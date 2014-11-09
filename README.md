@@ -86,4 +86,4 @@ Execute :
 
 ## Autor
 
-Originalmente por [NFe.io](https://github.com/nfeio).
+Originalmente criado pela equipe da [NFe.io](https://github.com/nfeio).
