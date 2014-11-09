@@ -6,7 +6,7 @@
 
 ## Exemplo de Uso
 ```js
-var nfe = require('iugu')('c73d49f9-6490-46ee-ba36-dcf69f6334fd'); // Ache sua chave API no Painel
+var nfe = require('nfe-io')('c73d49f9-6490-46ee-ba36-dcf69f6334fd'); // Ache sua chave API no Painel
 // nfe.{ RESOURCE_NAME }.{ METHOD_NAME }
 ```
 Todo método aceita um callback opcional como ultimo argumento:
