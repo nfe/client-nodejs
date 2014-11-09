@@ -19,13 +19,13 @@ nfe.legalpeople.create(
   name: 'BANCO DO BRASIL SA',
   email: 'exemplo@bb.com.br',
   address: {
-    country: '',
+    country: 'BRA',
     postalCode: '70073-901',
     street: 'Outros Quadra 1 Bloco G Lote 32',
     number: 'S/N',
     additionalInformation: 'QUADRAQUADRA 01 BLOCO G',
     district: 'Asa Sul',
-    city': {
+    city: {
       code: '5300108',
       name: 'Brasilia'
     },
@@ -54,7 +54,7 @@ nfe.serviceInvoices.create(
           number: 'S/N', // opcional 
           additionalInformation: 'QUADRAQUADRA 01 BLOCO G', // opcional
           district: 'Asa Sul',
-          city': {
+          city: {
             code: '5300108', // opcional
             name: 'Brasilia' // opcional 
           },
