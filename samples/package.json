@@ -1,0 +1,17 @@
+{
+  "name": "samples-nfe-io",
+  "version": "0.0.1",
+  "description": "Samples of NFe.io API Cliente for Node.js",
+  "author": {
+    "name": "Gabriel Marquez",
+    "email": "gabriel@nfe.io"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nfeio/client-nodejs.git"
+  },
+  "bugs:": "https://github.com/nfeio/client-nodejs/issues",
+  "dependencies": {
+    "nfe-io": "0.0.3"
+  }
+}

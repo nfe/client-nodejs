@@ -1,2 +1,9 @@
 0.0.1 Nov 9, 2014
   - Initial release
+  
+0.0.4 Nov 22, 2014
+  - Fixed tests
+  - Add samples folder with some examples
+  
+0.0.5 Nov 22, 2014
+  - Refactored samples

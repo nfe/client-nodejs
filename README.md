@@ -1,4 +1,4 @@
-# NFe.io para Node.js [![Build Status](https://travis-ci.org/nfeio/nfe-node.png?branch=master)](https://travis-ci.org/nfeio/nfe-node)
+# NFe.io para Node.js [![Build Status](https://travis-ci.org/nfe/client-node.png?branch=master)](https://travis-ci.org/nfe/client-node)
 
 ## Instalação
 
@@ -6,64 +6,77 @@
 
 ## Exemplo de Uso
 ```js
-var nfe = require('nfe-io')('c73d49f9-6490-46ee-ba36-dcf69f6334fd'); // Ache sua chave API no Painel
-// nfe.{ RESOURCE_NAME }.{ METHOD_NAME }
+// Chave de acesso deve ser copiada do painel.
+var nfe = require('nfe-io')('chave-de-acesso-na-api');
+
+// Exemplo genérico
+// nfe.{ RESOURCE_NAME }.{ METHOD_NAME } ( { PARAMETERS, DATA }, { CALLBACK_FUNCTION } )
 ```
 Todo método aceita um callback opcional como ultimo argumento:
-
-### Criar uma Pessoa Jurídica
-```js
-nfe.legalpeople.create(
-  'c73d49f9649046eeba36', // ID da Empresa, ache no painel, nosso sistema é multi empresas :)
-  {
-  name: 'BANCO DO BRASIL SA',
-  email: 'exemplo@bb.com.br',
-  address: {
-    country: 'BRA',
-    postalCode: '70073-901',
-    street: 'Outros Quadra 1 Bloco G Lote 32',
-    number: 'S/N',
-    additionalInformation: 'QUADRAQUADRA 01 BLOCO G',
-    district: 'Asa Sul',
-    city: {
-      code: '5300108',
-      name: 'Brasilia'
-    },
-    state: 'DF'
-  }
-  }, function(err, entity) {
-    err; // null se não ocorreu nenhum erro
-    entity; // O objeto de retorno da criação
-  }
-);
-```
 
 ### Emitir uma Nota Fiscal de Serviço
 ```js
 nfe.serviceInvoices.create(
-  'c73d49f9649046eeba36', // ID da Empresa, ache no painel, nosso sistema é multi empresas :)
+  
+  // ID da empresa, você deve copiar exatamente como está no painel
+  'c73d49f9649046eeba36', 
+  
+  // Dados da nota fiscal de serviço
   {  
-    borrower: {
-        name: 'BANCO DO BRASIL SA',
-        federalTaxNumber: 00000000000191, // opcional
-        email: 'exemplo@bb.com.br',
-        address: {
-          country: 'BRA',
-          postalCode: '70073-901', // opcional 
-          street: 'Outros Quadra 1 Bloco G Lote 32',
-          number: 'S/N', // opcional 
-          additionalInformation: 'QUADRAQUADRA 01 BLOCO G', // opcional
-          district: 'Asa Sul',
-          city: {
-            code: '5300108', // opcional
-            name: 'Brasilia' // opcional 
-          },
-          state: 'DF' // opcional
-        }
-    },
-    cityServiceCode: '2690', // código de serviço de acordo com a cidade
-    description: 'Prestação de serviços de desenvolvimento de sistemas.',
-    servicesAmount:  0.01
+    // Código do serviço de acordo com o a cidade
+    'cityServiceCode': '2690',
+    
+    // Descrição dos serviços prestados
+    'description': 'TESTE EMISSAO',  
+
+    // Valor total do serviços
+    'servicesAmount':  0.01,
+
+    // Dados do Tomador dos Serviços
+    'borrower': {  
+
+      // CNPJ ou CPF (opcional para tomadores no exterior)
+      'federalTaxNumber': 00000000000191,
+
+      // Nome da pessoa física ou Razão Social da Empresa
+      'name': 'BANCO DO BRASIL SA',
+      
+      // Email para onde deverá ser enviado a nota fiscal
+      'email': 'exemplo@bb.com.br',
+
+      // Endereço do tomador
+      'address': {
+      	
+      	// Código do pais com três letras
+        'country': 'BRA',
+        
+        // CEP do endereço (opcional para tomadores no exterior)
+        'postalCode': '70073901',
+         
+        // Logradouro
+        'street': 'Outros Quadra 1 Bloco G Lote 32',
+        
+        // Número (opcional)
+        'number': 'S/N',
+        
+        // Complemento (opcional) 
+        'additionalInformation': 'QUADRA 01 BLOCO G',
+
+        // Bairro
+        'district': 'Asa Sul', 
+
+		// Cidade é opcional para tomadores no exterior
+        'city': { 
+            // Código do IBGE para a Cidade
+            'code': '5300108',
+            // Nome da Cidade
+            'name': 'Brasilia'
+        },
+
+        // Sigla do estado (opcional para tomadores no exterior)
+        'state': 'DF'
+        
+      }
   }, function(err, invoice) {    
     err; // null se não ocorreu nenhum erro
     invoice; // O objeto de retorno da emissão    
@@ -71,13 +84,74 @@ nfe.serviceInvoices.create(
 );
 ```
 
+### Criar uma Pessoa Jurídica
+```js
+nfe.legalpeople.create(
+  
+  // ID da empresa, você deve copiar exatamente como está no painel
+  'c73d49f9649046eeba36',
+  
+  // Dados da pessoa jurídica
+  {
+    // CNPJ ou CPF (opcional para tomadores no exterior)
+    'federalTaxNumber': 00000000000191,
+
+    // Nome da pessoa física ou Razão Social da Empresa
+    'name': 'BANCO DO BRASIL SA',
+    
+    // Email para onde deverá ser enviado a nota fiscal
+    'email': 'exemplo@bb.com.br',
+
+    // Endereço do tomador
+    'address': {
+      
+      // Código do pais com três letras
+      'country': 'BRA',
+      
+      // CEP do endereço (opcional para tomadores no exterior)
+      'postalCode': '70073901',
+       
+      // Logradouro
+      'street': 'Outros Quadra 1 Bloco G Lote 32',
+      
+      // Número (opcional)
+      'number': 'S/N',
+      
+      // Complemento (opcional) 
+      'additionalInformation': 'QUADRA 01 BLOCO G',
+
+      // Bairro
+      'district': 'Asa Sul', 
+
+      // Cidade é opcional para tomadores no exterior
+      'city': { 
+          // Código do IBGE para a Cidade
+          'code': '5300108',
+          // Nome da Cidade
+          'name': 'Brasilia'
+      },
+
+      // Sigla do estado (opcional para tomadores no exterior)
+      'state': 'DF'
+      
+    }
+  }, function(err, entity) {
+    err; // null se não ocorreu nenhum erro
+    entity; // O objeto de retorno da criação
+  }
+);
+```
+
 ## Documentação
-Acesse [api.nfe.io/docs](http://api.nfe.io/swagger) para mais informações
+Acesse [api.nfe.io/docs](nfe.github.io/api-docs/dist/) para mais detalhes da documentação e .
 
-## Configuração
+## Configurações 
 
- * `nfe.setApiKey('c73d49f9-6490-46ee-ba36-dcf69f6334fd');`
- * `nfe.setTimeout(20000); // in ms` (node's default: `120000ms`)
+#### Tempo limite para requisições
+ * `nfe.setTimeout(20000); // in ms` (node's default: `120000ms`);
+ 
+#### Chave de acesso
+ * `nfe.setApiKey('c73d49f9-6490-46ee-ba36-dcf69f6334fd');` 
 
 ## Testes
 Execute :
@@ -86,4 +160,4 @@ Execute :
 
 ## Autor
 
-Originalmente criado pela equipe da [NFe.io](https://github.com/nfeio).
+Originalmente criado pela equipe da [NFe.io](https://github.com/nfe).
