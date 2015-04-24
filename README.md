@@ -1,4 +1,4 @@
-# NFe.io para Node.js [![Build Status](https://travis-ci.org/nfe/client-node.png?branch=master)](https://travis-ci.org/nfe/client-node)
+# NFe.io para Node.js [![Build Status](https://travis-ci.org/nfe/client-node.png?branch=master)](https://travis-ci.org/nfe/client-nodejs)
 
 ## Instalação
 
