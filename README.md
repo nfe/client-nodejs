@@ -35,8 +35,8 @@ nfe.serviceInvoices.create(
     // Dados do Tomador dos Serviços
     'borrower': {  
 
-      // CNPJ ou CPF (opcional para tomadores no exterior)
-      'federalTaxNumber': 00000000000191,
+      // CNPJ ou CPF em números (opcional para tomadores no exterior)
+      'federalTaxNumber': 191,
 
       // Nome da pessoa física ou Razão Social da Empresa
       'name': 'BANCO DO BRASIL SA',
