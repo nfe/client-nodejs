@@ -143,7 +143,8 @@ nfe.legalpeople.create(
 ```
 
 ## Documentação
-Acesse [api.nfe.io/docs](nfe.github.io/api-docs/dist/) para mais detalhes da documentação e .
+
+Acesse [https://api.nfe.io](https://api.nfe.io) para mais detalhes e referências.
 
 ## Configurações 
 
