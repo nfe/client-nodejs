@@ -142,6 +142,37 @@ nfe.legalpeople.create(
 );
 ```
 
+### Exemplo para Listagem
+```js
+// Chave de acesso deve ser copiada do painel.
+var nfe = require('nfe-io')('COLOQUE_AQUI_SUA_CHAVE_API');
+
+// listar as empresas
+nfe.companies.list(function(err, res) {
+    var company = res.companies[0];
+    var id = company.id;
+    var name = company.name;
+        
+    console.log(id, name);
+
+    // lista as notas fiscais
+    nfe.serviceInvoices.list(id, function(err, res) {
+
+        if (err) {
+            console.error(err);
+            return;            
+        }
+
+        if (res.code === 200) { // retorno OK?
+            // primeira nota fiscal
+            var firstServiceInvoice = res.serviceInvoices[0];
+
+            console.log(firstServiceInvoice);
+        }
+    });
+});
+```
+
 ## Documentação
 
 Acesse [https://api.nfe.io](https://api.nfe.io) para mais detalhes e referências.
