@@ -35,6 +35,10 @@ nfe.serviceInvoices.create(
     // Dados do Tomador dos Serviços
     'borrower': {  
 
+      // Tipo do tomador dos serviços, 
+      //    opções: 'Undefined', 'NaturalPerson', 'LegalEntity'
+      'type': 'LegalEntity',
+
       // CNPJ ou CPF em números (opcional para tomadores no exterior)
       'federalTaxNumber': 191,
 
