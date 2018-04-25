@@ -90,7 +90,7 @@ nfe.serviceInvoices.create(
 
 ### Criar uma Empresa para Emissão de Notas
 ```js
-nfe.company.create(
+nfe.companies.create(
   // Dados da pessoa jurídica
   {
     // CNPJ ou CPF (opcional para tomadores no exterior)
