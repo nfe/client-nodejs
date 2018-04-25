@@ -88,23 +88,31 @@ nfe.serviceInvoices.create(
 );
 ```
 
-### Criar uma Pessoa Jurídica
+### Criar uma Empresa para Emissão de Notas
 ```js
-nfe.legalpeople.create(
-  
-  // ID da empresa, você deve copiar exatamente como está no painel
-  'c73d49f9649046eeba36',
-  
+nfe.company.create(
   // Dados da pessoa jurídica
   {
     // CNPJ ou CPF (opcional para tomadores no exterior)
-    'federalTaxNumber': 00000000000191,
+    // Atenção: Somente números sem zeros a esquerda
+    'federalTaxNumber': 191, 
 
     // Nome da pessoa física ou Razão Social da Empresa
     'name': 'BANCO DO BRASIL SA',
     
-    // Email para onde deverá ser enviado a nota fiscal
-    'email': 'exemplo@bb.com.br',
+    // Nome fantasia, esse nome será usado no assunto do email
+    'tradeName': 'BANCO DO BRASIL SA',
+        
+    // Número de Inscricação na Prefeitura (CCM) 
+    'municipalTaxNumber': '12345',
+    
+    // Tipo do Regime Tributário
+    //   Opções: 'Isento', 'MicroempreendedorIndividual', 'SimplesNacional', 'LucroPresumido', 'LucroReal'
+    'taxRegime': 'SimplesNacional'
+    
+    // Tipo do regime especial de tributação
+    //   Opções: ['Automatico', 'Nenhum', 'MicroempresaMunicipal', 'Estimativa', 'SociedadeDeProfissionais', 'Cooperativa', 'MicroempreendedorIndividual', 'MicroempresarioEmpresaPequenoPorte']
+    'specialTaxRegime': 'Nenhum',
 
     // Endereço do tomador
     'address': {
