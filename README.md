@@ -1,10 +1,22 @@
-# NFe.io para Node.js [![Build Status](https://travis-ci.org/nfe/client-nodejs.svg?branch=master)](https://travis-ci.org/nfe/client-nodejs)
+# Cliente Node.JS para emissão de notas fiscais - NFe.io 
 
-## Instalação
+## Onde eu posso acessar a documentação da API?
 
-`npm install nfe-io`
+> Acesse a [nossa documentação](https://nfe.io/doc/rest-api/nfe-v1) para mais detalhes e referências.
 
-## Exemplo de Uso
+## Como realizar a instalação do pacote?
+
+Nosso pacote é uma dependencia do NPM, e pode ser encontrado no [https://www.npmjs.com/package/nfe-io](https://www.npmjs.com/package/nfe-io)
+Para utilizar nosso pacote, utilize o comando abaixo para instalar:
+
+``` bash
+    npm install nfe-io
+```
+
+## Exemplo de utilização
+
+Depois de baixar o pacote, inclua a dependência em seu arquivo JS, utilizando o código abaixo:
+
 ```js
 // Chave de acesso deve ser copiada do painel.
 var nfe = require('nfe-io')('chave-de-acesso-na-api');
@@ -12,10 +24,14 @@ var nfe = require('nfe-io')('chave-de-acesso-na-api');
 // Exemplo genérico
 // nfe.{ RESOURCE_NAME }.{ METHOD_NAME } ( { PARAMETERS, DATA }, { CALLBACK_FUNCTION } )
 ```
-Todo método aceita um callback opcional como ultimo argumento:
+>**Observação:**Todo método aceita um callback opcional como ultimo argumento.
 
-### Emitir uma Nota Fiscal de Serviço
+### Como emitir uma Nota Fiscal de Serviço?
+Abaixo, temos um código-exemplo para realizar uma Emissão de Nota Fiscal de Serviço:
+
 ```js
+var nfe = require('nfe-io')('chave-de-acesso-na-api');
+
 nfe.serviceInvoices.create(
   
   // ID da empresa, você deve copiar exatamente como está no painel
@@ -37,7 +53,7 @@ nfe.serviceInvoices.create(
 
       // Tipo do tomador dos serviços, 
       //    opções: 'Undefined', 'NaturalPerson', 'LegalEntity'
-      'type': 'LegalEntity',
+      'type': 'LegalEntity',
 
       // CNPJ ou CPF em números (opcional para tomadores no exterior)
       'federalTaxNumber': 191,
@@ -87,32 +103,40 @@ nfe.serviceInvoices.create(
   }
 );
 ```
+### Como cancelar uma nota?
+>Em construção!
 
-### Criar uma Empresa para Emissão de Notas
+
+### Como criar uma empresa para realizar a emissão de notas fiscais?
+Abaixo, temos um código-exemplo de criação de uma empresa, para realizar a emissão de nota fiscal:
+
 ```js
+var nfe = require('nfe-io')('chave-de-acesso-na-api');
+
 nfe.companies.create(
+
   // Dados da pessoa jurídica
   {
     // CNPJ ou CPF (opcional para tomadores no exterior)
-    // Atenção: Somente números sem zeros a esquerda
-    'federalTaxNumber': 191, 
+    // Atenção: Somente números sem zeros a esquerda
+    'federalTaxNumber': 191, 
 
     // Nome da pessoa física ou Razão Social da Empresa
     'name': 'BANCO DO BRASIL SA',
     
-    // Nome fantasia, esse nome será usado no assunto do email
+    // Nome fantasia, esse nome será usado no assunto do email
     'tradeName': 'BANCO DO BRASIL SA',
         
     // Número de Inscricação na Prefeitura (CCM) 
-    'municipalTaxNumber': '12345',
+    'municipalTaxNumber': '12345',
     
     // Tipo do Regime Tributário
-    //   Opções: 'Isento', 'MicroempreendedorIndividual', 'SimplesNacional', 'LucroPresumido', 'LucroReal'
-    'taxRegime': 'SimplesNacional'
+    //   Opções: 'Isento', 'MicroempreendedorIndividual', 'SimplesNacional', 'LucroPresumido', 'LucroReal'
+    'taxRegime': 'SimplesNacional'
     
     // Tipo do regime especial de tributação
-    //   Opções: ['Automatico', 'Nenhum', 'MicroempresaMunicipal', 'Estimativa', 'SociedadeDeProfissionais', 'Cooperativa', 'MicroempreendedorIndividual', 'MicroempresarioEmpresaPequenoPorte']
-    'specialTaxRegime': 'Nenhum',
+    //   Opções: ['Automatico', 'Nenhum', 'MicroempresaMunicipal', 'Estimativa', 'SociedadeDeProfissionais', 'Cooperativa', 'MicroempreendedorIndividual', 'MicroempresarioEmpresaPequenoPorte']
+    'specialTaxRegime': 'Nenhum',
 
     // Endereço do tomador
     'address': {
@@ -154,54 +178,22 @@ nfe.companies.create(
 );
 ```
 
-### Exemplo para Listagem
-```js
-// Chave de acesso deve ser copiada do painel.
-var nfe = require('nfe-io')('COLOQUE_AQUI_SUA_CHAVE_API');
+### Como efetuar o download de uma nota em PDF?
+>Em construção!
 
-// listar as empresas
-nfe.companies.list(function(err, res) {
-    var company = res.companies[0];
-    var id = company.id;
-    var name = company.name;
-        
-    console.log(id, name);
-
-    // lista as notas fiscais
-    nfe.serviceInvoices.list(id, function(err, res) {
-
-        if (err) {
-            console.error(err);
-            return;            
-        }
-
-        if (res.code === 200) { // retorno OK?
-            // primeira nota fiscal
-            var firstServiceInvoice = res.serviceInvoices[0];
-
-            console.log(firstServiceInvoice);
-        }
-    });
-});
-```
-
-## Documentação
-
-Acesse [https://api.nfe.io](https://api.nfe.io) para mais detalhes e referências.
+### Como validar o Webhook?
+>Em construção!
 
 ## Configurações 
 
-#### Tempo limite para requisições
- * `nfe.setTimeout(20000); // in ms` (node's default: `120000ms`);
+### Tempo limite para requisições
+`nfe.setTimeout(20000); // in ms` (node's default: `120000ms`);
  
-#### Chave de acesso
- * `nfe.setApiKey('c73d49f9-6490-46ee-ba36-dcf69f6334fd');` 
+### Chave de acesso
+`nfe.setApiKey('c73d49f9-6490-46ee-ba36-dcf69f6334fd');` 
 
-## Testes
-Execute :
-
-`npm test`
-
-## Autor
-
-Originalmente criado pela equipe da [NFe.io](https://github.com/nfe).
+## Como testar a aplicação?
+Para executar testes, utilize o comando :
+``` bash
+npm test
+```
