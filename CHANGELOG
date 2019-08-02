@@ -10,3 +10,6 @@
   
 0.0.6 Nov 22, 2014
   - Bumped version
+
+0.0.7 Aug 2, 2019
+  - Add sendemail method to service invoice
