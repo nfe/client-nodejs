@@ -1,8 +1,8 @@
-# Cliente Node.JS para emissão de notas fiscais - NFe.io 
+# Cliente Node.JS para emissão de notas fiscais eletrônicas de serviço (NFS-e) - NFE.io 
 
 ## Onde eu posso acessar a documentação da API?
 
-> Acesse a [nossa documentação](https://nfe.io/doc/rest-api/nfe-v1) para mais detalhes e referências.
+> Acesse a [nossa documentação](https://nfe.io/docs/nota-fiscal-servico/integracao-nfs-e/) para mais detalhes ou acessa a [referência da API](https://nfe.io/doc/rest-api/nfe-v1/).
 
 ## Como realizar a instalação do pacote?
 
