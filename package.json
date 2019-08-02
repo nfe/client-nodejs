@@ -1,6 +1,6 @@
 {
   "name": "nfe-io",
-  "version": "0.0.7",
+  "version": "1.0.0",
   "description": "Official NFe.io API Client for Node.js",
   "homepage": "https://github.com/nfeio/client-nodejs",
   "author": {
