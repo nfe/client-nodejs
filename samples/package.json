@@ -12,6 +12,6 @@
   },
   "bugs:": "https://github.com/nfeio/client-nodejs/issues",
   "dependencies": {
-    "nfe-io": "0.0.6"
+    "nfe-io": "2.0.0"
   }
 }
