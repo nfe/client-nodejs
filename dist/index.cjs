@@ -892,11 +892,535 @@ var init_companies = __esm({
   }
 });
 
+// src/core/resources/legal-people.ts
+var LegalPeopleResource;
+var init_legal_people = __esm({
+  "src/core/resources/legal-people.ts"() {
+    LegalPeopleResource = class {
+      constructor(http) {
+        this.http = http;
+      }
+      /**
+       * List all legal people for a company
+       * 
+       * @param companyId - Company ID
+       * @returns List of legal people
+       * 
+       * @example
+       * ```typescript
+       * const result = await nfe.legalPeople.list('company-id');
+       * console.log(`Found ${result.legalPeople.length} legal entities`);
+       * ```
+       */
+      async list(companyId) {
+        const path = `/companies/${companyId}/legalpeople`;
+        const response = await this.http.get(path);
+        return response.data;
+      }
+      /**
+       * Create a new legal person
+       * 
+       * @param companyId - Company ID
+       * @param data - Legal person data
+       * @returns Created legal person
+       * 
+       * @example
+       * ```typescript
+       * const legalPerson = await nfe.legalPeople.create('company-id', {
+       *   federalTaxNumber: '12345678901234',
+       *   name: 'Empresa Exemplo Ltda',
+       *   email: 'contato@empresa.com.br',
+       *   address: {
+       *     street: 'Av. Paulista, 1000',
+       *     neighborhood: 'Bela Vista',
+       *     city: { code: '3550308', name: 'São Paulo' },
+       *     state: 'SP',
+       *     postalCode: '01310-100'
+       *     }
+       * });
+       * ```
+       */
+      async create(companyId, data) {
+        const path = `/companies/${companyId}/legalpeople`;
+        const response = await this.http.post(path, data);
+        return response.data;
+      }
+      /**
+       * Retrieve a specific legal person
+       * 
+       * @param companyId - Company ID
+       * @param legalPersonId - Legal person ID
+       * @returns Legal person details
+       * 
+       * @example
+       * ```typescript
+       * const legalPerson = await nfe.legalPeople.retrieve(
+       *   'company-id',
+       *   'legal-person-id'
+       * );
+       * console.log(legalPerson.name);
+       * ```
+       */
+      async retrieve(companyId, legalPersonId) {
+        const path = `/companies/${companyId}/legalpeople/${legalPersonId}`;
+        const response = await this.http.get(path);
+        return response.data;
+      }
+      /**
+       * Update a legal person
+       * 
+       * @param companyId - Company ID
+       * @param legalPersonId - Legal person ID
+       * @param data - Data to update
+       * @returns Updated legal person
+       * 
+       * @example
+       * ```typescript
+       * const updated = await nfe.legalPeople.update(
+       *   'company-id',
+       *   'legal-person-id',
+       *   { email: 'novo@email.com' }
+       * );
+       * ```
+       */
+      async update(companyId, legalPersonId, data) {
+        const path = `/companies/${companyId}/legalpeople/${legalPersonId}`;
+        const response = await this.http.put(path, data);
+        return response.data;
+      }
+      /**
+       * Delete a legal person
+       * 
+       * @param companyId - Company ID
+       * @param legalPersonId - Legal person ID
+       * 
+       * @example
+       * ```typescript
+       * await nfe.legalPeople.delete('company-id', 'legal-person-id');
+       * ```
+       */
+      async delete(companyId, legalPersonId) {
+        const path = `/companies/${companyId}/legalpeople/${legalPersonId}`;
+        await this.http.delete(path);
+      }
+      /**
+       * Create multiple legal people in batch
+       * 
+       * @param companyId - Company ID
+       * @param data - Array of legal people data
+       * @returns Array of created legal people
+       * 
+       * @example
+       * ```typescript
+       * const created = await nfe.legalPeople.createBatch('company-id', [
+       *   { name: 'Empresa 1', federalTaxNumber: '11111111111111', ... },
+       *   { name: 'Empresa 2', federalTaxNumber: '22222222222222', ... }
+       * ]);
+       * ```
+       */
+      async createBatch(companyId, data) {
+        const promises = data.map((person) => this.create(companyId, person));
+        return Promise.all(promises);
+      }
+      /**
+       * Find legal person by federal tax number (CNPJ)
+       * 
+       * @param companyId - Company ID
+       * @param federalTaxNumber - CNPJ (only numbers)
+       * @returns Legal person or undefined if not found
+       * 
+       * @example
+       * ```typescript
+       * const person = await nfe.legalPeople.findByTaxNumber(
+       *   'company-id',
+       *   '12345678901234'
+       * );
+       * if (person) {
+       *   console.log('Found:', person.name);
+       * }
+       * ```
+       */
+      async findByTaxNumber(companyId, federalTaxNumber) {
+        const result = await this.list(companyId);
+        return result.data?.find(
+          (person) => person.federalTaxNumber?.toString() === federalTaxNumber
+        );
+      }
+    };
+  }
+});
+
+// src/core/resources/natural-people.ts
+var NaturalPeopleResource;
+var init_natural_people = __esm({
+  "src/core/resources/natural-people.ts"() {
+    NaturalPeopleResource = class {
+      constructor(http) {
+        this.http = http;
+      }
+      /**
+       * List all natural people for a company
+       * 
+       * @param companyId - Company ID
+       * @returns List of natural people
+       * 
+       * @example
+       * ```typescript
+       * const result = await nfe.naturalPeople.list('company-id');
+       * console.log(`Found ${result.data.length} natural persons`);
+       * ```
+       */
+      async list(companyId) {
+        const path = `/companies/${companyId}/naturalpeople`;
+        const response = await this.http.get(path);
+        return response.data;
+      }
+      /**
+       * Create a new natural person
+       * 
+       * @param companyId - Company ID
+       * @param data - Natural person data
+       * @returns Created natural person
+       * 
+       * @example
+       * ```typescript
+       * const naturalPerson = await nfe.naturalPeople.create('company-id', {
+       *   federalTaxNumber: '12345678901',
+       *   name: 'João Silva',
+       *   email: 'joao@exemplo.com',
+       *   address: {
+       *     street: 'Rua Exemplo, 123',
+       *     neighborhood: 'Centro',
+       *     city: { code: '3550308', name: 'São Paulo' },
+       *     state: 'SP',
+       *     postalCode: '01000-000'
+       *   }
+       * });
+       * ```
+       */
+      async create(companyId, data) {
+        const path = `/companies/${companyId}/naturalpeople`;
+        const response = await this.http.post(path, data);
+        return response.data;
+      }
+      /**
+       * Retrieve a specific natural person
+       * 
+       * @param companyId - Company ID
+       * @param naturalPersonId - Natural person ID
+       * @returns Natural person details
+       * 
+       * @example
+       * ```typescript
+       * const naturalPerson = await nfe.naturalPeople.retrieve(
+       *   'company-id',
+       *   'natural-person-id'
+       * );
+       * console.log(naturalPerson.name);
+       * ```
+       */
+      async retrieve(companyId, naturalPersonId) {
+        const path = `/companies/${companyId}/naturalpeople/${naturalPersonId}`;
+        const response = await this.http.get(path);
+        return response.data;
+      }
+      /**
+       * Update a natural person
+       * 
+       * @param companyId - Company ID
+       * @param naturalPersonId - Natural person ID
+       * @param data - Data to update
+       * @returns Updated natural person
+       * 
+       * @example
+       * ```typescript
+       * const updated = await nfe.naturalPeople.update(
+       *   'company-id',
+       *   'natural-person-id',
+       *   { email: 'novo@email.com' }
+       * );
+       * ```
+       */
+      async update(companyId, naturalPersonId, data) {
+        const path = `/companies/${companyId}/naturalpeople/${naturalPersonId}`;
+        const response = await this.http.put(path, data);
+        return response.data;
+      }
+      /**
+       * Delete a natural person
+       * 
+       * @param companyId - Company ID
+       * @param naturalPersonId - Natural person ID
+       * 
+       * @example
+       * ```typescript
+       * await nfe.naturalPeople.delete('company-id', 'natural-person-id');
+       * ```
+       */
+      async delete(companyId, naturalPersonId) {
+        const path = `/companies/${companyId}/naturalpeople/${naturalPersonId}`;
+        await this.http.delete(path);
+      }
+      /**
+       * Create multiple natural people in batch
+       * 
+       * @param companyId - Company ID
+       * @param data - Array of natural people data
+       * @returns Array of created natural people
+       * 
+       * @example
+       * ```typescript
+       * const created = await nfe.naturalPeople.createBatch('company-id', [
+       *   { name: 'João Silva', federalTaxNumber: '11111111111', ... },
+       *   { name: 'Maria Santos', federalTaxNumber: '22222222222', ... }
+       * ]);
+       * ```
+       */
+      async createBatch(companyId, data) {
+        const promises = data.map((person) => this.create(companyId, person));
+        return Promise.all(promises);
+      }
+      /**
+       * Find natural person by federal tax number (CPF)
+       * 
+       * @param companyId - Company ID
+       * @param federalTaxNumber - CPF (only numbers)
+       * @returns Natural person or undefined if not found
+       * 
+       * @example
+       * ```typescript
+       * const person = await nfe.naturalPeople.findByTaxNumber(
+       *   'company-id',
+       *   '12345678901'
+       * );
+       * if (person) {
+       *   console.log('Found:', person.name);
+       * }
+       * ```
+       */
+      async findByTaxNumber(companyId, federalTaxNumber) {
+        const result = await this.list(companyId);
+        return result.data?.find(
+          (person) => person.federalTaxNumber?.toString() === federalTaxNumber
+        );
+      }
+    };
+  }
+});
+
+// src/core/resources/webhooks.ts
+var WebhooksResource;
+var init_webhooks = __esm({
+  "src/core/resources/webhooks.ts"() {
+    WebhooksResource = class {
+      constructor(http) {
+        this.http = http;
+      }
+      /**
+       * List all webhooks for a company
+       * 
+       * @param companyId - Company ID
+       * @returns List of webhooks
+       * 
+       * @example
+       * ```typescript
+       * const result = await nfe.webhooks.list('company-id');
+       * console.log(`You have ${result.data.length} webhooks configured`);
+       * ```
+       */
+      async list(companyId) {
+        const path = `/companies/${companyId}/webhooks`;
+        const response = await this.http.get(path);
+        return response.data;
+      }
+      /**
+       * Create a new webhook subscription
+       * 
+       * @param companyId - Company ID
+       * @param data - Webhook configuration
+       * @returns Created webhook
+       * 
+       * @example
+       * ```typescript
+       * const webhook = await nfe.webhooks.create('company-id', {
+       *   url: 'https://seu-site.com/webhook/nfe',
+       *   events: ['invoice.issued', 'invoice.cancelled'],
+       *   secret: 'sua-chave-secreta-opcional'
+       * });
+       * ```
+       */
+      async create(companyId, data) {
+        const path = `/companies/${companyId}/webhooks`;
+        const response = await this.http.post(path, data);
+        return response.data;
+      }
+      /**
+       * Retrieve a specific webhook
+       * 
+       * @param companyId - Company ID
+       * @param webhookId - Webhook ID
+       * @returns Webhook details
+       * 
+       * @example
+       * ```typescript
+       * const webhook = await nfe.webhooks.retrieve('company-id', 'webhook-id');
+       * console.log('Webhook URL:', webhook.url);
+       * ```
+       */
+      async retrieve(companyId, webhookId) {
+        const path = `/companies/${companyId}/webhooks/${webhookId}`;
+        const response = await this.http.get(path);
+        return response.data;
+      }
+      /**
+       * Update a webhook
+       * 
+       * @param companyId - Company ID
+       * @param webhookId - Webhook ID
+       * @param data - Data to update
+       * @returns Updated webhook
+       * 
+       * @example
+       * ```typescript
+       * const updated = await nfe.webhooks.update(
+       *   'company-id',
+       *   'webhook-id',
+       *   { events: ['invoice.issued', 'invoice.cancelled', 'invoice.failed'] }
+       * );
+       * ```
+       */
+      async update(companyId, webhookId, data) {
+        const path = `/companies/${companyId}/webhooks/${webhookId}`;
+        const response = await this.http.put(path, data);
+        return response.data;
+      }
+      /**
+       * Delete a webhook
+       * 
+       * @param companyId - Company ID
+       * @param webhookId - Webhook ID
+       * 
+       * @example
+       * ```typescript
+       * await nfe.webhooks.delete('company-id', 'webhook-id');
+       * console.log('Webhook deleted');
+       * ```
+       */
+      async delete(companyId, webhookId) {
+        const path = `/companies/${companyId}/webhooks/${webhookId}`;
+        await this.http.delete(path);
+      }
+      /**
+       * Validate webhook signature
+       * 
+       * Verifies that a webhook request came from NFE.io by validating its signature.
+       * This should be used to ensure webhook security.
+       * 
+       * @param payload - Raw webhook payload (as string)
+       * @param signature - Signature from X-NFE-Signature header
+       * @param secret - Your webhook secret
+       * @returns True if signature is valid
+       * 
+       * @example
+       * ```typescript
+       * // In your webhook endpoint:
+       * app.post('/webhook/nfe', async (req, res) => {
+       *   const signature = req.headers['x-nfe-signature'];
+       *   const payload = JSON.stringify(req.body);
+       *   
+       *   const isValid = nfe.webhooks.validateSignature(
+       *     payload,
+       *     signature,
+       *     'sua-chave-secreta'
+       *   );
+       *   
+       *   if (!isValid) {
+       *     return res.status(401).send('Invalid signature');
+       *   }
+       *   
+       *   // Process webhook...
+       * });
+       * ```
+       */
+      validateSignature(payload, signature, secret) {
+        try {
+          const crypto = globalThis.require?.("crypto");
+          if (!crypto) {
+            throw new Error("crypto module not available");
+          }
+          const hmac = crypto.createHmac("sha256", secret);
+          hmac.update(payload);
+          const expectedSignature = hmac.digest("hex");
+          return crypto.timingSafeEqual(
+            Buffer.from(signature),
+            Buffer.from(expectedSignature)
+          );
+        } catch (error) {
+          console.error("Error validating webhook signature:", error);
+          return false;
+        }
+      }
+      /**
+       * Test webhook delivery
+       * 
+       * Sends a test event to the webhook URL to verify it's working
+       * 
+       * @param companyId - Company ID
+       * @param webhookId - Webhook ID
+       * @returns Test result
+       * 
+       * @example
+       * ```typescript
+       * const result = await nfe.webhooks.test('company-id', 'webhook-id');
+       * if (result.success) {
+       *   console.log('Webhook is working!');
+       * }
+       * ```
+       */
+      async test(companyId, webhookId) {
+        const path = `/companies/${companyId}/webhooks/${webhookId}/test`;
+        const response = await this.http.post(
+          path,
+          {}
+        );
+        return response.data;
+      }
+      /**
+       * Get available webhook events
+       * 
+       * Returns a list of all available webhook event types
+       * 
+       * @returns List of available events
+       * 
+       * @example
+       * ```typescript
+       * const events = nfe.webhooks.getAvailableEvents();
+       * console.log('Available events:', events);
+       * ```
+       */
+      getAvailableEvents() {
+        return [
+          "invoice.issued",
+          "invoice.cancelled",
+          "invoice.failed",
+          "invoice.processing",
+          "company.created",
+          "company.updated",
+          "company.deleted"
+        ];
+      }
+    };
+  }
+});
+
 // src/core/resources/index.ts
 var init_resources = __esm({
   "src/core/resources/index.ts"() {
     init_service_invoices();
     init_companies();
+    init_legal_people();
+    init_natural_people();
+    init_webhooks();
   }
 });
 
@@ -925,14 +1449,151 @@ var init_client2 = __esm({
     init_errors();
     init_resources();
     exports.NfeClient = class {
+      /** @internal HTTP client for making API requests */
       http;
+      /** @internal Normalized client configuration */
       config;
-      // Public resource interfaces (maintain v2 naming convention)
+      /**
+       * Service Invoices API resource
+       * 
+       * @description
+       * Provides operations for managing service invoices (NFS-e):
+       * - Create, list, retrieve, cancel service invoices
+       * - Send invoices by email
+       * - Download PDF and XML files
+       * - Automatic polling for async invoice processing
+       * 
+       * @see {@link ServiceInvoicesResource}
+       * 
+       * @example
+       * ```typescript
+       * const invoice = await nfe.serviceInvoices.create(companyId, {
+       *   borrower: { name: 'Client', email: 'client@example.com' },
+       *   cityServiceCode: '12345',
+       *   servicesAmount: 1000.00
+       * });
+       * ```
+       */
       serviceInvoices;
+      /**
+       * Companies API resource
+       * 
+       * @description
+       * Provides operations for managing companies:
+       * - CRUD operations for companies
+       * - Upload digital certificates (PFX/P12)
+       * - Batch operations
+       * 
+       * @see {@link CompaniesResource}
+       * 
+       * @example
+       * ```typescript
+       * const company = await nfe.companies.create({
+       *   federalTaxNumber: '12345678000190',
+       *   name: 'My Company',
+       *   email: 'company@example.com'
+       * });
+       * ```
+       */
       companies;
-      // public readonly legalPeople: LegalPeopleResource;
-      // public readonly naturalPeople: NaturalPeopleResource;
-      // public readonly webhooks: WebhooksResource;
+      /**
+       * Legal People API resource
+       * 
+       * @description
+       * Provides operations for managing legal persons (empresas/PJ):
+       * - CRUD operations scoped by company
+       * - CNPJ lookup and validation
+       * - Batch operations
+       * 
+       * @see {@link LegalPeopleResource}
+       * 
+       * @example
+       * ```typescript
+       * const legalPerson = await nfe.legalPeople.create(companyId, {
+       *   federalTaxNumber: '12345678000190',
+       *   name: 'Legal Person Company'
+       * });
+       * ```
+       */
+      legalPeople;
+      /**
+       * Natural People API resource
+       * 
+       * @description
+       * Provides operations for managing natural persons (pessoas físicas/PF):
+       * - CRUD operations scoped by company
+       * - CPF lookup and validation
+       * - Batch operations
+       * 
+       * @see {@link NaturalPeopleResource}
+       * 
+       * @example
+       * ```typescript
+       * const naturalPerson = await nfe.naturalPeople.create(companyId, {
+       *   federalTaxNumber: '12345678901',
+       *   name: 'John Doe'
+       * });
+       * ```
+       */
+      naturalPeople;
+      /**
+       * Webhooks API resource
+       * 
+       * @description
+       * Provides operations for managing webhooks:
+       * - CRUD operations for webhook configurations
+       * - Webhook signature validation
+       * - Test webhook delivery
+       * - List available event types
+       * 
+       * @see {@link WebhooksResource}
+       * 
+       * @example
+       * ```typescript
+       * const webhook = await nfe.webhooks.create({
+       *   url: 'https://example.com/webhook',
+       *   events: ['invoice.issued', 'invoice.cancelled']
+       * });
+       * ```
+       */
+      webhooks;
+      /**
+       * Create a new NFE.io API client
+       * 
+       * @param config - Client configuration options
+       * @throws {ConfigurationError} If configuration is invalid
+       * @throws {ConfigurationError} If Node.js version < 18
+       * @throws {ConfigurationError} If fetch API is not available
+       * 
+       * @example Basic
+       * ```typescript
+       * const nfe = new NfeClient({
+       *   apiKey: 'your-api-key',
+       *   environment: 'production'
+       * });
+       * ```
+       * 
+       * @example With environment variable
+       * ```typescript
+       * // Set NFE_API_KEY environment variable
+       * const nfe = new NfeClient({
+       *   environment: 'production'
+       * });
+       * ```
+       * 
+       * @example With custom retry config
+       * ```typescript
+       * const nfe = new NfeClient({
+       *   apiKey: 'your-api-key',
+       *   timeout: 60000,
+       *   retryConfig: {
+       *     maxRetries: 5,
+       *     baseDelay: 1000,
+       *     maxDelay: 30000
+       *   }
+       * });
+       * ```
+       */
       constructor(config) {
         this.config = this.validateAndNormalizeConfig(config);
         this.validateEnvironment();
@@ -945,6 +1606,9 @@ var init_client2 = __esm({
         this.http = new HttpClient(httpConfig);
         this.serviceInvoices = new ServiceInvoicesResource(this.http);
         this.companies = new CompaniesResource(this.http);
+        this.legalPeople = new LegalPeopleResource(this.http);
+        this.naturalPeople = new NaturalPeopleResource(this.http);
+        this.webhooks = new WebhooksResource(this.http);
       }
       // --------------------------------------------------------------------------
       // Configuration Management
@@ -1022,7 +1686,21 @@ var init_client2 = __esm({
       // Public Utility Methods
       // --------------------------------------------------------------------------
       /**
-       * Update client configuration
+       * Update client configuration dynamically
+       * 
+       * @param newConfig - Partial configuration to merge with existing config
+       * @throws {ConfigurationError} If new configuration is invalid
+       * 
+       * @example
+       * ```typescript
+       * const nfe = new NfeClient({ apiKey: 'old-key' });
+       * 
+       * // Switch to sandbox environment
+       * nfe.updateConfig({ environment: 'sandbox' });
+       * 
+       * // Update timeout
+       * nfe.updateConfig({ timeout: 60000 });
+       * ```
        */
       updateConfig(newConfig) {
         const mergedConfig = { ...this.config, ...newConfig };
@@ -1037,19 +1715,49 @@ var init_client2 = __esm({
         Object.assign(this.http, new HttpClient(httpConfig));
       }
       /**
-       * Set timeout for requests (maintains v2 compatibility)
+       * Set request timeout in milliseconds
+       * 
+       * @param timeout - Request timeout in milliseconds
+       * 
+       * @description
+       * Maintains v2 API compatibility. Equivalent to `updateConfig({ timeout })`.
+       * 
+       * @example
+       * ```typescript
+       * nfe.setTimeout(60000); // 60 seconds
+       * ```
        */
       setTimeout(timeout) {
         this.updateConfig({ timeout });
       }
       /**
-       * Set API key (maintains v2 compatibility)
+       * Set or update API key
+       * 
+       * @param apiKey - New API key to use for authentication
+       * 
+       * @description
+       * Maintains v2 API compatibility. Equivalent to `updateConfig({ apiKey })`.
+       * 
+       * @example
+       * ```typescript
+       * nfe.setApiKey('new-api-key');
+       * ```
        */
       setApiKey(apiKey) {
         this.updateConfig({ apiKey });
       }
       /**
-       * Get current configuration (readonly)
+       * Get current client configuration
+       * 
+       * @returns Readonly copy of current configuration
+       * 
+       * @example
+       * ```typescript
+       * const config = nfe.getConfig();
+       * console.log('Environment:', config.environment);
+       * console.log('Base URL:', config.baseUrl);
+       * console.log('Timeout:', config.timeout);
+       * ```
        */
       getConfig() {
         return { ...this.config };
@@ -1058,8 +1766,48 @@ var init_client2 = __esm({
       // Polling Utility (for async invoice processing)
       // --------------------------------------------------------------------------
       /**
-       * Poll a resource until completion or timeout
-       * This is critical for NFE.io's async invoice processing (202 responses)
+       * Poll a resource until it completes or times out
+       * 
+       * @template T - Type of the resource being polled
+       * @param locationUrl - URL or path to poll
+       * @param options - Polling configuration
+       * @returns Promise that resolves when resource is complete
+       * @throws {PollingTimeoutError} If polling exceeds maxAttempts
+       * 
+       * @description
+       * Critical utility for NFE.io's async invoice processing. When creating a service
+       * invoice, the API returns a 202 response with a location URL. This method polls
+       * that URL until the invoice is fully processed or the polling times out.
+       * 
+       * @example Basic usage
+       * ```typescript
+       * const result = await nfe.serviceInvoices.create(companyId, data);
+       * 
+       * if (result.status === 'pending') {
+       *   const invoice = await nfe.pollUntilComplete(result.location);
+       *   console.log('Invoice issued:', invoice.number);
+       * }
+       * ```
+       * 
+       * @example With custom polling options
+       * ```typescript
+       * const invoice = await nfe.pollUntilComplete(locationUrl, {
+       *   maxAttempts: 60,  // Poll up to 60 times
+       *   intervalMs: 3000  // Wait 3 seconds between attempts
+       * });
+       * ```
+       * 
+       * @example Using createAndWait (recommended)
+       * ```typescript
+       * // Instead of manual polling, use the convenience method:
+       * const invoice = await nfe.serviceInvoices.createAndWait(companyId, data, {
+       *   maxAttempts: 30,
+       *   interval: 2000
+       * });
+       * ```
+       * 
+       * @see {@link PollOptions} for configuration options
+       * @see {@link ServiceInvoicesResource.createAndWait} for automated polling
        */
       async pollUntilComplete(locationUrl, options = {}) {
         const {
@@ -1114,7 +1862,38 @@ var init_client2 = __esm({
       // Health Check & Debug
       // --------------------------------------------------------------------------
       /**
-       * Check if the client is properly configured and can reach the API
+       * Check if the client is properly configured and can reach the NFE.io API
+       * 
+       * @returns Health check result with status and optional error details
+       * 
+       * @description
+       * Performs a simple API request to verify connectivity and authentication.
+       * Useful for debugging connection issues or validating client configuration.
+       * 
+       * @example
+       * ```typescript
+       * const health = await nfe.healthCheck();
+       * 
+       * if (health.status === 'ok') {
+       *   console.log('API connection successful!');
+       * } else {
+       *   console.error('API connection failed:', health.details);
+       * }
+       * ```
+       * 
+       * @example In application startup
+       * ```typescript
+       * async function initializeApp() {
+       *   const nfe = new NfeClient({ apiKey: process.env.NFE_API_KEY });
+       *   
+       *   const health = await nfe.healthCheck();
+       *   if (health.status !== 'ok') {
+       *     throw new Error(`NFE.io API is not reachable: ${health.details?.error}`);
+       *   }
+       *   
+       *   console.log('NFE.io SDK initialized successfully');
+       * }
+       * ```
        */
       async healthCheck() {
         try {
@@ -1135,7 +1914,35 @@ var init_client2 = __esm({
         }
       }
       /**
-       * Get client information for debugging
+       * Get client information for debugging and diagnostics
+       * 
+       * @returns Client diagnostic information
+       * 
+       * @description
+       * Returns comprehensive information about the current SDK instance,
+       * useful for bug reports and troubleshooting.
+       * 
+       * @example
+       * ```typescript
+       * const info = nfe.getClientInfo();
+       * console.log('SDK Version:', info.version);
+       * console.log('Node Version:', info.nodeVersion);
+       * console.log('Environment:', info.environment);
+       * console.log('Base URL:', info.baseUrl);
+       * ```
+       * 
+       * @example In error reporting
+       * ```typescript
+       * try {
+       *   await nfe.serviceInvoices.create(companyId, data);
+       * } catch (error) {
+       *   const info = nfe.getClientInfo();
+       *   console.error('Error context:', {
+       *     error: error.message,
+       *     sdkInfo: info
+       *   });
+       * }
+       * ```
        */
       getClientInfo() {
         return {
@@ -1255,6 +2062,55 @@ function validateApiKeyFormat(apiKey) {
     issues
   };
 }
+/**
+ * @fileoverview NFE.io SDK v3 - Main Client
+ * 
+ * @description
+ * Core client class for interacting with the NFE.io API v1.
+ * Provides a modern TypeScript interface with zero runtime dependencies.
+ * 
+ * @module @nfe-io/sdk/client
+ * @author NFE.io
+ * @license MIT
+ */
+/**
+ * @fileoverview NFE.io SDK v3 - Official Node.js SDK for NFE.io API
+ * 
+ * @description
+ * Modern TypeScript SDK for NFE.io API with zero runtime dependencies.
+ * Compatible with Node.js 18+ and modern JavaScript runtimes.
+ * 
+ * @example Basic Usage
+ * ```typescript
+ * import { NfeClient } from '@nfe-io/sdk';
+ * 
+ * const nfe = new NfeClient({ 
+ *   apiKey: 'your-api-key',
+ *   environment: 'production' // or 'sandbox'
+ * });
+ * 
+ * // Create a service invoice
+ * const invoice = await nfe.serviceInvoices.create('company-id', {
+ *   borrower: { /* ... *\/ },
+ *   cityServiceCode: '12345',
+ *   servicesAmount: 1000.00
+ * });
+ * ```
+ * 
+ * @example With Polling
+ * ```typescript
+ * // Automatically poll until invoice is processed
+ * const invoice = await nfe.serviceInvoices.createAndWait('company-id', data, {
+ *   maxAttempts: 30,
+ *   interval: 2000
+ * });
+ * ```
+ * 
+ * @module @nfe-io/sdk
+ * @version 3.0.0-beta.1
+ * @author NFE.io
+ * @license MIT
+ */
 
 exports.API_VERSION = API_VERSION;
 exports.DOCUMENTATION_URL = DOCUMENTATION_URL;

@@ -7,8 +7,6 @@
 // Resource classes
 export { ServiceInvoicesResource, createServiceInvoicesResource } from './service-invoices.js';
 export { CompaniesResource, createCompaniesResource } from './companies.js';
-
-// TODO: Add other resources
-// export { LegalPeopleResource, createLegalPeopleResource } from './legal-people.js';
-// export { NaturalPeopleResource, createNaturalPeopleResource } from './natural-people.js';
-// export { WebhooksResource, createWebhooksResource } from './webhooks.js';
+export { LegalPeopleResource } from './legal-people.js';
+export { NaturalPeopleResource } from './natural-people.js';
+export { WebhooksResource } from './webhooks.js';

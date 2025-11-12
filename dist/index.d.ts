@@ -452,17 +452,658 @@ declare class CompaniesResource {
 }
 
 /**
- * NFE.io SDK v3 - Main Client
- *
- * Modern TypeScript client for NFE.io API with zero runtime dependencies
- * Compatible with Node.js 18+ and any JavaScript environment
+ * LegalPeople Resource
+ * Manages legal entities (pessoas jurídicas) scoped by company
  */
 
-declare class NfeClient {
+/**
+ * LegalPeople resource for managing legal entities (pessoas jurídicas)
+ * All operations are scoped by company_id
+ */
+declare class LegalPeopleResource {
     private readonly http;
+    constructor(http: HttpClient);
+    /**
+     * List all legal people for a company
+     *
+     * @param companyId - Company ID
+     * @returns List of legal people
+     *
+     * @example
+     * ```typescript
+     * const result = await nfe.legalPeople.list('company-id');
+     * console.log(`Found ${result.legalPeople.length} legal entities`);
+     * ```
+     */
+    list(companyId: ResourceId): Promise<ListResponse<LegalPerson>>;
+    /**
+     * Create a new legal person
+     *
+     * @param companyId - Company ID
+     * @param data - Legal person data
+     * @returns Created legal person
+     *
+     * @example
+     * ```typescript
+     * const legalPerson = await nfe.legalPeople.create('company-id', {
+     *   federalTaxNumber: '12345678901234',
+     *   name: 'Empresa Exemplo Ltda',
+     *   email: 'contato@empresa.com.br',
+     *   address: {
+     *     street: 'Av. Paulista, 1000',
+     *     neighborhood: 'Bela Vista',
+     *     city: { code: '3550308', name: 'São Paulo' },
+     *     state: 'SP',
+     *     postalCode: '01310-100'
+     *     }
+     * });
+     * ```
+     */
+    create(companyId: ResourceId, data: Partial<LegalPerson>): Promise<LegalPerson>;
+    /**
+     * Retrieve a specific legal person
+     *
+     * @param companyId - Company ID
+     * @param legalPersonId - Legal person ID
+     * @returns Legal person details
+     *
+     * @example
+     * ```typescript
+     * const legalPerson = await nfe.legalPeople.retrieve(
+     *   'company-id',
+     *   'legal-person-id'
+     * );
+     * console.log(legalPerson.name);
+     * ```
+     */
+    retrieve(companyId: ResourceId, legalPersonId: ResourceId): Promise<LegalPerson>;
+    /**
+     * Update a legal person
+     *
+     * @param companyId - Company ID
+     * @param legalPersonId - Legal person ID
+     * @param data - Data to update
+     * @returns Updated legal person
+     *
+     * @example
+     * ```typescript
+     * const updated = await nfe.legalPeople.update(
+     *   'company-id',
+     *   'legal-person-id',
+     *   { email: 'novo@email.com' }
+     * );
+     * ```
+     */
+    update(companyId: ResourceId, legalPersonId: ResourceId, data: Partial<LegalPerson>): Promise<LegalPerson>;
+    /**
+     * Delete a legal person
+     *
+     * @param companyId - Company ID
+     * @param legalPersonId - Legal person ID
+     *
+     * @example
+     * ```typescript
+     * await nfe.legalPeople.delete('company-id', 'legal-person-id');
+     * ```
+     */
+    delete(companyId: ResourceId, legalPersonId: ResourceId): Promise<void>;
+    /**
+     * Create multiple legal people in batch
+     *
+     * @param companyId - Company ID
+     * @param data - Array of legal people data
+     * @returns Array of created legal people
+     *
+     * @example
+     * ```typescript
+     * const created = await nfe.legalPeople.createBatch('company-id', [
+     *   { name: 'Empresa 1', federalTaxNumber: '11111111111111', ... },
+     *   { name: 'Empresa 2', federalTaxNumber: '22222222222222', ... }
+     * ]);
+     * ```
+     */
+    createBatch(companyId: ResourceId, data: Array<Partial<LegalPerson>>): Promise<LegalPerson[]>;
+    /**
+     * Find legal person by federal tax number (CNPJ)
+     *
+     * @param companyId - Company ID
+     * @param federalTaxNumber - CNPJ (only numbers)
+     * @returns Legal person or undefined if not found
+     *
+     * @example
+     * ```typescript
+     * const person = await nfe.legalPeople.findByTaxNumber(
+     *   'company-id',
+     *   '12345678901234'
+     * );
+     * if (person) {
+     *   console.log('Found:', person.name);
+     * }
+     * ```
+     */
+    findByTaxNumber(companyId: ResourceId, federalTaxNumber: string): Promise<LegalPerson | undefined>;
+}
+
+/**
+ * NaturalPeople Resource
+ * Manages natural persons (pessoas físicas) scoped by company
+ */
+
+/**
+ * NaturalPeople resource for managing natural persons (pessoas físicas)
+ * All operations are scoped by company_id
+ */
+declare class NaturalPeopleResource {
+    private readonly http;
+    constructor(http: HttpClient);
+    /**
+     * List all natural people for a company
+     *
+     * @param companyId - Company ID
+     * @returns List of natural people
+     *
+     * @example
+     * ```typescript
+     * const result = await nfe.naturalPeople.list('company-id');
+     * console.log(`Found ${result.data.length} natural persons`);
+     * ```
+     */
+    list(companyId: ResourceId): Promise<ListResponse<NaturalPerson>>;
+    /**
+     * Create a new natural person
+     *
+     * @param companyId - Company ID
+     * @param data - Natural person data
+     * @returns Created natural person
+     *
+     * @example
+     * ```typescript
+     * const naturalPerson = await nfe.naturalPeople.create('company-id', {
+     *   federalTaxNumber: '12345678901',
+     *   name: 'João Silva',
+     *   email: 'joao@exemplo.com',
+     *   address: {
+     *     street: 'Rua Exemplo, 123',
+     *     neighborhood: 'Centro',
+     *     city: { code: '3550308', name: 'São Paulo' },
+     *     state: 'SP',
+     *     postalCode: '01000-000'
+     *   }
+     * });
+     * ```
+     */
+    create(companyId: ResourceId, data: Partial<NaturalPerson>): Promise<NaturalPerson>;
+    /**
+     * Retrieve a specific natural person
+     *
+     * @param companyId - Company ID
+     * @param naturalPersonId - Natural person ID
+     * @returns Natural person details
+     *
+     * @example
+     * ```typescript
+     * const naturalPerson = await nfe.naturalPeople.retrieve(
+     *   'company-id',
+     *   'natural-person-id'
+     * );
+     * console.log(naturalPerson.name);
+     * ```
+     */
+    retrieve(companyId: ResourceId, naturalPersonId: ResourceId): Promise<NaturalPerson>;
+    /**
+     * Update a natural person
+     *
+     * @param companyId - Company ID
+     * @param naturalPersonId - Natural person ID
+     * @param data - Data to update
+     * @returns Updated natural person
+     *
+     * @example
+     * ```typescript
+     * const updated = await nfe.naturalPeople.update(
+     *   'company-id',
+     *   'natural-person-id',
+     *   { email: 'novo@email.com' }
+     * );
+     * ```
+     */
+    update(companyId: ResourceId, naturalPersonId: ResourceId, data: Partial<NaturalPerson>): Promise<NaturalPerson>;
+    /**
+     * Delete a natural person
+     *
+     * @param companyId - Company ID
+     * @param naturalPersonId - Natural person ID
+     *
+     * @example
+     * ```typescript
+     * await nfe.naturalPeople.delete('company-id', 'natural-person-id');
+     * ```
+     */
+    delete(companyId: ResourceId, naturalPersonId: ResourceId): Promise<void>;
+    /**
+     * Create multiple natural people in batch
+     *
+     * @param companyId - Company ID
+     * @param data - Array of natural people data
+     * @returns Array of created natural people
+     *
+     * @example
+     * ```typescript
+     * const created = await nfe.naturalPeople.createBatch('company-id', [
+     *   { name: 'João Silva', federalTaxNumber: '11111111111', ... },
+     *   { name: 'Maria Santos', federalTaxNumber: '22222222222', ... }
+     * ]);
+     * ```
+     */
+    createBatch(companyId: ResourceId, data: Array<Partial<NaturalPerson>>): Promise<NaturalPerson[]>;
+    /**
+     * Find natural person by federal tax number (CPF)
+     *
+     * @param companyId - Company ID
+     * @param federalTaxNumber - CPF (only numbers)
+     * @returns Natural person or undefined if not found
+     *
+     * @example
+     * ```typescript
+     * const person = await nfe.naturalPeople.findByTaxNumber(
+     *   'company-id',
+     *   '12345678901'
+     * );
+     * if (person) {
+     *   console.log('Found:', person.name);
+     * }
+     * ```
+     */
+    findByTaxNumber(companyId: ResourceId, federalTaxNumber: string): Promise<NaturalPerson | undefined>;
+}
+
+/**
+ * Webhooks Resource
+ * Manages webhook subscriptions for event notifications
+ */
+
+/**
+ * Webhooks resource for managing event subscriptions
+ * All operations are scoped by company_id
+ */
+declare class WebhooksResource {
+    private readonly http;
+    constructor(http: HttpClient);
+    /**
+     * List all webhooks for a company
+     *
+     * @param companyId - Company ID
+     * @returns List of webhooks
+     *
+     * @example
+     * ```typescript
+     * const result = await nfe.webhooks.list('company-id');
+     * console.log(`You have ${result.data.length} webhooks configured`);
+     * ```
+     */
+    list(companyId: ResourceId): Promise<ListResponse<Webhook>>;
+    /**
+     * Create a new webhook subscription
+     *
+     * @param companyId - Company ID
+     * @param data - Webhook configuration
+     * @returns Created webhook
+     *
+     * @example
+     * ```typescript
+     * const webhook = await nfe.webhooks.create('company-id', {
+     *   url: 'https://seu-site.com/webhook/nfe',
+     *   events: ['invoice.issued', 'invoice.cancelled'],
+     *   secret: 'sua-chave-secreta-opcional'
+     * });
+     * ```
+     */
+    create(companyId: ResourceId, data: Partial<Webhook>): Promise<Webhook>;
+    /**
+     * Retrieve a specific webhook
+     *
+     * @param companyId - Company ID
+     * @param webhookId - Webhook ID
+     * @returns Webhook details
+     *
+     * @example
+     * ```typescript
+     * const webhook = await nfe.webhooks.retrieve('company-id', 'webhook-id');
+     * console.log('Webhook URL:', webhook.url);
+     * ```
+     */
+    retrieve(companyId: ResourceId, webhookId: ResourceId): Promise<Webhook>;
+    /**
+     * Update a webhook
+     *
+     * @param companyId - Company ID
+     * @param webhookId - Webhook ID
+     * @param data - Data to update
+     * @returns Updated webhook
+     *
+     * @example
+     * ```typescript
+     * const updated = await nfe.webhooks.update(
+     *   'company-id',
+     *   'webhook-id',
+     *   { events: ['invoice.issued', 'invoice.cancelled', 'invoice.failed'] }
+     * );
+     * ```
+     */
+    update(companyId: ResourceId, webhookId: ResourceId, data: Partial<Webhook>): Promise<Webhook>;
+    /**
+     * Delete a webhook
+     *
+     * @param companyId - Company ID
+     * @param webhookId - Webhook ID
+     *
+     * @example
+     * ```typescript
+     * await nfe.webhooks.delete('company-id', 'webhook-id');
+     * console.log('Webhook deleted');
+     * ```
+     */
+    delete(companyId: ResourceId, webhookId: ResourceId): Promise<void>;
+    /**
+     * Validate webhook signature
+     *
+     * Verifies that a webhook request came from NFE.io by validating its signature.
+     * This should be used to ensure webhook security.
+     *
+     * @param payload - Raw webhook payload (as string)
+     * @param signature - Signature from X-NFE-Signature header
+     * @param secret - Your webhook secret
+     * @returns True if signature is valid
+     *
+     * @example
+     * ```typescript
+     * // In your webhook endpoint:
+     * app.post('/webhook/nfe', async (req, res) => {
+     *   const signature = req.headers['x-nfe-signature'];
+     *   const payload = JSON.stringify(req.body);
+     *
+     *   const isValid = nfe.webhooks.validateSignature(
+     *     payload,
+     *     signature,
+     *     'sua-chave-secreta'
+     *   );
+     *
+     *   if (!isValid) {
+     *     return res.status(401).send('Invalid signature');
+     *   }
+     *
+     *   // Process webhook...
+     * });
+     * ```
+     */
+    validateSignature(payload: string, signature: string, secret: string): boolean;
+    /**
+     * Test webhook delivery
+     *
+     * Sends a test event to the webhook URL to verify it's working
+     *
+     * @param companyId - Company ID
+     * @param webhookId - Webhook ID
+     * @returns Test result
+     *
+     * @example
+     * ```typescript
+     * const result = await nfe.webhooks.test('company-id', 'webhook-id');
+     * if (result.success) {
+     *   console.log('Webhook is working!');
+     * }
+     * ```
+     */
+    test(companyId: ResourceId, webhookId: ResourceId): Promise<{
+        success: boolean;
+        message?: string;
+    }>;
+    /**
+     * Get available webhook events
+     *
+     * Returns a list of all available webhook event types
+     *
+     * @returns List of available events
+     *
+     * @example
+     * ```typescript
+     * const events = nfe.webhooks.getAvailableEvents();
+     * console.log('Available events:', events);
+     * ```
+     */
+    getAvailableEvents(): WebhookEvent[];
+}
+
+/**
+ * @fileoverview NFE.io SDK v3 - Main Client
+ *
+ * @description
+ * Core client class for interacting with the NFE.io API v1.
+ * Provides a modern TypeScript interface with zero runtime dependencies.
+ *
+ * @module @nfe-io/sdk/client
+ * @author NFE.io
+ * @license MIT
+ */
+
+/**
+ * Main NFE.io API Client
+ *
+ * @description
+ * Primary client class for interacting with the NFE.io API. Provides access to all
+ * API resources including service invoices, companies, legal/natural people, and webhooks.
+ *
+ * **Features:**
+ * - Zero runtime dependencies (uses native fetch)
+ * - Automatic retry with exponential backoff
+ * - TypeScript type safety
+ * - Async invoice processing with polling utilities
+ * - Environment detection and validation
+ *
+ * @example Basic Usage
+ * ```typescript
+ * import { NfeClient } from '@nfe-io/sdk';
+ *
+ * const nfe = new NfeClient({
+ *   apiKey: 'your-api-key',
+ *   environment: 'production' // or 'sandbox'
+ * });
+ *
+ * // Create a company
+ * const company = await nfe.companies.create({
+ *   federalTaxNumber: '12345678000190',
+ *   name: 'My Company'
+ * });
+ *
+ * // Issue a service invoice
+ * const invoice = await nfe.serviceInvoices.create(company.id, {
+ *   borrower: { /* ... *\/ },
+ *   cityServiceCode: '12345',
+ *   servicesAmount: 1000.00
+ * });
+ * ```
+ *
+ * @example With Custom Configuration
+ * ```typescript
+ * const nfe = new NfeClient({
+ *   apiKey: process.env.NFE_API_KEY,
+ *   environment: 'production',
+ *   timeout: 60000, // 60 seconds
+ *   retryConfig: {
+ *     maxRetries: 5,
+ *     baseDelay: 1000,
+ *     maxDelay: 30000
+ *   }
+ * });
+ * ```
+ *
+ * @example Async Invoice Processing
+ * ```typescript
+ * // Method 1: Manual polling
+ * const result = await nfe.serviceInvoices.create(companyId, data);
+ * if (result.status === 'pending') {
+ *   const invoice = await nfe.pollUntilComplete(
+ *     () => nfe.serviceInvoices.retrieve(companyId, result.id)
+ *   );
+ * }
+ *
+ * // Method 2: Automatic polling (recommended)
+ * const invoice = await nfe.serviceInvoices.createAndWait(companyId, data, {
+ *   maxAttempts: 30,
+ *   interval: 2000 // Check every 2 seconds
+ * });
+ * ```
+ *
+ * @see {@link NfeConfig} for configuration options
+ * @see {@link ServiceInvoicesResource} for invoice operations
+ * @see {@link CompaniesResource} for company operations
+ */
+declare class NfeClient {
+    /** @internal HTTP client for making API requests */
+    private readonly http;
+    /** @internal Normalized client configuration */
     private readonly config;
+    /**
+     * Service Invoices API resource
+     *
+     * @description
+     * Provides operations for managing service invoices (NFS-e):
+     * - Create, list, retrieve, cancel service invoices
+     * - Send invoices by email
+     * - Download PDF and XML files
+     * - Automatic polling for async invoice processing
+     *
+     * @see {@link ServiceInvoicesResource}
+     *
+     * @example
+     * ```typescript
+     * const invoice = await nfe.serviceInvoices.create(companyId, {
+     *   borrower: { name: 'Client', email: 'client@example.com' },
+     *   cityServiceCode: '12345',
+     *   servicesAmount: 1000.00
+     * });
+     * ```
+     */
     readonly serviceInvoices: ServiceInvoicesResource;
+    /**
+     * Companies API resource
+     *
+     * @description
+     * Provides operations for managing companies:
+     * - CRUD operations for companies
+     * - Upload digital certificates (PFX/P12)
+     * - Batch operations
+     *
+     * @see {@link CompaniesResource}
+     *
+     * @example
+     * ```typescript
+     * const company = await nfe.companies.create({
+     *   federalTaxNumber: '12345678000190',
+     *   name: 'My Company',
+     *   email: 'company@example.com'
+     * });
+     * ```
+     */
     readonly companies: CompaniesResource;
+    /**
+     * Legal People API resource
+     *
+     * @description
+     * Provides operations for managing legal persons (empresas/PJ):
+     * - CRUD operations scoped by company
+     * - CNPJ lookup and validation
+     * - Batch operations
+     *
+     * @see {@link LegalPeopleResource}
+     *
+     * @example
+     * ```typescript
+     * const legalPerson = await nfe.legalPeople.create(companyId, {
+     *   federalTaxNumber: '12345678000190',
+     *   name: 'Legal Person Company'
+     * });
+     * ```
+     */
+    readonly legalPeople: LegalPeopleResource;
+    /**
+     * Natural People API resource
+     *
+     * @description
+     * Provides operations for managing natural persons (pessoas físicas/PF):
+     * - CRUD operations scoped by company
+     * - CPF lookup and validation
+     * - Batch operations
+     *
+     * @see {@link NaturalPeopleResource}
+     *
+     * @example
+     * ```typescript
+     * const naturalPerson = await nfe.naturalPeople.create(companyId, {
+     *   federalTaxNumber: '12345678901',
+     *   name: 'John Doe'
+     * });
+     * ```
+     */
+    readonly naturalPeople: NaturalPeopleResource;
+    /**
+     * Webhooks API resource
+     *
+     * @description
+     * Provides operations for managing webhooks:
+     * - CRUD operations for webhook configurations
+     * - Webhook signature validation
+     * - Test webhook delivery
+     * - List available event types
+     *
+     * @see {@link WebhooksResource}
+     *
+     * @example
+     * ```typescript
+     * const webhook = await nfe.webhooks.create({
+     *   url: 'https://example.com/webhook',
+     *   events: ['invoice.issued', 'invoice.cancelled']
+     * });
+     * ```
+     */
+    readonly webhooks: WebhooksResource;
+    /**
+     * Create a new NFE.io API client
+     *
+     * @param config - Client configuration options
+     * @throws {ConfigurationError} If configuration is invalid
+     * @throws {ConfigurationError} If Node.js version < 18
+     * @throws {ConfigurationError} If fetch API is not available
+     *
+     * @example Basic
+     * ```typescript
+     * const nfe = new NfeClient({
+     *   apiKey: 'your-api-key',
+     *   environment: 'production'
+     * });
+     * ```
+     *
+     * @example With environment variable
+     * ```typescript
+     * // Set NFE_API_KEY environment variable
+     * const nfe = new NfeClient({
+     *   environment: 'production'
+     * });
+     * ```
+     *
+     * @example With custom retry config
+     * ```typescript
+     * const nfe = new NfeClient({
+     *   apiKey: 'your-api-key',
+     *   timeout: 60000,
+     *   retryConfig: {
+     *     maxRetries: 5,
+     *     baseDelay: 1000,
+     *     maxDelay: 30000
+     *   }
+     * });
+     * ```
+     */
     constructor(config: NfeConfig);
     private validateAndNormalizeConfig;
     private getDefaultBaseUrl;
@@ -473,24 +1114,108 @@ declare class NfeClient {
     private getNodeVersion;
     private extractMajorVersion;
     /**
-     * Update client configuration
+     * Update client configuration dynamically
+     *
+     * @param newConfig - Partial configuration to merge with existing config
+     * @throws {ConfigurationError} If new configuration is invalid
+     *
+     * @example
+     * ```typescript
+     * const nfe = new NfeClient({ apiKey: 'old-key' });
+     *
+     * // Switch to sandbox environment
+     * nfe.updateConfig({ environment: 'sandbox' });
+     *
+     * // Update timeout
+     * nfe.updateConfig({ timeout: 60000 });
+     * ```
      */
     updateConfig(newConfig: Partial<NfeConfig>): void;
     /**
-     * Set timeout for requests (maintains v2 compatibility)
+     * Set request timeout in milliseconds
+     *
+     * @param timeout - Request timeout in milliseconds
+     *
+     * @description
+     * Maintains v2 API compatibility. Equivalent to `updateConfig({ timeout })`.
+     *
+     * @example
+     * ```typescript
+     * nfe.setTimeout(60000); // 60 seconds
+     * ```
      */
     setTimeout(timeout: number): void;
     /**
-     * Set API key (maintains v2 compatibility)
+     * Set or update API key
+     *
+     * @param apiKey - New API key to use for authentication
+     *
+     * @description
+     * Maintains v2 API compatibility. Equivalent to `updateConfig({ apiKey })`.
+     *
+     * @example
+     * ```typescript
+     * nfe.setApiKey('new-api-key');
+     * ```
      */
     setApiKey(apiKey: string): void;
     /**
-     * Get current configuration (readonly)
+     * Get current client configuration
+     *
+     * @returns Readonly copy of current configuration
+     *
+     * @example
+     * ```typescript
+     * const config = nfe.getConfig();
+     * console.log('Environment:', config.environment);
+     * console.log('Base URL:', config.baseUrl);
+     * console.log('Timeout:', config.timeout);
+     * ```
      */
     getConfig(): Readonly<RequiredNfeConfig>;
     /**
-     * Poll a resource until completion or timeout
-     * This is critical for NFE.io's async invoice processing (202 responses)
+     * Poll a resource until it completes or times out
+     *
+     * @template T - Type of the resource being polled
+     * @param locationUrl - URL or path to poll
+     * @param options - Polling configuration
+     * @returns Promise that resolves when resource is complete
+     * @throws {PollingTimeoutError} If polling exceeds maxAttempts
+     *
+     * @description
+     * Critical utility for NFE.io's async invoice processing. When creating a service
+     * invoice, the API returns a 202 response with a location URL. This method polls
+     * that URL until the invoice is fully processed or the polling times out.
+     *
+     * @example Basic usage
+     * ```typescript
+     * const result = await nfe.serviceInvoices.create(companyId, data);
+     *
+     * if (result.status === 'pending') {
+     *   const invoice = await nfe.pollUntilComplete(result.location);
+     *   console.log('Invoice issued:', invoice.number);
+     * }
+     * ```
+     *
+     * @example With custom polling options
+     * ```typescript
+     * const invoice = await nfe.pollUntilComplete(locationUrl, {
+     *   maxAttempts: 60,  // Poll up to 60 times
+     *   intervalMs: 3000  // Wait 3 seconds between attempts
+     * });
+     * ```
+     *
+     * @example Using createAndWait (recommended)
+     * ```typescript
+     * // Instead of manual polling, use the convenience method:
+     * const invoice = await nfe.serviceInvoices.createAndWait(companyId, data, {
+     *   maxAttempts: 30,
+     *   interval: 2000
+     * });
+     * ```
+     *
+     * @see {@link PollOptions} for configuration options
+     * @see {@link ServiceInvoicesResource.createAndWait} for automated polling
      */
     pollUntilComplete<T = ServiceInvoice>(locationUrl: string, options?: PollOptions): Promise<T>;
     private extractPathFromUrl;
@@ -498,14 +1223,73 @@ declare class NfeClient {
     private isFailedResponse;
     private sleep;
     /**
-     * Check if the client is properly configured and can reach the API
+     * Check if the client is properly configured and can reach the NFE.io API
+     *
+     * @returns Health check result with status and optional error details
+     *
+     * @description
+     * Performs a simple API request to verify connectivity and authentication.
+     * Useful for debugging connection issues or validating client configuration.
+     *
+     * @example
+     * ```typescript
+     * const health = await nfe.healthCheck();
+     *
+     * if (health.status === 'ok') {
+     *   console.log('API connection successful!');
+     * } else {
+     *   console.error('API connection failed:', health.details);
+     * }
+     * ```
+     *
+     * @example In application startup
+     * ```typescript
+     * async function initializeApp() {
+     *   const nfe = new NfeClient({ apiKey: process.env.NFE_API_KEY });
+     *
+     *   const health = await nfe.healthCheck();
+     *   if (health.status !== 'ok') {
+     *     throw new Error(`NFE.io API is not reachable: ${health.details?.error}`);
+     *   }
+     *
+     *   console.log('NFE.io SDK initialized successfully');
+     * }
+     * ```
      */
     healthCheck(): Promise<{
         status: 'ok' | 'error';
         details?: any;
     }>;
     /**
-     * Get client information for debugging
+     * Get client information for debugging and diagnostics
+     *
+     * @returns Client diagnostic information
+     *
+     * @description
+     * Returns comprehensive information about the current SDK instance,
+     * useful for bug reports and troubleshooting.
+     *
+     * @example
+     * ```typescript
+     * const info = nfe.getClientInfo();
+     * console.log('SDK Version:', info.version);
+     * console.log('Node Version:', info.nodeVersion);
+     * console.log('Environment:', info.environment);
+     * console.log('Base URL:', info.baseUrl);
+     * ```
+     *
+     * @example In error reporting
+     * ```typescript
+     * try {
+     *   await nfe.serviceInvoices.create(companyId, data);
+     * } catch (error) {
+     *   const info = nfe.getClientInfo();
+     *   console.error('Error context:', {
+     *     error: error.message,
+     *     sdkInfo: info
+     *   });
+     * }
+     * ```
      */
     getClientInfo(): {
         version: string;
@@ -516,16 +1300,70 @@ declare class NfeClient {
     };
 }
 /**
- * Create NFE.io client instance (maintains v2 compatibility)
- * @param apiKey API key or full config object
- * @param version Ignored in v3 (maintained for compatibility)
+ * Create NFE.io client instance using factory function
+ *
+ * @param apiKey - API key string or full configuration object
+ * @param _version - API version (ignored in v3, maintained for v2 compatibility)
+ * @returns Configured NfeClient instance
+ *
+ * @description
+ * Factory function for creating NFE.io client instances. Maintains v2 API compatibility
+ * while providing modern TypeScript support.
+ *
+ * @example String API key
+ * ```typescript
+ * const nfe = createNfeClient('your-api-key');
+ * ```
+ *
+ * @example Configuration object
+ * ```typescript
+ * const nfe = createNfeClient({
+ *   apiKey: 'your-api-key',
+ *   environment: 'sandbox',
+ *   timeout: 60000
+ * });
+ * ```
+ *
+ * @example v2 compatibility
+ * ```typescript
+ * // v2 style (still works)
+ * const nfe = createNfeClient('your-api-key', 'v1');
+ * ```
  */
 declare function createNfeClient(apiKey: string | NfeConfig, _version?: string): NfeClient;
 /**
- * Default export factory function (maintains v2 compatibility)
+ * Default export factory function for CommonJS compatibility
+ *
+ * @param apiKey - API key string or full configuration object
+ * @param _version - API version (ignored in v3, maintained for v2 compatibility)
+ * @returns Configured NfeClient instance
+ *
+ * @description
+ * Default export maintains v2 API compatibility for CommonJS users.
+ * Equivalent to `createNfeClient()`.
+ *
+ * @example ES Modules
+ * ```typescript
+ * import nfe from '@nfe-io/sdk';
+ * const client = nfe('your-api-key');
+ * ```
+ *
+ * @example CommonJS
+ * ```javascript
+ * const nfe = require('@nfe-io/sdk').default;
+ * const client = nfe('your-api-key');
+ * ```
  */
 declare function nfe(apiKey: string | NfeConfig, _version?: string): NfeClient;
+/**
+ * Current SDK version
+ * @constant
+ */
 declare const VERSION = "3.0.0-beta.1";
+/**
+ * Supported Node.js version range (semver format)
+ * @constant
+ */
 declare const SUPPORTED_NODE_VERSIONS = ">=18.0.0";
 
 /**
@@ -646,47 +1484,203 @@ declare const ErrorTypes: {
 type ErrorType = keyof typeof ErrorTypes;
 
 /**
- * NFE.io SDK v3 - Main Entry Point
+ * @fileoverview NFE.io SDK v3 - Official Node.js SDK for NFE.io API
  *
- * Modern TypeScript SDK for NFE.io API with zero runtime dependencies
- * Compatible with Node.js 18+ and any JavaScript runtime
+ * @description
+ * Modern TypeScript SDK for NFE.io API with zero runtime dependencies.
+ * Compatible with Node.js 18+ and modern JavaScript runtimes.
+ *
+ * @example Basic Usage
+ * ```typescript
+ * import { NfeClient } from '@nfe-io/sdk';
+ *
+ * const nfe = new NfeClient({
+ *   apiKey: 'your-api-key',
+ *   environment: 'production' // or 'sandbox'
+ * });
+ *
+ * // Create a service invoice
+ * const invoice = await nfe.serviceInvoices.create('company-id', {
+ *   borrower: { /* ... *\/ },
+ *   cityServiceCode: '12345',
+ *   servicesAmount: 1000.00
+ * });
+ * ```
+ *
+ * @example With Polling
+ * ```typescript
+ * // Automatically poll until invoice is processed
+ * const invoice = await nfe.serviceInvoices.createAndWait('company-id', data, {
+ *   maxAttempts: 30,
+ *   interval: 2000
+ * });
+ * ```
+ *
+ * @module @nfe-io/sdk
+ * @version 3.0.0-beta.1
+ * @author NFE.io
+ * @license MIT
+ */
+/**
+ * Core client exports
+ *
+ * @see {@link NfeClient} - Main client class for NFE.io API
+ * @see {@link createNfeClient} - Factory function for creating client instances
  */
 
+/**
+ * NPM package name
+ * @constant
+ */
 declare const PACKAGE_NAME = "@nfe-io/sdk";
+/**
+ * Current SDK version
+ * @constant
+ */
 declare const PACKAGE_VERSION = "3.0.0-beta.1";
+/**
+ * NFE.io API version supported by this SDK
+ * @constant
+ */
 declare const API_VERSION = "v1";
+/**
+ * GitHub repository URL
+ * @constant
+ */
 declare const REPOSITORY_URL = "https://github.com/nfe/client-nodejs";
+/**
+ * Official NFE.io API documentation URL
+ * @constant
+ */
 declare const DOCUMENTATION_URL = "https://nfe.io/docs";
 /**
- * Check if the current environment supports NFE.io SDK v3
+ * Check if the current environment supports NFE.io SDK v3 requirements
+ *
+ * @description
+ * Validates that the runtime environment has all necessary features:
+ * - Node.js 18+ (for native fetch support)
+ * - Fetch API availability
+ * - AbortController availability
+ *
+ * @returns Object containing support status and detected issues
+ *
+ * @example
+ * ```typescript
+ * const check = isEnvironmentSupported();
+ * if (!check.supported) {
+ *   console.error('Environment issues:', check.issues);
+ *   console.error('Node version:', check.nodeVersion);
+ * }
+ * ```
  */
 declare function isEnvironmentSupported(): {
+    /** Whether all requirements are met */
     supported: boolean;
+    /** Detected Node.js version (e.g., "v18.17.0") */
     nodeVersion?: string;
+    /** Whether Fetch API is available */
     hasFetch: boolean;
+    /** Whether AbortController is available */
     hasAbortController: boolean;
+    /** List of detected compatibility issues */
     issues: string[];
 };
 /**
- * Get SDK runtime information
+ * Get comprehensive SDK runtime information
+ *
+ * @description
+ * Returns detailed information about the current runtime environment,
+ * useful for debugging and support.
+ *
+ * @returns Object containing SDK and runtime environment information
+ *
+ * @example
+ * ```typescript
+ * const info = getRuntimeInfo();
+ * console.log('SDK Version:', info.sdkVersion);
+ * console.log('Node Version:', info.nodeVersion);
+ * console.log('Platform:', info.platform);
+ * console.log('Environment:', info.environment);
+ * ```
  */
 declare function getRuntimeInfo(): {
+    /** Current SDK version */
     sdkVersion: string;
+    /** Node.js version (e.g., "v18.17.0") */
     nodeVersion: string;
+    /** Operating system platform (e.g., "linux", "darwin", "win32") */
     platform: string;
+    /** CPU architecture (e.g., "x64", "arm64") */
     arch: string;
+    /** Runtime environment type */
     environment: 'node' | 'browser' | 'unknown';
 };
 /**
- * Quick start: Create client from environment variable
- * Reads NFE_API_KEY from environment variables
+ * Create NFE.io client from environment variable
+ *
+ * @description
+ * Convenience function that reads API key from NFE_API_KEY environment variable.
+ * Useful for serverless functions and quick prototyping.
+ *
+ * @param environment - Target environment ('production' or 'sandbox')
+ * @returns Configured NfeClient instance
+ * @throws {ConfigurationError} If NFE_API_KEY environment variable is not set
+ *
+ * @example
+ * ```typescript
+ * // Set environment variable: NFE_API_KEY=your-api-key
+ * const nfe = createClientFromEnv('production');
+ *
+ * // Use the client normally
+ * const companies = await nfe.companies.list();
+ * ```
+ *
+ * @example Docker/Kubernetes
+ * ```yaml
+ * env:
+ *   - name: NFE_API_KEY
+ *     valueFrom:
+ *       secretKeyRef:
+ *         name: nfe-credentials
+ *         key: api-key
+ * ```
  */
 declare function createClientFromEnv(environment?: 'production' | 'sandbox'): any;
 /**
- * Quick start: Validate API key format
+ * Validate NFE.io API key format
+ *
+ * @description
+ * Performs basic validation on API key format before attempting to use it.
+ * Helps catch common mistakes like missing keys or keys with whitespace.
+ *
+ * @param apiKey - The API key to validate
+ * @returns Validation result with any detected issues
+ *
+ * @example
+ * ```typescript
+ * const result = validateApiKeyFormat('my-api-key');
+ * if (!result.valid) {
+ *   console.error('API key issues:', result.issues);
+ *   // ["API key appears to be too short"]
+ * }
+ * ```
+ *
+ * @example Integration with client
+ * ```typescript
+ * const apiKey = process.env.NFE_API_KEY;
+ * const validation = validateApiKeyFormat(apiKey);
+ *
+ * if (!validation.valid) {
+ *   throw new Error(`Invalid API key: ${validation.issues.join(', ')}`);
+ * }
+ *
+ * const nfe = new NfeClient({ apiKey });
+ * ```
  */
 declare function validateApiKeyFormat(apiKey: string): {
+    /** Whether the API key passes basic validation */
     valid: boolean;
+    /** List of validation issues found */
     issues: string[];
 };
 
