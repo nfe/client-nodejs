@@ -32,7 +32,8 @@
   "files": [
     "dist",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "MIGRATION.md"
   ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
