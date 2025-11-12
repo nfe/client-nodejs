@@ -1,0 +1,1127 @@
+swagger: "2.0"
+info:
+  version: v2
+  title: Legal Entities API
+  description: <h3>Como utilizar esta documentação ?</h3><p>Certifique-se que sua chave da API está preenchida no topo desta página para este recurso funcionar da maneira correta. Abaixo você poderá conferir a lista de recursos que podem ser manipulados através da API. Clicando em cada um dos métodos, você poderá verificar a lista de parâmetros, possíveis retornos e também um formulário. Este formulário pode ser utilizado para efetuar requisições reais na API.</p>
+host: legalentity.api.nfe.io
+paths:
+  /v2/legalentities/basicInfo/{federalTaxNumber}:
+    get:
+      tags:
+        - LegalEntities
+      summary: Consulta de dados do CNPJ
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2LegalentitiesBasicInfoByFederalTaxNumberGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: federalTaxNumber
+          in: path
+          description: CNPJ
+          required: true
+          type: integer
+          format: int64
+        - name: updateAddress
+          in: query
+          description: 'Define se deseja ou não atualizar o endereço do cartão CNPJ com base nos correios (Default: true)'
+          required: false
+          type: boolean
+        - name: updateCityCode
+          in: query
+          description: 'Quando updateAddress=false, define se deseja ou não atualizar somente o código da cidade utilizando o código postal com base nos correios (Default: false)'
+          required: false
+          type: boolean
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.LegalPersonResourceV2'
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Empresa não encontrada para o CNPJ informado
+          schema:
+            type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+      security:
+        - Authorization_Header:
+            - CheckClaimOrRole
+        - Authorization_QueryParam:
+            - CheckClaimOrRole
+  /v2/legalentities/stateTaxInfo/{state}/{federalTaxNumber}:
+    get:
+      tags:
+        - LegalEntities
+      summary: Consulta de Inscrição Estadual por CNPJ
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2LegalentitiesStateTaxInfoByStateByFederalTaxNumberGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: state
+          in: path
+          description: Código do IBGE do Estado que deseja consultar
+          required: true
+          type: string
+          enum:
+            - AC
+            - AL
+            - AM
+            - AP
+            - BA
+            - CE
+            - DF
+            - ES
+            - GO
+            - MA
+            - MG
+            - MS
+            - MT
+            - PA
+            - PB
+            - PE
+            - PI
+            - PR
+            - RJ
+            - RN
+            - RO
+            - RR
+            - RS
+            - SC
+            - SE
+            - SP
+            - TO
+            - EX
+            - NA
+        - name: federalTaxNumber
+          in: path
+          description: Número do documento que deseja consultar
+          required: true
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.StateTaxResourceV2'
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+        "403":
+          description: Accesso proibido
+      security:
+        - Authorization_Header:
+            - CheckClaimOrRole
+        - Authorization_QueryParam:
+            - CheckClaimOrRole
+  /v2/legalentities/stateTaxForInvoice/{state}/{federalTaxNumber}:
+    get:
+      tags:
+        - LegalEntities
+      summary: Consulta de Inscrição Estadual por CNPJ para avalição de Emissão de Nota Fiscal de Produto
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2LegalentitiesStateTaxForInvoiceByStateByFederalTaxNumberGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: state
+          in: path
+          description: Código do IBGE do Estado que deseja consultar
+          required: true
+          type: string
+          enum:
+            - AC
+            - AL
+            - AM
+            - AP
+            - BA
+            - CE
+            - DF
+            - ES
+            - GO
+            - MA
+            - MG
+            - MS
+            - MT
+            - PA
+            - PB
+            - PE
+            - PI
+            - PR
+            - RJ
+            - RN
+            - RO
+            - RR
+            - RS
+            - SC
+            - SE
+            - SP
+            - TO
+            - EX
+            - NA
+        - name: federalTaxNumber
+          in: path
+          description: Número do documento que deseja consultar
+          required: true
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.StateTaxToIssueInvoiceCompleteResource'
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+        "403":
+          description: Accesso proibido
+      security:
+        - Authorization_Header:
+            - CheckClaimOrRole
+        - Authorization_QueryParam:
+            - CheckClaimOrRole
+  /v2/legalentities/stateTaxSuggestedForInvoice/{state}/{federalTaxNumber}:
+    get:
+      tags:
+        - LegalEntities
+      summary: "Consulta de Inscrição Estadual por CNPJ para avalição de Emissão de Nota Fiscal de Produto\r\nCaso existir mais de uma HABILITADA, será retornado a melhor inscrição estadual para emitir nota em critério de avaliação da NFE.io"
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2LegalentitiesStateTaxSuggestedForInvoiceByStateByFederalTaxNumberGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: state
+          in: path
+          description: Código do IBGE do Estado que deseja consultar
+          required: true
+          type: string
+          enum:
+            - AC
+            - AL
+            - AM
+            - AP
+            - BA
+            - CE
+            - DF
+            - ES
+            - GO
+            - MA
+            - MG
+            - MS
+            - MT
+            - PA
+            - PB
+            - PE
+            - PI
+            - PR
+            - RJ
+            - RN
+            - RO
+            - RR
+            - RS
+            - SC
+            - SE
+            - SP
+            - TO
+            - EX
+            - NA
+        - name: federalTaxNumber
+          in: path
+          description: Número do documento que deseja consultar
+          required: true
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.StateTaxToIssueInvoiceCompleteResource'
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+        "403":
+          description: Accesso proibido
+      security:
+        - Authorization_Header:
+            - CheckClaimOrRole
+        - Authorization_QueryParam:
+            - CheckClaimOrRole
+definitions:
+  DataTech.Api.Resources.LegalEntities.TaxRegimeResource:
+    type: object
+    properties:
+      createdOn:
+        format: date-time
+        description: 'Data de Consulta do usuário - Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.'
+        type: string
+      optedInOn:
+        format: date-time
+        description: 'Data de opção pelo atual Regime Tributário - Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.'
+        type: string
+      taxRegime:
+        description: Regime Tributário Atual
+        type: string
+      name:
+        description: Razão social
+        type: string
+      federalTaxNumber:
+        description: Número da inscrição na Receita Federal (CNPJ)
+        type: string
+      previousDetails:
+        description: Lista de Períodos Anteriores
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.SimplesNacionalScrapOutItem+History'
+  DataTech.Services.Domain.Models.SimplesNacionalScrapOutItem+History:
+    type: object
+    properties:
+      taxRegime:
+        description: Regime Tributário
+        type: string
+      beginOn:
+        format: date-time
+        description: 'Data Inicial - Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.'
+        type: string
+      endOn:
+        format: date-time
+        description: 'Data Final - Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.'
+        type: string
+      description:
+        description: Detalhamento
+        type: string
+  DataTech.Api.Resources.LegalEntities.LegalPersonResource:
+    type: object
+    properties:
+      tradeName:
+        description: Nome fantasia
+        type: string
+      name:
+        description: Razão social
+        type: string
+      federalTaxNumber:
+        description: Número da inscrição na Receita Federal (CNPJ)
+        type: string
+      size:
+        description: Porte
+        type: string
+      openedOn:
+        format: date-time
+        description: Data da abertura
+        type: string
+      address:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Address'
+        description: Endereço
+      phones:
+        description: Número de telefone
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Phone'
+      statusOn:
+        format: date-time
+        description: Data da situação cadastral
+        type: string
+      status:
+        description: Situação cadastral
+        type: string
+      email:
+        description: Correio eletrônico
+        type: string
+      responsableEntity:
+        description: Ente Federativo Responsável (EFR)
+        type: string
+      specialStatus:
+        description: Situação Especial
+        type: string
+      specialStatusOn:
+        format: date-time
+        description: Data da Situação Especial
+        type: string
+      issuedOn:
+        format: date-time
+        description: Data de Consulta do usuário
+        type: string
+      statusReason:
+        description: Motivo da Situação Cadastral
+        type: string
+      shareCapital:
+        format: double
+        description: Capital sócial (em reais)
+        type: number
+      economicActivities:
+        description: Objeto com Código e descrição das atividades econômicas principal e secundárias
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Activity'
+      legalNature:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Item'
+        description: Objeto com Código e descrição da Natureza Legal
+      partners:
+        description: Objeto com nome e qualificação dos sócios e administradores
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Partner'
+      registrationUnit:
+        description: Objeto com a cidade/unidade registradora do certificado de baixa
+        type: string
+      unit:
+        description: Objeto que define se é matriz, filial ou sucursal
+        enum:
+          - Headoffice
+          - Subsidiary
+        type: string
+  DataTech.Services.Domain.Models.Address:
+    type: object
+    properties:
+      state:
+        description: Estado (UF)
+        type: string
+      city:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.CityBase'
+        description: Cidade
+      district:
+        description: Bairro (xBairro)
+        type: string
+      additionalInformation:
+        description: Complemento (xCpl)
+        type: string
+      streetSuffix:
+        description: Tipo do Logradouro
+        type: string
+      street:
+        description: Logradouro do Endereco (xLgr)
+        type: string
+      number:
+        description: Número (nro)
+        type: string
+      postalCode:
+        description: Código Endereço Postal (CEP)
+        type: string
+      country:
+        description: País
+        type: string
+  DataTech.Services.Domain.Models.Phone:
+    type: object
+    properties:
+      ddd:
+        description: Prefixo
+        type: string
+      number:
+        description: Número do telefone
+        type: string
+      source:
+        description: Origem da Informação
+        enum:
+          - RFB
+        type: string
+  DataTech.Services.Domain.Models.Activity:
+    type: object
+    properties:
+      isMain:
+        description: Verificador se é atividade principal ou secundária
+        type: boolean
+      code:
+        description: Código da Atividade Econômica
+        type: string
+      description:
+        description: Descrição da Atividade Econômica
+        type: string
+  DataTech.Services.Domain.Models.Item:
+    type: object
+    properties:
+      code:
+        description: Código da Atividade Econômica
+        type: string
+      description:
+        description: Descrição da Atividade Econômica
+        type: string
+  DataTech.Services.Domain.Models.Partner:
+    type: object
+    properties:
+      name:
+        description: Nome/Nome Empresarial
+        type: string
+      qualification:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Qualification'
+        description: Qualificação do Quadro de Sócios e Administradores
+  DataTech.Services.Domain.Models.CityBase:
+    type: object
+    properties:
+      code:
+        description: Código do município (cMun)
+        type: string
+      name:
+        description: Nome do município (xMun)
+        type: string
+  DataTech.Services.Domain.Models.Qualification:
+    type: object
+    properties:
+      code:
+        description: Código Qualificação do Quadro de Sócios e Administradores
+        type: string
+      description:
+        description: Descrição da Qualificação do Quadro de Sócios e Administradores
+        type: string
+  DataTech.Api.Resources.LegalEntities.StateTaxInfoResource:
+    type: object
+    properties:
+      createdOn:
+        format: date-time
+        description: Data de Consulta
+        type: string
+      name:
+        description: Razão social
+        type: string
+      tradeName:
+        description: Nome Fantasia
+        type: string
+      federalTaxNumber:
+        description: Número da inscrição na Receita Federal (CNPJ)
+        type: string
+      taxPayer:
+        description: Lista de Contribuites(Inscrição Estadual)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.TaxPayerResource'
+  DataTech.Api.Resources.LegalEntities.TaxPayerResource:
+    type: object
+    properties:
+      stateTaxNumber:
+        description: Inscrição Estadual (IE)
+        type: string
+      state:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.StateBase'
+        description: Estado (IE)
+      typeStateTax:
+        description: Tipo Inscrição Estadual (IE)
+        type: string
+      statusOnStateTax:
+        format: date-time
+        description: Data da situação na UF
+        type: string
+      statusStateTax:
+        description: Situação IE
+        type: string
+      statusFederalTax:
+        description: Situação CNPJ
+        type: string
+      openedOn:
+        format: date-time
+        description: Data da abertura
+        type: string
+      closedOn:
+        format: date-time
+        description: Data fim atividade
+        type: string
+      cnae:
+        format: int64
+        description: CNAE fiscal (CNAE)
+        type: integer
+  DataTech.Services.Domain.Models.StateBase:
+    type: object
+    properties:
+      code:
+        type: string
+      abbreviation:
+        type: string
+      name:
+        type: string
+  DataTech.Api.Resources.LegalEntities.LegalPersonResourceV2:
+    type: object
+    properties:
+      legalEntity:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.LegalPersonResourceV2Item'
+        description: Pessoa jurídica
+  DataTech.Api.Resources.LegalEntities.LegalPersonResourceV2Item:
+    type: object
+    properties:
+      tradeName:
+        description: Nome fantasia
+        type: string
+      name:
+        description: Razão social
+        type: string
+      federalTaxNumber:
+        format: int64
+        description: Número da inscrição na Receita Federal (CNPJ)
+        type: integer
+      size:
+        description: Porte
+        enum:
+          - Unknown
+          - ME
+          - EPP
+          - DEMAIS
+        type: string
+      openedOn:
+        format: date-time
+        description: Data da abertura
+        type: string
+      address:
+        $ref: '#/definitions/DataTech.Api.Resources.AddressResourceItem'
+        description: Endereço
+      phones:
+        description: Número de telefone
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.PhoneResource'
+      statusOn:
+        format: date-time
+        description: Data da situação cadastral
+        type: string
+      status:
+        description: Situação cadastral
+        enum:
+          - Unknown
+          - Active
+          - Suspended
+          - Cancelled
+          - Unabled
+          - "Null"
+        type: string
+      email:
+        description: Correio eletrônico
+        type: string
+      responsableEntity:
+        description: Ente Federativo Responsável (EFR)
+        type: string
+      specialStatus:
+        description: Situação Especial
+        type: string
+      specialStatusOn:
+        format: date-time
+        description: Data da Situação Especial
+        type: string
+      issuedOn:
+        format: date-time
+        description: Data de Consulta do usuário
+        type: string
+      statusReason:
+        description: Motivo da Situação Cadastral
+        type: string
+      shareCapital:
+        format: double
+        description: Capital sócial (em reais)
+        type: number
+      economicActivities:
+        description: Objeto com Código e descrição das atividades econômicas principal e secundárias
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.EconomicActivityResource'
+      legalNature:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.LegalEntityNatureResource'
+        description: Objeto com Código e descrição da Natureza Legal
+      partners:
+        description: Objeto com nome e qualificação dos sócios e administradores
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.PartnerResource'
+      registrationUnit:
+        description: Objeto com a cidade/unidade registradora do certificado de baixa
+        type: string
+      unit:
+        description: Objeto que define se é matriz, filial ou sucursal
+        enum:
+          - Headoffice
+          - Subsidiary
+        type: string
+  DataTech.Api.Resources.AddressResourceItem:
+    description: Endereço
+    type: object
+    properties:
+      state:
+        description: Estado
+        type: string
+      city:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.CityBase'
+        description: Cidade
+      district:
+        description: Bairro
+        type: string
+      additionalInformation:
+        description: Informações adicionais
+        type: string
+      streetSuffix:
+        description: Sufixo da rua
+        type: string
+      street:
+        description: Nome da rua
+        type: string
+      number:
+        description: Número
+        type: string
+      numberMin:
+        type: string
+      numberMax:
+        type: string
+      postalCode:
+        description: CEP
+        type: string
+      country:
+        description: País
+        type: string
+  DataTech.Api.Resources.LegalEntities.PhoneResource:
+    type: object
+    properties:
+      ddd:
+        description: Prefixo
+        type: string
+      number:
+        description: Número do telefone
+        type: string
+      source:
+        description: Origem da Informação
+        enum:
+          - RFB
+        type: string
+  DataTech.Api.Resources.LegalEntities.EconomicActivityResource:
+    description: Objeto com Código e descrição das atividades econômicas principal e secundárias
+    type: object
+    properties:
+      type:
+        description: Classificação da atividade
+        enum:
+          - Main
+          - Secondary
+        type: string
+      code:
+        format: int32
+        description: Código da atividade  (CNAE)
+        type: integer
+      description:
+        description: Descrição da atividade  (CNAE)
+        type: string
+  DataTech.Api.Resources.LegalEntities.LegalEntityNatureResource:
+    type: object
+    properties:
+      code:
+        description: Código da Natureza Legal
+        type: string
+      description:
+        description: Descrição da Natureza Legal
+        type: string
+  DataTech.Api.Resources.LegalEntities.PartnerResource:
+    type: object
+    properties:
+      name:
+        description: Nome/Nome Empresarial
+        type: string
+      qualification:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.QualificationResource'
+        description: Qualificação do Quadro de Sócios e Administradores
+  DataTech.Api.Resources.LegalEntities.QualificationResource:
+    type: object
+    properties:
+      code:
+        description: Código Qualificação do Quadro de Sócios e Administradores
+        type: string
+      description:
+        description: Descrição da Qualificação do Quadro de Sócios e Administradores
+        type: string
+  DataTech.Api.Resources.LegalEntities.StateTaxResourceV2:
+    type: object
+    properties:
+      legalEntity:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.StateTaxResourceItemV2'
+  DataTech.Api.Resources.LegalEntities.StateTaxResourceItemV2:
+    type: object
+    properties:
+      tradeName:
+        description: Nome fantasia
+        type: string
+      name:
+        description: Razão social
+        type: string
+      federalTaxNumber:
+        format: int64
+        description: Número da inscrição na Receita Federal (CNPJ)
+        type: integer
+      createdOn:
+        format: date-time
+        description: Data de Consulta do usuário
+        type: string
+      taxRegime:
+        description: "Código de Regime Tributário (CRT)\r\n<remarks>\r\n    0 - Desconhecido (Necessário mapear)\r\n    1 - Simples Nacional\r\n    2 - MEI\r\n    3 - Regime Normal - Lucro Presumido ou Lucro Real (Normal_Regime)\r\n</remarks>"
+        enum:
+          - Unknown
+          - SimplesNacional
+          - MEI
+          - Normal
+        type: string
+      legalNature:
+        description: Código da Natureza Jurídica
+        enum:
+          - EmpresaPublica
+          - SociedadeEconomiaMista
+          - SociedadeAnonimaAberta
+          - SociedadeAnonimaFechada
+          - SociedadeEmpresariaLimitada
+          - SociedadeEmpresariaEmNomeColetivo
+          - SociedadeEmpresariaEmComanditaSimples
+          - SociedadeEmpresariaEmComanditaporAcoes
+          - SociedadeemContaParticipacao
+          - Empresario
+          - Cooperativa
+          - ConsorcioSociedades
+          - GrupoSociedades
+          - EmpresaDomiciliadaExterior
+          - ClubeFundoInvestimento
+          - SociedadeSimplesPura
+          - SociedadeSimplesLimitada
+          - SociedadeSimplesEmNomeColetivo
+          - SociedadeSimplesEmComanditaSimples
+          - EmpresaBinacional
+          - ConsorcioEmpregadores
+          - ConsorcioSimples
+          - EireliNaturezaEmpresaria
+          - EireliNaturezaSimples
+          - ServicoNotarial
+          - FundacaoPrivada
+          - ServicoSocialAutonomo
+          - CondominioEdilicio
+          - ComissaoConciliacaoPrevia
+          - EntidadeMediacaoArbitragem
+          - PartidoPolitico
+          - EntidadeSindical
+          - EstabelecimentoBrasilFundacaoAssociacaoEstrangeiras
+          - FundacaoAssociacaoDomiciliadaExterior
+          - OrganizacaoReligiosa
+          - ComunidadeIndigena
+          - FundoPrivado
+          - AssociacaoPrivada
+          - OutrasSemFimLucrativo
+          - Unknown
+        type: string
+      fiscalUnit:
+        description: Unidade de fiscalização
+        type: string
+      createdUnit:
+        description: Unidade de cadastro
+        type: string
+      checkCode:
+        description: Código de verificação
+        type: string
+      stateTaxes:
+        description: Inscrições estaduais
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.StateTaxResource'
+  DataTech.Api.Resources.LegalEntities.StateTaxResource:
+    description: Inscrições estaduais
+    type: object
+    properties:
+      status:
+        description: Situação cadastral
+        enum:
+          - Abled
+          - Unabled
+          - Cancelled
+          - Unknown
+        type: string
+      taxNumber:
+        description: Inscrição Estadual (IE)
+        type: string
+      statusOn:
+        format: date-time
+        description: Data da situação cadastral
+        type: string
+      openedOn:
+        format: date-time
+        description: Data da abertura
+        type: string
+      closedOn:
+        format: date-time
+        description: Data fim atividade
+        type: string
+      additionalInformation:
+        description: Informações adicionais
+        type: string
+      code:
+        description: Estado
+        enum:
+          - AC
+          - AL
+          - AM
+          - AP
+          - BA
+          - CE
+          - DF
+          - ES
+          - GO
+          - MA
+          - MG
+          - MS
+          - MT
+          - PA
+          - PB
+          - PE
+          - PI
+          - PR
+          - RJ
+          - RN
+          - RO
+          - RR
+          - RS
+          - SC
+          - SE
+          - SP
+          - TO
+          - EX
+          - NA
+        type: string
+      address:
+        $ref: '#/definitions/DataTech.Api.Resources.AddressResourceItem'
+        description: Endereço
+      economicActivities:
+        description: Objeto com Código e descrição das atividades econômicas principal e secundárias (CNAE)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.EconomicActivityResource'
+      nfe:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.FiscalDocumentDescriptionResource'
+        description: Indicador de Nota Fiscal de Eletrônica (NFE)
+      nfse:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.FiscalDocumentDescriptionResource'
+        description: Indicador de Nota Fiscal de Serviço Eletrônica (NFSE)
+      cte:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.FiscalDocumentDescriptionResource'
+        description: Indicador de Conhecimento de Transporte Eletrônico (CTE)
+      nfce:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.FiscalDocumentDescriptionResource'
+        description: Indicador de Nota Fiscal de Consumidor Eletrônica (NFCE)
+  DataTech.Api.Resources.LegalEntities.FiscalDocumentDescriptionResource:
+    description: Informações do contribuinte
+    type: object
+    properties:
+      status:
+        description: "Status da Situação do Contribuinte\r\n    <para>Abled</para><para>Unabled</para><para>Unknown</para>"
+        enum:
+          - Abled
+          - Unabled
+          - Unknown
+        type: string
+      description:
+        description: Descrição da fonte de dados
+        type: string
+  DataTech.Api.Resources.LegalEntities.StateTaxToIssueInvoiceCompleteResource:
+    type: object
+    properties:
+      legalEntity:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.StateTaxToIssueInvoiceItemResource'
+  DataTech.Api.Resources.LegalEntities.StateTaxToIssueInvoiceItemResource:
+    type: object
+    properties:
+      tradeName:
+        description: Nome fantasia
+        type: string
+      name:
+        description: Razão social
+        type: string
+      federalTaxNumber:
+        format: int64
+        description: Número da inscrição na Receita Federal (CNPJ)
+        type: integer
+      createdOn:
+        format: date-time
+        description: Data de Consulta do usuário
+        type: string
+      taxRegime:
+        description: "Código de Regime Tributário (CRT)\r\n<remarks>\r\n    0 - Desconhecido (Necessário mapear)\r\n    1 - Simples Nacional\r\n    2 - MEI\r\n    3 - Regime Normal - Lucro Presumido ou Lucro Real (Normal_Regime)\r\n</remarks>"
+        enum:
+          - Unknown
+          - SimplesNacional
+          - MEI
+          - Normal
+        type: string
+      legalNature:
+        description: Código da Natureza Jurídica
+        enum:
+          - EmpresaPublica
+          - SociedadeEconomiaMista
+          - SociedadeAnonimaAberta
+          - SociedadeAnonimaFechada
+          - SociedadeEmpresariaLimitada
+          - SociedadeEmpresariaEmNomeColetivo
+          - SociedadeEmpresariaEmComanditaSimples
+          - SociedadeEmpresariaEmComanditaporAcoes
+          - SociedadeemContaParticipacao
+          - Empresario
+          - Cooperativa
+          - ConsorcioSociedades
+          - GrupoSociedades
+          - EmpresaDomiciliadaExterior
+          - ClubeFundoInvestimento
+          - SociedadeSimplesPura
+          - SociedadeSimplesLimitada
+          - SociedadeSimplesEmNomeColetivo
+          - SociedadeSimplesEmComanditaSimples
+          - EmpresaBinacional
+          - ConsorcioEmpregadores
+          - ConsorcioSimples
+          - EireliNaturezaEmpresaria
+          - EireliNaturezaSimples
+          - ServicoNotarial
+          - FundacaoPrivada
+          - ServicoSocialAutonomo
+          - CondominioEdilicio
+          - ComissaoConciliacaoPrevia
+          - EntidadeMediacaoArbitragem
+          - PartidoPolitico
+          - EntidadeSindical
+          - EstabelecimentoBrasilFundacaoAssociacaoEstrangeiras
+          - FundacaoAssociacaoDomiciliadaExterior
+          - OrganizacaoReligiosa
+          - ComunidadeIndigena
+          - FundoPrivado
+          - AssociacaoPrivada
+          - OutrasSemFimLucrativo
+          - Unknown
+        type: string
+      fiscalUnit:
+        description: Unidade de fiscalização
+        type: string
+      createdUnit:
+        description: Unidade de cadastro
+        type: string
+      checkCode:
+        description: Código de verificação
+        type: string
+      stateTaxes:
+        description: Inscrições estaduais
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.StateTaxToIssueInvoiceResource'
+  DataTech.Api.Resources.LegalEntities.StateTaxToIssueInvoiceResource:
+    description: Inscrições estaduais
+    type: object
+    properties:
+      status:
+        description: Situação cadastral
+        enum:
+          - Abled
+          - Unabled
+          - Cancelled
+          - UnabledTemp
+          - UnabledNotConfirmed
+          - Unknown
+          - UnknownTemp
+          - UnknownNotConfirmed
+        type: string
+      taxNumber:
+        description: Inscrição Estadual (IE)
+        type: string
+      statusOn:
+        format: date-time
+        description: Data da situação cadastral
+        type: string
+      openedOn:
+        format: date-time
+        description: Data da abertura
+        type: string
+      closedOn:
+        format: date-time
+        description: Data fim atividade
+        type: string
+      additionalInformation:
+        description: Informações adicionais
+        type: string
+      code:
+        description: Estado
+        enum:
+          - AC
+          - AL
+          - AM
+          - AP
+          - BA
+          - CE
+          - DF
+          - ES
+          - GO
+          - MA
+          - MG
+          - MS
+          - MT
+          - PA
+          - PB
+          - PE
+          - PI
+          - PR
+          - RJ
+          - RN
+          - RO
+          - RR
+          - RS
+          - SC
+          - SE
+          - SP
+          - TO
+          - EX
+          - NA
+        type: string
+      address:
+        $ref: '#/definitions/DataTech.Api.Resources.AddressResourceItem'
+        description: Endereço
+      economicActivities:
+        description: Objeto com Código e descrição das atividades econômicas principal e secundárias (CNAE)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.EconomicActivityResource'
+      nfe:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.FiscalDocumentDescriptionResource'
+        description: Indicador de Nota Fiscal de Eletrônica (NFE)
+      nfse:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.FiscalDocumentDescriptionResource'
+        description: Indicador de Nota Fiscal de Serviço Eletrônica (NFSE)
+      cte:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.FiscalDocumentDescriptionResource'
+        description: Indicador de Conhecimento de Transporte Eletrônico (CTE)
+      nfce:
+        $ref: '#/definitions/DataTech.Api.Resources.LegalEntities.FiscalDocumentDescriptionResource'
+        description: Indicador de Nota Fiscal de Consumidor Eletrônica (NFCE)
+securityDefinitions:
+  Authorization_Header:
+    name: Authorization
+    in: header
+    type: apiKey
+    description: 'Autenticar usando o Cabeçalho HTTP, exemplo: "X-NFE-ApiKey {APIKEY_TOKEN}"'
+  Authorization_QueryParam:
+    name: apikey
+    in: query
+    type: apiKey
+    description: 'Autenticar usando o Parametro na URL, exemplo: "/?apikey={APIKEY_TOKEN}"'
+security:
+  - Authorization_Header: []
+    Authorization_QueryParam: []

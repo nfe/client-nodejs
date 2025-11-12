@@ -1,0 +1,577 @@
+openapi: 3.0.1
+servers:
+  - url: https://api.nfse.io
+info:
+  title: Consulta de CT-e (Distribuição)
+  version: v2
+  description: "# Introducão\nSeja bem-vindo a documentação da API de Consulta de CT-e (Distribuição)!\nNossa API foi criada utilizando o padrão REST que possibilita a integração de seu sistema ao nosso, sendo assim você também pode extender ou recriar as funcionalidades existentes na nossa plataforma, tudo isso consumindo a API que está documentada abaixo.\n\nEsta API tem como objetivo manipular o produto de consulta de CT-e. O processo tem como pré-requisitos o cadastro de uma empresa, na sequência o cadastro de um certificado A1 válido desta empresa, e o cadastro de um endpoint de webhook para você receber as notificações. Para mais detalhes de como cadastrar empresa, certificado e webhook, você pode ver nossa documentação da nota fiscal de produto, ou fazer o procedimento via dashboard da nfe.io. \n\nCom os pré-requisitos atendidos, o próximo passo é habilitar a busca automática e observar os webhooks chegando em seu endpoint cadastrado.\n\n\n# Como usar a API?\nLogo a seguir você encontrará todos os recursos e metódos suportados pela API, sendo que essa página possibilita que você teste os recursos e métodos diretamente através dela.\n\n# Autenticação\nVocê precisa de uma chave de API (API Key) para identificar a conta que está realizando solicitações para a API. \nPara isso você deve colocar sua chave de API no campo que se encontra no topo desta página para que os métodos funcionem corretamente.\nNo seu código de integração temos suporte para autenticação de diversas formas sendo eles: \nHTTP Header (Authorization ou X-NFEIO-APIKEY) ou HTTP Query String (api_key) nos dois modos passando o valor da sua chave de api (API Key).\n"
+tags:
+  - name: Transportation Invoices
+    description: |
+      Utilize estas requisições para habilitar ou desabilitar a busca automática de CT-e
+  - name: Inbound
+    description: |
+      Utilize estas requisições para consultar metadados ou XMLs de CT-e encontrados pela processo de busca automática
+paths:
+  /v2/companies/{companyId}/inbound/transportationinvoices:
+    post:
+      tags:
+        - Transportation Invoices
+      summary: Ativar busca automática de documentos e Eventos relacionados a Conhecimento de Transporte Eletrônico (CT-e)
+      description: Você precisará do APIKEY para utilização
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json-patch+json:
+            schema:
+              $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.EnableTransportationInvoiceInboundResource'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.EnableTransportationInvoiceInboundResource'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.EnableTransportationInvoiceInboundResource'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.EnableTransportationInvoiceInboundResource'
+      responses:
+        "200":
+          description: Sucesso na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.TransportationInvoiceInboundResource'
+        "400":
+          description: Algum parametro informado não é válido
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - Authorization_Header:
+            - readAccess
+            - writeAccess
+          Authorization_QueryParam:
+            - readAccess
+            - writeAccess
+    delete:
+      tags:
+        - Transportation Invoices
+      summary: Inativar busca automática de documentos e Eventos relacionados a Conhecimento de Transporte Eletrônico (CT-e)
+      description: Você precisará do APIKEY para utilização
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.TransportationInvoiceInboundResource'
+        "400":
+          description: Algum parametro informado não é válido
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - Authorization_Header:
+            - readAccess
+            - writeAccess
+          Authorization_QueryParam:
+            - readAccess
+            - writeAccess
+    get:
+      tags:
+        - Transportation Invoices
+      summary: Obter as configurações ativas usadas na busca automática de Conhecimento de Transporte Eletrônico (CT-e)
+      description: Você precisará do APIKEY para utilização
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.TransportationInvoiceInboundResource'
+        "400":
+          description: Algum parametro informado não é válido
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - Authorization_Header:
+            - readAccess
+            - writeAccess
+          Authorization_QueryParam:
+            - readAccess
+            - writeAccess
+  /v2/companies/{company_id}/inbound/{access_key}:
+    get:
+      tags:
+        - Inbound
+      summary: Obter os detalhes de um CT-e pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: access_key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.MetadataResource'
+        "400":
+          description: Algum parametro informado não é válido
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - Authorization_Header:
+            - readAccess
+            - writeAccess
+          Authorization_QueryParam:
+            - readAccess
+            - writeAccess
+  /v2/companies/{company_id}/inbound/{access_key}/xml:
+    get:
+      tags:
+        - Inbound
+      summary: Obter o XML de um CT-e pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: access_key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Algum parametro informado não é válido
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - Authorization_Header:
+            - readAccess
+            - writeAccess
+          Authorization_QueryParam:
+            - readAccess
+            - writeAccess
+  /v2/companies/{company_id}/inbound/{access_key}/events/{event_key}:
+    get:
+      tags:
+        - Inbound
+      summary: Obter os detalhes de um evento ref. a um CT-e pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: access_key
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: event_key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.MetadataResource'
+        "400":
+          description: Algum parametro informado não é válido
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - Authorization_Header:
+            - readAccess
+            - writeAccess
+          Authorization_QueryParam:
+            - readAccess
+            - writeAccess
+  /v2/companies/{company_id}/inbound/{access_key}/events/{event_key}/xml:
+    get:
+      tags:
+        - Inbound
+      summary: Obter o XML de um evento ref. a um CT-e pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: access_key
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: event_key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          content:
+            application/json:
+              schema:
+                type: string
+        "400":
+          description: Algum parametro informado não é válido
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - Authorization_Header:
+            - readAccess
+            - writeAccess
+          Authorization_QueryParam:
+            - readAccess
+            - writeAccess
+components:
+  schemas:
+    DFe.NetCore.Domain.Enums.EntityStatus:
+      enum:
+        - 0
+        - 1
+        - -1
+      type: integer
+      format: int32
+    DFe.NetCore.Domain.Enums.MetadataResourceType:
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+      type: integer
+      format: int32
+    DFe.NetCore.Domain.Resources.CompanyResource:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        federalTaxNumber:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        stateTaxNumber:
+          type: string
+          nullable: true
+      additionalProperties: false
+    DFe.NetCore.Domain.Resources.EnableInboundProductInvoiceResource:
+      type: object
+      properties:
+        startFromNsu:
+          type: integer
+          format: int64
+        startFromDate:
+          type: string
+          format: date-time
+        automaticManifesting:
+          $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.ManifestAutomaticRulesResource'
+      additionalProperties: false
+    DFe.NetCore.Domain.Resources.EnableTransportationInvoiceInboundResource:
+      type: object
+      properties:
+        startFromNsu:
+          type: integer
+          format: int64
+        startFromDate:
+          type: string
+          format: date-time
+      additionalProperties: false
+    DFe.NetCore.Domain.Resources.ManifestAutomaticRulesResource:
+      type: object
+      properties:
+        minutesToWaitAwarenessOperation:
+          type: integer
+          format: int32
+      additionalProperties: false
+    DFe.NetCore.Domain.Resources.MetadataResource:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        createdOn:
+          type: string
+          format: date-time
+          nullable: true
+        accessKey:
+          type: string
+          nullable: true
+        parentAccessKey:
+          type: string
+          nullable: true
+        productInvoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.ProductInvoiceResource'
+          nullable: true
+        company:
+          $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.CompanyResource'
+        type:
+          $ref: '#/components/schemas/DFe.NetCore.Domain.Enums.MetadataResourceType'
+        nsu:
+          type: integer
+          format: int64
+        issuedOn:
+          type: string
+          format: date-time
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        xmlUrl:
+          type: string
+          nullable: true
+        federalTaxNumberSender:
+          type: string
+          nullable: true
+        nameSender:
+          type: string
+          nullable: true
+        totalInvoiceAmount:
+          type: string
+          nullable: true
+      additionalProperties: false
+    DFe.NetCore.Domain.Resources.ProductInvoiceInboundResource:
+      type: object
+      properties:
+        startFromNsu:
+          type: integer
+          format: int64
+        startFromDate:
+          type: string
+          format: date-time
+        automaticManifesting:
+          $ref: '#/components/schemas/DFe.NetCore.Domain.Resources.ManifestAutomaticRulesResource'
+        companyId:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/DFe.NetCore.Domain.Enums.EntityStatus'
+        createdOn:
+          type: string
+          format: date-time
+        modifiedOn:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false
+    DFe.NetCore.Domain.Resources.ProductInvoiceResource:
+      type: object
+      properties:
+        accessKey:
+          type: string
+          nullable: true
+      additionalProperties: false
+    DFe.NetCore.Domain.Resources.TransportationInvoiceInboundResource:
+      type: object
+      properties:
+        startFromNsu:
+          type: integer
+          format: int64
+        startFromDate:
+          type: string
+          format: date-time
+        companyId:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/DFe.NetCore.Domain.Enums.EntityStatus'
+        createdOn:
+          type: string
+          format: date-time
+        modifiedOn:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false
+  securitySchemes:
+    Authorization_Header:
+      type: apiKey
+      description: 'Autenticar usando o Cabeçalho HTTP, exemplo: "X-NFE-ApiKey {APIKEY_TOKEN}"'
+      name: Authorization
+      in: header
+    Authorization_QueryParam:
+      type: apiKey
+      description: 'Autenticar usando o Parametro na URL, exemplo: "/?apikey={APIKEY_TOKEN}"'
+      name: apikey
+      in: query
+security:
+  - Authorization_Header:
+      - readAccess
+      - writeAccess
+    Authorization_QueryParam:
+      - readAccess
+      - writeAccess
