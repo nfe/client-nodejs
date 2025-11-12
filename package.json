@@ -1,6 +1,6 @@
 {
   "name": "@nfe-io/sdk",
-  "version": "3.0.0-beta.1",
+  "version": "3.0.0",
   "description": "Official NFE.io SDK for Node.js 18+ - TypeScript native with zero runtime dependencies",
   "keywords": ["nfe", "nfse", "nota-fiscal", "invoice", "brazil", "typescript"],
   "author": {
@@ -44,11 +44,10 @@
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",
-    "generate": "tsx scripts/generate-types.ts",
-    "validate-spec": "tsx scripts/validate-openapi.ts",
-    "docs": "typedoc src/index.ts",
-    "prepublishOnly": "npm run build && npm test",
-    "release": "npm run build && npm test && npm publish"
+    "validate:openapi": "tsx scripts/validate-openapi-compliance.js",
+    "docs": "typedoc src/index.ts --out docs/api",
+    "prepublishOnly": "npm run build && npm test -- --run",
+    "release": "npm run build && npm test -- --run && npm publish"
   },
   "dependencies": {},
   "devDependencies": {
