@@ -349,9 +349,9 @@ export function getRuntimeInfo(): {
       platform = process.platform || 'unknown';
       arch = process.arch || 'unknown';
       environment = 'node';
-    } else if (typeof window !== 'undefined') {
+    } else if (typeof window !== 'undefined' && typeof (window as any).navigator !== 'undefined') {
       environment = 'browser';
-      platform = navigator.platform || 'unknown';
+      platform = (window as any).navigator.platform || 'unknown';
     }
   } catch {
     // Safe fallback

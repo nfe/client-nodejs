@@ -1327,15 +1327,14 @@ declare class NfeClient {
  * @example v2 compatibility
  * ```typescript
  * // v2 style (still works)
- * const nfe = createNfeClient('your-api-key', 'v1');
+ * const nfe = createNfeClient('your-api-key');
  * ```
  */
-declare function createNfeClient(apiKey: string | NfeConfig, _version?: string): NfeClient;
+declare function createNfeClient(apiKey: string | NfeConfig): NfeClient;
 /**
  * Default export factory function for CommonJS compatibility
  *
  * @param apiKey - API key string or full configuration object
- * @param _version - API version (ignored in v3, maintained for v2 compatibility)
  * @returns Configured NfeClient instance
  *
  * @description
@@ -1354,7 +1353,7 @@ declare function createNfeClient(apiKey: string | NfeConfig, _version?: string):
  * const client = nfe('your-api-key');
  * ```
  */
-declare function nfe(apiKey: string | NfeConfig, _version?: string): NfeClient;
+declare function nfe(apiKey: string | NfeConfig): NfeClient;
 /**
  * Current SDK version
  * @constant

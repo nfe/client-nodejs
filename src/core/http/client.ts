@@ -290,7 +290,7 @@ export class HttpClient {
     const platform = process.platform;
     
     // Try to get package version (will be undefined in development)
-    const packageVersion = '3.0.0-beta.1'; // TODO: Read from package.json
+    const packageVersion = '3.0.0'; // TODO: Read from package.json
     
     return `@nfe-io/sdk@${packageVersion} node/${nodeVersion} (${platform})`;
   }
@@ -318,9 +318,9 @@ export class HttpClient {
       return false;
     }
 
-    // Don't retry client errors (4xx) except authentication (might be temporary)
+    // Don't retry client errors (4xx) - these are permanent errors
     if (error.code && error.code >= 400 && error.code < 500) {
-      return error.code !== 401; // Retry auth errors once
+      return true; // Don't retry any 4xx errors
     }
 
     // Retry server errors (5xx) and network errors

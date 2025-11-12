@@ -728,10 +728,10 @@ export class NfeClient {
  * @example v2 compatibility
  * ```typescript
  * // v2 style (still works)
- * const nfe = createNfeClient('your-api-key', 'v1');
+ * const nfe = createNfeClient('your-api-key');
  * ```
  */
-export function createNfeClient(apiKey: string | NfeConfig, _version?: string): NfeClient {
+export function createNfeClient(apiKey: string | NfeConfig): NfeClient {
   const config = typeof apiKey === 'string' ? { apiKey } : apiKey;
   return new NfeClient(config);
 }
@@ -740,7 +740,6 @@ export function createNfeClient(apiKey: string | NfeConfig, _version?: string): 
  * Default export factory function for CommonJS compatibility
  * 
  * @param apiKey - API key string or full configuration object
- * @param _version - API version (ignored in v3, maintained for v2 compatibility)
  * @returns Configured NfeClient instance
  * 
  * @description
@@ -759,8 +758,8 @@ export function createNfeClient(apiKey: string | NfeConfig, _version?: string): 
  * const client = nfe('your-api-key');
  * ```
  */
-export default function nfe(apiKey: string | NfeConfig, _version?: string): NfeClient {
-  return createNfeClient(apiKey, _version);
+export default function nfe(apiKey: string | NfeConfig): NfeClient {
+  return createNfeClient(apiKey);
 }
 
 // ============================================================================

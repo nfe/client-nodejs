@@ -504,7 +504,7 @@ var init_client = __esm({
           return false;
         }
         if (error.code && error.code >= 400 && error.code < 500) {
-          return error.code !== 401;
+          return true;
         }
         return false;
       }
@@ -1435,11 +1435,11 @@ __export(client_exports, {
   createNfeClient: () => createNfeClient,
   default: () => nfe
 });
-function createNfeClient(apiKey, _version) {
+function createNfeClient(apiKey) {
   const config = typeof apiKey === "string" ? { apiKey } : apiKey;
   return new exports.NfeClient(config);
 }
-function nfe(apiKey, _version) {
+function nfe(apiKey) {
   return createNfeClient(apiKey);
 }
 exports.NfeClient = void 0; exports.VERSION = void 0; exports.SUPPORTED_NODE_VERSIONS = void 0; var DEFAULT_TIMEOUT, DEFAULT_RETRY_ATTEMPTS;
@@ -2017,9 +2017,9 @@ function getRuntimeInfo() {
       platform = process2.platform || "unknown";
       arch = process2.arch || "unknown";
       environment = "node";
-    } else if (typeof window !== "undefined") {
+    } else if (typeof window !== "undefined" && typeof window.navigator !== "undefined") {
       environment = "browser";
-      platform = navigator.platform || "unknown";
+      platform = window.navigator.platform || "unknown";
     }
   } catch {
   }
