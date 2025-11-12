@@ -1,24 +1,191 @@
-lib-cov
-*.seed
+# ============================================================================
+# NFE.io SDK v3 - Git Ignore Configuration
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Dependencies
+# ----------------------------------------------------------------------------
+node_modules/
+bower_components/
+jspm_packages/
+
+# ----------------------------------------------------------------------------
+# Build Outputs
+# ----------------------------------------------------------------------------
+dist/
+build/
+out/
+*.tsbuildinfo
+buildAssets/
+
+# ----------------------------------------------------------------------------
+# Coverage Reports
+# ----------------------------------------------------------------------------
+coverage/
+.nyc_output/
+*.lcov
+
+# ----------------------------------------------------------------------------
+# Logs
+# ----------------------------------------------------------------------------
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# ----------------------------------------------------------------------------
+# Operating System Files
+# ----------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ----------------------------------------------------------------------------
+# IDE & Editors
+# ----------------------------------------------------------------------------
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains (WebStorm, IntelliJ, etc)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ----------------------------------------------------------------------------
+# Testing
+# ----------------------------------------------------------------------------
+test-results/
+test-output/
+.vitest/
+
+# ----------------------------------------------------------------------------
+# Package Manager
+# ----------------------------------------------------------------------------
+# NPM
+npm-debug.log*
+package-lock.json.bak
+
+# Yarn
+yarn-error.log
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# pnpm
+pnpm-debug.log*
+.pnpm-store/
+
+# ----------------------------------------------------------------------------
+# Build Artifacts & Temporary Files
+# ----------------------------------------------------------------------------
+*.tgz
+*.tar.gz
+*.zip
+*.seed
 *.csv
 *.dat
 *.out
 *.pid
 *.gz
-*.swp
+tmp/
+temp/
+.tmp/
+pids/
+lib-cov/
+results/
 
-pids
-logs
-results
-tmp
-test
+# ----------------------------------------------------------------------------
+# Environment & Configuration
+# ----------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+*.local
 
-npm-debug.log
-node_modules
-.idea
-*.iml
-.DS_Store
-Thumbs.db
+# ----------------------------------------------------------------------------
+# TypeScript
+# ----------------------------------------------------------------------------
+*.tsbuildinfo
 
-buildAssets
+# ----------------------------------------------------------------------------
+# Documentation Build
+# ----------------------------------------------------------------------------
+docs/api/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
+# ----------------------------------------------------------------------------
+# Release & Deployment
+# ----------------------------------------------------------------------------
+*.tgz
+npm-pack/
+release/
+
+# ----------------------------------------------------------------------------
+# Misc
+# ----------------------------------------------------------------------------
+.cache/
+.temp/
+.next/
+.nuxt/
+.docusaurus/
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.eslintcache
+.node_repl_history
+.npm
+.yarn-integrity
+
+# ----------------------------------------------------------------------------
+# Optional: Keep for reference but ignore in commits
+# ----------------------------------------------------------------------------
+# Uncomment if you want to ignore these:
+# package.json.v3
+# package-v3.json
+# CHANGELOG-v3.md

@@ -1,0 +1,158 @@
+# ============================================================================
+# NFE.io SDK v3 - Git Attributes Configuration
+# ============================================================================
+# Ensures consistent line endings and proper diff handling across platforms
+
+# ----------------------------------------------------------------------------
+# Auto-detect text files and normalize line endings
+# ----------------------------------------------------------------------------
+* text=auto eol=lf
+
+# ----------------------------------------------------------------------------
+# Source Code
+# ----------------------------------------------------------------------------
+*.ts text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.jsx text eol=lf
+*.tsx text eol=lf
+
+# ----------------------------------------------------------------------------
+# Configuration Files
+# ----------------------------------------------------------------------------
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+.editorconfig text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.npmignore text eol=lf
+.npmrc text eol=lf
+.eslintrc* text eol=lf
+.prettierrc* text eol=lf
+tsconfig*.json text eol=lf
+package*.json text eol=lf
+
+# ----------------------------------------------------------------------------
+# Documentation
+# ----------------------------------------------------------------------------
+*.md text eol=lf
+*.txt text eol=lf
+LICENSE text eol=lf
+AUTHORS text eol=lf
+CHANGELOG* text eol=lf
+CONTRIBUTING* text eol=lf
+README* text eol=lf
+
+# ----------------------------------------------------------------------------
+# Shell Scripts
+# ----------------------------------------------------------------------------
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+
+# PowerShell Scripts (Windows)
+*.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+
+# Batch files (Windows)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# ----------------------------------------------------------------------------
+# Web Files
+# ----------------------------------------------------------------------------
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.sass text eol=lf
+*.less text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+
+# ----------------------------------------------------------------------------
+# Binary Files (explicitly mark as binary)
+# ----------------------------------------------------------------------------
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.avif binary
+
+# Fonts
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.tgz binary
+*.bz2 binary
+*.7z binary
+*.rar binary
+
+# Executables
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# Other binary formats
+*.pdf binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.ogg binary
+
+# ----------------------------------------------------------------------------
+# Git LFS (Large File Storage) - if needed in future
+# ----------------------------------------------------------------------------
+# *.psd filter=lfs diff=lfs merge=lfs -text
+# *.ai filter=lfs diff=lfs merge=lfs -text
+
+# ----------------------------------------------------------------------------
+# Language-specific diff patterns
+# ----------------------------------------------------------------------------
+*.ts diff=typescript
+*.js diff=javascript
+*.json diff=json
+*.md diff=markdown
+
+# ----------------------------------------------------------------------------
+# Export-ignore (files not included in archives)
+# ----------------------------------------------------------------------------
+.gitattributes export-ignore
+.gitignore export-ignore
+.github/ export-ignore
+tests/ export-ignore
+examples/ export-ignore
+docs/ export-ignore
+*.test.* export-ignore
+*.spec.* export-ignore
+.travis.yml export-ignore
+.eslintrc* export-ignore
+.prettierrc* export-ignore
+tsconfig*.json export-ignore
+vitest.config.ts export-ignore
+tsup.config.ts export-ignore
+
+# ----------------------------------------------------------------------------
+# Merge strategies
+# ----------------------------------------------------------------------------
+package-lock.json merge=ours
+yarn.lock merge=ours
+pnpm-lock.yaml merge=ours
+CHANGELOG.md merge=union
