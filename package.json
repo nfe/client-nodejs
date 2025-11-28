@@ -1,5 +1,5 @@
 {
-  "name": "@nfe-io/sdk",
+  "name": "nfe-io",
   "version": "3.0.0",
   "description": "Official NFE.io SDK for Node.js 18+ - TypeScript native with zero runtime dependencies",
   "keywords": ["nfe", "nfse", "nota-fiscal", "invoice", "brazil", "typescript"],

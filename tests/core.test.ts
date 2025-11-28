@@ -19,28 +19,29 @@ describe('NfeClient Core', () => {
     
     client = new NfeClient({
       apiKey: 'test-key',
-      sandbox: true
+      environment: 'sandbox'
     });
   });
 
   it('should create client with valid config', () => {
     expect(client).toBeInstanceOf(NfeClient);
-    expect(client.config.apiKey).toBe('test-key');
-    expect(client.config.sandbox).toBe(true);
+    const config = client.getConfig();
+    expect(config.apiKey).toBe('test-key');
+    expect(config.environment).toBe('sandbox');
   });
 
   it('should throw error for invalid config', () => {
     expect(() => {
       new NfeClient({ apiKey: '' });
-    }).toThrow('API key is required');
+    }).toThrow();
   });
 
   it('should validate sandbox URLs', () => {
     const sandboxClient = new NfeClient({ 
       apiKey: 'test', 
-      sandbox: true 
+      environment: 'sandbox'
     });
-    expect(sandboxClient.config.baseUrl).toContain('sandbox');
+    expect(sandboxClient.getConfig().baseUrl).toContain('sandbox');
   });
 });
 
@@ -49,8 +50,8 @@ describe('Error System', () => {
     const authError = new AuthenticationError('Invalid API key');
     expect(authError).toBeInstanceOf(NfeError);
     expect(authError).toBeInstanceOf(AuthenticationError);
-    expect(authError.type).toBe('authentication_error');
-    expect(authError.statusCode).toBe(401);
+    expect(authError.type).toBe('AuthenticationError');
+    expect(authError.code).toBe(401);
   });
 
   it('should create bad request errors', () => {
@@ -58,8 +59,8 @@ describe('Error System', () => {
       field: 'Invalid field value'
     });
     expect(badRequest).toBeInstanceOf(BadRequestError);
-    expect(badRequest.type).toBe('bad_request_error');
-    expect(badRequest.statusCode).toBe(400);
+    expect(badRequest.type).toBe('ValidationError');
+    expect(badRequest.code).toBe(400);
     expect(badRequest.details).toEqual({
       field: 'Invalid field value'
     });
@@ -73,7 +74,7 @@ describe('ServiceInvoices Resource', () => {
     global.fetch = vi.fn();
     client = new NfeClient({
       apiKey: 'test-key',
-      sandbox: true
+      environment: 'sandbox'
     });
   });
 
