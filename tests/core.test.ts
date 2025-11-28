@@ -4,10 +4,10 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NfeClient } from '../src/core/client';
-import { 
-  NfeError, 
-  AuthenticationError, 
-  BadRequestError 
+import {
+  NfeError,
+  AuthenticationError,
+  BadRequestError
 } from '../src/core/errors';
 
 describe('NfeClient Core', () => {
@@ -16,7 +16,7 @@ describe('NfeClient Core', () => {
   beforeEach(() => {
     // Mock fetch globally
     global.fetch = vi.fn();
-    
+
     client = new NfeClient({
       apiKey: 'test-key',
       environment: 'sandbox'
@@ -37,8 +37,8 @@ describe('NfeClient Core', () => {
   });
 
   it('should validate sandbox URLs', () => {
-    const sandboxClient = new NfeClient({ 
-      apiKey: 'test', 
+    const sandboxClient = new NfeClient({
+      apiKey: 'test',
       environment: 'sandbox'
     });
     expect(sandboxClient.getConfig().baseUrl).toContain('sandbox');
