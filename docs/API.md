@@ -44,7 +44,7 @@ Creates a new NFE.io API client instance.
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
 | `apiKey` | `string` | Yes* | `process.env.NFE_API_KEY` | NFE.io API key |
-| `environment` | `'production' \| 'sandbox'` | No | `'production'` | Target environment |
+| `environment` | `'production' \| 'development'` | No | `'production'` | API environment (both use same endpoint: `https://api.nfe.io/v1`) |
 | `baseUrl` | `string` | No | Auto-detected | Custom API base URL |
 | `timeout` | `number` | No | `30000` | Request timeout in ms |
 | `retryConfig` | `RetryConfig` | No | See below | Retry configuration |
@@ -95,7 +95,7 @@ Update client configuration dynamically.
 
 ```typescript
 nfe.updateConfig({
-  environment: 'sandbox',
+  environment: 'development',
   timeout: 60000
 });
 ```
@@ -620,7 +620,7 @@ const events = await nfe.webhooks.getAvailableEvents();
 ```typescript
 interface NfeConfig {
   apiKey?: string;
-  environment?: 'production' | 'sandbox';
+  environment?: 'production' | 'development';
   baseUrl?: string;
   timeout?: number;
   retryConfig?: RetryConfig;

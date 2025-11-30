@@ -64,7 +64,7 @@ import { NfeClient } from '@nfe-io/sdk';
 // Initialize the client
 const nfe = new NfeClient({
   apiKey: 'your-api-key',
-  environment: 'production' // or 'sandbox'
+  environment: 'production' // or 'development'
 });
 
 // Create a company
@@ -461,13 +461,44 @@ Full API documentation is available at:
 - [Official API Docs](https://nfe.io/docs/nota-fiscal-servico/integracao-nfs-e/)
 - [REST API Reference](https://nfe.io/doc/rest-api/nfe-v1/)
 
-## 🧪 Development
+## 🧪 Development & Testing
 
 ### Running Tests
 
 ```bash
+# Run all tests (unit + integration)
 npm test
+
+# Run only unit tests
+npm run test:unit
+
+# Run only integration tests (requires API key)
+npm run test:integration
+
+# Run with coverage
+npm run test:coverage
+
+# Run with UI
+npm run test:ui
 ```
+
+### Integration Tests
+
+Integration tests validate against the **real NFE.io API**:
+
+```bash
+# Set your development/test API key
+export NFE_API_KEY="your-development-api-key"
+export NFE_TEST_ENVIRONMENT="development"
+export RUN_INTEGRATION_TESTS="true"
+
+# Run integration tests
+npm run test:integration
+```
+
+See [tests/integration/README.md](./tests/integration/README.md) for detailed documentation.
+
+**Note**: Integration tests make real API calls and may incur costs depending on your plan.
 
 ### Type Checking
 

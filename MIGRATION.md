@@ -71,7 +71,7 @@ nfe.setTimeout(60000);
 const nfe = new NfeClient({
   apiKey: 'api-key',
   timeout: 60000,
-  environment: 'production', // or 'sandbox'
+  environment: 'production', // or 'development'
   retryConfig: {
     maxRetries: 3,
     baseDelay: 1000
