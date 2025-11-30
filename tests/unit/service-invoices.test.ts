@@ -248,4 +248,408 @@ describe('ServiceInvoicesResource', () => {
       ).rejects.toThrow('API error');
     });
   });
+
+  describe('createAndWait', () => {
+    it('should handle synchronous response (201) without polling', async () => {
+      const mockInvoice = createMockInvoice({ status: 'issued' });
+      const mockResponse: HttpResponse<ServiceInvoice> = {
+        data: mockInvoice,
+        status: 201,
+        headers: {},
+      };
+      vi.mocked(mockHttpClient.post).mockResolvedValue(mockResponse);
+
+      const invoiceData = {
+        borrower: mockInvoice.borrower,
+        cityServiceCode: mockInvoice.cityServiceCode,
+        description: mockInvoice.description,
+        servicesAmount: 1000.00,
+      };
+
+      const result = await serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData);
+
+      expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
+      expect(mockHttpClient.get).not.toHaveBeenCalled();
+      expect(result).toEqual(mockInvoice);
+      expect(result.status).toBe('issued');
+    });
+
+    it('should poll until completion for async response (202)', async () => {
+      const asyncResponse: AsyncResponse = {
+        code: 202,
+        status: 'pending',
+        location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
+      };
+      const pendingInvoice = createMockInvoice({ status: 'processing' });
+      const completedInvoice = createMockInvoice({ status: 'issued' });
+
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: asyncResponse,
+        status: 202,
+        headers: { location: asyncResponse.location },
+      });
+      vi.mocked(mockHttpClient.get)
+        .mockResolvedValueOnce({ data: pendingInvoice, status: 200, headers: {} })
+        .mockResolvedValueOnce({ data: completedInvoice, status: 200, headers: {} });
+
+      const invoiceData = {
+        borrower: completedInvoice.borrower,
+        cityServiceCode: completedInvoice.cityServiceCode,
+        description: completedInvoice.description,
+        servicesAmount: 1000.00,
+      };
+
+      const result = await serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData, {
+        maxAttempts: 10,
+        intervalMs: 10,
+      });
+
+      expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
+      expect(mockHttpClient.get).toHaveBeenCalledTimes(2);
+      expect(result).toEqual(completedInvoice);
+      expect(result.status).toBe('issued');
+    });
+
+    it('should throw InvoiceProcessingError on polling timeout', async () => {
+      const asyncResponse: AsyncResponse = {
+        code: 202,
+        status: 'pending',
+        location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
+      };
+      const pendingInvoice = createMockInvoice({ status: 'processing' });
+
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: asyncResponse,
+        status: 202,
+        headers: { location: asyncResponse.location },
+      });
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: pendingInvoice,
+        status: 200,
+        headers: {},
+      });
+
+      const invoiceData = {
+        borrower: pendingInvoice.borrower,
+        cityServiceCode: pendingInvoice.cityServiceCode,
+        description: 'Test',
+        servicesAmount: 1000.00,
+      };
+
+      await expect(
+        serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData, {
+          maxAttempts: 3,
+          intervalMs: 10,
+          timeoutMs: 50,
+        })
+      ).rejects.toThrow('Invoice processing timeout');
+    });
+
+    it('should throw InvoiceProcessingError if invoice processing fails', async () => {
+      const asyncResponse: AsyncResponse = {
+        code: 202,
+        status: 'pending',
+        location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
+      };
+      const failedInvoice = createMockInvoice({ status: 'failed' });
+
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: asyncResponse,
+        status: 202,
+        headers: { location: asyncResponse.location },
+      });
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: failedInvoice,
+        status: 200,
+        headers: {},
+      });
+
+      const invoiceData = {
+        borrower: failedInvoice.borrower,
+        cityServiceCode: failedInvoice.cityServiceCode,
+        description: 'Test',
+        servicesAmount: 1000.00,
+      };
+
+      await expect(
+        serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData, {
+          maxAttempts: 10,
+          intervalMs: 10,
+        })
+      ).rejects.toThrow(/Invoice processing|Failed to poll/);
+    });
+
+    it('should throw InvoiceProcessingError on unexpected response format', async () => {
+      const unexpectedResponse = {
+        code: 200,
+        message: 'Unexpected response',
+      };
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: unexpectedResponse,
+        status: 200,
+        headers: {},
+      });
+
+      const invoiceData = {
+        borrower: createMockInvoice().borrower,
+        cityServiceCode: '12345',
+        description: 'Test',
+        servicesAmount: 1000.00,
+      };
+
+      await expect(
+        serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData)
+      ).rejects.toThrow('Unexpected response from invoice creation');
+    });
+
+    it('should respect custom polling options', async () => {
+      const asyncResponse: AsyncResponse = {
+        code: 202,
+        status: 'pending',
+        location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
+      };
+      const completedInvoice = createMockInvoice({ status: 'issued' });
+
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: asyncResponse,
+        status: 202,
+        headers: { location: asyncResponse.location },
+      });
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: completedInvoice,
+        status: 200,
+        headers: {},
+      });
+
+      const invoiceData = {
+        borrower: completedInvoice.borrower,
+        cityServiceCode: completedInvoice.cityServiceCode,
+        description: 'Test',
+        servicesAmount: 1000.00,
+      };
+
+      const result = await serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData, {
+        maxAttempts: 50,
+        intervalMs: 500,
+        timeoutMs: 30000,
+      });
+
+      expect(result).toEqual(completedInvoice);
+    });
+
+    it('should handle async response without location header', async () => {
+      const asyncResponse: AsyncResponse = {
+        code: 202,
+        status: 'pending',
+        location: undefined as any,
+      };
+
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: asyncResponse,
+        status: 202,
+        headers: {},
+      });
+
+      const invoiceData = {
+        borrower: createMockInvoice().borrower,
+        cityServiceCode: '12345',
+        description: 'Test',
+        servicesAmount: 1000.00,
+      };
+
+      await expect(
+        serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData)
+      ).rejects.toThrow('Unexpected response from invoice creation');
+    });
+
+    it('should extract path from full URL in location header', async () => {
+      const asyncResponse: AsyncResponse = {
+        code: 202,
+        status: 'pending',
+        location: `https://api.nfe.io/v1/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
+      };
+      const completedInvoice = createMockInvoice({ status: 'issued' });
+
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: asyncResponse,
+        status: 202,
+        headers: { location: asyncResponse.location },
+      });
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: completedInvoice,
+        status: 200,
+        headers: {},
+      });
+
+      const invoiceData = {
+        borrower: completedInvoice.borrower,
+        cityServiceCode: completedInvoice.cityServiceCode,
+        description: 'Test',
+        servicesAmount: 1000.00,
+      };
+
+      const result = await serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData, {
+        intervalMs: 10,
+      });
+
+      // Path extracted from URL includes /v1
+      expect(mockHttpClient.get).toHaveBeenCalledWith(
+        `/v1/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`
+      );
+      expect(result).toEqual(completedInvoice);
+    });
+
+    it('should handle timeoutMs correctly', async () => {
+      const asyncResponse: AsyncResponse = {
+        code: 202,
+        status: 'pending',
+        location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
+      };
+      const pendingInvoice = createMockInvoice({ status: 'processing' });
+
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: asyncResponse,
+        status: 202,
+        headers: { location: asyncResponse.location },
+      });
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: pendingInvoice,
+        status: 200,
+        headers: {},
+      });
+
+      const invoiceData = {
+        borrower: pendingInvoice.borrower,
+        cityServiceCode: '12345',
+        description: 'Test',
+        servicesAmount: 1000.00,
+      };
+
+      const startTime = Date.now();
+
+      await expect(
+        serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData, {
+          maxAttempts: 100,
+          intervalMs: 10,
+          timeoutMs: 100,
+        })
+      ).rejects.toThrow('Invoice processing timeout');
+
+      const elapsed = Date.now() - startTime;
+      expect(elapsed).toBeLessThan(500); // Should timeout well before 100 attempts
+    });
+  });
+
+  describe('getStatus', () => {
+    it('should return invoice status with completion flags', async () => {
+      const mockInvoice = createMockInvoice({ status: 'issued' });
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: mockInvoice,
+        status: 200,
+        headers: {},
+      });
+
+      const result = await serviceInvoices.getStatus(TEST_COMPANY_ID, TEST_INVOICE_ID);
+
+      expect(result.status).toBe('issued');
+      expect(result.invoice).toEqual(mockInvoice);
+      expect(result.isComplete).toBe(true);
+      expect(result.isFailed).toBe(false);
+    });
+
+    it('should recognize failed status', async () => {
+      const mockInvoice = createMockInvoice({ status: 'failed' });
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: mockInvoice,
+        status: 200,
+        headers: {},
+      });
+
+      const result = await serviceInvoices.getStatus(TEST_COMPANY_ID, TEST_INVOICE_ID);
+
+      expect(result.isComplete).toBe(false);
+      expect(result.isFailed).toBe(true);
+    });
+
+    it('should recognize cancelled status as failed', async () => {
+      const mockInvoice = createMockInvoice({ status: 'cancelled' });
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: mockInvoice,
+        status: 200,
+        headers: {},
+      });
+
+      const result = await serviceInvoices.getStatus(TEST_COMPANY_ID, TEST_INVOICE_ID);
+
+      expect(result.isFailed).toBe(true);
+    });
+  });
+
+  describe('createBatch', () => {
+    it('should create multiple invoices without waiting', async () => {
+      const mockInvoice = createMockInvoice();
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: mockInvoice,
+        status: 201,
+        headers: {},
+      });
+
+      const invoicesData = [
+        { borrower: mockInvoice.borrower, cityServiceCode: '12345', servicesAmount: 1000 },
+        { borrower: mockInvoice.borrower, cityServiceCode: '12346', servicesAmount: 2000 },
+      ];
+
+      const results = await serviceInvoices.createBatch(TEST_COMPANY_ID, invoicesData);
+
+      expect(results).toHaveLength(2);
+      expect(mockHttpClient.post).toHaveBeenCalledTimes(2);
+    });
+
+    it('should create multiple invoices and wait for completion', async () => {
+      const mockInvoice = createMockInvoice({ status: 'issued' });
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: mockInvoice,
+        status: 201,
+        headers: {},
+      });
+
+      const invoicesData = [
+        { borrower: mockInvoice.borrower, cityServiceCode: '12345', servicesAmount: 1000 },
+        { borrower: mockInvoice.borrower, cityServiceCode: '12346', servicesAmount: 2000 },
+      ];
+
+      const results = await serviceInvoices.createBatch(TEST_COMPANY_ID, invoicesData, {
+        waitForCompletion: true,
+      });
+
+      expect(results).toHaveLength(2);
+      expect(results.every(r => 'status' in r && r.status === 'issued')).toBe(true);
+    });
+
+    it('should respect maxConcurrent option', async () => {
+      const mockInvoice = createMockInvoice();
+      let concurrentCalls = 0;
+      let maxConcurrent = 0;
+
+      vi.mocked(mockHttpClient.post).mockImplementation(async () => {
+        concurrentCalls++;
+        maxConcurrent = Math.max(maxConcurrent, concurrentCalls);
+        await new Promise(resolve => setTimeout(resolve, 10));
+        concurrentCalls--;
+        return { data: mockInvoice, status: 201, headers: {} };
+      });
+
+      const invoicesData = Array(10).fill(null).map((_, i) => ({
+        borrower: mockInvoice.borrower,
+        cityServiceCode: `1234${i}`,
+        servicesAmount: 1000,
+      }));
+
+      await serviceInvoices.createBatch(TEST_COMPANY_ID, invoicesData, {
+        maxConcurrent: 3,
+      });
+
+      expect(maxConcurrent).toBeLessThanOrEqual(3);
+    });
+  });
 });
