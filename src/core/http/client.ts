@@ -1,17 +1,17 @@
 /**
  * NFE.io SDK v3 - HTTP Client with Fetch API
- * 
- * Modern HTTP client using native fetch (Node.js 18+)  
+ *
+ * Modern HTTP client using native fetch (Node.js 18+)
  * Zero external dependencies with automatic retries and proper error handling
  */
 
 import type { HttpConfig, HttpResponse, RetryConfig } from '../types.js';
-import { 
-  ErrorFactory, 
-  ConnectionError, 
-  TimeoutError, 
+import {
+  ErrorFactory,
+  ConnectionError,
+  TimeoutError,
   RateLimitError,
-  type NfeError 
+  type NfeError
 } from '../errors/index.js';
 
 // Simple type declarations for runtime APIs
@@ -65,8 +65,8 @@ export class HttpClient {
   // --------------------------------------------------------------------------
 
   private async request<T>(
-    method: string, 
-    url: string, 
+    method: string,
+    url: string,
     data?: unknown
   ): Promise<HttpResponse<T>> {
     const { maxRetries, baseDelay } = this.config.retryConfig;
@@ -190,7 +190,7 @@ export class HttpClient {
 
   private async handleErrorResponse(response: any): Promise<never> {
     let errorData: unknown;
-    
+
     try {
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
@@ -205,14 +205,14 @@ export class HttpClient {
 
     // Extract error message from response data
     const message = this.extractErrorMessage(errorData, response.status);
-    
+
     throw ErrorFactory.fromHttpResponse(response.status, errorData, message);
   }
 
   private extractErrorMessage(data: unknown, status: number): string {
     if (typeof data === 'object' && data !== null) {
       const errorObj = data as Record<string, unknown>;
-      
+
       // Try common error message fields
       if (typeof errorObj.message === 'string') return errorObj.message;
       if (typeof errorObj.error === 'string') return errorObj.error;
@@ -254,7 +254,7 @@ export class HttpClient {
 
   private buildHeaders(data?: unknown): Record<string, string> {
     const headers: Record<string, string> = {
-      'Authorization': `Basic ${Buffer.from(this.config.apiKey).toString('base64')}`,
+      'Authorization': `Basic ${this.config.apiKey}`,
       'Accept': 'application/json',
       'User-Agent': this.getUserAgent(),
     };
@@ -288,10 +288,10 @@ export class HttpClient {
   private getUserAgent(): string {
     const nodeVersion = process.version;
     const platform = process.platform;
-    
+
     // Try to get package version (will be undefined in development)
     const packageVersion = '3.0.0'; // TODO: Read from package.json
-    
+
     return `@nfe-io/sdk@${packageVersion} node/${nodeVersion} (${platform})`;
   }
 
@@ -329,11 +329,11 @@ export class HttpClient {
 
   private calculateRetryDelay(attempt: number, baseDelay: number): number {
     const { maxDelay = 30000, backoffMultiplier = 2 } = this.config.retryConfig;
-    
+
     // Exponential backoff with jitter
     const exponentialDelay = baseDelay * Math.pow(backoffMultiplier, attempt);
     const jitter = Math.random() * 0.1 * exponentialDelay; // 10% jitter
-    
+
     return Math.min(exponentialDelay + jitter, maxDelay);
   }
 
