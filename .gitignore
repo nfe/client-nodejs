@@ -189,3 +189,6 @@ release/
 # package.json.v3
 # package-v3.json
 # CHANGELOG-v3.md
+
+test-auth.js
+debug-auth.mjs
