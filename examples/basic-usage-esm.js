@@ -23,11 +23,11 @@ console.log('\n📊 Informações do runtime:');
 const runtimeInfo = getRuntimeInfo();
 console.log(runtimeInfo);
 
-// Configurar cliente (usando sandbox)
+// Configurar cliente (usando development)
 console.log('\n🚀 Criando cliente NFE.io...');
 const nfe = createNfeClient({
   apiKey: 'sua-api-key-aqui',
-  environment: 'sandbox',
+  environment: 'development',
   timeout: 10000,
   retryConfig: {
     maxAttempts: 3,

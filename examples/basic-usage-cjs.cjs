@@ -25,11 +25,11 @@ async function demonstrateSDK() {
     const runtimeInfo = getRuntimeInfo();
     console.log(runtimeInfo);
 
-    // Configurar cliente (usando sandbox)
+    // Configurar cliente (usando development)
     console.log('\n🚀 Criando cliente NFE.io...');
     const nfe = createNfeClient({
       apiKey: 'sua-api-key-aqui',
-      environment: 'sandbox',
+      environment: 'development',
       timeout: 10000,
       retryConfig: {
         maxAttempts: 3,
@@ -50,7 +50,7 @@ async function demonstrateSDK() {
 
     // Exemplo de validação de dados (sem fazer chamada real)
     console.log('\n🔍 Exemplo de validação de dados:');
-    
+
     const exampleInvoiceData = {
       cityServiceCode: '12345',
       description: 'Desenvolvimento de software personalizado',
@@ -68,9 +68,9 @@ async function demonstrateSDK() {
         }
       }
     };
-    
+
     console.log('Dados da nota fiscal:', JSON.stringify(exampleInvoiceData, null, 2));
-    
+
     console.log('\n📋 Fluxo típico de uma nota fiscal:');
     console.log('1. Criar nota: POST /companies/{id}/serviceinvoices');
     console.log('2. Receber 202 (processamento assíncrono)');
@@ -78,7 +78,7 @@ async function demonstrateSDK() {
     console.log('4. Baixar PDF/XML quando emitida');
 
     console.log('\n✨ Demonstração concluída com sucesso!');
-    
+
   } catch (error) {
     console.error('❌ Erro durante demonstração:', error.message);
   }

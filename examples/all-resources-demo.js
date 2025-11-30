@@ -9,7 +9,7 @@ async function demonstrateAllResources() {
   // Criar cliente
   const nfe = createNfeClient({
     apiKey: 'sua-api-key-aqui',
-    environment: 'sandbox'
+    environment: 'development'
   });
 
   console.log('🚀 NFE.io SDK v3 - Demonstração Completa\n');
@@ -20,7 +20,7 @@ async function demonstrateAllResources() {
     // ========================================================================
     console.log('1️⃣  COMPANIES - Gerenciamento de Empresas');
     console.log('─'.repeat(50));
-    
+
     // Listar empresas
     console.log('Listando empresas...');
     // const companies = await nfe.companies.list();
@@ -48,7 +48,7 @@ const company = await nfe.companies.create({
     // ========================================================================
     console.log('\n2️⃣  SERVICE INVOICES - Notas Fiscais de Serviço');
     console.log('─'.repeat(50));
-    
+
     console.log('Funcionalidades disponíveis:');
     console.log('✓ create() - Criar nota fiscal');
     console.log('✓ createAndWait() - Criar e aguardar processamento');
@@ -83,7 +83,7 @@ const invoice = await nfe.serviceInvoices.createAndWait(
     // ========================================================================
     console.log('\n3️⃣  LEGAL PEOPLE - Pessoas Jurídicas');
     console.log('─'.repeat(50));
-    
+
     console.log('Operações CRUD completas (scoped por company):');
     console.log('✓ list(companyId) - Listar');
     console.log('✓ create(companyId, data) - Criar');
@@ -108,7 +108,7 @@ const legalPerson = await nfe.legalPeople.create('company-id', {
     // ========================================================================
     console.log('\n4️⃣  NATURAL PEOPLE - Pessoas Físicas');
     console.log('─'.repeat(50));
-    
+
     console.log('Operações CRUD completas (scoped por company):');
     console.log('✓ list(companyId) - Listar');
     console.log('✓ create(companyId, data) - Criar');
@@ -133,7 +133,7 @@ const naturalPerson = await nfe.naturalPeople.create('company-id', {
     // ========================================================================
     console.log('\n5️⃣  WEBHOOKS - Notificações de Eventos');
     console.log('─'.repeat(50));
-    
+
     console.log('Funcionalidades:');
     console.log('✓ list(companyId) - Listar webhooks');
     console.log('✓ create(companyId, data) - Criar webhook');
@@ -159,17 +159,17 @@ const webhook = await nfe.webhooks.create('company-id', {
 app.post('/webhook/nfe', async (req, res) => {
   const signature = req.headers['x-nfe-signature'];
   const payload = JSON.stringify(req.body);
-  
+
   const isValid = nfe.webhooks.validateSignature(
     payload,
     signature,
     'sua-chave-secreta'
   );
-  
+
   if (!isValid) {
     return res.status(401).send('Invalid signature');
   }
-  
+
   // Processar evento...
 });
     `);
