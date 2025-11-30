@@ -19,7 +19,7 @@ describe('NfeClient Core', () => {
 
     client = new NfeClient({
       apiKey: 'test-key',
-      environment: 'sandbox'
+      environment: 'development'
     });
   });
 
@@ -27,7 +27,7 @@ describe('NfeClient Core', () => {
     expect(client).toBeInstanceOf(NfeClient);
     const config = client.getConfig();
     expect(config.apiKey).toBe('test-key');
-    expect(config.environment).toBe('sandbox');
+    expect(config.environment).toBe('development');
   });
 
   it('should throw error for invalid config', () => {
@@ -36,12 +36,18 @@ describe('NfeClient Core', () => {
     }).toThrow();
   });
 
-  it('should validate sandbox URLs', () => {
-    const sandboxClient = new NfeClient({
+  it('should use same URL for both environments', () => {
+    const productionClient = new NfeClient({
       apiKey: 'test',
-      environment: 'sandbox'
+      environment: 'production'
     });
-    expect(sandboxClient.getConfig().baseUrl).toContain('sandbox');
+    const developmentClient = new NfeClient({
+      apiKey: 'test',
+      environment: 'development'
+    });
+    // Both should use the same API endpoint
+    expect(productionClient.getConfig().baseUrl).toBe('https://api.nfe.io/v1');
+    expect(developmentClient.getConfig().baseUrl).toBe('https://api.nfe.io/v1');
   });
 });
 
@@ -74,7 +80,7 @@ describe('ServiceInvoices Resource', () => {
     global.fetch = vi.fn();
     client = new NfeClient({
       apiKey: 'test-key',
-      environment: 'sandbox'
+      environment: 'development'
     });
   });
 

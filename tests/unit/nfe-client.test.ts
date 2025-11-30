@@ -5,7 +5,7 @@ import { ConfigurationError } from '../../src/core/errors/index.js';
 describe('NfeClient', () => {
   const validConfig = {
     apiKey: 'test-api-key',
-    environment: 'sandbox' as const,
+    environment: 'development' as const,
   };
 
   describe('constructor', () => {
@@ -35,10 +35,10 @@ describe('NfeClient', () => {
       expect(client).toBeInstanceOf(NfeClient);
     });
 
-    it('should accept sandbox environment', () => {
+    it('should accept development environment', () => {
       const client = new NfeClient({
         apiKey: 'test-key',
-        environment: 'sandbox',
+        environment: 'development',
       });
 
       expect(client).toBeInstanceOf(NfeClient);
@@ -127,7 +127,7 @@ describe('NfeClient', () => {
     it('should accept custom base URL', () => {
       const client = new NfeClient({
         apiKey: 'test-api-key',
-        environment: 'sandbox',
+        environment: 'development',
         baseUrl: 'https://custom-api.example.com',
       });
       expect(client).toBeInstanceOf(NfeClient);

@@ -1,6 +1,6 @@
 /**
  * NFE.io SDK v3 - Core Types
- * 
+ *
  * TypeScript definitions for NFE.io API v1
  * Based on current v2 SDK and OpenAPI specs
  */
@@ -12,8 +12,8 @@
 export interface NfeConfig {
   /** NFE.io API Key (required) */
   apiKey: string;
-  /** Environment to use */
-  environment?: 'production' | 'sandbox';
+  /** Environment to use (both use same endpoint, differentiated by API key) */
+  environment?: 'production' | 'development';
   /** Custom base URL (overrides environment) */
   baseUrl?: string;
   /** Request timeout in milliseconds */
@@ -273,7 +273,7 @@ export interface Webhook {
 export type WebhookEvent = 'invoice.created' | 'invoice.issued' | 'invoice.cancelled' | 'invoice.failed';
 
 // ============================================================================
-// API Response Types  
+// API Response Types
 // ============================================================================
 
 export interface ListResponse<T> {
