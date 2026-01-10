@@ -1,11 +1,11 @@
 {
-  "name": "@nfe-io/sdk",
+  "name": "nfe-io",
   "version": "3.0.0-beta.1",
   "description": "Official NFE.io SDK for Node.js 18+ - TypeScript native with zero runtime dependencies",
   "keywords": ["nfe", "nfse", "nota-fiscal", "invoice", "brazil", "typescript"],
   "author": {
     "name": "NFE.io Team",
-    "email": "dev@nfe.io"
+    "email": "hackers@nfe.io"
   },
   "license": "MIT",
   "repository": {

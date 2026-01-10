@@ -37,7 +37,12 @@
   ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "npm run clean && npm run typecheck && tsup",
+    "download:spec": "tsx scripts/download-openapi.ts",
+    "generate": "tsx scripts/generate-types.ts",
+    "generate:watch": "tsx watch scripts/generate-types.ts",
+    "validate:spec": "tsx scripts/validate-spec.ts",
+    "build": "npm run generate && npm run clean && npm run typecheck && tsup",
+    "prebuild": "npm run validate:spec",
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts --fix",
@@ -69,6 +74,7 @@
     "tsx": "^4.7.0",
     "typedoc": "^0.25.0",
     "typescript": "^5.3.0",
-    "vitest": "^1.0.0"
+    "vitest": "^1.0.0",
+    "yaml": "^2.3.4"
   }
 }
