@@ -87,7 +87,7 @@ describe('ServiceInvoices Resource', () => {
   it('should create service invoice', async () => {
     const mockResponse = {
       id: '123',
-      status: 'processing',
+      flowStatus: 'WaitingSend',
       _links: {
         self: { href: '/invoices/123' }
       }
@@ -109,18 +109,18 @@ describe('ServiceInvoices Resource', () => {
     });
 
     expect(invoice.id).toBe('123');
-    expect(invoice.status).toBe('processing');
+    expect(invoice.flowStatus).toBe('WaitingSend');
   });
 
   it('should handle async polling', async () => {
     const mockPendingResponse = {
       id: '123',
-      status: 'processing'
+      flowStatus: 'WaitingSend'
     };
 
     const mockCompletedResponse = {
       id: '123',
-      status: 'issued',
+      flowStatus: 'Issued',
       rpsNumber: 1001
     };
 
@@ -147,7 +147,7 @@ describe('ServiceInvoices Resource', () => {
       { maxAttempts: 2, interval: 100 }
     );
 
-    expect(invoice.status).toBe('issued');
+    expect(invoice.flowStatus).toBe('Issued');
     expect(invoice.rpsNumber).toBe(1001);
   });
 });

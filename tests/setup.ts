@@ -32,14 +32,16 @@ export const TEST_PERSON_ID = 'test-person-id';
 export const createMockCompany = (overrides = {}) => ({
   id: TEST_COMPANY_ID,
   name: 'Test Company',
+  tradeName: 'Test Company Ltd',
   federalTaxNumber: 12345678000190,
   email: 'test@example.com',
-  taxRegime: 1 as const,
+  taxRegime: 'SimplesNacional' as const,
   address: {
     country: 'BRA',
     postalCode: '01310-100',
     street: 'Av. Paulista',
     number: '1578',
+    district: 'Bela Vista',
     city: { code: '3550308', name: 'São Paulo' },
     state: 'SP',
   },
@@ -48,9 +50,9 @@ export const createMockCompany = (overrides = {}) => ({
 
 export const createMockInvoice = (overrides = {}) => ({
   id: TEST_INVOICE_ID,
-  companyId: TEST_COMPANY_ID,
-  number: '12345',
-  status: 'issued' as const,
+  environment: 'Production' as const,
+  flowStatus: 'Issued' as const,
+  flowMessage: undefined,
   description: 'Test service description',
   createdOn: '2024-01-01T00:00:00Z',
   borrower: {
@@ -86,6 +88,7 @@ export const createMockWebhook = (overrides: Partial<Webhook> = {}): Webhook => 
 export const createMockLegalPerson = (overrides = {}) => ({
   id: TEST_PERSON_ID,
   name: 'Legal Person Company',
+  tradeName: 'Legal Person Ltd',
   federalTaxNumber: 12345678000190,
   email: 'legal@example.com',
   address: {
@@ -93,6 +96,7 @@ export const createMockLegalPerson = (overrides = {}) => ({
     postalCode: '01310-100',
     street: 'Av. Paulista',
     number: '2000',
+    district: 'Bela Vista',
     city: { code: '3550308', name: 'São Paulo' },
     state: 'SP',
   },

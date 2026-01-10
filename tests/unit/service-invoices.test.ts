@@ -130,7 +130,7 @@ describe('ServiceInvoicesResource', () => {
 
   describe('cancel', () => {
     it('should cancel a service invoice', async () => {
-      const cancelledInvoice = createMockInvoice({ status: 'cancelled' });
+      const cancelledInvoice = createMockInvoice({ flowStatus: 'Cancelled' });
       const mockResponse: HttpResponse<ServiceInvoice> = {
         data: cancelledInvoice,
         status: 200,
@@ -143,7 +143,7 @@ describe('ServiceInvoicesResource', () => {
       expect(mockHttpClient.delete).toHaveBeenCalledWith(
         `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`
       );
-      expect(result.status).toBe('cancelled');
+      expect(result.flowStatus).toBe('Cancelled');
     });
   });
 
@@ -251,7 +251,7 @@ describe('ServiceInvoicesResource', () => {
 
   describe('createAndWait', () => {
     it('should handle synchronous response (201) without polling', async () => {
-      const mockInvoice = createMockInvoice({ status: 'issued' });
+      const mockInvoice = createMockInvoice({ flowStatus: 'Issued' });
       const mockResponse: HttpResponse<ServiceInvoice> = {
         data: mockInvoice,
         status: 201,
@@ -271,7 +271,7 @@ describe('ServiceInvoicesResource', () => {
       expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
       expect(mockHttpClient.get).not.toHaveBeenCalled();
       expect(result).toEqual(mockInvoice);
-      expect(result.status).toBe('issued');
+      expect(result.flowStatus).toBe('Issued');
     });
 
     it('should poll until completion for async response (202)', async () => {
@@ -280,8 +280,8 @@ describe('ServiceInvoicesResource', () => {
         status: 'pending',
         location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
       };
-      const pendingInvoice = createMockInvoice({ status: 'processing' });
-      const completedInvoice = createMockInvoice({ status: 'issued' });
+      const pendingInvoice = createMockInvoice({ flowStatus: 'WaitingSend' });
+      const completedInvoice = createMockInvoice({ flowStatus: 'Issued' });
 
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         data: asyncResponse,
@@ -307,7 +307,7 @@ describe('ServiceInvoicesResource', () => {
       expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
       expect(mockHttpClient.get).toHaveBeenCalledTimes(2);
       expect(result).toEqual(completedInvoice);
-      expect(result.status).toBe('issued');
+      expect(result.flowStatus).toBe('Issued');
     });
 
     it('should throw InvoiceProcessingError on polling timeout', async () => {
@@ -316,7 +316,7 @@ describe('ServiceInvoicesResource', () => {
         status: 'pending',
         location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
       };
-      const pendingInvoice = createMockInvoice({ status: 'processing' });
+      const pendingInvoice = createMockInvoice({ flowStatus: 'WaitingSend' });
 
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         data: asyncResponse,
@@ -351,7 +351,7 @@ describe('ServiceInvoicesResource', () => {
         status: 'pending',
         location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
       };
-      const failedInvoice = createMockInvoice({ status: 'failed' });
+      const failedInvoice = createMockInvoice({ flowStatus: 'IssueFailed' });
 
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         data: asyncResponse,
@@ -408,7 +408,7 @@ describe('ServiceInvoicesResource', () => {
         status: 'pending',
         location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
       };
-      const completedInvoice = createMockInvoice({ status: 'issued' });
+      const completedInvoice = createMockInvoice({ flowStatus: 'Issued' });
 
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         data: asyncResponse,
@@ -468,7 +468,7 @@ describe('ServiceInvoicesResource', () => {
         status: 'pending',
         location: `https://api.nfe.io/v1/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
       };
-      const completedInvoice = createMockInvoice({ status: 'issued' });
+      const completedInvoice = createMockInvoice({ flowStatus: 'Issued' });
 
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         data: asyncResponse,
@@ -505,7 +505,7 @@ describe('ServiceInvoicesResource', () => {
         status: 'pending',
         location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`,
       };
-      const pendingInvoice = createMockInvoice({ status: 'processing' });
+      const pendingInvoice = createMockInvoice({ flowStatus: 'WaitingSend' });
 
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         data: asyncResponse,
@@ -542,7 +542,7 @@ describe('ServiceInvoicesResource', () => {
 
   describe('getStatus', () => {
     it('should return invoice status with completion flags', async () => {
-      const mockInvoice = createMockInvoice({ status: 'issued' });
+      const mockInvoice = createMockInvoice({ flowStatus: 'Issued' });
       vi.mocked(mockHttpClient.get).mockResolvedValue({
         data: mockInvoice,
         status: 200,
@@ -551,14 +551,14 @@ describe('ServiceInvoicesResource', () => {
 
       const result = await serviceInvoices.getStatus(TEST_COMPANY_ID, TEST_INVOICE_ID);
 
-      expect(result.status).toBe('issued');
+      expect(result.status).toBe('Issued');
       expect(result.invoice).toEqual(mockInvoice);
       expect(result.isComplete).toBe(true);
       expect(result.isFailed).toBe(false);
     });
 
     it('should recognize failed status', async () => {
-      const mockInvoice = createMockInvoice({ status: 'failed' });
+      const mockInvoice = createMockInvoice({ flowStatus: 'IssueFailed' });
       vi.mocked(mockHttpClient.get).mockResolvedValue({
         data: mockInvoice,
         status: 200,
@@ -572,7 +572,7 @@ describe('ServiceInvoicesResource', () => {
     });
 
     it('should recognize cancelled status as failed', async () => {
-      const mockInvoice = createMockInvoice({ status: 'cancelled' });
+      const mockInvoice = createMockInvoice({ flowStatus: 'CancelFailed' });
       vi.mocked(mockHttpClient.get).mockResolvedValue({
         data: mockInvoice,
         status: 200,
@@ -606,7 +606,7 @@ describe('ServiceInvoicesResource', () => {
     });
 
     it('should create multiple invoices and wait for completion', async () => {
-      const mockInvoice = createMockInvoice({ status: 'issued' });
+      const mockInvoice = createMockInvoice({ flowStatus: 'Issued' });
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         data: mockInvoice,
         status: 201,
@@ -623,7 +623,7 @@ describe('ServiceInvoicesResource', () => {
       });
 
       expect(results).toHaveLength(2);
-      expect(results.every(r => 'status' in r && r.status === 'issued')).toBe(true);
+      expect(results.every(r => 'flowStatus' in r && r.flowStatus === 'Issued')).toBe(true);
     });
 
     it('should respect maxConcurrent option', async () => {

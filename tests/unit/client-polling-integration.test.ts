@@ -27,13 +27,13 @@ describe('Client Polling Integration', () => {
       };
 
       const pendingInvoice = createMockInvoice({
-        status: 'processing',
-        number: undefined as any, // Not yet issued
+        flowStatus: 'WaitingSend',
+        rpsNumber: undefined as any, // Not yet issued
       });
 
       const issuedInvoice = createMockInvoice({
-        status: 'issued',
-        number: '12345',
+        flowStatus: 'Issued',
+        rpsNumber: 54321,
       });
 
       // Mock the creation request (202 response)
@@ -62,16 +62,16 @@ describe('Client Polling Integration', () => {
         { maxAttempts: 10, intervalMs: 10 }
       );
 
-      expect(result.status).toBe('issued');
-      expect(result.number).toBe('12345');
+      expect(result.flowStatus).toBe('Issued');
+      expect(result.rpsNumber).toBe(54321);
       expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
       expect(mockHttpClient.get).toHaveBeenCalledTimes(3);
     });
 
     it('should handle immediate completion (201 response)', async () => {
       const completedInvoice = createMockInvoice({
-        status: 'issued',
-        number: '67890',
+        flowStatus: 'Issued',
+        rpsNumber: 67890,
       });
 
       vi.spyOn(mockHttpClient, 'post').mockResolvedValue({
@@ -94,8 +94,8 @@ describe('Client Polling Integration', () => {
         invoiceData
       );
 
-      expect(result.status).toBe('issued');
-      expect(result.number).toBe('67890');
+      expect(result.flowStatus).toBe('Issued');
+      expect(result.rpsNumber).toBe(67890);
       expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
       expect(getSpy).not.toHaveBeenCalled(); // No polling needed
     });
@@ -108,10 +108,10 @@ describe('Client Polling Integration', () => {
       };
 
       const stages = [
-        createMockInvoice({ status: 'pending' }),
-        createMockInvoice({ status: 'processing' }),
-        createMockInvoice({ status: 'authorized' }),
-        createMockInvoice({ status: 'issued', number: '54321' }),
+        createMockInvoice({ flowStatus: 'WaitingCalculateTaxes' }),
+        createMockInvoice({ flowStatus: 'WaitingDefineRpsNumber' }),
+        createMockInvoice({ flowStatus: 'WaitingSend' }),
+        createMockInvoice({ flowStatus: 'Issued', rpsNumber: 54321 }),
       ];
 
       vi.spyOn(mockHttpClient, 'post').mockResolvedValue({
@@ -138,8 +138,8 @@ describe('Client Polling Integration', () => {
         { maxAttempts: 10, intervalMs: 10 }
       );
 
-      expect(result.status).toBe('issued');
-      expect(result.number).toBe('54321');
+      expect(result.flowStatus).toBe('Issued');
+      expect(result.rpsNumber).toBe(54321);
       expect(getSpy).toHaveBeenCalledTimes(4);
     });
 
@@ -150,8 +150,8 @@ describe('Client Polling Integration', () => {
         location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/test-invoice-id`,
       };
 
-      const pendingInvoice = createMockInvoice({ status: 'processing' });
-      const issuedInvoice = createMockInvoice({ status: 'issued', number: '11111' });
+      const pendingInvoice = createMockInvoice({ flowStatus: 'WaitingSend' });
+      const issuedInvoice = createMockInvoice({ flowStatus: 'Issued', rpsNumber: 11111 });
 
       vi.spyOn(mockHttpClient, 'post').mockResolvedValue({
         data: asyncResponse,
@@ -178,8 +178,8 @@ describe('Client Polling Integration', () => {
         { maxAttempts: 10, intervalMs: 10 }
       );
 
-      expect(result.status).toBe('issued');
-      expect(result.number).toBe('11111');
+      expect(result.flowStatus).toBe('Issued');
+      expect(result.rpsNumber).toBe(11111);
     });
 
     it('should timeout when invoice never completes', async () => {
@@ -189,7 +189,7 @@ describe('Client Polling Integration', () => {
         location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/test-invoice-id`,
       };
 
-      const pendingInvoice = createMockInvoice({ status: 'processing' });
+      const pendingInvoice = createMockInvoice({ flowStatus: 'WaitingSend' });
 
       vi.spyOn(mockHttpClient, 'post').mockResolvedValue({
         data: asyncResponse,
@@ -226,7 +226,7 @@ describe('Client Polling Integration', () => {
         location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/test-invoice-id`,
       };
 
-      const failedInvoice = createMockInvoice({ status: 'failed' });
+      const failedInvoice = createMockInvoice({ flowStatus: 'IssueFailed' });
 
       vi.spyOn(mockHttpClient, 'post').mockResolvedValue({
         data: asyncResponse,
@@ -314,10 +314,10 @@ describe('Client Polling Integration', () => {
 
       // Step 2: Poll for completion (realistic timing)
       const invoiceStates = [
-        createMockInvoice({ status: 'pending', id: 'nfe-12345' }),
-        createMockInvoice({ status: 'processing', id: 'nfe-12345' }),
-        createMockInvoice({ status: 'processing', id: 'nfe-12345' }),
-        createMockInvoice({ status: 'issued', id: 'nfe-12345', number: 'NFE-2024-001' }),
+        createMockInvoice({ flowStatus: 'WaitingCalculateTaxes', id: 'nfe-12345' }),
+        createMockInvoice({ flowStatus: 'WaitingDefineRpsNumber', id: 'nfe-12345' }),
+        createMockInvoice({ flowStatus: 'WaitingSend', id: 'nfe-12345' }),
+        createMockInvoice({ flowStatus: 'Issued', id: 'nfe-12345', rpsNumber: 2024001 }),
       ];
 
       const getSpy = vi.spyOn(mockHttpClient, 'get');
@@ -352,8 +352,8 @@ describe('Client Polling Integration', () => {
         { maxAttempts: 30, intervalMs: 10 }
       );
 
-      expect(result.status).toBe('issued');
-      expect(result.number).toBe('NFE-2024-001');
+      expect(result.flowStatus).toBe('Issued');
+      expect(result.rpsNumber).toBe(2024001);
       expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
       expect(getSpy).toHaveBeenCalledTimes(4);
     }, 10000);
@@ -392,8 +392,8 @@ describe('Client Polling Integration', () => {
         return {
           data: createMockInvoice({
             id: invoice?.id,
-            status: isFirstCall ? 'processing' : 'issued',
-            number: isFirstCall ? undefined : invoice?.number,
+            flowStatus: isFirstCall ? 'WaitingSend' : 'Issued',
+            rpsNumber: isFirstCall ? undefined : parseInt(invoice?.number.split('-')[1] || '0'),
           }),
           status: 200,
           headers: {},
@@ -415,8 +415,8 @@ describe('Client Polling Integration', () => {
       ]);
 
       expect(results).toHaveLength(3);
-      expect(results.every(r => r.status === 'issued')).toBe(true);
-      expect(results.map(r => r.number).sort()).toEqual(['NFE-001', 'NFE-002', 'NFE-003']);
+      expect(results.every(r => r.flowStatus === 'Issued')).toBe(true);
+      expect(results.map(r => r.rpsNumber).sort()).toEqual([1, 2, 3]);
     });
   });
 
@@ -456,9 +456,9 @@ describe('Client Polling Integration', () => {
       // Invoice without explicit status but with id and number (NFE.io pattern)
       const completedInvoice = {
         ...createMockInvoice(),
-        status: 'issued', // NFE.io always returns status when complete
+        flowStatus: 'Issued', // NFE.io always returns status when complete
         id: 'test-invoice-id',
-        number: '99999',
+        rpsNumber: 99999,
       };
 
       vi.spyOn(mockHttpClient, 'post').mockResolvedValue({
@@ -487,7 +487,7 @@ describe('Client Polling Integration', () => {
       );
 
       expect(result.id).toBe('test-invoice-id');
-      expect(result.number).toBe('99999');
+      expect(result.rpsNumber).toBe(99999);
     }, 10000);
   });
 });
