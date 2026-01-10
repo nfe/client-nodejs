@@ -1,14 +1,14 @@
 /**
  * NFE.io SDK v3 - Service Invoices Resource
- * 
+ *
  * Handles service invoice operations (NFS-e)
  * This is the core functionality of NFE.io API
  */
 
-import type { 
-  ServiceInvoice, 
-  ServiceInvoiceData, 
-  ListResponse, 
+import type {
+  ServiceInvoice,
+  ServiceInvoiceData,
+  ListResponse,
   PaginationOptions,
   AsyncResponse
 } from '../types.js';
@@ -31,12 +31,12 @@ export class ServiceInvoicesResource {
    * Returns 202 + location for async processing (NFE.io pattern)
    */
   async create(
-    companyId: string, 
+    companyId: string,
     data: ServiceInvoiceData
   ): Promise<ServiceInvoice | AsyncResponse> {
     const path = `/companies/${companyId}/serviceinvoices`;
     const response = await this.http.post<ServiceInvoice | AsyncResponse>(path, data);
-    
+
     return response.data;
   }
 
@@ -44,12 +44,12 @@ export class ServiceInvoicesResource {
    * List service invoices for a company
    */
   async list(
-    companyId: string, 
+    companyId: string,
     options: PaginationOptions = {}
   ): Promise<ListResponse<ServiceInvoice>> {
     const path = `/companies/${companyId}/serviceinvoices`;
     const response = await this.http.get<ListResponse<ServiceInvoice>>(path, options);
-    
+
     return response.data;
   }
 
@@ -59,7 +59,7 @@ export class ServiceInvoicesResource {
   async retrieve(companyId: string, invoiceId: string): Promise<ServiceInvoice> {
     const path = `/companies/${companyId}/serviceinvoices/${invoiceId}`;
     const response = await this.http.get<ServiceInvoice>(path);
-    
+
     return response.data;
   }
 
@@ -69,7 +69,7 @@ export class ServiceInvoicesResource {
   async cancel(companyId: string, invoiceId: string): Promise<ServiceInvoice> {
     const path = `/companies/${companyId}/serviceinvoices/${invoiceId}`;
     const response = await this.http.delete<ServiceInvoice>(path);
-    
+
     return response.data;
   }
 
@@ -83,7 +83,7 @@ export class ServiceInvoicesResource {
   async sendEmail(companyId: string, invoiceId: string): Promise<{ sent: boolean; message?: string }> {
     const path = `/companies/${companyId}/serviceinvoices/${invoiceId}/sendemail`;
     const response = await this.http.put<{ sent: boolean; message?: string }>(path);
-    
+
     return response.data;
   }
 
@@ -96,14 +96,14 @@ export class ServiceInvoicesResource {
    */
   async downloadPdf(companyId: string, invoiceId?: string): Promise<any> {
     let path: string;
-    
+
     if (invoiceId) {
       path = `/companies/${companyId}/serviceinvoices/${invoiceId}/pdf`;
     } else {
       // Bulk download for company
       path = `/companies/${companyId}/serviceinvoices/pdf`;
     }
-    
+
     const response = await this.http.get<any>(path);
     return response.data;
   }
@@ -113,14 +113,14 @@ export class ServiceInvoicesResource {
    */
   async downloadXml(companyId: string, invoiceId?: string): Promise<any> {
     let path: string;
-    
+
     if (invoiceId) {
       path = `/companies/${companyId}/serviceinvoices/${invoiceId}/xml`;
     } else {
       // Bulk download for company
       path = `/companies/${companyId}/serviceinvoices/xml`;
     }
-    
+
     const response = await this.http.get<any>(path);
     return response.data;
   }
@@ -133,24 +133,24 @@ export class ServiceInvoicesResource {
    * Create invoice and wait for completion (handles async processing)
    */
   async createAndWait(
-    companyId: string, 
+    companyId: string,
     data: ServiceInvoiceData,
-    options: { 
-      maxAttempts?: number; 
-      intervalMs?: number; 
-      timeoutMs?: number 
+    options: {
+      maxAttempts?: number;
+      intervalMs?: number;
+      timeoutMs?: number
     } = {}
   ): Promise<ServiceInvoice> {
     const { maxAttempts = 30, intervalMs = 2000, timeoutMs = 60000 } = options;
-    
+
     // Create invoice
     const createResult = await this.create(companyId, data);
-    
+
     // If synchronous response (unusual for NFE.io), return immediately
     if ('id' in createResult && createResult.id) {
       return createResult as ServiceInvoice;
     }
-    
+
     // Handle async response (202 + location)
     const asyncResult = createResult as AsyncResponse;
     if (asyncResult.code !== 202 || !asyncResult.location) {
@@ -159,7 +159,7 @@ export class ServiceInvoicesResource {
         createResult
       );
     }
-    
+
     // Poll for completion using the injected polling logic
     return this.pollInvoiceCompletion(asyncResult.location, {
       maxAttempts,
@@ -178,12 +178,13 @@ export class ServiceInvoicesResource {
     isFailed: boolean;
   }> {
     const invoice = await this.retrieve(companyId, invoiceId);
-    
+    const status = invoice.flowStatus ?? 'unknown';
+
     return {
-      status: invoice.status,
+      status,
       invoice,
-      isComplete: ['issued', 'completed'].includes(invoice.status),
-      isFailed: ['failed', 'cancelled', 'error'].includes(invoice.status),
+      isComplete: ['Issued'].includes(status),
+      isFailed: ['CancelFailed', 'IssueFailed'].includes(status),
     };
   }
 
@@ -193,19 +194,19 @@ export class ServiceInvoicesResource {
   async createBatch(
     companyId: string,
     invoices: ServiceInvoiceData[],
-    options: { 
+    options: {
       waitForCompletion?: boolean;
       maxConcurrent?: number;
     } = {}
   ): Promise<Array<ServiceInvoice | AsyncResponse>> {
     const { waitForCompletion = false, maxConcurrent = 5 } = options;
-    
+
     // Process in batches to avoid overwhelming the API
     const results: Array<ServiceInvoice | AsyncResponse> = [];
-    
+
     for (let i = 0; i < invoices.length; i += maxConcurrent) {
       const batch = invoices.slice(i, i + maxConcurrent);
-      
+
       const batchPromises = batch.map(async (invoiceData) => {
         if (waitForCompletion) {
           return this.createAndWait(companyId, invoiceData);
@@ -213,11 +214,11 @@ export class ServiceInvoicesResource {
           return this.create(companyId, invoiceData);
         }
       });
-      
+
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
     }
-    
+
     return results;
   }
 
@@ -231,7 +232,7 @@ export class ServiceInvoicesResource {
   ): Promise<ServiceInvoice> {
     const { maxAttempts, intervalMs, timeoutMs } = options;
     const startTime = Date.now();
-    
+
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       // Check timeout
       if (Date.now() - startTime > timeoutMs) {
@@ -240,23 +241,23 @@ export class ServiceInvoicesResource {
           { locationUrl, attempt, timeoutMs }
         );
       }
-      
+
       // Wait before polling (except first attempt)
       if (attempt > 0) {
         await this.sleep(intervalMs);
       }
-      
+
       try {
         // Extract path from location URL
         const path = this.extractPathFromLocationUrl(locationUrl);
         const response = await this.http.get<ServiceInvoice>(path);
         const invoice = response.data;
-        
+
         // Check if processing is complete
         if (this.isInvoiceComplete(invoice)) {
           return invoice;
         }
-        
+
         // Check if processing failed
         if (this.isInvoiceFailed(invoice)) {
           throw new InvoiceProcessingError(
@@ -264,9 +265,9 @@ export class ServiceInvoicesResource {
             invoice
           );
         }
-        
+
         // Continue polling
-        
+
       } catch (error) {
         // If it's the last attempt, throw the error
         if (attempt === maxAttempts - 1) {
@@ -275,11 +276,11 @@ export class ServiceInvoicesResource {
             { error, locationUrl, attempt }
           );
         }
-        
+
         // For other attempts, continue (might be temporary issue)
       }
     }
-    
+
     throw new InvoiceProcessingError(
       `Invoice processing timeout after ${maxAttempts} polling attempts`,
       { locationUrl, maxAttempts, intervalMs }
@@ -297,11 +298,13 @@ export class ServiceInvoicesResource {
   }
 
   private isInvoiceComplete(invoice: ServiceInvoice): boolean {
-    return ['issued', 'completed'].includes(invoice.status);
+    const status = invoice.flowStatus;
+    return status === 'Issued';
   }
 
   private isInvoiceFailed(invoice: ServiceInvoice): boolean {
-    return ['failed', 'cancelled', 'error'].includes(invoice.status);
+    const status = invoice.flowStatus;
+    return status === 'CancelFailed' || status === 'IssueFailed';
   }
 
   private sleep(ms: number): Promise<void> {

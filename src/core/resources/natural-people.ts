@@ -4,7 +4,7 @@
  */
 
 import type { HttpClient } from '../http/client.js';
-import type { NaturalPerson, ListResponse, ResourceId } from '../types.js';
+import type { NaturalPerson, ListNaturalPeopleResponse, ResourceId } from '../types.js';
 
 /**
  * NaturalPeople resource for managing natural persons (pessoas físicas)
@@ -15,30 +15,30 @@ export class NaturalPeopleResource {
 
   /**
    * List all natural people for a company
-   * 
+   *
    * @param companyId - Company ID
    * @returns List of natural people
-   * 
+   *
    * @example
    * ```typescript
    * const result = await nfe.naturalPeople.list('company-id');
    * console.log(`Found ${result.data.length} natural persons`);
    * ```
    */
-  async list(companyId: ResourceId): Promise<ListResponse<NaturalPerson>> {
+  async list(companyId: ResourceId): Promise<ListNaturalPeopleResponse> {
     const path = `/companies/${companyId}/naturalpeople`;
-    const response = await this.http.get<ListResponse<NaturalPerson>>(path);
-    
+    const response = await this.http.get<ListNaturalPeopleResponse>(path);
+
     return response.data;
   }
 
   /**
    * Create a new natural person
-   * 
+   *
    * @param companyId - Company ID
    * @param data - Natural person data
    * @returns Created natural person
-   * 
+   *
    * @example
    * ```typescript
    * const naturalPerson = await nfe.naturalPeople.create('company-id', {
@@ -61,17 +61,17 @@ export class NaturalPeopleResource {
   ): Promise<NaturalPerson> {
     const path = `/companies/${companyId}/naturalpeople`;
     const response = await this.http.post<NaturalPerson>(path, data);
-    
+
     return response.data;
   }
 
   /**
    * Retrieve a specific natural person
-   * 
+   *
    * @param companyId - Company ID
    * @param naturalPersonId - Natural person ID
    * @returns Natural person details
-   * 
+   *
    * @example
    * ```typescript
    * const naturalPerson = await nfe.naturalPeople.retrieve(
@@ -87,18 +87,18 @@ export class NaturalPeopleResource {
   ): Promise<NaturalPerson> {
     const path = `/companies/${companyId}/naturalpeople/${naturalPersonId}`;
     const response = await this.http.get<NaturalPerson>(path);
-    
+
     return response.data;
   }
 
   /**
    * Update a natural person
-   * 
+   *
    * @param companyId - Company ID
    * @param naturalPersonId - Natural person ID
    * @param data - Data to update
    * @returns Updated natural person
-   * 
+   *
    * @example
    * ```typescript
    * const updated = await nfe.naturalPeople.update(
@@ -115,16 +115,16 @@ export class NaturalPeopleResource {
   ): Promise<NaturalPerson> {
     const path = `/companies/${companyId}/naturalpeople/${naturalPersonId}`;
     const response = await this.http.put<NaturalPerson>(path, data);
-    
+
     return response.data;
   }
 
   /**
    * Delete a natural person
-   * 
+   *
    * @param companyId - Company ID
    * @param naturalPersonId - Natural person ID
-   * 
+   *
    * @example
    * ```typescript
    * await nfe.naturalPeople.delete('company-id', 'natural-person-id');
@@ -140,11 +140,11 @@ export class NaturalPeopleResource {
 
   /**
    * Create multiple natural people in batch
-   * 
+   *
    * @param companyId - Company ID
    * @param data - Array of natural people data
    * @returns Array of created natural people
-   * 
+   *
    * @example
    * ```typescript
    * const created = await nfe.naturalPeople.createBatch('company-id', [
@@ -163,11 +163,11 @@ export class NaturalPeopleResource {
 
   /**
    * Find natural person by federal tax number (CPF)
-   * 
+   *
    * @param companyId - Company ID
    * @param federalTaxNumber - CPF (only numbers)
    * @returns Natural person or undefined if not found
-   * 
+   *
    * @example
    * ```typescript
    * const person = await nfe.naturalPeople.findByTaxNumber(
@@ -184,8 +184,10 @@ export class NaturalPeopleResource {
     federalTaxNumber: string
   ): Promise<NaturalPerson | undefined> {
     const result = await this.list(companyId);
-    return result.data?.find(
-      (person: NaturalPerson) => 
+    const people = result.naturalPeople ?? [];
+
+    return people.find(
+      (person) =>
         person.federalTaxNumber?.toString() === federalTaxNumber
     );
   }

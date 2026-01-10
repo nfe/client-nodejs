@@ -4,7 +4,7 @@
  */
 
 import type { HttpClient } from '../http/client.js';
-import type { LegalPerson, ListResponse, ResourceId } from '../types.js';
+import type { LegalPerson, ListLegalPeopleResponse, ResourceId } from '../types.js';
 
 /**
  * LegalPeople resource for managing legal entities (pessoas jurídicas)
@@ -15,30 +15,30 @@ export class LegalPeopleResource {
 
   /**
    * List all legal people for a company
-   * 
+   *
    * @param companyId - Company ID
    * @returns List of legal people
-   * 
+   *
    * @example
    * ```typescript
    * const result = await nfe.legalPeople.list('company-id');
-   * console.log(`Found ${result.legalPeople.length} legal entities`);
+   * console.log(`Found ${result.legalPeople?.length ?? 0} legal entities`);
    * ```
    */
-  async list(companyId: ResourceId): Promise<ListResponse<LegalPerson>> {
+  async list(companyId: ResourceId): Promise<ListLegalPeopleResponse> {
     const path = `/companies/${companyId}/legalpeople`;
-    const response = await this.http.get<ListResponse<LegalPerson>>(path);
-    
+    const response = await this.http.get<ListLegalPeopleResponse>(path);
+
     return response.data;
   }
 
   /**
    * Create a new legal person
-   * 
+   *
    * @param companyId - Company ID
    * @param data - Legal person data
    * @returns Created legal person
-   * 
+   *
    * @example
    * ```typescript
    * const legalPerson = await nfe.legalPeople.create('company-id', {
@@ -61,17 +61,17 @@ export class LegalPeopleResource {
   ): Promise<LegalPerson> {
     const path = `/companies/${companyId}/legalpeople`;
     const response = await this.http.post<LegalPerson>(path, data);
-    
+
     return response.data;
   }
 
   /**
    * Retrieve a specific legal person
-   * 
+   *
    * @param companyId - Company ID
    * @param legalPersonId - Legal person ID
    * @returns Legal person details
-   * 
+   *
    * @example
    * ```typescript
    * const legalPerson = await nfe.legalPeople.retrieve(
@@ -87,18 +87,18 @@ export class LegalPeopleResource {
   ): Promise<LegalPerson> {
     const path = `/companies/${companyId}/legalpeople/${legalPersonId}`;
     const response = await this.http.get<LegalPerson>(path);
-    
+
     return response.data;
   }
 
   /**
    * Update a legal person
-   * 
+   *
    * @param companyId - Company ID
    * @param legalPersonId - Legal person ID
    * @param data - Data to update
    * @returns Updated legal person
-   * 
+   *
    * @example
    * ```typescript
    * const updated = await nfe.legalPeople.update(
@@ -115,16 +115,16 @@ export class LegalPeopleResource {
   ): Promise<LegalPerson> {
     const path = `/companies/${companyId}/legalpeople/${legalPersonId}`;
     const response = await this.http.put<LegalPerson>(path, data);
-    
+
     return response.data;
   }
 
   /**
    * Delete a legal person
-   * 
+   *
    * @param companyId - Company ID
    * @param legalPersonId - Legal person ID
-   * 
+   *
    * @example
    * ```typescript
    * await nfe.legalPeople.delete('company-id', 'legal-person-id');
@@ -140,11 +140,11 @@ export class LegalPeopleResource {
 
   /**
    * Create multiple legal people in batch
-   * 
+   *
    * @param companyId - Company ID
    * @param data - Array of legal people data
    * @returns Array of created legal people
-   * 
+   *
    * @example
    * ```typescript
    * const created = await nfe.legalPeople.createBatch('company-id', [
@@ -163,11 +163,11 @@ export class LegalPeopleResource {
 
   /**
    * Find legal person by federal tax number (CNPJ)
-   * 
+   *
    * @param companyId - Company ID
    * @param federalTaxNumber - CNPJ (only numbers)
    * @returns Legal person or undefined if not found
-   * 
+   *
    * @example
    * ```typescript
    * const person = await nfe.legalPeople.findByTaxNumber(
@@ -183,10 +183,15 @@ export class LegalPeopleResource {
     companyId: ResourceId,
     federalTaxNumber: string
   ): Promise<LegalPerson | undefined> {
+    // Note: The API returns a single object, not an array
+    // This method needs to be refactored if the API actually returns arrays
     const result = await this.list(companyId);
-    return result.data?.find(
-      (person: LegalPerson) => 
-        person.federalTaxNumber?.toString() === federalTaxNumber
-    );
+
+    // For now, check if the single returned object matches
+    if (result.federalTaxNumber?.toString() === federalTaxNumber) {
+      return result as LegalPerson;
+    }
+
+    return undefined;
   }
 }

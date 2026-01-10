@@ -2,12 +2,50 @@
  * NFE.io SDK v3 - Core Types
  *
  * TypeScript definitions for NFE.io API v1
- * Based on current v2 SDK and OpenAPI specs
+ *
+ * This file re-exports generated types and adds SDK-specific types
+ * for configuration, HTTP client, and high-level operations.
  */
 
 // ============================================================================
-// Configuration Types
+// Generated Types (from OpenAPI specs)
 // ============================================================================
+
+// Import to use in type computations below
+import type {
+  CreateServiceInvoiceRequest,
+  GetServiceInvoiceResponse,
+} from '../generated/index.js';
+
+export type {
+  // Service Invoice types
+  CreateServiceInvoiceRequest as ServiceInvoiceData,
+  CreateServiceInvoiceResponse,
+  GetServiceInvoiceResponse as ServiceInvoice,
+  ListServiceInvoicesResponse,
+  ListServiceInvoicesParams,
+
+  // Company types
+  Company,
+  CreateCompanyRequest as CompanyData,
+  GetCompanyResponse,
+  ListCompaniesResponse,
+
+  // People types
+  LegalPerson,
+  GetLegalPersonResponse,
+  ListLegalPeopleResponse,
+  NaturalPerson,
+  GetNaturalPersonResponse,
+  ListNaturalPeopleResponse,
+} from '../generated/index.js';
+
+// ============================================================================
+// SDK-Specific Types (not in generated code)
+// ============================================================================
+
+// Configuration Types
+// ----------------------------------------------------------------------------
 
 export interface NfeConfig {
   /** NFE.io API Key (required) */
@@ -33,9 +71,8 @@ export interface RetryConfig {
   backoffMultiplier?: number;
 }
 
-// ============================================================================
 // HTTP Types
-// ============================================================================
+// ----------------------------------------------------------------------------
 
 export interface HttpConfig {
   baseUrl: string;
@@ -56,198 +93,45 @@ export interface AsyncResponse {
   location: string;
 }
 
-// ============================================================================
-// Address Types
-// ============================================================================
+// Backward Compatibility Type Aliases
+// ----------------------------------------------------------------------------
 
-export interface Address {
-  /** Country code (always 'BRA' for Brazil) */
-  country: string;
-  /** Postal code (CEP) */
-  postalCode?: string;
-  /** Street address */
-  street: string;
-  /** Address number */
-  number?: string;
-  /** Additional information (complement) */
+/** Borrower/Tomador from ServiceInvoiceData */
+export type ServiceInvoiceBorrower = NonNullable<CreateServiceInvoiceRequest['borrower']>;
+
+/** Invoice status from API (flowStatus field) */
+export type ServiceInvoiceStatus = NonNullable<GetServiceInvoiceResponse['flowStatus']>;
+
+/** Additional invoice details (withholdings, deductions) */
+export type ServiceInvoiceDetails = {
+  issWithheld?: number;
+  pisWithheld?: number;
+  cofinsWithheld?: number;
+  csllWithheld?: number;
+  irrfWithheld?: number;
+  inssWithheld?: number;
+  deductions?: number;
   additionalInformation?: string;
-  /** District/neighborhood */
-  district?: string;
-  /** City information */
-  city?: City;
-  /** State abbreviation */
-  state?: string;
-}
+};
 
-export interface City {
-  /** IBGE city code */
-  code: string;
-  /** City name */
-  name: string;
-}
+/** Address type (for backward compatibility) */
+export type Address = NonNullable<ServiceInvoiceBorrower['address']>;
 
-// ============================================================================
-// Entity Types (Companies, People)
-// ============================================================================
+/** City type */
+export type City = NonNullable<Address['city']>;
 
-export type EntityType = 'NaturalPerson' | 'LegalEntity';
+// Entity Type Aliases (from generated enums)
+// ----------------------------------------------------------------------------
+
+export type EntityType = 'Undefined' | 'NaturalPerson' | 'LegalEntity';
 export type TaxRegime = 'Isento' | 'MicroempreendedorIndividual' | 'SimplesNacional' | 'LucroPresumido' | 'LucroReal';
 export type SpecialTaxRegime = 'Automatico' | 'Nenhum' | 'MicroempresaMunicipal' | 'Estimativa' | 'SociedadeDeProfissionais' | 'Cooperativa' | 'MicroempreendedorIndividual' | 'MicroempresarioEmpresaPequenoPorte';
 
-export interface Company {
-  /** Company ID */
-  id?: string;
-  /** Company name / Razão Social */
-  name: string;
-  /** Trade name / Nome fantasia */
-  tradeName?: string;
-  /** Federal tax number (CNPJ/CPF) */
-  federalTaxNumber: number;
-  /** Municipal tax number (CCM) */
-  municipalTaxNumber?: string;
-  /** Email address */
-  email?: string;
-  /** Opening date */
-  openingDate?: string;
-  /** Tax regime */
-  taxRegime: TaxRegime;
-  /** Special tax regime */
-  specialTaxRegime?: SpecialTaxRegime;
-  /** Legal nature */
-  legalNature?: string;
-  /** Company address */
-  address: Address;
-  /** Creation timestamp */
-  createdOn?: string;
-  /** Last update timestamp */
-  modifiedOn?: string;
-}
 
-export interface LegalPerson {
-  /** Person ID */
-  id?: string;
-  /** Company ID (scope) */
-  companyId?: string;
-  /** Company name / Razão Social */
-  name: string;
-  /** Trade name / Nome fantasia */
-  tradeName?: string;
-  /** Federal tax number (CNPJ) */
-  federalTaxNumber: number;
-  /** Municipal tax number */
-  municipalTaxNumber?: string;
-  /** Email address */
-  email?: string;
-  /** Address */
-  address: Address;
-  /** Creation timestamp */
-  createdOn?: string;
-  /** Last update timestamp */
-  modifiedOn?: string;
-}
 
-export interface NaturalPerson {
-  /** Person ID */
-  id?: string;
-  /** Company ID (scope) */
-  companyId?: string;
-  /** Full name */
-  name: string;
-  /** Federal tax number (CPF) */
-  federalTaxNumber: number;
-  /** Email address */
-  email?: string;
-  /** Address */
-  address: Address;
-  /** Creation timestamp */
-  createdOn?: string;
-  /** Last update timestamp */
-  modifiedOn?: string;
-}
 
-// ============================================================================
-// Service Invoice Types
-// ============================================================================
 
-export interface ServiceInvoiceData {
-  /** Municipal service code */
-  cityServiceCode: string;
-  /** Service description */
-  description: string;
-  /** Total services amount */
-  servicesAmount: number;
-  /** Borrower (recipient) information */
-  borrower: ServiceInvoiceBorrower;
-  /** Additional invoice details */
-  details?: ServiceInvoiceDetails;
-}
 
-export interface ServiceInvoiceBorrower {
-  /** Borrower type */
-  type: EntityType;
-  /** Federal tax number (CPF/CNPJ) */
-  federalTaxNumber: number;
-  /** Full name or company name */
-  name: string;
-  /** Email for invoice delivery */
-  email: string;
-  /** Borrower address */
-  address: Address;
-}
-
-export interface ServiceInvoiceDetails {
-  /** ISS withholding */
-  issWithheld?: number;
-  /** PIS withholding */
-  pisWithheld?: number;
-  /** COFINS withholding */
-  cofinsWithheld?: number;
-  /** CSLL withholding */
-  csllWithheld?: number;
-  /** IRRF withholding */
-  irrfWithheld?: number;
-  /** INSS withholding */
-  inssWithheld?: number;
-  /** Deductions */
-  deductions?: number;
-  /** Additional information */
-  additionalInformation?: string;
-}
-
-export interface ServiceInvoice {
-  /** Invoice ID */
-  id: string;
-  /** Company ID */
-  companyId: string;
-  /** Invoice number */
-  number?: string;
-  /** Verification code */
-  verificationCode?: string;
-  /** Invoice status */
-  status: ServiceInvoiceStatus;
-  /** Municipal service code */
-  cityServiceCode: string;
-  /** Service description */
-  description: string;
-  /** Total services amount */
-  servicesAmount: number;
-  /** Borrower information */
-  borrower: ServiceInvoiceBorrower;
-  /** Invoice details */
-  details?: ServiceInvoiceDetails;
-  /** PDF download URL */
-  pdfUrl?: string;
-  /** XML download URL */
-  xmlUrl?: string;
-  /** Creation timestamp */
-  createdOn: string;
-  /** Last update timestamp */
-  modifiedOn?: string;
-  /** Issue date */
-  issuedOn?: string;
-}
-
-export type ServiceInvoiceStatus = 'pending' | 'processing' | 'issued' | 'cancelled' | 'failed';
 
 // ============================================================================
 // Webhook Types
