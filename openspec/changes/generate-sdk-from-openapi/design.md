@@ -1,0 +1,524 @@
+# Design: Generate SDK from OpenAPI Specifications
+
+**Change ID**: `generate-sdk-from-openapi`  
+**Status**: Draft  
+
+---
+
+## Architecture Overview
+
+The SDK generation system follows a **hybrid architecture** pattern where machine-generated types provide compile-time safety while handwritten code provides developer experience.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    OpenAPI Specs (Source of Truth)          │
+│                     openapi/spec/*.yaml                     │
+│  12 files: nf-servico, nf-produto, consulta-cnpj, etc.    │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ scripts/generate-types.ts
+                     │ (openapi-typescript)
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Generated Types Layer                       │
+│                    src/generated/                           │
+│  ⚠️ AUTO-GENERATED - DO NOT EDIT                           │
+│  - schema.ts (merged types)                                 │
+│  - nf-servico.ts, nf-produto.ts, etc. (per-spec)          │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ import types
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│                Handwritten DX Layer                          │
+│                   src/core/resources/                       │
+│  ✏️ HANDWRITTEN - Wraps generated types                    │
+│  - service-invoices.ts (uses NfServico types)              │
+│  - companies.ts (uses Company types)                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Component Design
+
+### 1. Generation Script (`scripts/generate-types.ts`)
+
+**Responsibilities**:
+- Discover OpenAPI specs in `openapi/spec/`
+- Run `openapi-typescript` for each spec
+- Generate namespaced type files
+- Create unified index with re-exports
+- Validate output compiles
+
+**Key Functions**:
+
+```typescript
+/**
+ * Main orchestrator for type generation
+ */
+async function generateTypes(): Promise<void> {
+  const specs = await discoverSpecs();
+  
+  for (const spec of specs) {
+    await generateTypesForSpec(spec);
+  }
+  
+  await createUnifiedIndex(specs);
+  await validateOutput();
+}
+
+/**
+ * Discovers all OpenAPI specs in openapi/spec/
+ */
+async function discoverSpecs(): Promise<SpecDefinition[]> {
+  const files = await fs.readdir('openapi/spec');
+  return files
+    .filter(f => f.endsWith('.yaml') || f.endsWith('.yml'))
+    .map(parseSpecDefinition);
+}
+
+/**
+ * Generates TypeScript types for a single spec
+ */
+async function generateTypesForSpec(spec: SpecDefinition): Promise<void> {
+  const output = await openApiTS(spec.inputPath, {
+    // openapi-typescript options
+  });
+  
+  const wrappedOutput = wrapWithNamespace(output, spec.namespace);
+  await fs.writeFile(spec.outputPath, wrappedOutput);
+}
+```
+
+**Configuration**:
+```typescript
+interface GeneratorConfig {
+  inputDir: string;        // 'openapi/spec'
+  outputDir: string;       // 'src/generated'
+  specs: SpecConfig[];     // Per-spec configuration
+  globalTypes: string[];   // Types to deduplicate
+}
+
+interface SpecConfig {
+  input: string;           // 'nf-servico-v1.yaml'
+  output: string;          // 'nf-servico.ts'
+  namespace: string;       // 'NfServico'
+  version: string;         // 'v1'
+}
+```
+
+---
+
+### 2. Validation Script (`scripts/validate-spec.ts`)
+
+**Responsibilities**:
+- Validate OpenAPI 3.0 schema compliance
+- Check for required fields
+- Detect breaking changes (optional)
+- Report clear errors
+
+**Key Functions**:
+
+```typescript
+/**
+ * Validates all OpenAPI specs
+ */
+async function validateSpecs(): Promise<ValidationReport> {
+  const specs = await discoverSpecs();
+  const results = await Promise.all(
+    specs.map(validateSpec)
+  );
+  
+  return aggregateResults(results);
+}
+
+/**
+ * Validates a single spec
+ */
+async function validateSpec(specPath: string): Promise<SpecValidation> {
+  const content = await loadYaml(specPath);
+  
+  return {
+    isValid: validateOpenAPISchema(content),
+    errors: findSchemaErrors(content),
+    warnings: findWarnings(content),
+  };
+}
+```
+
+---
+
+### 3. Generated Code Structure (`src/generated/`)
+
+**Directory Layout**:
+```
+src/generated/
+├── index.ts              # Unified exports
+├── schema.ts             # Merged types (backward compat)
+├── nf-servico.ts         # Service invoice types
+├── nf-produto.ts         # Product invoice types
+├── nf-consumidor.ts      # Consumer invoice types
+├── companies.ts          # Company-related types
+├── consulta-cnpj.ts      # CNPJ lookup types
+├── consulta-cte.ts       # CTE lookup types
+├── consulta-endereco.ts  # Address lookup types
+└── ...                   # Other specs
+```
+
+**File Template**:
+```typescript
+/**
+ * ⚠️ AUTO-GENERATED from openapi/spec/nf-servico-v1.yaml
+ * Do not edit this file directly.
+ * 
+ * To regenerate: npm run generate
+ * Last generated: 2026-01-10T10:30:00Z
+ */
+
+export interface paths {
+  "/v1/companies/{company_id}/serviceinvoices": {
+    get: operations["ServiceInvoices_Get"];
+    post: operations["ServiceInvoices_Create"];
+  };
+  // ...
+}
+
+export interface components {
+  schemas: {
+    ServiceInvoice: {
+      id: string;
+      status: "issued" | "cancelled" | "error";
+      // ...
+    };
+    Company: {
+      id: string;
+      name: string;
+      // ...
+    };
+  };
+}
+
+export interface operations {
+  ServiceInvoices_Get: {
+    parameters: { /* ... */ };
+    responses: { /* ... */ };
+  };
+  // ...
+}
+```
+
+**Unified Index** (`src/generated/index.ts`):
+```typescript
+/**
+ * Unified exports from all OpenAPI specs
+ */
+
+// Per-spec namespaces
+export * as NfServico from './nf-servico';
+export * as NfProduto from './nf-produto';
+export * as NfConsumidor from './nf-consumidor';
+export * as Companies from './companies';
+// ...
+
+// Common types (using service invoice as canonical)
+export type ServiceInvoice = NfServico.components['schemas']['ServiceInvoice'];
+export type Company = NfServico.components['schemas']['Company'];
+export type LegalPerson = NfServico.components['schemas']['LegalPerson'];
+export type NaturalPerson = NfServico.components['schemas']['NaturalPerson'];
+
+// Backward compatibility alias
+export * from './schema'; // merged types from all specs
+```
+
+---
+
+### 4. Handwritten DX Layer Integration
+
+**Usage Pattern** in `src/core/resources/service-invoices.ts`:
+
+```typescript
+import { HttpClient } from '../http/client';
+import { NfServico } from '../../generated';
+
+// Extract specific types from generated namespace
+type ServiceInvoice = NfServico.components['schemas']['ServiceInvoice'];
+type CreateRequest = NfServico.components['schemas']['ServiceInvoiceCreationObject'];
+type ListResponse = NfServico.operations['ServiceInvoices_Get']['responses']['200']['content']['application/json'];
+
+export class ServiceInvoicesResource {
+  constructor(private http: HttpClient) {}
+  
+  /**
+   * Create a new service invoice
+   * @param companyId - Company identifier
+   * @param data - Invoice creation data
+   */
+  async create(
+    companyId: string,
+    data: CreateRequest
+  ): Promise<ServiceInvoice> {
+    return this.http.post<ServiceInvoice>(
+      `/companies/${companyId}/serviceinvoices`,
+      data
+    );
+  }
+  
+  /**
+   * List service invoices
+   */
+  async list(
+    companyId: string,
+    options?: ListOptions
+  ): Promise<ServiceInvoice[]> {
+    const response = await this.http.get<ListResponse>(
+      `/companies/${companyId}/serviceinvoices`,
+      { params: options }
+    );
+    return response.serviceInvoices;
+  }
+}
+```
+
+---
+
+## Type Conflict Resolution
+
+### Problem
+Multiple OpenAPI specs may define the same entity with slight variations:
+- `nf-servico-v1.yaml` defines `Company` with fields A, B, C
+- `nf-produto-v2.yaml` defines `Company` with fields A, B, D
+
+### Solution: Namespace Strategy
+
+**Approach 1: Full Namespacing (Recommended)**
+```typescript
+// src/generated/index.ts
+export * as NfServico from './nf-servico';
+export * as NfProduto from './nf-produto';
+
+// Usage in handwritten code:
+import { NfServico, NfProduto } from '@/generated';
+
+type ServiceCompany = NfServico.components['schemas']['Company'];
+type ProductCompany = NfProduto.components['schemas']['Company'];
+```
+
+**Approach 2: Canonical Types**
+```typescript
+// Define canonical version from most complete spec
+export type Company = NfServico.components['schemas']['Company'];
+
+// Aliases for other versions
+export type ProductCompany = NfProduto.components['schemas']['Company'];
+```
+
+**Approach 3: Manual Override File** (fallback)
+```typescript
+// src/generated/overrides.ts - handwritten
+export interface Company {
+  // Manually merged from all specs
+  id: string;
+  name: string;
+  // ... union of all fields
+}
+```
+
+---
+
+## Build Pipeline Integration
+
+### Local Development
+```bash
+# Terminal 1: Watch mode for OpenAPI changes
+npm run generate:watch
+
+# Terminal 2: Watch mode for TypeScript compilation
+npm run dev
+```
+
+### CI/CD Pipeline
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Validate OpenAPI specs
+        run: npm run validate:spec
+      
+      - name: Generate types
+        run: npm run generate
+      
+      - name: Type check
+        run: npm run typecheck
+      
+      - name: Lint
+        run: npm run lint
+      
+      - name: Test
+        run: npm run test -- --run
+      
+      - name: Build
+        run: npm run build
+```
+
+---
+
+## Error Handling
+
+### Generation Errors
+
+**Invalid OpenAPI Spec**:
+```
+❌ Error: Invalid OpenAPI spec at openapi/spec/nf-servico-v1.yaml
+   Line 42: Missing required field 'operationId' in POST /companies
+   
+   Fix: Add operationId to the operation or run 'npm run validate:spec'
+```
+
+**Type Conflicts**:
+```
+⚠️  Warning: Type conflict detected
+    'Company' defined in multiple specs with different schemas:
+    - nf-servico-v1.yaml (3 fields)
+    - nf-produto-v2.yaml (5 fields)
+    
+    Resolution: Using namespaced types (NfServico.Company, NfProduto.Company)
+```
+
+**Compilation Errors**:
+```
+❌ Error: Generated types failed to compile
+   src/generated/nf-servico.ts:123:45 - error TS2304: Cannot find name 'Foo'
+   
+   This likely indicates an issue with the OpenAPI spec.
+   Check openapi/spec/nf-servico-v1.yaml for references to undefined schemas.
+```
+
+---
+
+## Future Enhancements
+
+### 1. Runtime Validation with Zod
+Generate Zod schemas alongside TypeScript types:
+```typescript
+// src/generated/nf-servico.zod.ts
+import { z } from 'zod';
+
+export const ServiceInvoiceSchema = z.object({
+  id: z.string(),
+  status: z.enum(['issued', 'cancelled', 'error']),
+  // ...
+});
+```
+
+### 2. API Documentation Generation
+Generate Markdown docs from OpenAPI:
+```bash
+npm run generate:docs
+# → Creates docs/api/service-invoices.md from OpenAPI descriptions
+```
+
+### 3. Mock Server Generation
+Generate MSW handlers from OpenAPI:
+```typescript
+// tests/mocks/generated-handlers.ts
+export const handlers = [
+  rest.post('/companies/:id/serviceinvoices', (req, res, ctx) => {
+    // Generated from OpenAPI response examples
+    return res(ctx.json({ ... }));
+  }),
+];
+```
+
+### 4. Client SDK Generation
+Full client generation (not just types):
+```typescript
+// Alternative to handwritten DX layer
+const client = createClient<NfServico.paths>({
+  baseUrl: 'https://api.nfe.io',
+  apiKey: 'xxx',
+});
+
+// Fully typed with autocomplete
+const invoice = await client.POST('/companies/{id}/serviceinvoices', {
+  params: { path: { id: 'company-123' } },
+  body: { /* typed */ },
+});
+```
+
+---
+
+## Decision Log
+
+### Decision 1: Namespace vs. Merge Strategy
+**Decision**: Use namespacing (export * as NfServico)  
+**Rationale**: 
+- Preserves all type information
+- No data loss from merging
+- Clear provenance of types
+- Easier to debug conflicts
+
+**Alternatives Considered**:
+- Merge all types: Loses information, hard to resolve conflicts
+- Manual override: High maintenance, defeats purpose of generation
+
+---
+
+### Decision 2: Committed vs. Ignored Generated Files
+**Decision**: Commit generated files to Git  
+**Rationale**:
+- Easier for contributors (no generation step needed)
+- Faster CI (skip generation if specs unchanged)
+- Clear diffs show API changes
+
+**Alternatives Considered**:
+- Gitignore generated/: Requires generation on every clone/CI run
+- Submodule for generated: Adds complexity
+
+---
+
+### Decision 3: Single vs. Multiple Output Files
+**Decision**: Generate one file per OpenAPI spec  
+**Rationale**:
+- Clear mapping spec → generated file
+- Better tree-shaking (import only needed specs)
+- Easier to track changes
+
+**Alternatives Considered**:
+- Single merged file: Harder to attribute types, larger bundle
+- Per-endpoint files: Too many files, complex imports
+
+---
+
+## Open Questions
+
+1. **Spec versioning**: Should we track specific commits of OpenAPI specs or use tags?
+2. **Breaking change detection**: Should generation fail if API has breaking changes?
+3. **Type customization**: Allow manual type overrides for edge cases?
+4. **Zod integration**: Generate runtime validators now or later?
+
+---
+
+## References
+
+- [openapi-typescript docs](https://openapi-ts.pages.dev/)
+- [OpenAPI 3.0 Specification](https://swagger.io/specification/)
+- [TypeScript Handbook - Namespaces](https://www.typescriptlang.org/docs/handbook/namespaces.html)
+- AGENTS.md: Project modernization guidelines
