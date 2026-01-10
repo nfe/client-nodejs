@@ -1,0 +1,176 @@
+# OpenAPI Type Generator Configuration
+
+# Output directory for generated TypeScript files
+output: src/generated
+
+# Specs to process
+specs:
+  # Service Invoice API (NFe-e Serviço) - MAIN
+  - path: openapi/spec/nf-servico-v1.yaml
+    output: nf-servico.ts
+    namespace: NfServico
+    description: Service invoice operations (create, list, retrieve, cancel)
+    priority: 1
+    enabled: true
+
+  # Product Invoice API (NFe-e Produto)
+  - path: openapi/spec/nf-produto-v2.yaml
+    output: nf-produto.ts
+    namespace: NfProduto
+    description: Product invoice operations
+    priority: 2
+    enabled: true
+
+  # Consumer Invoice API (NFe-e Consumidor)
+  - path: openapi/spec/nf-consumidor-v2.yaml
+    output: nf-consumidor.ts
+    namespace: NfConsumidor
+    description: Consumer invoice operations
+    priority: 3
+    enabled: true
+
+  # Distribution Query API
+  - path: openapi/spec/consulta-nfe-distribuicao-v1.yaml
+    output: consulta-nfe-distribuicao.ts
+    namespace: ConsultaNfeDistribuicao
+    description: Invoice distribution query
+    priority: 4
+    enabled: true
+
+  # Tax Calculation API
+  - path: openapi/spec/calculo-impostos-v1.yaml
+    output: calculo-impostos.ts
+    namespace: CalculoImpostos
+    description: Tax calculation utilities
+    priority: 5
+    enabled: true
+
+  # Address Lookup API
+  - path: openapi/spec/consulta-endereco.yaml
+    output: consulta-endereco.ts
+    namespace: ConsultaEndereco
+    description: Address lookup by postal code
+    priority: 6
+    enabled: true
+
+  # General Invoice Query
+  - path: openapi/spec/consulta-nf.yaml
+    output: consulta-nf.ts
+    namespace: ConsultaNf
+    description: General invoice query operations
+    priority: 7
+    enabled: true
+
+  # Swagger 2.0 specs (skipped by openapi-typescript)
+  # Uncomment if converted to OpenAPI 3.0
+
+  # - path: openapi/spec/cpf-api.yaml
+  #   output: cpf-api.ts
+  #   namespace: CpfApi
+  #   enabled: false
+  #   reason: Swagger 2.0 - requires conversion
+
+  # - path: openapi/spec/consulta-cnpj.yaml
+  #   output: consulta-cnpj.ts
+  #   namespace: ConsultaCnpj
+  #   enabled: false
+  #   reason: Swagger 2.0 - requires conversion
+
+# Type generation options
+generation:
+  # Add banner to generated files
+  banner: |
+    ⚠️ AUTO-GENERATED - DO NOT EDIT
+    This file was automatically generated from OpenAPI specifications.
+    Manual changes will be overwritten on next generation.
+
+    Generated: {timestamp}
+    Source: {specPath}
+
+  # TypeScript compiler options for generated code
+  typescript:
+    target: ES2020
+    module: ESNext
+    strict: true
+
+  # Type transformations
+  transforms:
+    # Convert operation IDs to method names
+    operationIdToCamelCase: true
+
+    # Add JSDoc comments from descriptions
+    addJsDocs: true
+
+    # Export all types (not just referenced ones)
+    exportAllTypes: true
+
+  # Naming conventions
+  naming:
+    # How to name generated type files
+    fileNaming: kebab-case # or: camelCase, PascalCase
+
+    # How to name exported types
+    typeNaming: PascalCase
+
+    # Prefix for operation types
+    operationPrefix: '' # e.g., 'Api' -> ApiCreateServiceInvoice
+
+# Validation options
+validation:
+  # Validate specs before generation
+  validateBeforeGenerate: true
+
+  # Fail on validation warnings
+  strictValidation: false
+
+  # OpenAPI version requirements
+  minimumVersion: '3.0.0'
+
+  # Skip Swagger 2.0 specs
+  skipSwagger2: true
+
+# Post-generation tasks
+postGeneration:
+  # Run TypeScript compiler check
+  typecheck: true
+
+  # Format with Prettier
+  format: true
+
+  # Lint with ESLint
+  lint: false # Can be slow, run separately if needed
+
+# Logging
+logging:
+  level: info # error | warn | info | debug
+  showProgress: true
+  showTimings: true
+
+# Advanced options
+advanced:
+  # Merge common types across specs
+  mergeCommonTypes: true
+
+  # Types to merge (use first occurrence)
+  commonTypes:
+    - Company
+    - Address
+    - City
+
+  # Custom type overrides (use handwritten version)
+  typeOverrides: {}
+    # Example:
+    # ServiceInvoiceStatus:
+    #   path: src/core/types/custom-status.ts
+    #   export: ServiceInvoiceStatus
+
+# CI/CD integration
+ci:
+  # Fail build if generation fails
+  failOnError: true
+
+  # Cache generated files (not recommended)
+  cacheGenerated: false
+
+  # Git tracking
+  trackInGit: true # Commit generated files to Git
