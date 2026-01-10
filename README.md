@@ -500,6 +500,39 @@ See [tests/integration/README.md](./tests/integration/README.md) for detailed do
 
 **Note**: Integration tests make real API calls and may incur costs depending on your plan.
 
+### OpenAPI Type Generation
+
+The SDK generates TypeScript types automatically from OpenAPI specifications:
+
+```bash
+# Download latest specs from API (if available)
+npm run download:spec
+
+# Validate all OpenAPI specs
+npm run validate:spec
+
+# Generate TypeScript types from specs
+npm run generate
+
+# Watch mode - auto-regenerate on spec changes
+npm run generate:watch
+```
+
+**Specs location**: `openapi/spec/*.yaml`  
+**Generated types**: `src/generated/*.ts`  
+**Configuration**: `openapi/generator-config.yaml`
+
+The build process automatically validates specs and generates types before compilation:
+
+```bash
+npm run build
+# → Runs: validate:spec → generate → typecheck → tsup
+```
+
+**Note**: Generated files should not be manually edited. Edit the OpenAPI specs and regenerate instead.
+
+For migration guidance, see [docs/MIGRATION-TO-GENERATED-TYPES.md](./docs/MIGRATION-TO-GENERATED-TYPES.md).
+
 ### Type Checking
 
 ```bash
@@ -535,7 +568,7 @@ MIT © [NFE.io](https://nfe.io)
 
 ## 🗺️ Roadmap
 
-- [ ] OpenAPI spec validation
+- [x] OpenAPI spec validation and type generation
 - [ ] Rate limiting helpers
 - [ ] Pagination helpers
 - [ ] Request/response interceptors

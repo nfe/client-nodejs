@@ -32,6 +32,12 @@ cd client-nodejs
 # Instale dependências
 npm install
 
+# Valide specs OpenAPI
+npm run validate:spec
+
+# Gere tipos do OpenAPI
+npm run generate
+
 # Rode testes
 npm test
 
@@ -40,6 +46,29 @@ npm run build
 
 # Typecheck
 npm run typecheck
+```
+
+### Workflow de Desenvolvimento com OpenAPI
+
+O SDK gera tipos automaticamente das especificações OpenAPI:
+
+```bash
+# 1. Valide specs antes de começar
+npm run validate:spec
+
+# 2. Gere tipos (já incluído no build)
+npm run generate
+
+# 3. Durante desenvolvimento, use watch mode
+npm run generate:watch
+```
+
+**Importante**:
+- Specs estão em `openapi/spec/*.yaml`
+- Tipos gerados ficam em `src/generated/` com banner `// ⚠️ AUTO-GENERATED - DO NOT EDIT`
+- **NUNCA** edite arquivos em `src/generated/` manualmente
+- O build (`npm run build`) automaticamente valida e gera tipos antes de compilar
+- CI/CD valida specs e regenera tipos em cada PR
 ```
 
 ---
