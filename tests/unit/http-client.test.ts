@@ -5,13 +5,28 @@ import { TEST_API_KEY } from '../setup';
 
 // Helper to create mock Headers object
 function createMockHeaders(entries: [string, string][]): any {
-  const map = new Map(entries);
+  const map = new Map(entries.map(([k, v]) => [k.toLowerCase(), v]));
   return {
     get: (key: string) => map.get(key.toLowerCase()) || null,
     has: (key: string) => map.has(key.toLowerCase()),
     entries: () => map.entries(),
     keys: () => map.keys(),
     values: () => map.values(),
+    forEach: (callback: (value: string, key: string) => void) => {
+      map.forEach((value, key) => callback(value, key));
+    },
+  };
+}
+
+// Helper to create mock error Response
+function createMockErrorResponse(status: number, statusText: string, errorData: any): any {
+  return {
+    ok: false,
+    status,
+    statusText,
+    headers: createMockHeaders([['content-type', 'application/json']]),
+    json: async () => errorData,
+    text: async () => JSON.stringify(errorData),
   };
 }
 
@@ -198,13 +213,9 @@ describe('HttpClient', () => {
     });
 
     it('should throw AuthenticationError on 401', async () => {
-      fetchMock.mockResolvedValue({
-        ok: false,
-        status: 401,
-        statusText: 'Unauthorized',
-        headers: createMockHeaders([['content-type', 'application/json']]),
-        json: async () => ({ error: 'Invalid API key' }),
-      });
+      fetchMock.mockResolvedValue(
+        createMockErrorResponse(401, 'Unauthorized', { error: 'Invalid API key' })
+      );
 
       // 401 errors should not retry
       await expect(httpClient.get('/test')).rejects.toMatchObject({
@@ -219,16 +230,12 @@ describe('HttpClient', () => {
 
   describe('Error Handling', () => {
     it('should throw ValidationError on 400', async () => {
-      fetchMock.mockResolvedValue({
-        ok: false,
-        status: 400,
-        statusText: 'Bad Request',
-        headers: createMockHeaders([['content-type', 'application/json']]),
-        json: async () => ({
+      fetchMock.mockResolvedValue(
+        createMockErrorResponse(400, 'Bad Request', {
           error: 'Validation failed',
           details: { field: 'required' },
-        }),
-      });
+        })
+      );
 
       // 400 errors should not retry
       await expect(httpClient.get('/test')).rejects.toMatchObject({
@@ -240,13 +247,9 @@ describe('HttpClient', () => {
     });
 
     it('should throw NotFoundError on 404', async () => {
-      fetchMock.mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
-        headers: createMockHeaders([['content-type', 'application/json']]),
-        json: async () => ({ error: 'Resource not found' }),
-      });
+      fetchMock.mockResolvedValue(
+        createMockErrorResponse(404, 'Not Found', { error: 'Resource not found' })
+      );
 
       // 404 errors should not retry
       await expect(httpClient.get('/test')).rejects.toMatchObject({
@@ -259,16 +262,14 @@ describe('HttpClient', () => {
 
     it('should throw RateLimitError on 429 after retries', async () => {
       // Always return 429
-      fetchMock.mockResolvedValue({
-        ok: false,
-        status: 429,
-        statusText: 'Too Many Requests',
-        headers: new Map([
-          ['content-type', 'application/json'],
-          ['retry-after', '60'],
-        ]),
-        json: async () => ({ error: 'Rate limit exceeded' }),
-      });
+      const errorResponse = createMockErrorResponse(429, 'Too Many Requests', { error: 'Rate limit exceeded' });
+      // Add retry-after header
+      errorResponse.headers.get = (key: string) => {
+        if (key.toLowerCase() === 'retry-after') return '60';
+        if (key.toLowerCase() === 'content-type') return 'application/json';
+        return null;
+      };
+      fetchMock.mockResolvedValue(errorResponse);
 
       const promise = httpClient.get('/test');
 
@@ -284,13 +285,9 @@ describe('HttpClient', () => {
 
     it('should throw ServerError on 500 after retries', async () => {
       // Always return 500
-      fetchMock.mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-        headers: createMockHeaders([['content-type', 'application/json']]),
-        json: async () => ({ error: 'Server error' }),
-      });
+      fetchMock.mockResolvedValue(
+        createMockErrorResponse(500, 'Internal Server Error', { error: 'Server error' })
+      );
 
       const promise = httpClient.get('/test');
 
@@ -386,13 +383,9 @@ describe('HttpClient', () => {
     });
 
     it('should not retry on 400 Bad Request', async () => {
-      fetchMock.mockResolvedValue({
-        ok: false,
-        status: 400,
-        statusText: 'Bad Request',
-        headers: createMockHeaders([['content-type', 'application/json']]),
-        json: async () => ({ error: 'Invalid input' }),
-      });
+      fetchMock.mockResolvedValue(
+        createMockErrorResponse(400, 'Bad Request', { error: 'Invalid input' })
+      );
 
       const promise = httpClient.get('/test');
 
@@ -401,13 +394,9 @@ describe('HttpClient', () => {
     });
 
     it('should respect maxRetries limit', async () => {
-      fetchMock.mockResolvedValue({
-        ok: false,
-        status: 503,
-        statusText: 'Service Unavailable',
-        headers: createMockHeaders([['content-type', 'application/json']]),
-        json: async () => ({ error: 'Unavailable' }),
-      });
+      fetchMock.mockResolvedValue(
+        createMockErrorResponse(503, 'Service Unavailable', { error: 'Unavailable' })
+      );
 
       const promise = httpClient.get('/test');
 

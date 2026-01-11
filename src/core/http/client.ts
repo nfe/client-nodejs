@@ -11,7 +11,7 @@ import {
   ConnectionError,
   TimeoutError,
   RateLimitError,
-  type NfeError
+  NfeError
 } from '../errors/index.js';
 
 // Simple type declarations for runtime APIs
@@ -124,6 +124,11 @@ export class HttpClient {
 
     } catch (error) {
       clearTimeout(timeoutId);
+
+      // Re-throw NfeError instances (from handleErrorResponse)
+      if (error instanceof NfeError) {
+        throw error;
+      }
 
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
