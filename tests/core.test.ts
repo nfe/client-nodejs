@@ -10,6 +10,21 @@ import {
   BadRequestError
 } from '../src/core/errors';
 
+// Helper to create mock Headers object (same as http-client.test.ts)
+function createMockHeaders(entries: [string, string][]): any {
+  const map = new Map(entries.map(([k, v]) => [k.toLowerCase(), v]));
+  return {
+    get: (key: string) => map.get(key.toLowerCase()) || null,
+    has: (key: string) => map.has(key.toLowerCase()),
+    entries: () => map.entries(),
+    keys: () => map.keys(),
+    values: () => map.values(),
+    forEach: (callback: (value: string, key: string) => void) => {
+      map.forEach((value, key) => callback(value, key));
+    },
+  };
+}
+
 describe('NfeClient Core', () => {
   let client: NfeClient;
 
@@ -31,9 +46,16 @@ describe('NfeClient Core', () => {
   });
 
   it('should throw error for invalid config', () => {
+    // Unset environment variable to ensure validation runs
+    const originalEnv = process.env.NFE_API_KEY;
+    delete process.env.NFE_API_KEY;
+
     expect(() => {
       new NfeClient({ apiKey: '' });
     }).toThrow();
+
+    // Restore environment
+    if (originalEnv) process.env.NFE_API_KEY = originalEnv;
   });
 
   it('should use same URL for both environments', () => {
@@ -93,11 +115,12 @@ describe('ServiceInvoices Resource', () => {
       }
     };
 
+    // Mock 201 response (synchronous invoice creation)
     (global.fetch as any).mockResolvedValue({
       ok: true,
-      status: 202,
-      headers: new Map([
-        ['location', '/invoices/123']
+      status: 201,
+      headers: createMockHeaders([
+        ['content-type', 'application/json']
       ]),
       json: () => Promise.resolve(mockResponse)
     });
@@ -128,12 +151,13 @@ describe('ServiceInvoices Resource', () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 202,
-        headers: new Map([['location', '/invoices/123']]),
+        headers: createMockHeaders([['location', '/invoices/123']]),
         json: () => Promise.resolve(mockPendingResponse)
       })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: () => Promise.resolve(mockCompletedResponse)
       });
 
@@ -173,6 +197,7 @@ describe('Companies Resource', () => {
     (global.fetch as any).mockResolvedValue({
       ok: true,
       status: 200,
+      headers: createMockHeaders([['content-type', 'application/json']]),
       json: () => Promise.resolve(mockResponse)
     });
 
@@ -191,6 +216,7 @@ describe('Companies Resource', () => {
     (global.fetch as any).mockResolvedValue({
       ok: true,
       status: 201,
+      headers: createMockHeaders([['content-type', 'application/json']]),
       json: () => Promise.resolve(mockResponse)
     });
 
