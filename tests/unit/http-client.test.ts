@@ -27,9 +27,9 @@ describe('HttpClient', () => {
       10000,
       { maxRetries: 3, baseDelay: 10, maxDelay: 100 } // Delays curtos para testes rápidos
     );
-    
+
     httpClient = new HttpClient(config);
-    
+
     // Mock global fetch
     fetchMock = vi.fn();
     global.fetch = fetchMock as any;
@@ -51,7 +51,7 @@ describe('HttpClient', () => {
       });
 
       const response = await httpClient.get<typeof mockData>('/companies');
-      
+
       expect(response.data).toEqual(mockData);
       expect(response.status).toBe(200);
       expect(fetchMock).toHaveBeenCalledWith(
@@ -85,8 +85,8 @@ describe('HttpClient', () => {
         json: async () => ([]),
       });
 
-      await httpClient.get('/companies', { 
-        page: 1, 
+      await httpClient.get('/companies', {
+        page: 1,
         filter: undefined,
         limit: null as any,
       });
@@ -102,7 +102,7 @@ describe('HttpClient', () => {
     it('should make successful POST request with JSON body', async () => {
       const requestBody = { name: 'New Company', email: 'test@example.com' };
       const responseBody = { id: '456', ...requestBody };
-      
+
       fetchMock.mockResolvedValue({
         ok: true,
         status: 201,
@@ -112,10 +112,10 @@ describe('HttpClient', () => {
       });
 
       const response = await httpClient.post<typeof responseBody>('/companies', requestBody);
-      
+
       expect(response.data).toEqual(responseBody);
       expect(response.status).toBe(201);
-      
+
       const requestOptions = fetchMock.mock.calls[0][1];
       expect(requestOptions.method).toBe('POST');
       expect(requestOptions.body).toBe(JSON.stringify(requestBody));
@@ -136,7 +136,7 @@ describe('HttpClient', () => {
       });
 
       const response = await httpClient.post('/serviceinvoices', { data: 'test' });
-      
+
       expect(response.status).toBe(202);
       expect(response.data).toMatchObject({
         code: 202,
@@ -150,7 +150,7 @@ describe('HttpClient', () => {
     it('should make successful PUT request', async () => {
       const updateData = { name: 'Updated Company' };
       const responseBody = { id: '123', ...updateData };
-      
+
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
@@ -159,7 +159,7 @@ describe('HttpClient', () => {
       });
 
       const response = await httpClient.put('/companies/123', updateData);
-      
+
       expect(response.data).toEqual(responseBody);
       expect(fetchMock.mock.calls[0][1].method).toBe('PUT');
     });
@@ -176,7 +176,7 @@ describe('HttpClient', () => {
       });
 
       const response = await httpClient.delete('/companies/123');
-      
+
       expect(response.status).toBe(204);
       expect(fetchMock.mock.calls[0][1].method).toBe('DELETE');
     });
@@ -192,7 +192,7 @@ describe('HttpClient', () => {
       });
 
       await httpClient.get('/test');
-      
+
       const authHeader = fetchMock.mock.calls[0][1].headers['Authorization'];
       expect(authHeader).toBe(`Basic ${Buffer.from(TEST_API_KEY).toString('base64')}`);
     });
@@ -211,7 +211,7 @@ describe('HttpClient', () => {
         name: 'AuthenticationError',
         code: 401,
       });
-      
+
       // Verify no retries happened
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
@@ -235,7 +235,7 @@ describe('HttpClient', () => {
         name: 'ValidationError',
         code: 400,
       });
-      
+
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
@@ -253,7 +253,7 @@ describe('HttpClient', () => {
         name: 'NotFoundError',
         code: 404,
       });
-      
+
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
@@ -271,13 +271,13 @@ describe('HttpClient', () => {
       });
 
       const promise = httpClient.get('/test');
-      
+
       // Should fail after max retries
       await expect(promise).rejects.toMatchObject({
         name: 'RateLimitError',
         code: 429,
       });
-      
+
       // Should have tried 4 times (1 initial + 3 retries)
       expect(fetchMock).toHaveBeenCalledTimes(4);
     });
@@ -293,13 +293,13 @@ describe('HttpClient', () => {
       });
 
       const promise = httpClient.get('/test');
-      
+
       // Should fail after max retries
       await expect(promise).rejects.toMatchObject({
         name: 'ServerError',
         code: 500,
       });
-      
+
       expect(fetchMock).toHaveBeenCalledTimes(4);
     });
 
@@ -308,12 +308,12 @@ describe('HttpClient', () => {
       fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
 
       const promise = httpClient.get('/test');
-      
+
       // Should fail after max retries
       await expect(promise).rejects.toMatchObject({
         name: 'ConnectionError',
       });
-      
+
       expect(fetchMock).toHaveBeenCalledTimes(4);
     });
 
@@ -324,12 +324,12 @@ describe('HttpClient', () => {
       fetchMock.mockRejectedValue(abortError);
 
       const promise = httpClient.get('/test');
-      
+
       // Should fail after max retries
       await expect(promise).rejects.toMatchObject({
         name: 'TimeoutError',
       });
-      
+
       expect(fetchMock).toHaveBeenCalledTimes(4);
     });
   });
@@ -359,9 +359,9 @@ describe('HttpClient', () => {
         });
 
       const promise = httpClient.get<{ success: boolean }>('/test');
-      
+
       const response = await promise;
-      
+
       expect(response.data).toEqual({ success: true });
       expect(fetchMock).toHaveBeenCalledTimes(3);
     });
@@ -378,9 +378,9 @@ describe('HttpClient', () => {
         });
 
       const promise = httpClient.get<{ success: boolean }>('/test');
-      
+
       const response = await promise;
-      
+
       expect(response.data).toEqual({ success: true });
       expect(fetchMock).toHaveBeenCalledTimes(3);
     });
@@ -395,7 +395,7 @@ describe('HttpClient', () => {
       });
 
       const promise = httpClient.get('/test');
-      
+
       await expect(promise).rejects.toThrow();
       expect(fetchMock).toHaveBeenCalledTimes(1); // No retries
     });
@@ -410,7 +410,7 @@ describe('HttpClient', () => {
       });
 
       const promise = httpClient.get('/test');
-      
+
       await expect(promise).rejects.toThrow();
       // Initial request + 3 retries = 4 total
       expect(fetchMock).toHaveBeenCalledTimes(4);
@@ -435,7 +435,7 @@ describe('HttpClient', () => {
         });
 
       const promise = httpClient.get<{ success: boolean }>('/test');
-      
+
       const response = await promise;
       expect(response.data).toEqual({ success: true });
       expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -475,7 +475,7 @@ describe('HttpClient', () => {
       });
 
       clientWithTrailingSlash.get('/companies');
-      
+
       // Should not have double slashes
       expect(fetchMock.mock.calls[0][0]).toBe('https://api.nfe.io/v1/companies');
     });
@@ -510,7 +510,7 @@ describe('HttpClient', () => {
     it('should handle PDF responses as Buffer', async () => {
       const pdfContent = 'PDF binary content';
       const arrayBuffer = new TextEncoder().encode(pdfContent).buffer;
-      
+
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
@@ -519,7 +519,7 @@ describe('HttpClient', () => {
       });
 
       const response = await httpClient.get<Buffer>('/invoice.pdf');
-      
+
       expect(Buffer.isBuffer(response.data)).toBe(true);
       expect(response.data.toString()).toBe(pdfContent);
     });
@@ -527,7 +527,7 @@ describe('HttpClient', () => {
     it('should handle XML responses as Buffer', async () => {
       const xmlContent = '<xml>content</xml>';
       const arrayBuffer = new TextEncoder().encode(xmlContent).buffer;
-      
+
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
@@ -536,7 +536,7 @@ describe('HttpClient', () => {
       });
 
       const response = await httpClient.get<Buffer>('/invoice.xml');
-      
+
       expect(Buffer.isBuffer(response.data)).toBe(true);
       expect(response.data.toString()).toBe(xmlContent);
     });
@@ -552,7 +552,7 @@ describe('HttpClient', () => {
       });
 
       await httpClient.get('/test');
-      
+
       const userAgent = fetchMock.mock.calls[0][1].headers['User-Agent'];
       expect(userAgent).toContain('@nfe-io/sdk');
       expect(userAgent).toContain('node/');
@@ -567,7 +567,7 @@ describe('HttpClient', () => {
       });
 
       await httpClient.get('/test');
-      
+
       const acceptHeader = fetchMock.mock.calls[0][1].headers['Accept'];
       expect(acceptHeader).toBe('application/json');
     });
@@ -581,7 +581,7 @@ describe('HttpClient', () => {
       });
 
       await httpClient.post('/test', { data: 'value' });
-      
+
       const contentType = fetchMock.mock.calls[0][1].headers['Content-Type'];
       expect(contentType).toBe('application/json');
     });
@@ -601,7 +601,7 @@ describe('HttpClient', () => {
       });
 
       const response = await httpClient.get('/test');
-      
+
       expect(response.headers).toEqual({
         'content-type': 'application/json',
         'x-request-id': '123456',
@@ -613,7 +613,7 @@ describe('HttpClient', () => {
   describe('Utility Functions', () => {
     it('should create default retry config', () => {
       const retryConfig = createDefaultRetryConfig();
-      
+
       expect(retryConfig).toEqual({
         maxRetries: 3,
         baseDelay: 1000,
