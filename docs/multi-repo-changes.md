@@ -29,7 +29,7 @@ Adaptadores MCP e n8n foram **movidos para repositórios separados** para melhor
 **Conteúdo**:
 - Guidelines para contribuir com o SDK core
 - Instruções para criar extensões usando o SDK
-- Exemplos de código mostrando como usar `@nfe-io/sdk` em extensões
+- Exemplos de código mostrando como usar `nfe-io` em extensões
 - Seção sobre APIs públicas vs internas
 - Processo de review de PRs
 - Documentação sobre extensões oficiais (MCP, n8n)
@@ -115,7 +115,7 @@ mcp-server/
 │   ├── tools/            # NFE.io tools for LLMs
 │   └── prompts/          # Custom prompts
 ├── package.json
-│   dependencies: @nfe-io/sdk ^3.0.0
+│   dependencies: nfe-io ^3.0.0
 └── README.md
 ```
 
@@ -127,7 +127,7 @@ n8n-nodes/
 │   └── ServiceInvoice/  # Invoice node
 ├── credentials/         # API credentials
 ├── package.json
-│   dependencies: @nfe-io/sdk ^3.0.0
+│   dependencies: nfe-io ^3.0.0
 └── README.md
 ```
 
@@ -150,7 +150,7 @@ n8n-nodes/
 - **Experimentação livre**: Podem inovar sem breaking changes no core
 
 ### ✅ **Para Usuários**
-- **Instalação seletiva**: `npm install @nfe-io/sdk` (minimal)
+- **Instalação seletiva**: `npm install nfe-io` (minimal)
 - **Opt-in para extensões**: Instalam apenas o que precisam
 - **Descoberta clara**: README lista extensões oficiais
 - **Documentação específica**: Cada repo tem seus próprios docs
@@ -183,10 +183,10 @@ MCP Server for NFE.io - Enables LLMs to issue Brazilian invoices.
 npm install @nfe-io/mcp-server
 
 ## Dependencies
-- @nfe-io/sdk ^3.0.0 (peer dependency)
+- nfe-io ^3.0.0 (peer dependency)
 - @modelcontextprotocol/sdk
 
-See [@nfe-io/sdk docs](https://github.com/nfe/client-nodejs) for core SDK usage.
+See [nfe-io docs](https://github.com/nfe/client-nodejs) for core SDK usage.
 ```
 
 ### **No n8n Nodes** (a criar):
@@ -199,10 +199,10 @@ n8n custom nodes for NFE.io automation.
 Via n8n community nodes or npm install @nfe-io/n8n-nodes
 
 ## Dependencies
-- @nfe-io/sdk ^3.0.0
+- nfe-io ^3.0.0
 - n8n-workflow
 
-See [@nfe-io/sdk docs](https://github.com/nfe/client-nodejs) for API reference.
+See [nfe-io docs](https://github.com/nfe/client-nodejs) for API reference.
 ```
 
 ---

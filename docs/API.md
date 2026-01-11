@@ -22,7 +22,7 @@ Complete API reference for the NFE.io Node.js SDK v3.
 ## Installation
 
 ```bash
-npm install @nfe-io/sdk
+npm install nfe-io
 ```
 
 ## Client
@@ -738,7 +738,7 @@ import {
   PollingTimeoutError,
   isNfeError,
   isAuthenticationError
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 ```
 
 ### Error Types
@@ -763,7 +763,7 @@ import {
   ValidationError, 
   NotFoundError,
   isNfeError 
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 
 try {
   const invoice = await nfe.serviceInvoices.create(companyId, data);
@@ -845,7 +845,7 @@ console.log('Invoice issued:', invoice.number);
 ### Environment Detection
 
 ```typescript
-import { isEnvironmentSupported, getRuntimeInfo } from '@nfe-io/sdk';
+import { isEnvironmentSupported, getRuntimeInfo } from 'nfe-io';
 
 // Check environment compatibility
 const support = isEnvironmentSupported();
@@ -863,7 +863,7 @@ console.log('Platform:', info.platform);
 ### Quick Start Helpers
 
 ```typescript
-import { createClientFromEnv, validateApiKeyFormat } from '@nfe-io/sdk';
+import { createClientFromEnv, validateApiKeyFormat } from 'nfe-io';
 
 // Create client from environment variable
 // Requires NFE_API_KEY environment variable
@@ -891,7 +891,7 @@ import type {
   Webhook,
   ListResponse,
   PaginationOptions
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 
 const config: NfeConfig = {
   apiKey: 'your-api-key',
@@ -916,7 +916,7 @@ The SDK is designed to be extensible. See [CONTRIBUTING.md](../CONTRIBUTING.md) 
 ### Example: Custom Resource Extension
 
 ```typescript
-import { HttpClient } from '@nfe-io/sdk/core/http/client';
+import { HttpClient } from 'nfe-io/core/http/client';
 
 class CustomResource {
   constructor(private http: HttpClient) {}
@@ -927,7 +927,7 @@ class CustomResource {
 }
 
 // Extend NfeClient
-import { NfeClient } from '@nfe-io/sdk';
+import { NfeClient } from 'nfe-io';
 
 class ExtendedNfeClient extends NfeClient {
   public readonly custom: CustomResource;

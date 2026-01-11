@@ -374,7 +374,7 @@ import type { ServiceInvoice, Company } from '../types.js';
 
 ```typescript
 // For SDK extensions (MCP, n8n, etc.)
-import type { ServiceInvoice, Company } from '@nfe-io/sdk';
+import type { ServiceInvoice, Company } from 'nfe-io';
 ```
 
 **Use when**: Building extensions that use the SDK as a dependency.

@@ -151,7 +151,7 @@ import type {
   ServiceInvoice,   // ✅ Documented
   Company,          // ✅ Documented
   Webhook           // ✅ Documented
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 ```
 
 #### **Error Handling:**
@@ -160,7 +160,7 @@ import {
   NfeError,              // ✅ Documented
   AuthenticationError,   // ✅ Documented
   ValidationError        // ✅ Documented
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 ```
 
 ### 5. Documentation Coverage

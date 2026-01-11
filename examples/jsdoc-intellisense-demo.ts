@@ -18,7 +18,7 @@ import {
   validateApiKeyFormat,
   AuthenticationError,
   ValidationError
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 
 // Example 1: Environment validation with full documentation
 const envCheck = isEnvironmentSupported();

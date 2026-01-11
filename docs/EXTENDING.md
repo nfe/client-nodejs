@@ -17,7 +17,7 @@ Guide for extending the NFE.io SDK with custom functionality, adapters, and inte
 The NFE.io SDK v3 is designed with extensibility in mind:
 
 ```
-@nfe-io/sdk (core)
+nfe-io (core)
 ├── NfeClient          # Main client class
 ├── HttpClient         # HTTP layer with retry logic
 ├── Resources          # API resource classes
@@ -44,8 +44,8 @@ Your Extension
 All NFE.io resources follow a consistent pattern. Here's how to create your own:
 
 ```typescript
-import { HttpClient } from '@nfe-io/sdk/core/http/client';
-import type { ListResponse, PaginationOptions } from '@nfe-io/sdk';
+import { HttpClient } from 'nfe-io/core/http/client';
+import type { ListResponse, PaginationOptions } from 'nfe-io';
 
 export interface CustomEntity {
   id: string;
@@ -105,7 +105,7 @@ export class CustomResource {
 Add your custom resource to the client:
 
 ```typescript
-import { NfeClient, type NfeConfig } from '@nfe-io/sdk';
+import { NfeClient, type NfeConfig } from 'nfe-io';
 import { CustomResource } from './custom-resource';
 
 export class ExtendedNfeClient extends NfeClient {
@@ -186,7 +186,7 @@ export class CompanyScopedResource {
 Add custom logic before requests are sent:
 
 ```typescript
-import { HttpClient, type HttpConfig } from '@nfe-io/sdk/core/http/client';
+import { HttpClient, type HttpConfig } from 'nfe-io/core/http/client';
 
 export class CustomHttpClient extends HttpClient {
   async request<T>(
@@ -330,7 +330,7 @@ Create platform-specific adapters that wrap the core SDK:
 
 ```typescript
 // adapter.ts
-import { NfeClient, type NfeConfig, type ServiceInvoice } from '@nfe-io/sdk';
+import { NfeClient, type NfeConfig, type ServiceInvoice } from 'nfe-io';
 
 export interface AdapterConfig extends NfeConfig {
   // Platform-specific configuration
@@ -372,7 +372,7 @@ export abstract class BaseAdapter {
 ```typescript
 import express, { Request, Response } from 'express';
 import { BaseAdapter, type AdapterConfig } from './adapter';
-import type { ServiceInvoice } from '@nfe-io/sdk';
+import type { ServiceInvoice } from 'nfe-io';
 
 export class ExpressAdapter extends BaseAdapter {
   private app?: express.Application;
@@ -466,7 +466,7 @@ Model Context Protocol integration for LLM tool usage.
 
 ```typescript
 // mcp-server.ts
-import { NfeClient } from '@nfe-io/sdk';
+import { NfeClient } from 'nfe-io';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
@@ -627,7 +627,7 @@ import {
   INodeType,
   INodeTypeDescription,
 } from 'n8n-workflow';
-import { NfeClient } from '@nfe-io/sdk';
+import { NfeClient } from 'nfe-io';
 
 export class NfeIo implements INodeType {
   description: INodeTypeDescription = {
@@ -770,7 +770,7 @@ import type {
   ServiceInvoice,
   ServiceInvoiceData,
   Company
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 
 // Good
 async function createInvoice(
@@ -791,7 +791,7 @@ async function createInvoice(companyId: any, data: any): Promise<any> {
 Handle errors appropriately:
 
 ```typescript
-import { AuthenticationError, ValidationError } from '@nfe-io/sdk';
+import { AuthenticationError, ValidationError } from 'nfe-io';
 
 try {
   await nfe.serviceInvoices.create(companyId, data);
@@ -837,7 +837,7 @@ class MyAdapter extends BaseAdapter {
 Validate configuration early:
 
 ```typescript
-import { validateApiKeyFormat } from '@nfe-io/sdk';
+import { validateApiKeyFormat } from 'nfe-io';
 
 function createAdapter(config: AdapterConfig) {
   // Validate API key
