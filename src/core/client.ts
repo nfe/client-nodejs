@@ -286,10 +286,10 @@ export class NfeClient {
   // --------------------------------------------------------------------------
 
   private validateAndNormalizeConfig(config: NfeConfig): RequiredNfeConfig {
-    if (!config.apiKey) {
+    if (!config.apiKey || config.apiKey.trim() === '') {
       // Try to get from environment variable
       const envApiKey = this.getEnvironmentVariable('NFE_API_KEY');
-      if (!envApiKey) {
+      if (!envApiKey || envApiKey.trim() === '') {
         throw ErrorFactory.fromMissingApiKey();
       }
       config.apiKey = envApiKey;

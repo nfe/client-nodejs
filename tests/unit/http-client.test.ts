@@ -3,20 +3,29 @@ import { HttpClient, createDefaultRetryConfig, buildHttpConfig } from '../../src
 import type { HttpConfig } from '../../src/core/types';
 import { TEST_API_KEY } from '../setup';
 
+// Helper to create mock Headers object
+function createMockHeaders(entries: [string, string][]): any {
+  const map = new Map(entries);
+  return {
+    get: (key: string) => map.get(key.toLowerCase()) || null,
+    has: (key: string) => map.has(key.toLowerCase()),
+    entries: () => map.entries(),
+    keys: () => map.keys(),
+    values: () => map.values(),
+  };
+}
+
 describe('HttpClient', () => {
   let httpClient: HttpClient;
   let fetchMock: ReturnType<typeof vi.fn>;
   let config: HttpConfig;
 
   beforeEach(() => {
-    // Use fake timers to speed up retry tests
-    vi.useFakeTimers();
-    
     config = buildHttpConfig(
       TEST_API_KEY,
       'https://api.nfe.io/v1',
       10000,
-      createDefaultRetryConfig()
+      { maxRetries: 3, baseDelay: 10, maxDelay: 100 } // Delays curtos para testes rápidos
     );
     
     httpClient = new HttpClient(config);
@@ -27,7 +36,6 @@ describe('HttpClient', () => {
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -38,7 +46,7 @@ describe('HttpClient', () => {
         ok: true,
         status: 200,
         statusText: 'OK',
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => mockData,
       });
 
@@ -58,7 +66,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ([]),
       });
 
@@ -73,7 +81,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ([]),
       });
 
@@ -99,7 +107,7 @@ describe('HttpClient', () => {
         ok: true,
         status: 201,
         statusText: 'Created',
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => responseBody,
       });
 
@@ -146,7 +154,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => responseBody,
       });
 
@@ -179,7 +187,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({}),
       });
 
@@ -194,7 +202,7 @@ describe('HttpClient', () => {
         ok: false,
         status: 401,
         statusText: 'Unauthorized',
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({ error: 'Invalid API key' }),
       });
 
@@ -215,7 +223,7 @@ describe('HttpClient', () => {
         ok: false,
         status: 400,
         statusText: 'Bad Request',
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({
           error: 'Validation failed',
           details: { field: 'required' },
@@ -236,7 +244,7 @@ describe('HttpClient', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({ error: 'Resource not found' }),
       });
 
@@ -264,9 +272,6 @@ describe('HttpClient', () => {
 
       const promise = httpClient.get('/test');
       
-      // Rate limits are retried, so advance timers to complete all retries
-      await vi.runAllTimersAsync();
-      
       // Should fail after max retries
       await expect(promise).rejects.toMatchObject({
         name: 'RateLimitError',
@@ -283,14 +288,11 @@ describe('HttpClient', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({ error: 'Server error' }),
       });
 
       const promise = httpClient.get('/test');
-      
-      // Server errors are retried, so advance timers
-      await vi.runAllTimersAsync();
       
       // Should fail after max retries
       await expect(promise).rejects.toMatchObject({
@@ -306,9 +308,6 @@ describe('HttpClient', () => {
       fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
 
       const promise = httpClient.get('/test');
-      
-      // Network errors are retried, so advance timers
-      await vi.runAllTimersAsync();
       
       // Should fail after max retries
       await expect(promise).rejects.toMatchObject({
@@ -326,9 +325,6 @@ describe('HttpClient', () => {
 
       const promise = httpClient.get('/test');
       
-      // Timeout errors are retried, so advance timers
-      await vi.runAllTimersAsync();
-      
       // Should fail after max retries
       await expect(promise).rejects.toMatchObject({
         name: 'TimeoutError',
@@ -345,27 +341,24 @@ describe('HttpClient', () => {
           ok: false,
           status: 503,
           statusText: 'Service Unavailable',
-          headers: new Map([['content-type', 'application/json']]),
+          headers: createMockHeaders([['content-type', 'application/json']]),
           json: async () => ({ error: 'Temporarily unavailable' }),
         })
         .mockResolvedValueOnce({
           ok: false,
           status: 503,
           statusText: 'Service Unavailable',
-          headers: new Map([['content-type', 'application/json']]),
+          headers: createMockHeaders([['content-type', 'application/json']]),
           json: async () => ({ error: 'Temporarily unavailable' }),
         })
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
-          headers: new Map([['content-type', 'application/json']]),
+          headers: createMockHeaders([['content-type', 'application/json']]),
           json: async () => ({ success: true }),
         });
 
       const promise = httpClient.get<{ success: boolean }>('/test');
-      
-      // Fast-forward through retry delays
-      await vi.runAllTimersAsync();
       
       const response = await promise;
       
@@ -380,14 +373,11 @@ describe('HttpClient', () => {
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
-          headers: new Map([['content-type', 'application/json']]),
+          headers: createMockHeaders([['content-type', 'application/json']]),
           json: async () => ({ success: true }),
         });
 
       const promise = httpClient.get<{ success: boolean }>('/test');
-      
-      // Fast-forward through retry delays
-      await vi.runAllTimersAsync();
       
       const response = await promise;
       
@@ -400,7 +390,7 @@ describe('HttpClient', () => {
         ok: false,
         status: 400,
         statusText: 'Bad Request',
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({ error: 'Invalid input' }),
       });
 
@@ -415,14 +405,11 @@ describe('HttpClient', () => {
         ok: false,
         status: 503,
         statusText: 'Service Unavailable',
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({ error: 'Unavailable' }),
       });
 
       const promise = httpClient.get('/test');
-      
-      // Fast-forward through all retry attempts
-      await vi.runAllTimersAsync();
       
       await expect(promise).rejects.toThrow();
       // Initial request + 3 retries = 4 total
@@ -443,14 +430,11 @@ describe('HttpClient', () => {
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
-          headers: new Map([['content-type', 'application/json']]),
+          headers: createMockHeaders([['content-type', 'application/json']]),
           json: async () => ({ success: true }),
         });
 
       const promise = httpClient.get<{ success: boolean }>('/test');
-      
-      // Fast-forward through retry delay
-      await vi.runAllTimersAsync();
       
       const response = await promise;
       expect(response.data).toEqual({ success: true });
@@ -463,7 +447,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({}),
       });
 
@@ -486,7 +470,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({}),
       });
 
@@ -503,7 +487,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => jsonData,
       });
 
@@ -515,7 +499,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'text/plain']]),
+        headers: createMockHeaders([['content-type', 'text/plain']]),
         text: async () => 'Plain text response',
       });
 
@@ -530,7 +514,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/pdf']]),
+        headers: createMockHeaders([['content-type', 'application/pdf']]),
         arrayBuffer: async () => arrayBuffer,
       });
 
@@ -547,7 +531,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/xml']]),
+        headers: createMockHeaders([['content-type', 'application/xml']]),
         arrayBuffer: async () => arrayBuffer,
       });
 
@@ -563,7 +547,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({}),
       });
 
@@ -578,7 +562,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({}),
       });
 
@@ -592,7 +576,7 @@ describe('HttpClient', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 201,
-        headers: new Map([['content-type', 'application/json']]),
+        headers: createMockHeaders([['content-type', 'application/json']]),
         json: async () => ({}),
       });
 

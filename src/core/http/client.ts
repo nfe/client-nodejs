@@ -254,7 +254,7 @@ export class HttpClient {
 
   private buildHeaders(data?: unknown): Record<string, string> {
     const headers: Record<string, string> = {
-      'Authorization': `Basic ${this.config.apiKey}`,
+      'Authorization': `Basic ${Buffer.from(this.config.apiKey).toString('base64')}`,
       'Accept': 'application/json',
       'User-Agent': this.getUserAgent(),
     };
