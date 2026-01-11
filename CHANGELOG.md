@@ -84,15 +84,14 @@ Version 3.0 is a complete rewrite of the NFE.io SDK with modern TypeScript, zero
 ### Changed
 
 #### Breaking Changes
-- **Package name** changed from `nfe-io` to `@nfe-io/sdk`
 - **Node.js requirement** increased from 12+ to 18+
 - **API initialization** now uses class constructor instead of factory function
   ```javascript
   // v2
   var nfe = require('nfe-io')('api-key');
-  
+
   // v3
-  import { NfeClient } from '@nfe-io/sdk';
+  import { NfeClient } from 'nfe-io';
   const nfe = new NfeClient({ apiKey: 'api-key' });
   ```
 - **No callback support** - Only async/await and promises
@@ -134,7 +133,7 @@ See [MIGRATION.md](./MIGRATION.md) for detailed migration instructions.
 
 **Quick checklist:**
 1. ✅ Upgrade to Node.js 18+
-2. ✅ Change package name: `npm install @nfe-io/sdk`
+2. ✅ Install the package: `npm install nfe-io`
 3. ✅ Update imports/requires
 4. ✅ Convert callbacks to async/await
 5. ✅ Update error handling to use error classes

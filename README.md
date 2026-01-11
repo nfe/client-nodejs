@@ -1,7 +1,7 @@
 # NFE.io SDK para Node.js (v3)
 
-[![npm version](https://img.shields.io/npm/v/@nfe-io/sdk.svg)](https://www.npmjs.com/package/@nfe-io/sdk)
-[![Node.js Version](https://img.shields.io/node/v/@nfe-io/sdk.svg)](https://nodejs.org)
+[![npm version](https://img.shields.io/npm/v/nfe-io.svg)](https://www.npmjs.com/package/nfe-io)
+[![Node.js Version](https://img.shields.io/node/v/nfe-io.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -39,19 +39,19 @@
 - TypeScript >= 5.0 (se usar TypeScript)
 
 ```bash
-npm install @nfe-io/sdk
+npm install nfe-io
 ```
 
 ou
 
 ```bash
-yarn add @nfe-io/sdk
+yarn add nfe-io
 ```
 
 ou
 
 ```bash
-pnpm add @nfe-io/sdk
+pnpm add nfe-io
 ```
 
 ## 🚀 Início Rápido
@@ -59,7 +59,7 @@ pnpm add @nfe-io/sdk
 ### Uso Básico (ESM)
 
 ```typescript
-import { NfeClient } from '@nfe-io/sdk';
+import { NfeClient } from 'nfe-io';
 
 // Inicializar o cliente
 const nfe = new NfeClient({
@@ -110,7 +110,7 @@ console.log(`Nota fiscal criada: ${notaFiscal.number}`);
 ### Uso com CommonJS
 
 ```javascript
-const { NfeClient } = require('@nfe-io/sdk');
+const { NfeClient } = require('nfe-io');
 
 const nfe = new NfeClient({
   apiKey: process.env.NFE_API_KEY,
@@ -294,7 +294,7 @@ import {
   ValidationError,
   NotFoundError,
   RateLimitError 
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 
 try {
   const notaFiscal = await nfe.serviceInvoices.create(empresaId, dados);
@@ -330,7 +330,7 @@ nfe.serviceInvoices.create('id-empresa', dados, function(err, notaFiscal) {
 });
 
 // v3 (async/await + TypeScript)
-import { NfeClient } from '@nfe-io/sdk';
+import { NfeClient } from 'nfe-io';
 const nfe = new NfeClient({ apiKey: 'chave-api' });
 
 try {
@@ -346,7 +346,7 @@ try {
 ### Fluxo Completo de Emissão de Nota Fiscal
 
 ```typescript
-import { NfeClient } from '@nfe-io/sdk';
+import { NfeClient } from 'nfe-io';
 
 const nfe = new NfeClient({
   apiKey: process.env.NFE_API_KEY!,

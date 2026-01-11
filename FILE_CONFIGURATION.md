@@ -116,7 +116,7 @@ cd ../test-project
 npm install ../client-nodejs/nfe-io-sdk-3.0.0.tgz
 
 # 3. Verificar imports
-node --input-type=module --eval "import { NfeClient } from '@nfe-io/sdk'; console.log('OK');"
+node --input-type=module --eval "import { NfeClient } from 'nfe-io'; console.log('OK');"
 ```
 
 ### Verificar arquivos ignorados pelo Git

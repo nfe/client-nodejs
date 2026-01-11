@@ -68,7 +68,7 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 ## 📁 Estrutura de Arquivos Obrigatória
 
 ```
-client-nodejs/                    # @nfe-io/sdk - Core SDK
+client-nodejs/                    # nfe-io - Core SDK
 ├── openapi/
 │   ├── spec/
 │   │   └── nfe-api.json          # ⚠️ SOURCE OF TRUTH - OpenAPI spec
@@ -164,7 +164,7 @@ EOF
 
 cat > package.json << 'EOF'
 {
-  "name": "@nfe-io/sdk",
+  "name": "nfe-io",
   "version": "3.0.0-beta.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -405,7 +405,7 @@ npm run docs            # Docs geradas
 ### package.json Obrigatório
 ```json
 {
-  "name": "@nfe-io/sdk",
+  "name": "nfe-io",
   "version": "3.0.0-beta.1",
   "description": "Official NFe.io SDK for Node.js 18+",
   "main": "./dist/index.js",
@@ -642,9 +642,9 @@ O SDK NFE.io v3 foi projetado para ser extensível. As seguintes extensões ofic
 **Model Context Protocol Server para integração com LLMs**
 
 - Permite que LLMs (Claude, GPT, etc.) emitam notas fiscais via conversação natural
-- Implementa MCP tools usando `@nfe-io/sdk` internamente
+- Implementa MCP tools usando `nfe-io` internamente
 - Instale: `npm install @nfe-io/mcp-server`
-- Depende de: `@nfe-io/sdk` (peer dependency)
+- Depende de: `nfe-io` (peer dependency)
 
 ### [@nfe-io/n8n-nodes](https://github.com/nfe/n8n-nodes)
 **Custom nodes n8n para automação de workflows**
@@ -652,7 +652,7 @@ O SDK NFE.io v3 foi projetado para ser extensível. As seguintes extensões ofic
 - Permite automação de emissão de notas fiscais em workflows n8n
 - Nodes para ServiceInvoices, Companies, Webhooks
 - Instale via n8n community nodes ou `npm install @nfe-io/n8n-nodes`
-- Depende de: `@nfe-io/sdk` (dependency)
+- Depende de: `nfe-io` (dependency)
 
 ### Criando Sua Própria Extensão
 

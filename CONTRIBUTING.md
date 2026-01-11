@@ -1,4 +1,4 @@
-# Contribuindo para @nfe-io/sdk
+# Contribuindo para nfe-io SDK
 
 Obrigado por seu interesse em contribuir para o SDK NFE.io! 🎉
 
@@ -117,7 +117,7 @@ O SDK NFE.io v3 é projetado para ser extensível. Se você quer criar uma exten
 ```
 Sua Extensão
     ↓ usa
-@nfe-io/sdk (este repositório)
+nfe-io (este repositório)
     ↓ chama
 NFE.io API
 ```
@@ -126,7 +126,7 @@ NFE.io API
 
 ```typescript
 // my-nfe-wrapper/src/index.ts
-import { NfeClient, type NfeConfig } from '@nfe-io/sdk';
+import { NfeClient, type NfeConfig } from 'nfe-io';
 
 export class MyNfeWrapper {
   private client: NfeClient;
@@ -159,7 +159,7 @@ export class MyNfeWrapper {
   "name": "my-nfe-wrapper",
   "version": "1.0.0",
   "dependencies": {
-    "@nfe-io/sdk": "^3.0.0"
+    "nfe-io": "^3.0.0"
   }
 }
 ```
@@ -169,7 +169,7 @@ export class MyNfeWrapper {
 1. **Repositório separado**: Crie um novo repositório para sua extensão
 2. **Naming**: Use prefixo como `nfe-*` ou `@yourscope/nfe-*`
 3. **Documentação**: README explicando o propósito e uso
-4. **Peer dependency**: Use `@nfe-io/sdk` como peer ou dependency
+4. **Peer dependency**: Use `nfe-io` como peer ou dependency
 
 ---
 
@@ -182,7 +182,7 @@ Extensões mantidas pela equipe NFE.io:
 
 ```typescript
 // Como a extensão usa o SDK internamente
-import { NfeClient } from '@nfe-io/sdk';
+import { NfeClient } from 'nfe-io';
 
 export class NfeMcpServer {
   private sdk: NfeClient;
@@ -206,7 +206,7 @@ export class NfeMcpServer {
 
 ```typescript
 // Como o n8n node usa o SDK
-import { NfeClient } from '@nfe-io/sdk';
+import { NfeClient } from 'nfe-io';
 import { IExecuteFunctions } from 'n8n-core';
 
 export class NfeIoNode {
@@ -252,10 +252,10 @@ import {
   type Company,
   NfeError,
   AuthenticationError
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 
 // ❌ API Interna - NÃO use
-import { HttpClient } from '@nfe-io/sdk/dist/core/http/client';
+import { HttpClient } from 'nfe-io/dist/core/http/client';
 ```
 
 ---
