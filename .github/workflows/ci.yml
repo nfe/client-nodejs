@@ -114,8 +114,8 @@ jobs:
 
       - name: Check build artifacts
         run: |
-          test -f dist/index.js || (echo "CJS build missing" && exit 1)
-          test -f dist/index.mjs || (echo "ESM build missing" && exit 1)
+          test -f dist/index.cjs || (echo "CJS build missing" && exit 1)
+          test -f dist/index.js || (echo "ESM build missing" && exit 1)
           test -f dist/index.d.ts || (echo "Types build missing" && exit 1)
 
       - name: Upload build artifacts

@@ -308,7 +308,7 @@ export class NfeClient {
     const normalizedConfig: RequiredNfeConfig = {
       apiKey: config.apiKey,
       environment,
-      baseUrl: config.baseUrl || this.getDefaultBaseUrl(environment),
+      baseUrl: config.baseUrl || this.getDefaultBaseUrl(),
       timeout: config.timeout || 30000,
       retryConfig: config.retryConfig || createDefaultRetryConfig(),
     };
@@ -316,7 +316,7 @@ export class NfeClient {
     return normalizedConfig;
   }
 
-  private getDefaultBaseUrl(_environment: 'production' | 'development'): string {
+  private getDefaultBaseUrl(): string {
     // NFE.io API uses the same endpoint for both production and development
     // They are differentiated by the API key used, not by different URLs
     return 'https://api.nfe.io/v1';

@@ -192,3 +192,6 @@ release/
 
 test-auth.js
 debug-auth.mjs
+4_OpenAPI Validation.txt
+1_Build.txt
+2_Test (Node 22.x).txt
