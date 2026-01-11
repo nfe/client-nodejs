@@ -415,12 +415,16 @@ describe('NfeClient.pollUntilComplete()', () => {
         { maxAttempts: 3, intervalMs: 1000 }
       );
 
+      // Capture the promise rejection expectation first
+      const expectation = expect(pollPromise).rejects.toThrow(PollingTimeoutError);
+
       // Advance through all polling attempts
       await vi.runOnlyPendingTimersAsync();
       await vi.advanceTimersByTimeAsync(1000);
       await vi.advanceTimersByTimeAsync(1000);
 
-      await expect(pollPromise).rejects.toThrow(PollingTimeoutError);
+      // Now await the expectation
+      await expectation;
     });
   });
 });
