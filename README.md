@@ -1,77 +1,77 @@
-# NFE.io SDK for Node.js (v3)
+# NFE.io SDK para Node.js (v3)
 
 [![npm version](https://img.shields.io/npm/v/@nfe-io/sdk.svg)](https://www.npmjs.com/package/@nfe-io/sdk)
 [![Node.js Version](https://img.shields.io/node/v/@nfe-io/sdk.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Official NFE.io SDK for Node.js 18+** - Modern TypeScript SDK for issuing Brazilian service invoices (NFS-e).
+**SDK Oficial NFE.io para Node.js 18+** - SDK TypeScript moderno para emissão de notas fiscais de serviço eletrônicas (NFS-e).
 
-> ✨ **Version 3.0** - Complete rewrite with TypeScript, zero runtime dependencies, and modern async/await API.
+> ✨ **Versão 3.0** - Reescrita completa com TypeScript, zero dependências em runtime e API moderna async/await.
 
-## 📋 Table of Contents
+## 📋 Índice
 
-- [Features](#-features)
-- [Installation](#-installation)
-- [Quick Start](#-quick-start)
-- [Documentation](#-documentation)
-- [Migration from v2](#-migration-from-v2)
-- [Examples](#-examples)
-- [API Reference](#-api-reference)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Recursos](#-recursos)
+- [Instalação](#-instalação)
+- [Início Rápido](#-início-rápido)
+- [Documentação](#-documentação)
+- [Migração da v2](#-migração-da-v2)
+- [Exemplos](#-exemplos)
+- [Referência da API](#-referência-da-api)
+- [Contribuindo](#-contribuindo)
+- [Licença](#-licença)
 
-## ✨ Features
+## ✨ Recursos
 
-- 🎯 **Modern TypeScript** - Full type safety with TypeScript 5.3+
-- 🚀 **Zero Dependencies** - Uses native Node.js fetch API (Node 18+)
-- ⚡ **Async/Await** - Clean promise-based API
-- 🔄 **Auto Retry** - Built-in exponential backoff retry logic
-- 📦 **ESM & CommonJS** - Works with both module systems
-- 🧪 **Well Tested** - 80+ tests with 88% coverage
-- 📖 **Full JSDoc** - Complete API documentation
-- 🛡️ **Error Handling** - Typed error classes for better error handling
+- 🎯 **TypeScript Moderno** - Segurança de tipos completa com TypeScript 5.3+
+- 🚀 **Zero Dependências** - Usa API fetch nativa do Node.js (Node 18+)
+- ⚡ **Async/Await** - API limpa baseada em promises
+- 🔄 **Retry Automático** - Lógica de retry com exponential backoff integrada
+- 📦 **ESM & CommonJS** - Funciona com ambos os sistemas de módulos
+- 🧪 **Bem Testado** - Mais de 80 testes com 88% de cobertura
+- 📖 **JSDoc Completo** - Documentação completa da API
+- 🛡️ **Tratamento de Erros** - Classes de erro tipadas para melhor tratamento
 
-## 📦 Installation
+## 📦 Instalação
 
-**Requirements:**
+**Requisitos:**
 - Node.js >= 18.0.0
-- TypeScript >= 5.0 (if using TypeScript)
+- TypeScript >= 5.0 (se usar TypeScript)
 
 ```bash
 npm install @nfe-io/sdk
 ```
 
-or
+ou
 
 ```bash
 yarn add @nfe-io/sdk
 ```
 
-or
+ou
 
 ```bash
 pnpm add @nfe-io/sdk
 ```
 
-## 🚀 Quick Start
+## 🚀 Início Rápido
 
-### Basic Usage (ESM)
+### Uso Básico (ESM)
 
 ```typescript
 import { NfeClient } from '@nfe-io/sdk';
 
-// Initialize the client
+// Inicializar o cliente
 const nfe = new NfeClient({
-  apiKey: 'your-api-key',
-  environment: 'production' // or 'development'
+  apiKey: 'sua-chave-api',
+  environment: 'production' // ou 'development'
 });
 
-// Create a company
-const company = await nfe.companies.create({
+// Criar uma empresa
+const empresa = await nfe.companies.create({
   federalTaxNumber: '12345678000190',
-  name: 'My Company Ltd',
-  email: 'company@example.com',
+  name: 'Minha Empresa Ltda',
+  email: 'empresa@exemplo.com.br',
   taxRegime: 1, // Simples Nacional
   address: {
     country: 'BRA',
@@ -83,16 +83,16 @@ const company = await nfe.companies.create({
   }
 });
 
-// Issue a service invoice
-const invoice = await nfe.serviceInvoices.create(company.id, {
+// Emitir uma nota fiscal de serviço
+const notaFiscal = await nfe.serviceInvoices.create(empresa.id, {
   cityServiceCode: '01234',
-  description: 'Web development services',
+  description: 'Serviços de desenvolvimento web',
   servicesAmount: 1000.00,
   borrower: {
     type: 'LegalEntity',
     federalTaxNumber: 12345678000190,
-    name: 'Client Company',
-    email: 'client@example.com',
+    name: 'Empresa Cliente',
+    email: 'cliente@exemplo.com.br',
     address: {
       country: 'BRA',
       postalCode: '01310-100',
@@ -104,10 +104,10 @@ const invoice = await nfe.serviceInvoices.create(company.id, {
   }
 });
 
-console.log(`Invoice created: ${invoice.number}`);
+console.log(`Nota fiscal criada: ${notaFiscal.number}`);
 ```
 
-### CommonJS Usage
+### Uso com CommonJS
 
 ```javascript
 const { NfeClient } = require('@nfe-io/sdk');
@@ -117,163 +117,163 @@ const nfe = new NfeClient({
   environment: 'production'
 });
 
-// Same API as ESM
+// Mesma API que ESM
 ```
 
-## 📚 Documentation
+## 📚 Documentação
 
-### API Resources
+### Recursos da API
 
-The SDK provides the following resources:
+O SDK fornece os seguintes recursos:
 
-#### 🧾 Service Invoices (`nfe.serviceInvoices`)
+#### 🧾 Notas Fiscais de Serviço (`nfe.serviceInvoices`)
 
-Manage NFS-e (Nota Fiscal de Serviço Eletrônica):
+Gerenciar NFS-e (Nota Fiscal de Serviço Eletrônica):
 
 ```typescript
-// Create invoice (returns immediately or async 202)
-const invoice = await nfe.serviceInvoices.create(companyId, invoiceData);
+// Criar nota fiscal (retorna imediatamente ou async 202)
+const notaFiscal = await nfe.serviceInvoices.create(empresaId, dadosNota);
 
-// Create and wait for completion (handles async processing)
-const invoice = await nfe.serviceInvoices.createAndWait(companyId, invoiceData, {
+// Criar e aguardar conclusão (lida com processamento assíncrono)
+const notaFiscal = await nfe.serviceInvoices.createAndWait(empresaId, dadosNota, {
   maxAttempts: 30,
   intervalMs: 2000
 });
 
-// List invoices with pagination
-const result = await nfe.serviceInvoices.list(companyId, {
+// Listar notas fiscais com paginação
+const resultado = await nfe.serviceInvoices.list(empresaId, {
   page: 1,
   pageSize: 50
 });
 
-// Retrieve specific invoice
-const invoice = await nfe.serviceInvoices.retrieve(companyId, invoiceId);
+// Buscar nota fiscal específica
+const notaFiscal = await nfe.serviceInvoices.retrieve(empresaId, notaFiscalId);
 
-// Cancel invoice
-const cancelledInvoice = await nfe.serviceInvoices.cancel(companyId, invoiceId);
+// Cancelar nota fiscal
+const notaCancelada = await nfe.serviceInvoices.cancel(empresaId, notaFiscalId);
 
-// Send invoice by email
-await nfe.serviceInvoices.sendEmail(companyId, invoiceId);
+// Enviar nota fiscal por email
+await nfe.serviceInvoices.sendEmail(empresaId, notaFiscalId);
 
-// Download PDF
-const pdfBuffer = await nfe.serviceInvoices.downloadPdf(companyId, invoiceId);
+// Baixar PDF
+const pdfBuffer = await nfe.serviceInvoices.downloadPdf(empresaId, notaFiscalId);
 
-// Download XML
-const xmlData = await nfe.serviceInvoices.downloadXml(companyId, invoiceId);
+// Baixar XML
+const xmlData = await nfe.serviceInvoices.downloadXml(empresaId, notaFiscalId);
 ```
 
-#### 🏢 Companies (`nfe.companies`)
+#### 🏢 Empresas (`nfe.companies`)
 
-Manage companies in your account:
+Gerenciar empresas na sua conta:
 
 ```typescript
-// Create company
-const company = await nfe.companies.create({
+// Criar empresa
+const empresa = await nfe.companies.create({
   federalTaxNumber: '12345678000190',
-  name: 'Company Name',
-  // ... other fields
+  name: 'Nome da Empresa',
+  // ... outros campos
 });
 
-// List all companies
-const companies = await nfe.companies.list();
+// Listar todas as empresas
+const empresas = await nfe.companies.list();
 
-// Get specific company
-const company = await nfe.companies.retrieve(companyId);
+// Buscar empresa específica
+const empresa = await nfe.companies.retrieve(empresaId);
 
-// Update company
-const updated = await nfe.companies.update(companyId, {
-  email: 'newemail@company.com'
+// Atualizar empresa
+const atualizada = await nfe.companies.update(empresaId, {
+  email: 'novoemail@empresa.com.br'
 });
 
-// Upload digital certificate
-await nfe.companies.uploadCertificate(companyId, {
-  file: certificateBuffer,
-  password: 'cert-password'
+// Upload de certificado digital
+await nfe.companies.uploadCertificate(empresaId, {
+  file: certificadoBuffer,
+  password: 'senha-certificado'
 });
 ```
 
-#### 👔 Legal People (`nfe.legalPeople`)
+#### 👔 Pessoas Jurídicas (`nfe.legalPeople`)
 
-Manage legal entities (companies/businesses):
+Gerenciar pessoas jurídicas (empresas/negócios):
 
 ```typescript
-// Create legal person
-const person = await nfe.legalPeople.create(companyId, {
+// Criar pessoa jurídica
+const pessoa = await nfe.legalPeople.create(empresaId, {
   federalTaxNumber: '12345678000190',
-  name: 'Business Name',
-  email: 'business@example.com',
+  name: 'Nome da Empresa',
+  email: 'empresa@exemplo.com.br',
   address: { /* ... */ }
 });
 
-// List all legal people
-const people = await nfe.legalPeople.list(companyId);
+// Listar todas as pessoas jurídicas
+const pessoas = await nfe.legalPeople.list(empresaId);
 
-// Find by tax number
-const person = await nfe.legalPeople.findByTaxNumber(companyId, '12345678000190');
+// Buscar por CNPJ
+const pessoa = await nfe.legalPeople.findByTaxNumber(empresaId, '12345678000190');
 ```
 
-#### 👤 Natural People (`nfe.naturalPeople`)
+#### 👤 Pessoas Físicas (`nfe.naturalPeople`)
 
-Manage natural persons (individuals):
+Gerenciar pessoas físicas (indivíduos):
 
 ```typescript
-// Create natural person
-const person = await nfe.naturalPeople.create(companyId, {
+// Criar pessoa física
+const pessoa = await nfe.naturalPeople.create(empresaId, {
   federalTaxNumber: 12345678901,
-  name: 'John Doe',
-  email: 'john@example.com',
+  name: 'João da Silva',
+  email: 'joao@exemplo.com.br',
   address: { /* ... */ }
 });
 
-// Find by CPF
-const person = await nfe.naturalPeople.findByTaxNumber(companyId, '12345678901');
+// Buscar por CPF
+const pessoa = await nfe.naturalPeople.findByTaxNumber(empresaId, '12345678901');
 ```
 
 #### 🔗 Webhooks (`nfe.webhooks`)
 
-Manage webhook configurations:
+Gerenciar configurações de webhook:
 
 ```typescript
-// Create webhook
-const webhook = await nfe.webhooks.create(companyId, {
-  url: 'https://myapp.com/webhooks/nfe',
+// Criar webhook
+const webhook = await nfe.webhooks.create(empresaId, {
+  url: 'https://meuapp.com.br/webhooks/nfe',
   events: ['invoice.issued', 'invoice.cancelled'],
   active: true
 });
 
-// List webhooks
-const webhooks = await nfe.webhooks.list(companyId);
+// Listar webhooks
+const webhooks = await nfe.webhooks.list(empresaId);
 
-// Update webhook
-await nfe.webhooks.update(companyId, webhookId, {
+// Atualizar webhook
+await nfe.webhooks.update(empresaId, webhookId, {
   events: ['invoice.issued']
 });
 
-// Validate webhook signature
-const isValid = nfe.webhooks.validateSignature(
+// Validar assinatura do webhook
+const ehValido = nfe.webhooks.validateSignature(
   payload,
-  signature,
-  secret
+  assinatura,
+  segredo
 );
 ```
 
-### Configuration Options
+### Opções de Configuração
 
 ```typescript
 const nfe = new NfeClient({
-  // Required: Your NFE.io API key
-  apiKey: 'your-api-key',
+  // Obrigatório: Sua chave API do NFE.io
+  apiKey: 'sua-chave-api',
   
-  // Optional: Environment (default: 'production')
-  environment: 'production', // or 'sandbox'
+  // Opcional: Ambiente (padrão: 'production')
+  environment: 'production', // ou 'sandbox'
   
-  // Optional: Custom base URL (overrides environment)
-  baseUrl: 'https://custom-api.nfe.io/v1',
+  // Opcional: URL base customizada (sobrescreve environment)
+  baseUrl: 'https://api-customizada.nfe.io/v1',
   
-  // Optional: Request timeout in milliseconds (default: 30000)
+  // Opcional: Timeout de requisição em milissegundos (padrão: 30000)
   timeout: 60000,
   
-  // Optional: Retry configuration
+  // Opcional: Configuração de retry
   retryConfig: {
     maxRetries: 3,
     baseDelay: 1000,
@@ -283,9 +283,9 @@ const nfe = new NfeClient({
 });
 ```
 
-### Error Handling
+### Tratamento de Erros
 
-The SDK provides typed error classes:
+O SDK fornece classes de erro tipadas:
 
 ```typescript
 import { 
@@ -297,53 +297,53 @@ import {
 } from '@nfe-io/sdk';
 
 try {
-  const invoice = await nfe.serviceInvoices.create(companyId, data);
-} catch (error) {
-  if (error instanceof AuthenticationError) {
-    console.error('Invalid API key:', error.message);
-  } else if (error instanceof ValidationError) {
-    console.error('Invalid data:', error.details);
-  } else if (error instanceof NotFoundError) {
-    console.error('Resource not found:', error.message);
-  } else if (error instanceof RateLimitError) {
-    console.error('Rate limit exceeded, retry after:', error.retryAfter);
-  } else if (error instanceof NfeError) {
-    console.error('API error:', error.code, error.message);
+  const notaFiscal = await nfe.serviceInvoices.create(empresaId, dados);
+} catch (erro) {
+  if (erro instanceof AuthenticationError) {
+    console.error('Chave API inválida:', erro.message);
+  } else if (erro instanceof ValidationError) {
+    console.error('Dados inválidos:', erro.details);
+  } else if (erro instanceof NotFoundError) {
+    console.error('Recurso não encontrado:', erro.message);
+  } else if (erro instanceof RateLimitError) {
+    console.error('Limite de requisições excedido, tente novamente em:', erro.retryAfter);
+  } else if (erro instanceof NfeError) {
+    console.error('Erro da API:', erro.code, erro.message);
   } else {
-    console.error('Unexpected error:', error);
+    console.error('Erro inesperado:', erro);
   }
 }
 ```
 
-## 🔄 Migration from v2
+## 🔄 Migração da v2
 
-See [MIGRATION.md](./MIGRATION.md) for a complete migration guide.
+Veja [MIGRATION.md](./MIGRATION.md) para um guia completo de migração.
 
-**Key Changes:**
+**Principais Mudanças:**
 
 ```javascript
 // v2 (callbacks + promises)
-var nfe = require('nfe-io')('api-key');
-nfe.serviceInvoices.create('company-id', data, function(err, invoice) {
+var nfe = require('nfe-io')('chave-api');
+nfe.serviceInvoices.create('id-empresa', dados, function(err, notaFiscal) {
   if (err) return console.error(err);
-  console.log(invoice);
+  console.log(notaFiscal);
 });
 
 // v3 (async/await + TypeScript)
 import { NfeClient } from '@nfe-io/sdk';
-const nfe = new NfeClient({ apiKey: 'api-key' });
+const nfe = new NfeClient({ apiKey: 'chave-api' });
 
 try {
-  const invoice = await nfe.serviceInvoices.create('company-id', data);
-  console.log(invoice);
-} catch (error) {
-  console.error(error);
+  const notaFiscal = await nfe.serviceInvoices.create('id-empresa', dados);
+  console.log(notaFiscal);
+} catch (erro) {
+  console.error(erro);
 }
 ```
 
-## 📝 Examples
+## 📝 Exemplos
 
-### Complete Invoice Flow
+### Fluxo Completo de Emissão de Nota Fiscal
 
 ```typescript
 import { NfeClient } from '@nfe-io/sdk';
@@ -353,13 +353,13 @@ const nfe = new NfeClient({
   environment: 'production'
 });
 
-async function issueInvoice() {
-  // 1. Get or create company
-  const companies = await nfe.companies.list();
-  const company = companies.data[0];
+async function emitirNotaFiscal() {
+  // 1. Buscar ou criar empresa
+  const empresas = await nfe.companies.list();
+  const empresa = empresas.data[0];
   
-  // 2. Create invoice with automatic polling
-  const invoice = await nfe.serviceInvoices.createAndWait(company.id, {
+  // 2. Criar nota fiscal com polling automático
+  const notaFiscal = await nfe.serviceInvoices.createAndWait(empresa.id, {
     cityServiceCode: '01234',
     description: 'Consultoria em TI',
     servicesAmount: 5000.00,
@@ -382,27 +382,27 @@ async function issueInvoice() {
     intervalMs: 2000
   });
   
-  console.log(`✅ Invoice issued: ${invoice.number}`);
+  console.log(`✅ Nota fiscal emitida: ${notaFiscal.number}`);
   
-  // 3. Send by email
-  await nfe.serviceInvoices.sendEmail(company.id, invoice.id);
-  console.log('📧 Email sent');
+  // 3. Enviar por email
+  await nfe.serviceInvoices.sendEmail(empresa.id, notaFiscal.id);
+  console.log('📧 Email enviado');
   
-  // 4. Download PDF
-  const pdf = await nfe.serviceInvoices.downloadPdf(company.id, invoice.id);
-  await fs.promises.writeFile(`invoice-${invoice.number}.pdf`, pdf);
-  console.log('💾 PDF saved');
+  // 4. Baixar PDF
+  const pdf = await nfe.serviceInvoices.downloadPdf(empresa.id, notaFiscal.id);
+  await fs.promises.writeFile(`nota-fiscal-${notaFiscal.number}.pdf`, pdf);
+  console.log('💾 PDF salvo');
 }
 
-issueInvoice().catch(console.error);
+emitirNotaFiscal().catch(console.error);
 ```
 
-### Webhook Setup
+### Configuração de Webhook
 
 ```typescript
-// Setup webhook to receive invoice events
-const webhook = await nfe.webhooks.create(companyId, {
-  url: 'https://myapp.com/api/webhooks/nfe',
+// Configurar webhook para receber eventos de notas fiscais
+const webhook = await nfe.webhooks.create(empresaId, {
+  url: 'https://meuapp.com.br/api/webhooks/nfe',
   events: [
     'invoice.issued',
     'invoice.cancelled',
@@ -411,170 +411,170 @@ const webhook = await nfe.webhooks.create(companyId, {
   active: true
 });
 
-// In your webhook endpoint
+// No seu endpoint de webhook
 app.post('/api/webhooks/nfe', (req, res) => {
-  const signature = req.headers['x-nfe-signature'];
-  const isValid = nfe.webhooks.validateSignature(
+  const assinatura = req.headers['x-nfe-signature'];
+  const ehValido = nfe.webhooks.validateSignature(
     req.body,
-    signature,
+    assinatura,
     process.env.WEBHOOK_SECRET
   );
   
-  if (!isValid) {
-    return res.status(401).send('Invalid signature');
+  if (!ehValido) {
+    return res.status(401).send('Assinatura inválida');
   }
   
   const { event, data } = req.body;
   
   if (event === 'invoice.issued') {
-    console.log('Invoice issued:', data.id);
+    console.log('Nota fiscal emitida:', data.id);
   }
   
   res.status(200).send('OK');
 });
 ```
 
-### Batch Invoice Creation
+### Criação de Notas Fiscais em Lote
 
 ```typescript
-async function issueBatchInvoices(companyId: string, invoices: InvoiceData[]) {
-  const results = await Promise.allSettled(
-    invoices.map(data => 
-      nfe.serviceInvoices.createAndWait(companyId, data)
+async function emitirNotasEmLote(empresaId: string, notasFiscais: DadosNota[]) {
+  const resultados = await Promise.allSettled(
+    notasFiscais.map(dados => 
+      nfe.serviceInvoices.createAndWait(empresaId, dados)
     )
   );
   
-  const succeeded = results.filter(r => r.status === 'fulfilled');
-  const failed = results.filter(r => r.status === 'rejected');
+  const sucesso = resultados.filter(r => r.status === 'fulfilled');
+  const falha = resultados.filter(r => r.status === 'rejected');
   
-  console.log(`✅ ${succeeded.length} invoices issued`);
-  console.log(`❌ ${failed.length} invoices failed`);
+  console.log(`✅ ${sucesso.length} notas fiscais emitidas`);
+  console.log(`❌ ${falha.length} notas fiscais falharam`);
   
-  return { succeeded, failed };
+  return { sucesso, falha };
 }
 ```
 
-## 🏗️ API Reference
+## 🏗️ Referência da API
 
-Full API documentation is available at:
-- [TypeDoc Documentation](https://nfe.github.io/client-nodejs/) *(coming soon)*
-- [Official API Docs](https://nfe.io/docs/nota-fiscal-servico/integracao-nfs-e/)
-- [REST API Reference](https://nfe.io/doc/rest-api/nfe-v1/)
+Documentação completa da API disponível em:
+- [Documentação TypeDoc](https://nfe.github.io/client-nodejs/) *(em breve)*
+- [Documentação Oficial da API](https://nfe.io/docs/nota-fiscal-servico/integracao-nfs-e/)
+- [Referência da API REST](https://nfe.io/doc/rest-api/nfe-v1/)
 
-## 🧪 Development & Testing
+## 🧪 Desenvolvimento & Testes
 
-### Running Tests
+### Executando Testes
 
 ```bash
-# Run all tests (unit + integration)
+# Executar todos os testes (unit + integration)
 npm test
 
-# Run only unit tests
+# Executar apenas testes unitários
 npm run test:unit
 
-# Run only integration tests (requires API key)
+# Executar apenas testes de integração (requer chave API)
 npm run test:integration
 
-# Run with coverage
+# Executar com cobertura
 npm run test:coverage
 
-# Run with UI
+# Executar com UI
 npm run test:ui
 ```
 
-### Integration Tests
+### Testes de Integração
 
-Integration tests validate against the **real NFE.io API**:
+Os testes de integração validam contra a **API real do NFE.io**:
 
 ```bash
-# Set your development/test API key
-export NFE_API_KEY="your-development-api-key"
+# Definir sua chave API de desenvolvimento/teste
+export NFE_API_KEY="sua-chave-api-desenvolvimento"
 export NFE_TEST_ENVIRONMENT="development"
 export RUN_INTEGRATION_TESTS="true"
 
-# Run integration tests
+# Executar testes de integração
 npm run test:integration
 ```
 
-See [tests/integration/README.md](./tests/integration/README.md) for detailed documentation.
+Veja [tests/integration/README.md](./tests/integration/README.md) para documentação detalhada.
 
-**Note**: Integration tests make real API calls and may incur costs depending on your plan.
+**Nota**: Testes de integração fazem chamadas reais à API e podem gerar custos dependendo do seu plano.
 
-### OpenAPI Type Generation
+### Geração de Tipos OpenAPI
 
-The SDK generates TypeScript types automatically from OpenAPI specifications:
+O SDK gera tipos TypeScript automaticamente a partir de especificações OpenAPI:
 
 ```bash
-# Download latest specs from API (if available)
+# Baixar specs mais recentes da API (se disponível)
 npm run download:spec
 
-# Validate all OpenAPI specs
+# Validar todas as specs OpenAPI
 npm run validate:spec
 
-# Generate TypeScript types from specs
+# Gerar tipos TypeScript a partir das specs
 npm run generate
 
-# Watch mode - auto-regenerate on spec changes
+# Modo watch - regenerar automaticamente ao modificar specs
 npm run generate:watch
 ```
 
-**Specs location**: `openapi/spec/*.yaml`  
-**Generated types**: `src/generated/*.ts`  
-**Configuration**: `openapi/generator-config.yaml`
+**Localização das specs**: `openapi/spec/*.yaml`  
+**Tipos gerados**: `src/generated/*.ts`  
+**Configuração**: `openapi/generator-config.yaml`
 
-The build process automatically validates specs and generates types before compilation:
+O processo de build valida automaticamente as specs e gera tipos antes da compilação:
 
 ```bash
 npm run build
-# → Runs: validate:spec → generate → typecheck → tsup
+# → Executa: validate:spec → generate → typecheck → tsup
 ```
 
-**Note**: Generated files should not be manually edited. Edit the OpenAPI specs and regenerate instead.
+**Nota**: Arquivos gerados não devem ser editados manualmente. Edite as specs OpenAPI e regenere.
 
-For migration guidance, see [docs/MIGRATION-TO-GENERATED-TYPES.md](./docs/MIGRATION-TO-GENERATED-TYPES.md).
+Para orientações de migração, veja [docs/MIGRATION-TO-GENERATED-TYPES.md](./docs/MIGRATION-TO-GENERATED-TYPES.md).
 
-### Type Checking
+### Verificação de Tipos
 
 ```bash
 npm run typecheck
 ```
 
-### Building
+### Build
 
 ```bash
 npm run build
 ```
 
-## 🤝 Contributing
+## 🤝 Contribuindo
 
-Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+Contribuições são bem-vindas! Por favor, veja [CONTRIBUTING.md](./CONTRIBUTING.md) para orientações.
 
-### Official Extensions
+### Extensões Oficiais
 
-The SDK is designed to be extensible. Official extensions:
+O SDK foi projetado para ser extensível. Extensões oficiais:
 
-- **[@nfe-io/mcp-server](https://github.com/nfe/mcp-server)** - Model Context Protocol server for LLM integration
-- **[@nfe-io/n8n-nodes](https://github.com/nfe/n8n-nodes)** - n8n workflow automation nodes
+- **[@nfe-io/mcp-server](https://github.com/nfe/mcp-server)** - Servidor Model Context Protocol para integração com LLMs
+- **[@nfe-io/n8n-nodes](https://github.com/nfe/n8n-nodes)** - Nós de automação de workflow n8n
 
-## 📄 License
+## 📄 Licença
 
 MIT © [NFE.io](https://nfe.io)
 
-## 🆘 Support
+## 🆘 Suporte
 
 - 📧 Email: suporte@nfe.io
-- 📖 Documentation: https://nfe.io/docs/
+- 📖 Documentação: https://nfe.io/docs/
 - 🐛 Issues: https://github.com/nfe/client-nodejs/issues
 
 ## 🗺️ Roadmap
 
-- [x] OpenAPI spec validation and type generation
-- [ ] Rate limiting helpers
-- [ ] Pagination helpers
-- [ ] Request/response interceptors
-- [ ] Custom retry strategies
-- [ ] Browser support (via bundlers)
+- [x] Validação de spec OpenAPI e geração de tipos
+- [ ] Helpers para rate limiting
+- [ ] Helpers para paginação
+- [ ] Interceptors de request/response
+- [ ] Estratégias de retry customizadas
+- [ ] Suporte para navegadores (via bundlers)
 
 ---
 
-**Made with ❤️ by the NFE.io team**
+**Feito com ❤️ pela equipe NFE.io**
