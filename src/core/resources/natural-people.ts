@@ -4,7 +4,7 @@
  */
 
 import type { HttpClient } from '../http/client.js';
-import type { NaturalPerson, ListNaturalPeopleResponse, ResourceId } from '../types.js';
+import type { NaturalPerson, ResourceId, ListResponse } from '../types.js';
 
 /**
  * NaturalPeople resource for managing natural persons (pessoas físicas)
@@ -25,9 +25,9 @@ export class NaturalPeopleResource {
    * console.log(`Found ${result.data.length} natural persons`);
    * ```
    */
-  async list(companyId: ResourceId): Promise<ListNaturalPeopleResponse> {
+  async list(companyId: ResourceId): Promise<ListResponse<NaturalPerson>> {
     const path = `/companies/${companyId}/naturalpeople`;
-    const response = await this.http.get<ListNaturalPeopleResponse>(path);
+    const response = await this.http.get<ListResponse<NaturalPerson>>(path);
 
     return response.data;
   }
@@ -184,10 +184,10 @@ export class NaturalPeopleResource {
     federalTaxNumber: string
   ): Promise<NaturalPerson | undefined> {
     const result = await this.list(companyId);
-    const people = result.naturalPeople ?? [];
+    const people = (result.data ?? []) as NaturalPerson[];
 
     return people.find(
-      (person) =>
+      (person: NaturalPerson) =>
         person.federalTaxNumber?.toString() === federalTaxNumber
     );
   }

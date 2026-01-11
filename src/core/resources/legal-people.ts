@@ -4,7 +4,7 @@
  */
 
 import type { HttpClient } from '../http/client.js';
-import type { LegalPerson, ListLegalPeopleResponse, ResourceId } from '../types.js';
+import type { LegalPerson, ResourceId, ListResponse } from '../types.js';
 
 /**
  * LegalPeople resource for managing legal entities (pessoas jurídicas)
@@ -25,9 +25,9 @@ export class LegalPeopleResource {
    * console.log(`Found ${result.legalPeople?.length ?? 0} legal entities`);
    * ```
    */
-  async list(companyId: ResourceId): Promise<ListLegalPeopleResponse> {
+  async list(companyId: ResourceId): Promise<ListResponse<LegalPerson>> {
     const path = `/companies/${companyId}/legalpeople`;
-    const response = await this.http.get<ListLegalPeopleResponse>(path);
+    const response = await this.http.get<ListResponse<LegalPerson>>(path);
 
     return response.data;
   }
@@ -183,15 +183,12 @@ export class LegalPeopleResource {
     companyId: ResourceId,
     federalTaxNumber: string
   ): Promise<LegalPerson | undefined> {
-    // Note: The API returns a single object, not an array
-    // This method needs to be refactored if the API actually returns arrays
     const result = await this.list(companyId);
+    const people = (result.data ?? []) as LegalPerson[];
 
-    // For now, check if the single returned object matches
-    if (result.federalTaxNumber?.toString() === federalTaxNumber) {
-      return result as LegalPerson;
-    }
-
-    return undefined;
+    return people.find(
+      (person: LegalPerson) =>
+        person.federalTaxNumber?.toString() === federalTaxNumber
+    );
   }
 }

@@ -5,7 +5,7 @@
  * Types are namespaced by spec to avoid conflicts.
  *
  * @generated
- * Last updated: 2026-01-10T21:48:26.099Z
+ * Last updated: 2026-01-11T02:10:53.147Z
  */
 
 // ============================================================================
@@ -27,16 +27,37 @@ export * as Nfeio from './nfeio.js';
 // Common types from main spec (nf-servico-v1)
 // Use these for convenience, or use namespaced versions for specificity
 
-// Import types to avoid namespace errors
-import type { components as NfServicoComponents } from './nf-servico-v1.js';
+// Since OpenAPI specs don't have separate schemas (schemas: never),
+// we define minimal types here for backward compatibility
+// These are placeholders - real API responses may have more fields
 
-export type ServiceInvoice = NfServicoComponents['schemas']['ServiceInvoice'];
-export type Company = NfServicoComponents['schemas']['Company'];
-export type LegalPerson = NfServicoComponents['schemas']['LegalPerson'];
-export type NaturalPerson = NfServicoComponents['schemas']['NaturalPerson'];
+export interface ServiceInvoice {
+  id?: string;
+  flowStatus?: string;
+  status?: string;
+  [key: string]: unknown;
+}
 
-// Note: Other specs may define these types differently.
-// Use namespaced imports (e.g., import { components } from '@/generated/nf-produto-v2') when specificity is needed.
+export interface Company {
+  id?: string;
+  federalTaxNumber?: number;
+  name?: string;
+  [key: string]: unknown;
+}
+
+export interface LegalPerson {
+  id?: string;
+  federalTaxNumber?: string | number;
+  name?: string;
+  [key: string]: unknown;
+}
+
+export interface NaturalPerson {
+  id?: string;
+  federalTaxNumber?: string | number;
+  name?: string;
+  [key: string]: unknown;
+}
 
 // ============================================================================
 // Backward Compatibility

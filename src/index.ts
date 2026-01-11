@@ -1,19 +1,19 @@
 /**
  * @fileoverview NFE.io SDK v3 - Official Node.js SDK for NFE.io API
- * 
+ *
  * @description
  * Modern TypeScript SDK for NFE.io API with zero runtime dependencies.
  * Compatible with Node.js 18+ and modern JavaScript runtimes.
- * 
+ *
  * @example Basic Usage
  * ```typescript
  * import { NfeClient } from '@nfe-io/sdk';
- * 
- * const nfe = new NfeClient({ 
+ *
+ * const nfe = new NfeClient({
  *   apiKey: 'your-api-key',
  *   environment: 'production' // or 'sandbox'
  * });
- * 
+ *
  * // Create a service invoice
  * const invoice = await nfe.serviceInvoices.create('company-id', {
  *   borrower: { /* ... *\/ },
@@ -21,7 +21,7 @@
  *   servicesAmount: 1000.00
  * });
  * ```
- * 
+ *
  * @example With Polling
  * ```typescript
  * // Automatically poll until invoice is processed
@@ -30,7 +30,7 @@
  *   interval: 2000
  * });
  * ```
- * 
+ *
  * @module @nfe-io/sdk
  * @version 3.0.0-beta.1
  * @author NFE.io
@@ -43,7 +43,7 @@
 
 /**
  * Core client exports
- * 
+ *
  * @see {@link NfeClient} - Main client class for NFE.io API
  * @see {@link createNfeClient} - Factory function for creating client instances
  */
@@ -51,7 +51,7 @@ export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS } from './
 
 /**
  * TypeScript type definitions for NFE.io API entities and configurations
- * 
+ *
  * @see {@link NfeConfig} - Client configuration options
  * @see {@link Company} - Company entity type
  * @see {@link ServiceInvoice} - Service invoice entity type
@@ -64,33 +64,29 @@ export type {
   NfeConfig,
   RequiredNfeConfig,
   RetryConfig,
-  
+
   // Entities
   Company,
   LegalPerson,
   NaturalPerson,
   ServiceInvoice,
   ServiceInvoiceData,
-  ServiceInvoiceBorrower,
   ServiceInvoiceDetails,
-  ServiceInvoiceStatus,
   Webhook,
   WebhookEvent,
-  
+
   // Common types
-  Address,
-  City,
   EntityType,
   TaxRegime,
   SpecialTaxRegime,
-  
+
   // HTTP and pagination
   HttpResponse,
   ListResponse,
   PageInfo,
   PaginationOptions,
   PollOptions,
-  
+
   // Utility types
   ResourceId,
   ApiErrorResponse,
@@ -98,7 +94,7 @@ export type {
 
 /**
  * Error classes and utilities for comprehensive error handling
- * 
+ *
  * @see {@link NfeError} - Base error class for all SDK errors
  * @see {@link AuthenticationError} - Thrown when API key is invalid (401)
  * @see {@link ValidationError} - Thrown when request validation fails (400, 422)
@@ -112,7 +108,7 @@ export type {
 export {
   // Base error
   NfeError,
-  
+
   // HTTP errors
   AuthenticationError,
   ValidationError,
@@ -120,19 +116,19 @@ export {
   ConflictError,
   RateLimitError,
   ServerError,
-  
+
   // Connection errors
   ConnectionError,
   TimeoutError,
-  
+
   // SDK errors
   ConfigurationError,
   PollingTimeoutError,
   InvoiceProcessingError,
-  
+
   // Error factory
   ErrorFactory,
-  
+
   // Type guards
   isNfeError,
   isAuthenticationError,
@@ -141,12 +137,12 @@ export {
   isConnectionError,
   isTimeoutError,
   isPollingTimeoutError,
-  
+
   // Legacy aliases (v2 compatibility)
   BadRequestError,
   APIError,
   InternalServerError,
-  
+
   // Error types
   ErrorTypes,
   type ErrorType,
@@ -158,28 +154,28 @@ export {
 
 /**
  * Default export for CommonJS compatibility
- * 
+ *
  * @description
  * Allows both ES modules and CommonJS usage:
- * 
+ *
  * @example ES Modules
  * ```typescript
  * import { NfeClient } from '@nfe-io/sdk';
  * const nfe = new NfeClient({ apiKey: 'xxx' });
  * ```
- * 
+ *
  * @example ES Modules (default import)
  * ```typescript
  * import nfeFactory from '@nfe-io/sdk';
  * const nfe = nfeFactory({ apiKey: 'xxx' });
  * ```
- * 
+ *
  * @example CommonJS
  * ```javascript
  * const { NfeClient } = require('@nfe-io/sdk');
  * const nfe = new NfeClient({ apiKey: 'xxx' });
  * ```
- * 
+ *
  * @example CommonJS (default require)
  * ```javascript
  * const nfeFactory = require('@nfe-io/sdk').default;
@@ -229,15 +225,15 @@ export const DOCUMENTATION_URL = 'https://nfe.io/docs';
 
 /**
  * Check if the current environment supports NFE.io SDK v3 requirements
- * 
+ *
  * @description
  * Validates that the runtime environment has all necessary features:
  * - Node.js 18+ (for native fetch support)
  * - Fetch API availability
  * - AbortController availability
- * 
+ *
  * @returns Object containing support status and detected issues
- * 
+ *
  * @example
  * ```typescript
  * const check = isEnvironmentSupported();
@@ -261,7 +257,7 @@ export function isEnvironmentSupported(): {
 } {
   const issues: string[] = [];
   let nodeVersion: string | undefined;
-  
+
   // Check Node.js version
   try {
     nodeVersion = (globalThis as any).process?.version;
@@ -274,19 +270,19 @@ export function isEnvironmentSupported(): {
   } catch {
     issues.push('Unable to detect Node.js version');
   }
-  
+
   // Check fetch support
   const hasFetch = typeof fetch !== 'undefined';
   if (!hasFetch) {
     issues.push('Fetch API not available');
   }
-  
+
   // Check AbortController support
   const hasAbortController = typeof AbortController !== 'undefined';
   if (!hasAbortController) {
     issues.push('AbortController not available');
   }
-  
+
   const result: {
     supported: boolean;
     nodeVersion?: string;
@@ -299,23 +295,23 @@ export function isEnvironmentSupported(): {
     hasAbortController,
     issues,
   };
-  
+
   if (nodeVersion) {
     result.nodeVersion = nodeVersion;
   }
-  
+
   return result;
 }
 
 /**
  * Get comprehensive SDK runtime information
- * 
+ *
  * @description
  * Returns detailed information about the current runtime environment,
  * useful for debugging and support.
- * 
+ *
  * @returns Object containing SDK and runtime environment information
- * 
+ *
  * @example
  * ```typescript
  * const info = getRuntimeInfo();
@@ -341,7 +337,7 @@ export function getRuntimeInfo(): {
   let platform = 'unknown';
   let arch = 'unknown';
   let environment: 'node' | 'browser' | 'unknown' = 'unknown';
-  
+
   try {
     const process = (globalThis as any).process;
     if (process) {
@@ -356,7 +352,7 @@ export function getRuntimeInfo(): {
   } catch {
     // Safe fallback
   }
-  
+
   return {
     sdkVersion: PACKAGE_VERSION,
     nodeVersion,
@@ -372,24 +368,24 @@ export function getRuntimeInfo(): {
 
 /**
  * Create NFE.io client from environment variable
- * 
+ *
  * @description
  * Convenience function that reads API key from NFE_API_KEY environment variable.
  * Useful for serverless functions and quick prototyping.
- * 
+ *
  * @param environment - Target environment ('production' or 'sandbox')
  * @returns Configured NfeClient instance
  * @throws {ConfigurationError} If NFE_API_KEY environment variable is not set
- * 
+ *
  * @example
  * ```typescript
  * // Set environment variable: NFE_API_KEY=your-api-key
  * const nfe = createClientFromEnv('production');
- * 
+ *
  * // Use the client normally
  * const companies = await nfe.companies.list();
  * ```
- * 
+ *
  * @example Docker/Kubernetes
  * ```yaml
  * env:
@@ -408,24 +404,24 @@ export function createClientFromEnv(environment?: 'production' | 'sandbox') {
       'NFE_API_KEY environment variable is required when using createClientFromEnv()'
     );
   }
-  
+
   const { NfeClient } = require('./core/client');
-  return new NfeClient({ 
-    apiKey, 
-    environment: environment || 'production' 
+  return new NfeClient({
+    apiKey,
+    environment: environment || 'production'
   });
 }
 
 /**
  * Validate NFE.io API key format
- * 
+ *
  * @description
  * Performs basic validation on API key format before attempting to use it.
  * Helps catch common mistakes like missing keys or keys with whitespace.
- * 
+ *
  * @param apiKey - The API key to validate
  * @returns Validation result with any detected issues
- * 
+ *
  * @example
  * ```typescript
  * const result = validateApiKeyFormat('my-api-key');
@@ -434,16 +430,16 @@ export function createClientFromEnv(environment?: 'production' | 'sandbox') {
  *   // ["API key appears to be too short"]
  * }
  * ```
- * 
+ *
  * @example Integration with client
  * ```typescript
  * const apiKey = process.env.NFE_API_KEY;
  * const validation = validateApiKeyFormat(apiKey);
- * 
+ *
  * if (!validation.valid) {
  *   throw new Error(`Invalid API key: ${validation.issues.join(', ')}`);
  * }
- * 
+ *
  * const nfe = new NfeClient({ apiKey });
  * ```
  */
@@ -454,21 +450,21 @@ export function validateApiKeyFormat(apiKey: string): {
   issues: string[];
 } {
   const issues: string[] = [];
-  
+
   if (!apiKey) {
     issues.push('API key is required');
   } else {
     if (apiKey.length < 10) {
       issues.push('API key appears to be too short');
     }
-    
+
     if (apiKey.includes(' ')) {
       issues.push('API key should not contain spaces');
     }
-    
+
     // Add more validation rules as needed
   }
-  
+
   return {
     valid: issues.length === 0,
     issues,

@@ -177,7 +177,7 @@ export class ServiceInvoicesResource {
     isComplete: boolean;
     isFailed: boolean;
   }> {
-    const invoice = await this.retrieve(companyId, invoiceId);
+    const invoice = await this.retrieve(companyId, invoiceId) as ServiceInvoice;
     const status = invoice.flowStatus ?? 'unknown';
 
     return {
@@ -261,7 +261,7 @@ export class ServiceInvoicesResource {
         // Check if processing failed
         if (this.isInvoiceFailed(invoice)) {
           throw new InvoiceProcessingError(
-            `Invoice processing failed: ${invoice.status}`,
+            `Invoice processing failed: ${(invoice as ServiceInvoice).status}`,
             invoice
           );
         }
@@ -298,12 +298,12 @@ export class ServiceInvoicesResource {
   }
 
   private isInvoiceComplete(invoice: ServiceInvoice): boolean {
-    const status = invoice.flowStatus;
+    const status = (invoice as ServiceInvoice).flowStatus;
     return status === 'Issued';
   }
 
   private isInvoiceFailed(invoice: ServiceInvoice): boolean {
-    const status = invoice.flowStatus;
+    const status = (invoice as ServiceInvoice).flowStatus;
     return status === 'CancelFailed' || status === 'IssueFailed';
   }
 

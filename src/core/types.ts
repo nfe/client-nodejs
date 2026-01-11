@@ -11,34 +11,19 @@
 // Generated Types (from OpenAPI specs)
 // ============================================================================
 
-// Import to use in type computations below
-import type {
-  CreateServiceInvoiceRequest,
-  GetServiceInvoiceResponse,
-} from '../generated/index.js';
-
 export type {
-  // Service Invoice types
-  CreateServiceInvoiceRequest as ServiceInvoiceData,
-  CreateServiceInvoiceResponse,
-  GetServiceInvoiceResponse as ServiceInvoice,
-  ListServiceInvoicesResponse,
-  ListServiceInvoicesParams,
-
-  // Company types
+  // Main entity types
+  ServiceInvoice,
   Company,
-  CreateCompanyRequest as CompanyData,
-  GetCompanyResponse,
-  ListCompaniesResponse,
-
-  // People types
   LegalPerson,
-  GetLegalPersonResponse,
-  ListLegalPeopleResponse,
   NaturalPerson,
-  GetNaturalPersonResponse,
-  ListNaturalPeopleResponse,
 } from '../generated/index.js';
+
+// Type aliases for convenience
+export type { ServiceInvoice as ServiceInvoiceData } from '../generated/index.js';
+export type { Company as CompanyData } from '../generated/index.js';
+export type { LegalPerson as LegalPersonData } from '../generated/index.js';
+export type { NaturalPerson as NaturalPersonData } from '../generated/index.js';
 
 // ============================================================================
 // SDK-Specific Types (not in generated code)
@@ -96,12 +81,6 @@ export interface AsyncResponse {
 // Backward Compatibility Type Aliases
 // ----------------------------------------------------------------------------
 
-/** Borrower/Tomador from ServiceInvoiceData */
-export type ServiceInvoiceBorrower = NonNullable<CreateServiceInvoiceRequest['borrower']>;
-
-/** Invoice status from API (flowStatus field) */
-export type ServiceInvoiceStatus = NonNullable<GetServiceInvoiceResponse['flowStatus']>;
-
 /** Additional invoice details (withholdings, deductions) */
 export type ServiceInvoiceDetails = {
   issWithheld?: number;
@@ -113,12 +92,6 @@ export type ServiceInvoiceDetails = {
   deductions?: number;
   additionalInformation?: string;
 };
-
-/** Address type (for backward compatibility) */
-export type Address = NonNullable<ServiceInvoiceBorrower['address']>;
-
-/** City type */
-export type City = NonNullable<Address['city']>;
 
 // Entity Type Aliases (from generated enums)
 // ----------------------------------------------------------------------------

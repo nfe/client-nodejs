@@ -1,13 +1,13 @@
 /**
  * NFE.io SDK v3 - Companies Resource
- * 
+ *
  * Handles company operations and certificate management
  */
 
-import type { 
-  Company, 
-  ListResponse, 
-  PaginationOptions 
+import type {
+  Company,
+  ListResponse,
+  PaginationOptions
 } from '../types.js';
 import type { HttpClient } from '../http/client.js';
 
@@ -28,7 +28,7 @@ export class CompaniesResource {
   async create(data: Omit<Company, 'id' | 'createdOn' | 'modifiedOn'>): Promise<Company> {
     const path = '/companies';
     const response = await this.http.post<Company>(path, data);
-    
+
     return response.data;
   }
 
@@ -38,7 +38,7 @@ export class CompaniesResource {
   async list(options: PaginationOptions = {}): Promise<ListResponse<Company>> {
     const path = '/companies';
     const response = await this.http.get<ListResponse<Company>>(path, options);
-    
+
     return response.data;
   }
 
@@ -48,7 +48,7 @@ export class CompaniesResource {
   async retrieve(companyId: string): Promise<Company> {
     const path = `/companies/${companyId}`;
     const response = await this.http.get<Company>(path);
-    
+
     return response.data;
   }
 
@@ -58,7 +58,7 @@ export class CompaniesResource {
   async update(companyId: string, data: Partial<Company>): Promise<Company> {
     const path = `/companies/${companyId}`;
     const response = await this.http.put<Company>(path, data);
-    
+
     return response.data;
   }
 
@@ -68,7 +68,7 @@ export class CompaniesResource {
   async remove(companyId: string): Promise<{ deleted: boolean; id: string }> {
     const path = `/companies/${companyId}`;
     const response = await this.http.delete<{ deleted: boolean; id: string }>(path);
-    
+
     return response.data;
   }
 
@@ -81,7 +81,7 @@ export class CompaniesResource {
    * Handles FormData for file upload
    */
   async uploadCertificate(
-    companyId: string, 
+    companyId: string,
     certificateData: {
       /** Certificate file (Buffer or Blob) */
       file: any;
@@ -92,25 +92,25 @@ export class CompaniesResource {
     }
   ): Promise<{ uploaded: boolean; message?: string }> {
     const path = `/companies/${companyId}/certificate`;
-    
+
     // Create FormData for file upload
     const formData = this.createFormData();
-    
+
     // Add certificate file
     if (certificateData.filename) {
       formData.append('certificate', certificateData.file, certificateData.filename);
     } else {
       formData.append('certificate', certificateData.file);
     }
-    
+
     // Add password
     formData.append('password', certificateData.password);
-    
+
     const response = await this.http.post<{ uploaded: boolean; message?: string }>(
-      path, 
+      path,
       formData
     );
-    
+
     return response.data;
   }
 
@@ -130,7 +130,7 @@ export class CompaniesResource {
       isValid?: boolean;
       details?: any;
     }>(path);
-    
+
     return response.data;
   }
 
@@ -143,10 +143,12 @@ export class CompaniesResource {
    */
   async findByTaxNumber(taxNumber: number): Promise<Company | null> {
     const companies = await this.list({ pageCount: 100 }); // Get reasonable batch
-    
-    return companies.data.find(company => 
+
+    const found = (companies.data as Company[]).find((company: Company) =>
       company.federalTaxNumber === taxNumber
-    ) || null;
+    );
+
+    return found || null;
   }
 
   /**
@@ -154,11 +156,11 @@ export class CompaniesResource {
    */
   async getCompaniesWithCertificates(): Promise<Company[]> {
     const companies = await this.list({ pageCount: 100 });
-    
+
     const companiesWithCerts: Company[] = [];
-    
+
     // Check certificate status for each company
-    for (const company of companies.data) {
+    for (const company of (companies.data as Company[])) {
       try {
         const certStatus = await this.getCertificateStatus(company.id!);
         if (certStatus.hasCertificate && certStatus.isValid) {
@@ -169,7 +171,7 @@ export class CompaniesResource {
         continue;
       }
     }
-    
+
     return companiesWithCerts;
   }
 
@@ -178,19 +180,19 @@ export class CompaniesResource {
    */
   async createBatch(
     companies: Array<Omit<Company, 'id' | 'createdOn' | 'modifiedOn'>>,
-    options: { 
+    options: {
       maxConcurrent?: number;
       continueOnError?: boolean;
     } = {}
   ): Promise<Array<Company | { error: string; data: any }>> {
     const { maxConcurrent = 3, continueOnError = true } = options;
-    
+
     const results: Array<Company | { error: string; data: any }> = [];
-    
+
     // Process in batches to avoid overwhelming the API
     for (let i = 0; i < companies.length; i += maxConcurrent) {
       const batch = companies.slice(i, i + maxConcurrent);
-      
+
       const batchPromises = batch.map(async (companyData) => {
         try {
           return await this.create(companyData);
@@ -205,16 +207,16 @@ export class CompaniesResource {
           }
         }
       });
-      
+
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
     }
-    
+
     return results;
   }
 
   // --------------------------------------------------------------------------
-  // Private Helper Methods  
+  // Private Helper Methods
   // --------------------------------------------------------------------------
 
   private createFormData(): any {
