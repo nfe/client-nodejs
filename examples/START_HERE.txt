@@ -1,0 +1,72 @@
+🚀 NFE.io SDK v3 - Exemplos Práticos
+======================================
+
+Este diretório contém exemplos completos e prontos para uso do SDK NFE.io.
+
+INÍCIO RÁPIDO
+=============
+
+1️⃣  Configure suas credenciais:
+    npm run examples:setup
+
+2️⃣  Teste a conexão:
+    npm run examples:test
+
+3️⃣  Execute os exemplos:
+    npm run examples
+
+
+ARQUIVOS PRINCIPAIS
+===================
+
+📘 SCRIPTS UTILITÁRIOS:
+  setup.js              - Configuração interativa (COMECE AQUI!)
+  test-connection.js    - Teste de conexão e diagnóstico
+  run-examples.js       - Menu interativo para executar exemplos
+
+📗 EXEMPLOS REAIS:
+  real-world-invoice.js         - Emitir nota fiscal completa
+  real-world-list-invoices.js   - Consultar notas existentes
+  real-world-manage-people.js   - Gerenciar clientes (pessoas)
+  real-world-webhooks.js        - Configurar webhooks
+
+📕 EXEMPLOS BÁSICOS:
+  basic-usage.ts         - TypeScript básico
+  basic-usage-esm.js     - ES Modules básico
+  basic-usage-cjs.cjs    - CommonJS básico
+  all-resources-demo.js  - Tour completo da API
+
+📙 DOCUMENTAÇÃO:
+  README.md - Documentação completa dos exemplos
+
+
+COMANDOS ÚTEIS
+==============
+
+npm run examples:setup   # Configuração inicial interativa
+npm run examples:test    # Testar conexão e credenciais
+npm run examples         # Menu de exemplos
+npm run build            # Build do SDK
+
+node examples/run-examples.js 1    # Executar exemplo específico
+node examples/run-examples.js all  # Executar todos
+
+
+REQUISITOS
+==========
+
+✅ Node.js >= 18.0.0
+✅ Credenciais da API NFE.io (https://app.nfe.io/settings/api-keys)
+✅ Build do projeto (npm run build)
+
+
+AJUDA
+=====
+
+📚 Documentação completa: examples/README.md
+🌐 API Reference: https://nfe.io/docs/
+💬 Suporte: dev@nfe.io
+🐛 Issues: https://github.com/nfe/client-nodejs/issues
+
+
+═══════════════════════════════════════════════════════════════════════
