@@ -56,6 +56,30 @@ pnpm add nfe-io
 
 ## 🚀 Início Rápido
 
+### ⚡ Setup Rápido para Testes
+
+```bash
+# 1. Clone e instale
+git clone https://github.com/nfe/client-nodejs.git
+cd client-nodejs
+npm install
+
+# 2. Configure suas credenciais (interativo)
+npm run examples:setup
+
+# 3. Teste a conexão
+npm run examples:test
+
+# 4. Execute os exemplos
+npm run examples
+```
+
+### 📦 Instalação em Projeto Novo
+
+```bash
+npm install nfe-io
+```
+
 ### Uso Básico (ESM)
 
 ```typescript
@@ -342,6 +366,28 @@ try {
 ```
 
 ## 📝 Exemplos
+
+### ⚡ Exemplos Práticos Prontos para Uso
+
+O diretório [`examples/`](./examples/) contém exemplos completos que você pode executar com suas credenciais:
+
+```bash
+# Modo interativo com menu
+npm run examples
+
+# Ou diretamente
+node examples/run-examples.js
+```
+
+**Exemplos disponíveis**:
+1. 📊 **Listar Notas Fiscais** - Consulte notas existentes (comece por aqui!)
+2. 👥 **Gerenciar Pessoas** - CRUD de clientes (pessoas físicas/jurídicas)
+3. 🧾 **Emitir Nota Fiscal** - Fluxo completo: criar → enviar email → baixar PDF/XML
+4. 🔔 **Configurar Webhooks** - Receba notificações de eventos
+
+Veja [`examples/README.md`](./examples/README.md) para documentação completa.
+
+---
 
 ### Fluxo Completo de Emissão de Nota Fiscal
 
