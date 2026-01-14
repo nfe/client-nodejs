@@ -27,9 +27,13 @@ export class LegalPeopleResource {
    */
   async list(companyId: ResourceId): Promise<ListResponse<LegalPerson>> {
     const path = `/companies/${companyId}/legalpeople`;
-    const response = await this.http.get<ListResponse<LegalPerson>>(path);
+    const response = await this.http.get<{ legalPeople: LegalPerson[] }>(path);
 
-    return response.data;
+    // API returns: { legalPeople: [...] }
+    // Transform to our standard ListResponse format
+    return {
+      data: response.data.legalPeople || []
+    };
   }
 
   /**
@@ -60,9 +64,10 @@ export class LegalPeopleResource {
     data: Partial<LegalPerson>
   ): Promise<LegalPerson> {
     const path = `/companies/${companyId}/legalpeople`;
-    const response = await this.http.post<LegalPerson>(path, data);
+    const response = await this.http.post<{ legalPeople: LegalPerson }>(path, data);
 
-    return response.data;
+    // API returns wrapped object: { legalPeople: {...} }
+    return response.data.legalPeople;
   }
 
   /**
@@ -86,9 +91,10 @@ export class LegalPeopleResource {
     legalPersonId: ResourceId
   ): Promise<LegalPerson> {
     const path = `/companies/${companyId}/legalpeople/${legalPersonId}`;
-    const response = await this.http.get<LegalPerson>(path);
+    const response = await this.http.get<{ legalPeople: LegalPerson }>(path);
 
-    return response.data;
+    // API returns wrapped object: { legalPeople: {...} }
+    return response.data.legalPeople;
   }
 
   /**
@@ -114,9 +120,10 @@ export class LegalPeopleResource {
     data: Partial<LegalPerson>
   ): Promise<LegalPerson> {
     const path = `/companies/${companyId}/legalpeople/${legalPersonId}`;
-    const response = await this.http.put<LegalPerson>(path, data);
+    const response = await this.http.put<{ legalPeople: LegalPerson }>(path, data);
 
-    return response.data;
+    // API returns wrapped object: { legalPeople: {...} }
+    return response.data.legalPeople;
   }
 
   /**
