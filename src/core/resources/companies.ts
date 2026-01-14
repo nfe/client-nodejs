@@ -18,23 +18,61 @@ import { CertificateValidator } from '../utils/certificate-validator.js';
 // ============================================================================
 
 /**
- * Validate CNPJ format (14 digits)
+ * Validate CNPJ format (14 digits) with check digits
  */
 function validateCNPJ(cnpj: number): boolean {
-  const cnpjStr = cnpj.toString();
+  const cnpjStr = cnpj.toString().padStart(14, '0');
   if (cnpjStr.length !== 14) return false;
   if (/^(\d)\1{13}$/.test(cnpjStr)) return false; // All same digits
-  return true; // Simplified validation - full check digit validation could be added
+
+  // Validate first check digit
+  let sum = 0;
+  let weight = 5;
+  for (let i = 0; i < 12; i++) {
+    sum += parseInt(cnpjStr[i]!) * weight;
+    weight = weight === 2 ? 9 : weight - 1;
+  }
+  const firstDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (firstDigit !== parseInt(cnpjStr[12]!)) return false;
+
+  // Validate second check digit
+  sum = 0;
+  weight = 6;
+  for (let i = 0; i < 13; i++) {
+    sum += parseInt(cnpjStr[i]!) * weight;
+    weight = weight === 2 ? 9 : weight - 1;
+  }
+  const secondDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (secondDigit !== parseInt(cnpjStr[13]!)) return false;
+
+  return true;
 }
 
 /**
- * Validate CPF format (11 digits)
+ * Validate CPF format (11 digits) with check digits
  */
 function validateCPF(cpf: number): boolean {
-  const cpfStr = cpf.toString();
+  const cpfStr = cpf.toString().padStart(11, '0');
   if (cpfStr.length !== 11) return false;
   if (/^(\d)\1{10}$/.test(cpfStr)) return false; // All same digits
-  return true; // Simplified validation - full check digit validation could be added
+
+  // Validate first check digit
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpfStr[i]!) * (10 - i);
+  }
+  const firstDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (firstDigit !== parseInt(cpfStr[9]!)) return false;
+
+  // Validate second check digit
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpfStr[i]!) * (11 - i);
+  }
+  const secondDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (secondDigit !== parseInt(cpfStr[10]!)) return false;
+
+  return true;
 }
 
 /**
@@ -105,9 +143,10 @@ export class CompaniesResource {
     validateCompanyData(data);
 
     const path = '/companies';
-    const response = await this.http.post<Company>(path, data);
+    const response = await this.http.post<{ companies: Company }>(path, data);
 
-    return response.data;
+    // API returns wrapped object: { companies: {...} }
+    return response.data.companies;
   }
 
   /**
@@ -124,9 +163,17 @@ export class CompaniesResource {
    */
   async list(options: PaginationOptions = {}): Promise<ListResponse<Company>> {
     const path = '/companies';
-    const response = await this.http.get<ListResponse<Company>>(path, options);
+    const response = await this.http.get<{ companies: Company[]; page: number }>(path, options);
 
-    return response.data;
+    // API returns: { companies: [...], page: number }
+    // Transform to our standard ListResponse format
+    return {
+      data: response.data.companies,
+      page: {
+        pageIndex: response.data.page - 1, // API uses 1-based, we use 0-based
+        pageCount: options.pageCount || 100,
+      }
+    };
   }
 
   /**
@@ -209,9 +256,10 @@ export class CompaniesResource {
    */
   async retrieve(companyId: string): Promise<Company> {
     const path = `/companies/${companyId}`;
-    const response = await this.http.get<Company>(path);
+    const response = await this.http.get<{ companies: Company }>(path);
 
-    return response.data;
+    // API returns wrapped object: { companies: {...} }
+    return response.data.companies;
   }
 
   /**
@@ -236,9 +284,10 @@ export class CompaniesResource {
     validateCompanyData(data);
 
     const path = `/companies/${companyId}`;
-    const response = await this.http.put<Company>(path, data);
+    const response = await this.http.put<{ companies: Company }>(path, data);
 
-    return response.data;
+    // API returns wrapped object: { companies: {...} }
+    return response.data.companies;
   }
 
   /**
