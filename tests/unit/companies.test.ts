@@ -358,7 +358,7 @@ describe('CompaniesResource', () => {
       ];
 
       vi.mocked(mockHttpClient.get).mockResolvedValue({
-        data: { data: mockData },
+        data: { companies: mockData, page: 1 },
         status: 200,
         headers: {},
       });
@@ -376,7 +376,7 @@ describe('CompaniesResource', () => {
       ];
 
       vi.mocked(mockHttpClient.get).mockResolvedValue({
-        data: { data: mockData },
+        data: { companies: mockData, page: 1 },
         status: 200,
         headers: {},
       });
@@ -397,7 +397,7 @@ describe('CompaniesResource', () => {
 
       vi.mocked(mockHttpClient.get)
         .mockResolvedValueOnce({
-          data: { data: mockCompanies },
+          data: { companies: mockCompanies, page: 1 },
           status: 200,
           headers: {},
         })
@@ -432,7 +432,7 @@ describe('CompaniesResource', () => {
 
       vi.mocked(mockHttpClient.get)
         .mockResolvedValueOnce({
-          data: { data: mockCompanies },
+          data: { companies: mockCompanies, page: 1 },
           status: 200,
           headers: {},
         })
