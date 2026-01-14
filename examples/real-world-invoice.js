@@ -17,10 +17,17 @@ import { writeFileSync } from 'fs';
 dotenv.config({ path: '.env.test' });
 
 const apiKey = process.env.NFE_API_KEY;
+const companyId = process.env.NFE_COMPANY_ID; // Use company from env
 const environment = process.env.NFE_TEST_ENVIRONMENT || 'development';
 
 if (!apiKey) {
   console.error('❌ NFE_API_KEY não encontrada no .env.test');
+  process.exit(1);
+}
+
+if (!companyId) {
+  console.error('❌ NFE_COMPANY_ID não encontrada no .env.test');
+  console.error('💡 Configure NFE_COMPANY_ID no arquivo .env.test');
   process.exit(1);
 }
 
@@ -38,35 +45,28 @@ console.log('═'.repeat(70));
 
 async function emitirNotaFiscal() {
   try {
-    // 1. Listar empresas disponíveis
-    console.log('\n📋 1. Buscando empresas disponíveis...');
-    const empresas = await nfe.companies.list();
-
-    if (!empresas.data || empresas.data.length === 0) {
-      console.error('❌ Nenhuma empresa encontrada na conta');
-      return;
-    }
-
-    const empresa = empresas.data[0];
-    console.log(`✅ Empresa encontrada: ${empresa.name} (${empresa.id})`);
+    // 1. Recuperar empresa configurada
+    console.log('\n📋 1. Recuperando empresa configurada...');
+    const empresa = await nfe.companies.retrieve(companyId);
+    console.log(`✅ Empresa encontrada: ${empresa.name}`);
     console.log(`   CNPJ: ${empresa.federalTaxNumber}`);
 
     // 2. Buscar ou criar tomador (pessoa jurídica)
     console.log('\n📋 2. Verificando tomador dos serviços...');
 
     let tomador;
-    const cnpjTomador = '00000000000191'; // Banco do Brasil (exemplo)
+    const cnpjTomador = 191; // CNPJ válido: 00000000000191 (Banco do Brasil)
 
-    try {
-      // Tentar buscar tomador existente
-      tomador = await nfe.legalPeople.findByTaxNumber(empresa.id, cnpjTomador);
+    // findByTaxNumber returns undefined if not found (doesn't throw)
+    tomador = await nfe.legalPeople.findByTaxNumber(companyId, cnpjTomador.toString());
+
+    if (tomador) {
       console.log(`✅ Tomador encontrado: ${tomador.name}`);
-    } catch (error) {
-      if (error.statusCode === 404) {
-        // Criar novo tomador se não existir
-        console.log('⚠️  Tomador não encontrado, criando novo...');
-        tomador = await nfe.legalPeople.create(empresa.id, {
-          federalTaxNumber: cnpjTomador,
+    } else {
+      // Criar novo tomador se não existir
+      console.log('⚠️  Tomador não encontrado, criando novo...');
+      tomador = await nfe.legalPeople.create(companyId, {
+        federalTaxNumber: cnpjTomador,
           name: 'BANCO DO BRASIL SA',
           email: 'exemplo@bb.com.br',
           address: {
@@ -84,9 +84,6 @@ async function emitirNotaFiscal() {
           }
         });
         console.log(`✅ Tomador criado: ${tomador.name}`);
-      } else {
-        throw error;
-      }
     }
 
     // 3. Emitir nota fiscal com polling automático

@@ -14,10 +14,17 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.test' });
 
 const apiKey = process.env.NFE_API_KEY;
+const companyId = process.env.NFE_COMPANY_ID; // Use company from env
 const environment = process.env.NFE_TEST_ENVIRONMENT || 'development';
 
 if (!apiKey) {
   console.error('❌ NFE_API_KEY não encontrada no .env.test');
+  process.exit(1);
+}
+
+if (!companyId) {
+  console.error('❌ NFE_COMPANY_ID não encontrada no .env.test');
+  console.error('💡 Configure NFE_COMPANY_ID no arquivo .env.test');
   process.exit(1);
 }
 
@@ -28,21 +35,24 @@ console.log('═'.repeat(70));
 
 async function configurarWebhooks() {
   try {
-    // 1. Buscar empresa
-    console.log('\n📋 1. Buscando empresa...');
-    const empresas = await nfe.companies.list();
-
-    if (!empresas.data || empresas.data.length === 0) {
-      console.error('❌ Nenhuma empresa encontrada');
-      return;
-    }
-
-    const empresa = empresas.data[0];
+    // 1. Recuperar empresa configurada
+    console.log('\n📋 1. Recuperando empresa configurada...');
+    const empresa = await nfe.companies.retrieve(companyId);
     console.log(`✅ Empresa: ${empresa.name}`);
 
     // 2. Listar webhooks existentes
     console.log('\n📋 2. Listando webhooks configurados...');
-    const webhooks = await nfe.webhooks.list(empresa.id);
+    let webhooks = { data: [] };
+    try {
+      webhooks = await nfe.webhooks.list(companyId);
+    } catch (error) {
+      // API retorna 404 quando não há webhooks configurados
+      if (error.status === 404 || error.type === 'NotFoundError') {
+        console.log('⚠️  Nenhum webhook configurado ainda');
+      } else {
+        throw error;
+      }
+    }
 
     if (webhooks.data && webhooks.data.length > 0) {
       console.log(`✅ ${webhooks.data.length} webhook(s) encontrado(s):`);
@@ -52,8 +62,6 @@ async function configurarWebhooks() {
         console.log(`      Eventos: ${webhook.events?.join(', ') || 'N/A'}`);
         console.log('      ' + '─'.repeat(60));
       });
-    } else {
-      console.log('⚠️  Nenhum webhook configurado ainda');
     }
 
     // 3. Criar novo webhook (ou usar existente)
@@ -75,7 +83,7 @@ async function configurarWebhooks() {
       console.log('⚠️  Criando novo webhook...');
 
       try {
-        webhook = await nfe.webhooks.create(empresa.id, {
+        webhook = await nfe.webhooks.create(companyId, {
           url: webhookUrl,
           events: [
             'invoice.issued',
@@ -90,8 +98,11 @@ async function configurarWebhooks() {
         console.log(`   URL: ${webhook.url}`);
         console.log(`   Eventos: ${webhook.events?.join(', ')}`);
       } catch (error) {
-        if (error.statusCode === 400 || error.statusCode === 409) {
+        if (error.status === 400 || error.status === 409 || error.type === 'ValidationError') {
           console.warn('⚠️  Webhook já existe ou URL inválida');
+          console.warn('   Continue para ver exemplo de validação de assinatura');
+        } else if (error.status === 404 || error.type === 'NotFoundError') {
+          console.warn('⚠️  Recurso não encontrado - webhooks podem não estar disponíveis neste ambiente');
           console.warn('   Continue para ver exemplo de validação de assinatura');
         } else {
           throw error;
@@ -104,7 +115,7 @@ async function configurarWebhooks() {
       console.log('\n📋 4. Exemplo de atualização de webhook...');
       console.log('   (não executado neste exemplo, mas o código está disponível)');
       console.log('\n   Código para atualizar:');
-      console.log(`   await nfe.webhooks.update('${empresa.id}', '${webhook.id}', {`);
+      console.log(`   await nfe.webhooks.update('${companyId}', '${webhook.id}', {`);
       console.log(`     events: ['invoice.issued', 'invoice.cancelled']`);
       console.log(`   });`);
     }

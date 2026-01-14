@@ -15,10 +15,17 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.test' });
 
 const apiKey = process.env.NFE_API_KEY;
+const companyId = process.env.NFE_COMPANY_ID; // Use company from env
 const environment = process.env.NFE_TEST_ENVIRONMENT || 'development';
 
 if (!apiKey) {
   console.error('❌ NFE_API_KEY não encontrada no .env.test');
+  process.exit(1);
+}
+
+if (!companyId) {
+  console.error('❌ NFE_COMPANY_ID não encontrada no .env.test');
+  console.error('💡 Configure NFE_COMPANY_ID no arquivo .env.test');
   process.exit(1);
 }
 
@@ -31,31 +38,25 @@ async function gerenciarPessoas() {
   try {
     // 1. Buscar empresa
     console.log('\n📋 1. Buscando empresa...');
-    const empresas = await nfe.companies.list();
-
-    if (!empresas.data || empresas.data.length === 0) {
-      console.error('❌ Nenhuma empresa encontrada');
-      return;
-    }
-
-    const empresa = empresas.data[0];
+    const empresa = await nfe.companies.retrieve(companyId);
     console.log(`✅ Empresa: ${empresa.name}`);
 
     // 2. Criar/Buscar Pessoa Jurídica
     console.log('\n📋 2. Gerenciando Pessoa Jurídica (Empresa Cliente)...');
 
-    const cnpjExemplo = '12345678000190';
+    const cnpjExemplo = 33571681386979; // CNPJ válido com dígitos verificadores
     let pessoaJuridica;
 
-    try {
-      pessoaJuridica = await nfe.legalPeople.findByTaxNumber(empresa.id, cnpjExemplo);
-      console.log(`✅ Pessoa jurídica encontrada: ${pessoaJuridica.name}`);
-    } catch (error) {
-      if (error.statusCode === 404) {
-        console.log('⚠️  Pessoa jurídica não encontrada, criando...');
+    // findByTaxNumber returns undefined if not found (doesn't throw)
+    pessoaJuridica = await nfe.legalPeople.findByTaxNumber(empresa.id, cnpjExemplo);
 
-        pessoaJuridica = await nfe.legalPeople.create(empresa.id, {
-          federalTaxNumber: cnpjExemplo,
+    if (pessoaJuridica) {
+      console.log(`✅ Pessoa jurídica encontrada: ${pessoaJuridica.name}`);
+    } else {
+      console.log('⚠️  Pessoa jurídica não encontrada, criando...');
+
+      pessoaJuridica = await nfe.legalPeople.create(empresa.id, {
+        federalTaxNumber: cnpjExemplo,
           name: 'Tech Solutions Ltda',
           email: 'contato@techsolutions.com.br',
           address: {
@@ -77,23 +78,21 @@ async function gerenciarPessoas() {
         console.log(`   ID: ${pessoaJuridica.id}`);
         console.log(`   CNPJ: ${pessoaJuridica.federalTaxNumber}`);
         console.log(`   Email: ${pessoaJuridica.email}`);
-      } else {
-        throw error;
-      }
     }
 
     // 3. Criar/Buscar Pessoa Física
     console.log('\n📋 3. Gerenciando Pessoa Física (Cliente Individual)...');
 
-    const cpfExemplo = '12345678901';
+    const cpfExemplo = 12345678909; // CPF válido com dígitos verificadores
     let pessoaFisica;
 
-    try {
-      pessoaFisica = await nfe.naturalPeople.findByTaxNumber(empresa.id, cpfExemplo);
+    // findByTaxNumber returns undefined if not found (doesn't throw)
+    pessoaFisica = await nfe.naturalPeople.findByTaxNumber(empresa.id, cpfExemplo);
+
+    if (pessoaFisica) {
       console.log(`✅ Pessoa física encontrada: ${pessoaFisica.name}`);
-    } catch (error) {
-      if (error.statusCode === 404) {
-        console.log('⚠️  Pessoa física não encontrada, criando...');
+    } else {
+      console.log('⚠️  Pessoa física não encontrada, criando...');
 
         pessoaFisica = await nfe.naturalPeople.create(empresa.id, {
           federalTaxNumber: cpfExemplo,
@@ -118,9 +117,6 @@ async function gerenciarPessoas() {
         console.log(`   ID: ${pessoaFisica.id}`);
         console.log(`   CPF: ${pessoaFisica.federalTaxNumber}`);
         console.log(`   Email: ${pessoaFisica.email}`);
-      } else {
-        throw error;
-      }
     }
 
     // 4. Listar todas as pessoas jurídicas
