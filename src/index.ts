@@ -149,6 +149,27 @@ export {
 } from './core/errors/index.js';
 
 // ============================================================================
+// Certificate Validator
+// ============================================================================
+
+/**
+ * Certificate validation utilities
+ *
+ * @see {@link CertificateValidator} - Certificate validation utility class
+ *
+ * @example
+ * ```typescript
+ * import { CertificateValidator } from 'nfe-io';
+ *
+ * const validation = await CertificateValidator.validate(certBuffer, 'password');
+ * if (validation.valid) {
+ *   console.log('Certificate expires:', validation.metadata?.validTo);
+ * }
+ * ```
+ */
+export { CertificateValidator } from './core/utils/certificate-validator.js';
+
+// ============================================================================
 // Default Export (maintains v2 compatibility)
 // ============================================================================
 
