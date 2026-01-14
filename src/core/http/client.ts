@@ -162,6 +162,15 @@ export class HttpClient {
       }
     }
 
+    // Handle 204 No Content
+    if (response.status === 204) {
+      return {
+        data: {} as T,
+        status: response.status,
+        headers: this.extractHeaders(response)
+      };
+    }
+
     // Handle error responses
     if (!response.ok) {
       await this.handleErrorResponse(response);
