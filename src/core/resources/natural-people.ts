@@ -27,9 +27,13 @@ export class NaturalPeopleResource {
    */
   async list(companyId: ResourceId): Promise<ListResponse<NaturalPerson>> {
     const path = `/companies/${companyId}/naturalpeople`;
-    const response = await this.http.get<ListResponse<NaturalPerson>>(path);
+    const response = await this.http.get<{ naturalPeople: NaturalPerson[] }>(path);
 
-    return response.data;
+    // API returns: { naturalPeople: [...] }
+    // Transform to our standard ListResponse format
+    return {
+      data: response.data.naturalPeople || []
+    };
   }
 
   /**
@@ -60,9 +64,10 @@ export class NaturalPeopleResource {
     data: Partial<NaturalPerson>
   ): Promise<NaturalPerson> {
     const path = `/companies/${companyId}/naturalpeople`;
-    const response = await this.http.post<NaturalPerson>(path, data);
+    const response = await this.http.post<{ naturalPeople: NaturalPerson }>(path, data);
 
-    return response.data;
+    // API returns wrapped object: { naturalPeople: {...} }
+    return response.data.naturalPeople;
   }
 
   /**
@@ -86,9 +91,10 @@ export class NaturalPeopleResource {
     naturalPersonId: ResourceId
   ): Promise<NaturalPerson> {
     const path = `/companies/${companyId}/naturalpeople/${naturalPersonId}`;
-    const response = await this.http.get<NaturalPerson>(path);
+    const response = await this.http.get<{ naturalPeople: NaturalPerson }>(path);
 
-    return response.data;
+    // API returns wrapped object: { naturalPeople: {...} }
+    return response.data.naturalPeople;
   }
 
   /**
@@ -114,9 +120,10 @@ export class NaturalPeopleResource {
     data: Partial<NaturalPerson>
   ): Promise<NaturalPerson> {
     const path = `/companies/${companyId}/naturalpeople/${naturalPersonId}`;
-    const response = await this.http.put<NaturalPerson>(path, data);
+    const response = await this.http.put<{ naturalPeople: NaturalPerson }>(path, data);
 
-    return response.data;
+    // API returns wrapped object: { naturalPeople: {...} }
+    return response.data.naturalPeople;
   }
 
   /**
