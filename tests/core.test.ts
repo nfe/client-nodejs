@@ -223,7 +223,7 @@ describe('Companies Resource', () => {
     const company = await client.companies.create({
       name: 'Test Company',
       email: 'test@company.com',
-      federalTaxNumber: '12345678901234'
+      federalTaxNumber: 12345678901234
     });
 
     expect(company.id).toBe('new-company-id');
