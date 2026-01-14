@@ -322,15 +322,17 @@ await fs.writeFile('invoice.xml', xml);
 
 **Resource:** `nfe.companies`
 
-Company management operations.
+Company management operations including CRUD, certificate management, and search capabilities.
 
-#### `create(data: Partial<Company>): Promise<Company>`
+#### Core CRUD Operations
 
-Create a new company.
+##### `create(data: Omit<Company, 'id' | 'createdOn' | 'modifiedOn'>): Promise<Company>`
+
+Create a new company with automatic CNPJ/CPF validation.
 
 ```typescript
 const company = await nfe.companies.create({
-  federalTaxNumber: '12345678000190',
+  federalTaxNumber: 12345678000190, // CNPJ (14 digits) or CPF (11 digits)
   name: 'My Company',
   email: 'company@example.com',
   address: {
@@ -347,9 +349,9 @@ const company = await nfe.companies.create({
 });
 ```
 
-#### `list(options?: PaginationOptions): Promise<ListResponse<Company>>`
+##### `list(options?: PaginationOptions): Promise<ListResponse<Company>>`
 
-List all companies.
+List companies with pagination.
 
 ```typescript
 const companies = await nfe.companies.list({
@@ -358,17 +360,40 @@ const companies = await nfe.companies.list({
 });
 ```
 
-#### `retrieve(companyId: string): Promise<Company>`
+##### `listAll(): Promise<Company[]>`
 
-Get a specific company.
+Get all companies (auto-pagination).
+
+```typescript
+// Automatically fetches all pages
+const allCompanies = await nfe.companies.listAll();
+console.log(`Total: ${allCompanies.length} companies`);
+```
+
+##### `listIterator(): AsyncIterableIterator<Company>`
+
+Memory-efficient streaming of companies.
+
+```typescript
+// Process companies one at a time
+for await (const company of nfe.companies.listIterator()) {
+  console.log(company.name);
+  // Process company...
+}
+```
+
+##### `retrieve(companyId: string): Promise<Company>`
+
+Get a specific company by ID.
 
 ```typescript
 const company = await nfe.companies.retrieve('company-id');
+console.log(company.name);
 ```
 
-#### `update(companyId: string, data: Partial<Company>): Promise<Company>`
+##### `update(companyId: string, data: Partial<Company>): Promise<Company>`
 
-Update company information.
+Update company information with validation.
 
 ```typescript
 const updated = await nfe.companies.update('company-id', {
@@ -377,27 +402,171 @@ const updated = await nfe.companies.update('company-id', {
 });
 ```
 
-#### `delete(companyId: string): Promise<void>`
+##### `remove(companyId: string): Promise<{ deleted: boolean; id: string }>`
 
-Delete a company.
+Delete a company (named `remove` to avoid JS keyword conflict).
 
 ```typescript
-await nfe.companies.delete('company-id');
+const result = await nfe.companies.remove('company-id');
+console.log(`Deleted: ${result.deleted}`);
 ```
 
-#### `uploadCertificate(companyId: string, certificate: Buffer, password: string): Promise<Company>`
+#### Certificate Management
 
-Upload digital certificate (PFX/P12).
+##### `validateCertificate(file: Buffer, password: string): Promise<CertificateValidationResult>`
+
+Pre-validate a certificate before upload.
 
 ```typescript
-import fs from 'fs/promises';
+import { readFile } from 'fs/promises';
 
-const certBuffer = await fs.readFile('./certificate.pfx');
-const company = await nfe.companies.uploadCertificate(
-  'company-id',
-  certBuffer,
-  'certificate-password'
-);
+const certBuffer = await readFile('./certificate.pfx');
+const validation = await nfe.companies.validateCertificate(certBuffer, 'password');
+
+if (validation.valid) {
+  console.log('Valid until:', validation.metadata?.validTo);
+} else {
+  console.error('Invalid:', validation.error);
+}
+```
+
+##### `uploadCertificate(companyId: string, data: CertificateData): Promise<{ uploaded: boolean; message?: string }>`
+
+Upload digital certificate with automatic validation.
+
+```typescript
+import { readFile } from 'fs/promises';
+
+const certBuffer = await readFile('./certificate.pfx');
+
+const result = await nfe.companies.uploadCertificate('company-id', {
+  file: certBuffer,
+  password: 'certificate-password',
+  filename: 'certificate.pfx' // Optional
+});
+
+console.log(result.message);
+```
+
+##### `getCertificateStatus(companyId: string): Promise<CertificateStatus>`
+
+Get certificate status with expiration calculation.
+
+```typescript
+const status = await nfe.companies.getCertificateStatus('company-id');
+
+console.log('Has certificate:', status.hasCertificate);
+console.log('Expires on:', status.expiresOn);
+console.log('Days until expiration:', status.daysUntilExpiration);
+
+if (status.isExpiringSoon) {
+  console.warn('⚠️  Certificate expiring soon!');
+}
+```
+
+##### `replaceCertificate(companyId: string, data: CertificateData): Promise<{ uploaded: boolean; message?: string }>`
+
+Replace existing certificate (alias for upload).
+
+```typescript
+const result = await nfe.companies.replaceCertificate('company-id', {
+  file: newCertBuffer,
+  password: 'new-password',
+  filename: 'new-certificate.pfx'
+});
+```
+
+##### `checkCertificateExpiration(companyId: string, thresholdDays?: number): Promise<ExpirationWarning | null>`
+
+Check if certificate is expiring soon.
+
+```typescript
+// Check with 30-day threshold (default)
+const warning = await nfe.companies.checkCertificateExpiration('company-id', 30);
+
+if (warning) {
+  console.warn(`Certificate expiring in ${warning.daysRemaining} days`);
+  console.log('Expires on:', warning.expiresOn);
+}
+```
+
+#### Search & Helper Methods
+
+##### `findByTaxNumber(taxNumber: number): Promise<Company | null>`
+
+Find company by federal tax number (CNPJ or CPF).
+
+```typescript
+// Search by CNPJ (14 digits)
+const company = await nfe.companies.findByTaxNumber(12345678000190);
+
+// Or by CPF (11 digits)
+const company = await nfe.companies.findByTaxNumber(12345678901);
+
+if (company) {
+  console.log('Found:', company.name);
+} else {
+  console.log('Company not found');
+}
+```
+
+##### `findByName(name: string): Promise<Company[]>`
+
+Find companies by name (case-insensitive partial match).
+
+```typescript
+// Find all companies with "Acme" in the name
+const companies = await nfe.companies.findByName('Acme');
+
+companies.forEach(company => {
+  console.log(`Match: ${company.name}`);
+});
+```
+
+##### `getCompaniesWithCertificates(): Promise<Company[]>`
+
+Get all companies that have valid certificates.
+
+```typescript
+const companiesWithCerts = await nfe.companies.getCompaniesWithCertificates();
+
+console.log(`${companiesWithCerts.length} companies with valid certificates`);
+```
+
+##### `getCompaniesWithExpiringCertificates(thresholdDays?: number): Promise<Company[]>`
+
+Get companies with expiring certificates.
+
+```typescript
+// Find companies with certificates expiring within 30 days
+const expiring = await nfe.companies.getCompaniesWithExpiringCertificates(30);
+
+expiring.forEach(company => {
+  console.warn(`⚠️  ${company.name} certificate expiring soon`);
+});
+```
+
+#### Certificate Validator Utility
+
+The `CertificateValidator` utility can also be used independently:
+
+```typescript
+import { CertificateValidator } from 'nfe-io';
+
+// Check if format is supported
+if (CertificateValidator.isSupportedFormat('cert.pfx')) {
+  console.log('✓ Supported format');
+}
+
+// Calculate days until expiration
+const expirationDate = new Date('2026-12-31');
+const days = CertificateValidator.getDaysUntilExpiration(expirationDate);
+console.log(`Days remaining: ${days}`);
+
+// Check if expiring soon
+if (CertificateValidator.isExpiringSoon(expirationDate, 30)) {
+  console.warn('Certificate expiring within 30 days!');
+}
 ```
 
 ### Legal People

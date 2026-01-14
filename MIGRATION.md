@@ -287,16 +287,45 @@ nfe.companies.retrieve('company-id', callback);
 nfe.companies.update('company-id', updates, callback);
 nfe.companies.uploadCertificate('company-id', fileData, password, callback);
 
-// v3
+// v3 - Basic CRUD (same pattern, now async)
 await nfe.companies.create(companyData);
-await nfe.companies.list();
+await nfe.companies.list({ pageCount: 20, pageIndex: 0 });
 await nfe.companies.retrieve('company-id');
 await nfe.companies.update('company-id', updates);
+await nfe.companies.remove('company-id'); // Renamed from 'delete'
+
+// v3 - Certificate Management (enhanced)
 await nfe.companies.uploadCertificate('company-id', {
   file: fileBuffer,
-  password: 'cert-password'
+  password: 'cert-password',
+  filename: 'certificate.pfx' // Optional
 });
+
+// 🆕 New in v3: Certificate utilities
+const validation = await nfe.companies.validateCertificate(certBuffer, 'password');
+const status = await nfe.companies.getCertificateStatus('company-id');
+const warning = await nfe.companies.checkCertificateExpiration('company-id', 30);
+
+// 🆕 New in v3: Pagination helpers
+const allCompanies = await nfe.companies.listAll(); // Auto-pagination
+for await (const company of nfe.companies.listIterator()) {
+  // Memory-efficient streaming
+}
+
+// 🆕 New in v3: Search methods
+const company = await nfe.companies.findByTaxNumber(12345678000190);
+const matches = await nfe.companies.findByName('Acme');
+const withCerts = await nfe.companies.getCompaniesWithCertificates();
+const expiring = await nfe.companies.getCompaniesWithExpiringCertificates(30);
 ```
+
+**Key Changes:**
+- ✅ `delete()` → `remove()` (avoids JavaScript keyword)
+- ✅ `uploadCertificate()` now takes object with `{ file, password, filename? }`
+- 🆕 Pre-upload certificate validation
+- 🆕 Certificate expiration monitoring
+- 🆕 Search by tax number or name
+- 🆕 Auto-pagination with `listAll()` and `listIterator()`
 
 ### Legal People & Natural People
 
@@ -499,6 +528,83 @@ async function batchCreate(companyId, invoices) {
   
   return { succeeded, failed };
 }
+```
+
+### Certificate Management Migration
+
+The certificate management in v3 has been significantly enhanced:
+
+**v2 Approach:**
+```javascript
+// v2: Upload and hope it works
+const fs = require('fs');
+const certBuffer = fs.readFileSync('./certificate.pfx');
+
+nfe.companies.uploadCertificate('company-id', certBuffer, 'password', (err, result) => {
+  if (err) {
+    console.error('Upload failed:', err);
+    return;
+  }
+  console.log('Certificate uploaded');
+});
+```
+
+**v3 Approach (with validation):**
+```javascript
+// v3: Validate before upload
+import { readFile } from 'fs/promises';
+import { CertificateValidator } from '@nfe-io/sdk';
+
+const certBuffer = await readFile('./certificate.pfx');
+
+// 1. Check file format
+if (!CertificateValidator.isSupportedFormat('certificate.pfx')) {
+  throw new Error('Only .pfx and .p12 files are supported');
+}
+
+// 2. Validate certificate
+const validation = await nfe.companies.validateCertificate(certBuffer, 'password');
+if (!validation.valid) {
+  throw new Error(`Invalid certificate: ${validation.error}`);
+}
+
+console.log('Certificate expires:', validation.metadata?.validTo);
+
+// 3. Upload (will also validate automatically)
+const result = await nfe.companies.uploadCertificate('company-id', {
+  file: certBuffer,
+  password: 'password',
+  filename: 'certificate.pfx'
+});
+
+console.log(result.message);
+```
+
+**v3 Monitoring:**
+```javascript
+// Set up monitoring for expiring certificates
+async function checkCertificates() {
+  const expiring = await nfe.companies.getCompaniesWithExpiringCertificates(30);
+  
+  for (const company of expiring) {
+    const warning = await nfe.companies.checkCertificateExpiration(company.id, 30);
+    
+    if (warning) {
+      console.warn(`⚠️  ${company.name}`);
+      console.warn(`   Certificate expires in ${warning.daysRemaining} days`);
+      console.warn(`   Expiration date: ${warning.expiresOn.toLocaleDateString()}`);
+      
+      // Send alert to admin
+      await sendAdminAlert({
+        company: company.name,
+        daysRemaining: warning.daysRemaining
+      });
+    }
+  }
+}
+
+// Run daily
+setInterval(checkCertificates, 24 * 60 * 60 * 1000);
 ```
 
 ## FAQ
