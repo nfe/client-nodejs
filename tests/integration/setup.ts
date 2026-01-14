@@ -64,7 +64,7 @@ export function createIntegrationClient(): NfeClient {
 
 // Test data helpers for integration tests
 export const TEST_COMPANY_DATA = {
-  federalTaxNumber: 12345678000190, // Valid CNPJ format for testing
+  federalTaxNumber: 11222333000181, // Valid CNPJ with proper check digits
   name: 'Empresa Teste SDK v3',
   email: 'teste-sdk@example.com',
   taxRegime: 1 as const, // Simples Nacional
@@ -73,6 +73,7 @@ export const TEST_COMPANY_DATA = {
     postalCode: '01310-100',
     street: 'Av. Paulista',
     number: '1578',
+    district: 'Bela Vista',
     city: {
       code: '3550308', // São Paulo
       name: 'São Paulo',
@@ -82,7 +83,7 @@ export const TEST_COMPANY_DATA = {
 };
 
 export const TEST_LEGAL_PERSON_DATA = {
-  federalTaxNumber: 98765432000109,
+  federalTaxNumber: 11444555000149, // Valid CNPJ with proper check digits
   name: 'Cliente Pessoa Jurídica Teste',
   email: 'cliente-pj@example.com',
   address: {
@@ -90,6 +91,7 @@ export const TEST_LEGAL_PERSON_DATA = {
     postalCode: '01310-100',
     street: 'Av. Paulista',
     number: '1000',
+    district: 'Bela Vista',
     city: {
       code: '3550308',
       name: 'São Paulo',

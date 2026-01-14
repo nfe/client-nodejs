@@ -202,15 +202,17 @@ describe('Companies Resource', () => {
     });
 
     const companies = await client.companies.list();
-    expect(companies.companies).toHaveLength(2);
-    expect(companies.companies[0].name).toBe('Company 1');
+    expect(companies.data).toHaveLength(2);
+    expect(companies.data[0].name).toBe('Company 1');
   });
 
   it('should create company', async () => {
     const mockResponse = {
-      id: 'new-company-id',
-      name: 'Test Company',
-      email: 'test@company.com'
+      companies: {
+        id: 'new-company-id',
+        name: 'Test Company',
+        email: 'test@company.com'
+      }
     };
 
     (global.fetch as any).mockResolvedValue({
@@ -223,7 +225,7 @@ describe('Companies Resource', () => {
     const company = await client.companies.create({
       name: 'Test Company',
       email: 'test@company.com',
-      federalTaxNumber: 12345678901234
+      federalTaxNumber: 12345678000276
     });
 
     expect(company.id).toBe('new-company-id');

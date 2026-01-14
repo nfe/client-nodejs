@@ -17,9 +17,12 @@ globalThis.AbortController = globalThis.AbortController || class AbortController
   }
 };
 
-// Mock environment variables for tests
+// Mock environment variables for tests (only if not already set)
 process.env.NODE_ENV = 'test';
-process.env.NFE_API_KEY = 'test-api-key';
+// Don't override NFE_API_KEY if it's already set (for integration tests)
+if (!process.env.NFE_API_KEY || process.env.NFE_API_KEY === '') {
+  process.env.NFE_API_KEY = 'test-api-key';
+}
 
 // Test constants
 export const TEST_API_KEY = 'test-api-key-12345';

@@ -209,7 +209,7 @@ describe('HttpClient', () => {
       await httpClient.get('/test');
 
       const authHeader = fetchMock.mock.calls[0][1].headers['Authorization'];
-      expect(authHeader).toBe(`Basic ${Buffer.from(TEST_API_KEY).toString('base64')}`);
+      expect(authHeader).toBe(TEST_API_KEY);
     });
 
     it('should throw AuthenticationError on 401', async () => {

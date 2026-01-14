@@ -44,17 +44,16 @@ describe('CompaniesResource', () => {
         createMockCompany({ id: 'company-2', name: 'Company Two' }),
       ];
 
-      const mockListResponse: ListResponse<Company> = {
-        data: mockData,
-      };
-
-      const mockResponse: HttpResponse<ListResponse<Company>> = {
-        data: mockListResponse,
+      const mockResponse: HttpResponse<{ companies: Company[]; page: number }> = {
+        data: {
+          companies: mockData,
+          page: 1,
+        },
         status: 200,
         headers: {},
       };
 
-      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
+      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse as any);
 
       const result = await companies.list();
 
@@ -68,13 +67,15 @@ describe('CompaniesResource', () => {
     it('should retrieve a specific company', async () => {
       const mockCompany = createMockCompany();
 
-      const mockResponse: HttpResponse<Company> = {
-        data: mockCompany,
+      const mockResponse: HttpResponse<{ companies: Company }> = {
+        data: {
+          companies: mockCompany,
+        },
         status: 200,
         headers: {},
       };
 
-      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
+      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse as any);
 
       const result = await companies.retrieve(TEST_COMPANY_ID);
 
@@ -87,19 +88,21 @@ describe('CompaniesResource', () => {
     it('should create a new company', async () => {
       const companyData = {
         name: 'New Company',
-        federalTaxNumber: 12345678000190,
+        federalTaxNumber: 12345678000276,
         email: 'new@example.com',
       };
 
       const createdCompany = createMockCompany({ id: 'new-id', ...companyData });
 
-      const mockResponse: HttpResponse<Company> = {
-        data: createdCompany,
+      const mockResponse: HttpResponse<{ companies: Company }> = {
+        data: {
+          companies: createdCompany,
+        },
         status: 201,
         headers: {},
       };
 
-      vi.mocked(mockHttpClient.post).mockResolvedValue(mockResponse);
+      vi.mocked(mockHttpClient.post).mockResolvedValue(mockResponse as any);
 
       const result = await companies.create(companyData as any);
 
@@ -117,13 +120,15 @@ describe('CompaniesResource', () => {
 
       const updatedCompany = createMockCompany({ ...updateData });
 
-      const mockResponse: HttpResponse<Company> = {
-        data: updatedCompany,
+      const mockResponse: HttpResponse<{ companies: Company }> = {
+        data: {
+          companies: updatedCompany,
+        },
         status: 200,
         headers: {},
       };
 
-      vi.mocked(mockHttpClient.put).mockResolvedValue(mockResponse);
+      vi.mocked(mockHttpClient.put).mockResolvedValue(mockResponse as any);
 
       const result = await companies.update(TEST_COMPANY_ID, updateData as any);
 

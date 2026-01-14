@@ -22,12 +22,12 @@ describe('LegalPeopleResource', () => {
   describe('list', () => {
     it('should list legal people for a company', async () => {
       const mockPerson = createMockLegalPerson();
-      const mockResponse: HttpResponse<ListResponse<LegalPerson>> = {
-        data: { data: [mockPerson] },
+      const mockResponse: HttpResponse<{ legalPeople: LegalPerson[] }> = {
+        data: { legalPeople: [mockPerson] },
         status: 200,
         headers: {},
       };
-      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
+      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse as any);
 
       const result = await legalPeople.list(TEST_COMPANY_ID);
 
@@ -41,12 +41,12 @@ describe('LegalPeopleResource', () => {
   describe('retrieve', () => {
     it('should retrieve a legal person by id', async () => {
       const mockPerson = createMockLegalPerson();
-      const mockResponse: HttpResponse<LegalPerson> = {
-        data: mockPerson,
+      const mockResponse: HttpResponse<{ legalPeople: LegalPerson }> = {
+        data: { legalPeople: mockPerson },
         status: 200,
         headers: {},
       };
-      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
+      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse as any);
 
       const result = await legalPeople.retrieve(TEST_COMPANY_ID, TEST_PERSON_ID);
 
@@ -61,12 +61,12 @@ describe('LegalPeopleResource', () => {
     it('should create a new legal person', async () => {
       const newPerson = createMockLegalPerson({ id: undefined });
       const createdPerson = createMockLegalPerson();
-      const mockResponse: HttpResponse<LegalPerson> = {
-        data: createdPerson,
+      const mockResponse: HttpResponse<{ legalPeople: LegalPerson }> = {
+        data: { legalPeople: createdPerson },
         status: 201,
         headers: {},
       };
-      vi.mocked(mockHttpClient.post).mockResolvedValue(mockResponse);
+      vi.mocked(mockHttpClient.post).mockResolvedValue(mockResponse as any);
 
       const result = await legalPeople.create(TEST_COMPANY_ID, newPerson);
 
@@ -82,12 +82,12 @@ describe('LegalPeopleResource', () => {
     it('should update an existing legal person', async () => {
       const updates = { email: 'new@email.com' };
       const updatedPerson = createMockLegalPerson(updates);
-      const mockResponse: HttpResponse<LegalPerson> = {
-        data: updatedPerson,
+      const mockResponse: HttpResponse<{ legalPeople: LegalPerson }> = {
+        data: { legalPeople: updatedPerson },
         status: 200,
         headers: {},
       };
-      vi.mocked(mockHttpClient.put).mockResolvedValue(mockResponse);
+      vi.mocked(mockHttpClient.put).mockResolvedValue(mockResponse as any);
 
       const result = await legalPeople.update(TEST_COMPANY_ID, TEST_PERSON_ID, updates);
 
