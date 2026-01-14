@@ -3,6 +3,25 @@ import { CompaniesResource } from '../../src/core/resources/companies';
 import type { HttpClient } from '../../src/core/http/client';
 import type { HttpResponse, ListResponse, Company } from '../../src/core/types';
 import { createMockCompany, TEST_COMPANY_ID } from '../setup';
+import { CertificateValidator } from '../../src/core/utils/certificate-validator';
+
+// Mock CertificateValidator to avoid certificate format validation issues in tests
+vi.mock('../../src/core/utils/certificate-validator', () => ({
+  CertificateValidator: {
+    validate: vi.fn().mockResolvedValue({
+      valid: true,
+      metadata: {
+        subject: 'CN=Test',
+        issuer: 'CN=Test CA',
+        validFrom: new Date('2024-01-01'),
+        validTo: new Date('2026-12-31'),
+      },
+    }),
+    isSupportedFormat: vi.fn().mockReturnValue(true),
+    getDaysUntilExpiration: vi.fn().mockReturnValue(365),
+    isExpiringSoon: vi.fn().mockReturnValue(false),
+  },
+}));
 
 describe('CompaniesResource', () => {
   let companies: CompaniesResource;
@@ -262,6 +281,7 @@ describe('CompaniesResource', () => {
 
     it('should throw error if FormData is not available', async () => {
       // Remove FormData to simulate environment without it
+      const originalFormData = global.FormData;
       global.FormData = undefined as any;
 
       const companiesWithoutFormData = new CompaniesResource(mockHttpClient);
@@ -274,6 +294,9 @@ describe('CompaniesResource', () => {
       await expect(
         companiesWithoutFormData.uploadCertificate(TEST_COMPANY_ID, certificateData)
       ).rejects.toThrow('FormData is not available');
+
+      // Restore FormData
+      global.FormData = originalFormData;
     });
   });
 
@@ -422,82 +445,5 @@ describe('CompaniesResource', () => {
     });
   });
 
-  describe('createBatch', () => {
-    it('should create multiple companies', async () => {
-      const companiesData = [
-        { name: 'Company 1', federalTaxNumber: 11111111000111, email: 'c1@test.com' },
-        { name: 'Company 2', federalTaxNumber: 22222222000122, email: 'c2@test.com' },
-      ];
-
-      vi.mocked(mockHttpClient.post)
-        .mockResolvedValueOnce({
-          data: createMockCompany({ id: 'id-1', name: 'Company 1' }),
-          status: 201,
-          headers: {},
-        })
-        .mockResolvedValueOnce({
-          data: createMockCompany({ id: 'id-2', name: 'Company 2' }),
-          status: 201,
-          headers: {},
-        });
-
-      const results = await companies.createBatch(companiesData as any);
-
-      expect(results).toHaveLength(2);
-      expect(results[0]).toHaveProperty('id', 'id-1');
-      expect(results[1]).toHaveProperty('id', 'id-2');
-    });
-
-    it('should continue on error when continueOnError is true', async () => {
-      const companiesData = [
-        { name: 'Company 1', federalTaxNumber: 11111111000111, email: 'c1@test.com' },
-        { name: 'Company 2', federalTaxNumber: 22222222000122, email: 'c2@test.com' },
-      ];
-
-      vi.mocked(mockHttpClient.post)
-        .mockResolvedValueOnce({
-          data: createMockCompany({ id: 'id-1', name: 'Company 1' }),
-          status: 201,
-          headers: {},
-        })
-        .mockRejectedValueOnce(new Error('Duplicate tax number'));
-
-      const results = await companies.createBatch(companiesData as any, {
-        continueOnError: true,
-      });
-
-      expect(results).toHaveLength(2);
-      expect(results[0]).toHaveProperty('id', 'id-1');
-      expect(results[1]).toHaveProperty('error', 'Duplicate tax number');
-    });
-
-    it('should respect maxConcurrent option', async () => {
-      let concurrentCalls = 0;
-      let maxConcurrent = 0;
-
-      vi.mocked(mockHttpClient.post).mockImplementation(async () => {
-        concurrentCalls++;
-        maxConcurrent = Math.max(maxConcurrent, concurrentCalls);
-        await new Promise(resolve => setTimeout(resolve, 10));
-        concurrentCalls--;
-        return {
-          data: createMockCompany(),
-          status: 201,
-          headers: {},
-        };
-      });
-
-      const companiesData = Array(10).fill(null).map((_, i) => ({
-        name: `Company ${i}`,
-        federalTaxNumber: 11111111000111 + i,
-        email: `c${i}@test.com`,
-      }));
-
-      await companies.createBatch(companiesData as any, {
-        maxConcurrent: 3,
-      });
-
-      expect(maxConcurrent).toBeLessThanOrEqual(3);
-    });
-  });
+  // Note: createBatch was removed per user request during implementation
 });
