@@ -1,66 +1,67 @@
-# Migration Guide: v2 → v3
+# Guia de Migração: v2 → v3
 
-This guide helps you migrate from NFE.io SDK v2.x to v3.0.
+Este guia ajuda você a migrar do SDK NFE.io v2.x para v3.0.
 
-## 📋 Table of Contents
+## 📋 Índice
 
-- [Overview](#overview)
-- [Breaking Changes](#breaking-changes)
-- [Step-by-Step Migration](#step-by-step-migration)
-- [API Changes](#api-changes)
-- [Code Examples](#code-examples)
-- [FAQ](#faq)
+- [Visão Geral](#visão-geral)
+- [Mudanças Incompatíveis](#mudanças-incompatíveis)
+- [Migração Passo a Passo](#migração-passo-a-passo)
+- [Mudanças na API](#mudanças-na-api)
+- [Exemplos de Código](#exemplos-de-código)
+- [Perguntas Frequentes](#perguntas-frequentes)
 
-## Overview
+## Visão Geral
 
-### What's New in v3?
+### O que há de Novo na v3?
 
-✨ **Major Improvements:**
-- **TypeScript Native** - Full type safety and IntelliSense support
-- **Modern Async/Await** - No more callbacks, clean promise-based API
-- **Zero Dependencies** - Uses Node.js native fetch API (Node 18+)
-- **Better Error Handling** - Typed error classes with detailed information
-- **Auto Retry** - Built-in exponential backoff retry logic
-- **ESM & CommonJS** - Works with both module systems
+✨ **Principais Melhorias:**
+- **TypeScript Nativo** - Segurança de tipos completa e suporte a IntelliSense
+- **Async/Await Moderno** - Sem callbacks, API limpa baseada em promises
+- **Zero Dependências** - Usa Fetch API nativa do Node.js (Node 18+)
+- **Melhor Tratamento de Erros** - Classes de erro tipadas com informações detalhadas
+- **Retry Automático** - Lógica de retry com exponential backoff integrada
+- **ESM & CommonJS** - Funciona com ambos os sistemas de módulos
+- **OpenAPI Types** - Tipos gerados automaticamente das especificações da API
 
-⚠️ **Requirements:**
-- **Node.js >= 18.0.0** (up from v12 in v2)
-- **Breaking API changes** (see below)
+⚠️ **Requisitos:**
+- **Node.js >= 18.0.0** (anteriormente v12 na v2)
+- **Mudanças incompatíveis na API** (veja abaixo)
 
-### Migration Timeline
+### Cronograma de Migração
 
-**Recommended approach:**
-1. ✅ Update to Node.js 18+ if needed
-2. ✅ Install v3 alongside v2 (different package names)
-3. ✅ Migrate one resource at a time
-4. ✅ Update tests
-5. ✅ Remove v2 dependency
+**Abordagem recomendada:**
+1. ✅ Atualize para Node.js 18+ se necessário
+2. ✅ Instale v3 ao lado da v2 (mesmo nome de pacote)
+3. ✅ Migre um recurso por vez
+4. ✅ Atualize os testes
+5. ✅ Remova dependência da v2
 
-## Breaking Changes
+## Mudanças Incompatíveis
 
-### 1. Package Name Change
+### 1. Nome do Pacote (INALTERADO)
 
-```diff
-- npm install nfe-io
-+ npm install @nfe-io/sdk
+```bash
+# v2 e v3 usam o mesmo nome
+npm install nfe-io
 ```
 
-### 2. Import/Require Syntax
+### 2. Sintaxe de Import/Require
 
 ```javascript
 // v2
-var nfe = require('nfe-io')('your-api-key');
+var nfe = require('nfe-io')('sua-api-key');
 
 // v3 (ESM)
-import { NfeClient } from '@nfe-io/sdk';
-const nfe = new NfeClient({ apiKey: 'your-api-key' });
+import { NfeClient } from 'nfe-io';
+const nfe = new NfeClient({ apiKey: 'sua-api-key' });
 
 // v3 (CommonJS)
-const { NfeClient } = require('@nfe-io/sdk');
-const nfe = new NfeClient({ apiKey: 'your-api-key' });
+const { NfeClient } = require('nfe-io');
+const nfe = new NfeClient({ apiKey: 'sua-api-key' });
 ```
 
-### 3. Configuration
+### 3. Configuração
 
 ```javascript
 // v2
@@ -71,7 +72,7 @@ nfe.setTimeout(60000);
 const nfe = new NfeClient({
   apiKey: 'api-key',
   timeout: 60000,
-  environment: 'production', // or 'development'
+  environment: 'production', // ou 'development'
   retryConfig: {
     maxRetries: 3,
     baseDelay: 1000
@@ -93,7 +94,7 @@ nfe.serviceInvoices.create('company-id', data)
   .then(invoice => console.log(invoice))
   .catch(err => console.error(err));
 
-// v3 (async/await - RECOMMENDED)
+// v3 (async/await - RECOMENDADO)
 try {
   const invoice = await nfe.serviceInvoices.create('company-id', data);
   console.log(invoice);
@@ -102,86 +103,88 @@ try {
 }
 ```
 
-### 5. Error Handling
+### 5. Tratamento de Erros
 
 ```javascript
 // v2
 nfe.serviceInvoices.create('company-id', data, function(err, invoice) {
   if (err) {
     if (err.type === 'AuthenticationError') {
-      // handle auth error
+      // tratar erro de autenticação
     }
   }
 });
 
 // v3
-import { AuthenticationError, ValidationError } from '@nfe-io/sdk';
+import { AuthenticationError, ValidationError } from 'nfe-io';
 
 try {
   const invoice = await nfe.serviceInvoices.create('company-id', data);
 } catch (error) {
   if (error instanceof AuthenticationError) {
-    console.error('Invalid API key');
+    console.error('API key inválida');
   } else if (error instanceof ValidationError) {
-    console.error('Invalid data:', error.details);
+    console.error('Dados inválidos:', error.details);
   }
 }
 ```
 
-### 6. Response Format
+### 6. Formato de Resposta
 
 ```javascript
-// v2 - Direct data return
+// v2 - Retorno direto dos dados
 const invoice = await nfe.serviceInvoices.retrieve('company-id', 'invoice-id');
 console.log(invoice.number);
 
-// v3 - Same! (no change)
+// v3 - Igual! (sem mudanças)
 const invoice = await nfe.serviceInvoices.retrieve('company-id', 'invoice-id');
 console.log(invoice.number);
 ```
 
-### 7. Method Name Changes
+### 7. Mudanças nos Nomes dos Métodos
 
-| v2 Method | v3 Method | Notes |
+| Método v2 | Método v3 | Notas |
 |-----------|-----------|-------|
-| `create()` | `create()` | ✅ Same |
-| `list()` | `list()` | ✅ Same |
-| `retrieve()` | `retrieve()` | ✅ Same |
-| `update()` | `update()` | ✅ Same |
-| `delete()` | `delete()` | ✅ Same |
-| `sendEmail()` | `sendEmail()` | ✅ Same |
-| `downloadPdf()` | `downloadPdf()` | ✅ Same |
-| `downloadXml()` | `downloadXml()` | ✅ Same |
-| N/A | `createAndWait()` | 🆕 New! Auto-polling |
+| `create()` | `create()` | ✅ Igual |
+| `list()` | `list()` | ✅ Igual |
+| `retrieve()` | `retrieve()` | ✅ Igual |
+| `update()` | `update()` | ✅ Igual |
+| `delete()` | `delete()` / `remove()` | ⚠️ `remove()` em Companies |
+| `sendEmail()` | `sendEmail()` | ✅ Igual |
+| `downloadPdf()` | `downloadPdf()` | ✅ Igual |
+| `downloadXml()` | `downloadXml()` | ✅ Igual |
+| N/A | `createAndWait()` | 🆕 Novo! Polling automático |
+| N/A | `listAll()` | 🆕 Paginação automática |
+| N/A | `findByTaxNumber()` | 🆕 Busca por CNPJ/CPF |
 
-## Step-by-Step Migration
+## Migração Passo a Passo
 
-### Step 1: Install v3
+### Passo 1: Instalar v3
 
 ```bash
-# Install new package (v2 stays installed for now)
-npm install @nfe-io/sdk
+# Instalar novo pacote (v2 fica instalada por enquanto)
+npm install nfe-io@3.0.0
 
-# Check Node.js version
-node --version  # Should be >= 18.0.0
+# Verificar versão do Node.js
+node --version  # Deve ser >= 18.0.0
 ```
 
-### Step 2: Update Imports
+### Passo 2: Atualizar Imports
 
 ```diff
 - var nfe = require('nfe-io')('api-key');
-+ const { NfeClient } = require('@nfe-io/sdk');
++ const { NfeClient } = require('nfe-io');
 + const nfe = new NfeClient({ apiKey: 'api-key' });
 ```
 
-Or with ES Modules:
+Ou com ES Modules:
 
 ```diff
-+ import { NfeClient } from '@nfe-io/sdk';
++ import { NfeClient } from 'nfe-io';
 + const nfe = new NfeClient({ apiKey: 'api-key' });
 ```
 
-### Step 3: Convert Callbacks to Async/Await
+### Passo 3: Converter Callbacks para Async/Await
 
 ```diff
 - nfe.serviceInvoices.create('company-id', data, function(err, invoice) {
@@ -189,7 +192,7 @@ Or with ES Modules:
 -   console.log(invoice);
 - });
 
-+ async function createInvoice() {
++ async function criarNotaFiscal() {
 +   try {
 +     const invoice = await nfe.serviceInvoices.create('company-id', data);
 +     console.log(invoice);
@@ -197,10 +200,10 @@ Or with ES Modules:
 +     console.error(error);
 +   }
 + }
-+ createInvoice();
++ criarNotaFiscal();
 ```
 
-### Step 4: Update Error Handling
+### Passo 4: Atualizar Tratamento de Erros
 
 ```diff
 + import { 
@@ -208,27 +211,27 @@ Or with ES Modules:
 +   AuthenticationError, 
 +   ValidationError,
 +   NotFoundError 
-+ } from '@nfe-io/sdk';
++ } from 'nfe-io';
 
   try {
     const invoice = await nfe.serviceInvoices.create('company-id', data);
   } catch (error) {
 -   if (error.type === 'AuthenticationError') {
 +   if (error instanceof AuthenticationError) {
-      console.error('Auth failed');
+      console.error('Autenticação falhou');
     }
 -   if (error.type === 'ValidationError') {
 +   if (error instanceof ValidationError) {
-      console.error('Invalid data:', error.details);
+      console.error('Dados inválidos:', error.details);
     }
   }
 ```
 
-### Step 5: Update TypeScript (if applicable)
+### Passo 5: Atualizar TypeScript (se aplicável)
 
 ```typescript
-// Add types to your code
-import { NfeClient, ServiceInvoice, Company } from '@nfe-io/sdk';
+// Adicionar tipos ao seu código
+import { NfeClient, ServiceInvoice, Company } from 'nfe-io';
 
 const nfe = new NfeClient({ apiKey: 'api-key' });
 
@@ -240,16 +243,17 @@ async function getInvoice(
 }
 ```
 
-### Step 6: Remove v2
+### Passo 6: Remover v2
 
 ```bash
-# After all code is migrated and tested
-npm uninstall nfe-io
+# Após todo código migrado e testado
+# Não há necessidade de desinstalar se estiver na mesma major version
+# Apenas atualize suas importações e uso do código
 ```
 
-## API Changes
+## Mudanças na API
 
-### Service Invoices
+### Notas Fiscais de Serviço (Service Invoices)
 
 ```javascript
 // v2
@@ -263,21 +267,21 @@ nfe.serviceInvoices.downloadXml('company-id', 'invoice-id', callback);
 
 // v3
 await nfe.serviceInvoices.create('company-id', invoiceData);
-await nfe.serviceInvoices.list('company-id', { page: 1, pageSize: 50 });
+await nfe.serviceInvoices.list('company-id', { pageCount: 50, pageIndex: 0 });
 await nfe.serviceInvoices.retrieve('company-id', 'invoice-id');
 await nfe.serviceInvoices.cancel('company-id', 'invoice-id');
 await nfe.serviceInvoices.sendEmail('company-id', 'invoice-id');
 await nfe.serviceInvoices.downloadPdf('company-id', 'invoice-id');
 await nfe.serviceInvoices.downloadXml('company-id', 'invoice-id');
 
-// 🆕 New in v3: Auto-polling for async processing
+// 🆕 Novo na v3: Polling automático para processamento assíncrono
 await nfe.serviceInvoices.createAndWait('company-id', invoiceData, {
   maxAttempts: 30,
   intervalMs: 2000
 });
 ```
 
-### Companies
+### Empresas (Companies)
 
 ```javascript
 // v2
@@ -287,47 +291,47 @@ nfe.companies.retrieve('company-id', callback);
 nfe.companies.update('company-id', updates, callback);
 nfe.companies.uploadCertificate('company-id', fileData, password, callback);
 
-// v3 - Basic CRUD (same pattern, now async)
+// v3 - CRUD Básico (mesmo padrão, agora async)
 await nfe.companies.create(companyData);
 await nfe.companies.list({ pageCount: 20, pageIndex: 0 });
 await nfe.companies.retrieve('company-id');
 await nfe.companies.update('company-id', updates);
-await nfe.companies.remove('company-id'); // Renamed from 'delete'
+await nfe.companies.remove('company-id'); // Renomeado de 'delete'
 
-// v3 - Certificate Management (enhanced)
+// v3 - Gerenciamento de Certificados (aprimorado)
 await nfe.companies.uploadCertificate('company-id', {
   file: fileBuffer,
-  password: 'cert-password',
-  filename: 'certificate.pfx' // Optional
+  password: 'senha-certificado',
+  filename: 'certificate.pfx' // Opcional
 });
 
-// 🆕 New in v3: Certificate utilities
-const validation = await nfe.companies.validateCertificate(certBuffer, 'password');
+// 🆕 Novo na v3: Utilitários de certificado
+const validation = await nfe.companies.validateCertificate(certBuffer, 'senha');
 const status = await nfe.companies.getCertificateStatus('company-id');
 const warning = await nfe.companies.checkCertificateExpiration('company-id', 30);
 
-// 🆕 New in v3: Pagination helpers
-const allCompanies = await nfe.companies.listAll(); // Auto-pagination
+// 🆕 Novo na v3: Helpers de paginação
+const allCompanies = await nfe.companies.listAll(); // Paginação automática
 for await (const company of nfe.companies.listIterator()) {
-  // Memory-efficient streaming
+  // Streaming eficiente de memória
 }
 
-// 🆕 New in v3: Search methods
-const company = await nfe.companies.findByTaxNumber(12345678000190);
-const matches = await nfe.companies.findByName('Acme');
+// 🆕 Novo na v3: Métodos de busca
+const company = await nfe.companies.findByTaxNumber(12345678000190); // CNPJ
+const matches = await nfe.companies.findByName('Acme'); // Por nome
 const withCerts = await nfe.companies.getCompaniesWithCertificates();
 const expiring = await nfe.companies.getCompaniesWithExpiringCertificates(30);
 ```
 
-**Key Changes:**
-- ✅ `delete()` → `remove()` (avoids JavaScript keyword)
-- ✅ `uploadCertificate()` now takes object with `{ file, password, filename? }`
-- 🆕 Pre-upload certificate validation
-- 🆕 Certificate expiration monitoring
-- 🆕 Search by tax number or name
-- 🆕 Auto-pagination with `listAll()` and `listIterator()`
+**Principais Mudanças:**
+- ✅ `delete()` → `remove()` (evita palavra reservada JavaScript)
+- ✅ `uploadCertificate()` agora recebe objeto com `{ file, password, filename? }`
+- 🆕 Validação de certificado antes do upload
+- 🆕 Monitoramento de expiração de certificados
+- 🆕 Busca por CNPJ/CPF ou nome
+- 🆕 Paginação automática com `listAll()` e `listIterator()`
 
-### Legal People & Natural People
+### Pessoas Jurídicas e Físicas (Legal People & Natural People)
 
 ```javascript
 // v2
@@ -337,17 +341,25 @@ nfe.legalPeople.retrieve('company-id', 'person-id', callback);
 nfe.legalPeople.update('company-id', 'person-id', updates, callback);
 nfe.legalPeople.delete('company-id', 'person-id', callback);
 
-// v3 (same pattern, just async)
+// v3 (mesmo padrão, apenas async)
 await nfe.legalPeople.create('company-id', personData);
 await nfe.legalPeople.list('company-id');
 await nfe.legalPeople.retrieve('company-id', 'person-id');
 await nfe.legalPeople.update('company-id', 'person-id', updates);
 await nfe.legalPeople.delete('company-id', 'person-id');
 
-// 🆕 New in v3: Helper methods
-await nfe.legalPeople.findByTaxNumber('company-id', '12345678000190');
-await nfe.naturalPeople.findByTaxNumber('company-id', '12345678901');
+// Mesmo para pessoas físicas
+await nfe.naturalPeople.create('company-id', personData);
+await nfe.naturalPeople.list('company-id');
+await nfe.naturalPeople.retrieve('company-id', 'person-id');
+await nfe.naturalPeople.update('company-id', 'person-id', updates);
+await nfe.naturalPeople.delete('company-id', 'person-id');
 ```
+
+**Mudanças:**
+- ✅ Validação automática de CNPJ (pessoas jurídicas)
+- ✅ Validação automática de CPF (pessoas físicas)
+- ✅ Mesma interface async/await para ambos os recursos
 
 ### Webhooks
 
@@ -365,26 +377,23 @@ await nfe.webhooks.list('company-id');
 await nfe.webhooks.retrieve('company-id', 'webhook-id');
 await nfe.webhooks.update('company-id', 'webhook-id', updates);
 await nfe.webhooks.delete('company-id', 'webhook-id');
-
-// 🆕 New in v3: Signature validation
-const isValid = nfe.webhooks.validateSignature(payload, signature, secret);
 ```
 
-## Code Examples
+## Exemplos de Código
 
-### Before & After: Complete Invoice Flow
+### Antes & Depois: Fluxo Completo de Emissão de Nota Fiscal
 
-**v2 Code:**
+**Código v2:**
 
 ```javascript
 var nfe = require('nfe-io')('api-key');
 
-function issueInvoice(companyId, invoiceData, callback) {
+function emitirNotaFiscal(companyId, invoiceData, callback) {
   nfe.serviceInvoices.create(companyId, invoiceData, function(err, invoice) {
     if (err) return callback(err);
     
     if (invoice.code === 202) {
-      // Poll manually
+      // Poll manual
       var checkInterval = setInterval(function() {
         nfe.serviceInvoices.retrieve(companyId, invoice.id, function(err, result) {
           if (err) {
@@ -395,7 +404,7 @@ function issueInvoice(companyId, invoiceData, callback) {
           if (result.status === 'issued') {
             clearInterval(checkInterval);
             
-            // Send email
+            // Enviar email
             nfe.serviceInvoices.sendEmail(companyId, result.id, function(err) {
               if (err) return callback(err);
               callback(null, result);
@@ -404,7 +413,7 @@ function issueInvoice(companyId, invoiceData, callback) {
         });
       }, 2000);
     } else {
-      // Send email
+      // Enviar email
       nfe.serviceInvoices.sendEmail(companyId, invoice.id, function(err) {
         if (err) return callback(err);
         callback(null, invoice);
@@ -413,21 +422,21 @@ function issueInvoice(companyId, invoiceData, callback) {
   });
 }
 
-issueInvoice('company-id', invoiceData, function(err, invoice) {
+emitirNotaFiscal('company-id', invoiceData, function(err, invoice) {
   if (err) return console.error(err);
-  console.log('Invoice issued:', invoice.number);
+  console.log('Nota fiscal emitida:', invoice.number);
 });
 ```
 
-**v3 Code:**
+**Código v3:**
 
 ```javascript
-import { NfeClient } from '@nfe-io/sdk';
+import { NfeClient } from 'nfe-io';
 
 const nfe = new NfeClient({ apiKey: 'api-key' });
 
-async function issueInvoice(companyId, invoiceData) {
-  // Automatically handles polling and email
+async function emitirNotaFiscal(companyId, invoiceData) {
+  // Automaticamente faz polling e envia email
   const invoice = await nfe.serviceInvoices.createAndWait(
     companyId, 
     invoiceData,
@@ -439,64 +448,64 @@ async function issueInvoice(companyId, invoiceData) {
   return invoice;
 }
 
-// Usage
+// Uso
 try {
-  const invoice = await issueInvoice('company-id', invoiceData);
-  console.log('Invoice issued:', invoice.number);
+  const invoice = await emitirNotaFiscal('company-id', invoiceData);
+  console.log('Nota fiscal emitida:', invoice.number);
 } catch (error) {
-  console.error('Failed to issue invoice:', error);
+  console.error('Falha ao emitir nota fiscal:', error);
 }
 ```
 
-### Before & After: Error Handling
+### Antes & Depois: Tratamento de Erros
 
-**v2 Code:**
+**Código v2:**
 
 ```javascript
 nfe.serviceInvoices.create('company-id', data, function(err, invoice) {
   if (err) {
     if (err.type === 'AuthenticationError') {
-      console.error('Invalid API key');
+      console.error('API key inválida');
     } else if (err.type === 'BadRequestError') {
-      console.error('Invalid data:', err.message);
+      console.error('Dados inválidos:', err.message);
     } else {
-      console.error('Unknown error:', err);
+      console.error('Erro desconhecido:', err);
     }
     return;
   }
   
-  console.log('Success:', invoice);
+  console.log('Sucesso:', invoice);
 });
 ```
 
-**v3 Code:**
+**Código v3:**
 
 ```javascript
 import { 
   AuthenticationError, 
   ValidationError,
   RateLimitError 
-} from '@nfe-io/sdk';
+} from 'nfe-io';
 
 try {
   const invoice = await nfe.serviceInvoices.create('company-id', data);
-  console.log('Success:', invoice);
+  console.log('Sucesso:', invoice);
 } catch (error) {
   if (error instanceof AuthenticationError) {
-    console.error('Invalid API key');
+    console.error('API key inválida');
   } else if (error instanceof ValidationError) {
-    console.error('Invalid data:', error.details);
+    console.error('Dados inválidos:', error.details);
   } else if (error instanceof RateLimitError) {
-    console.error('Rate limited, retry after:', error.retryAfter);
+    console.error('Limite de taxa atingido, tentar após:', error.retryAfter);
   } else {
-    console.error('Unknown error:', error);
+    console.error('Erro desconhecido:', error);
   }
 }
 ```
 
-### Before & After: Batch Operations
+### Antes & Depois: Operações em Lote
 
-**v2 Code:**
+**Código v2:**
 
 ```javascript
 var async = require('async');
@@ -505,15 +514,15 @@ async.mapLimit(invoices, 5, function(invoiceData, callback) {
   nfe.serviceInvoices.create('company-id', invoiceData, callback);
 }, function(err, results) {
   if (err) return console.error(err);
-  console.log('Created:', results.length);
+  console.log('Criados:', results.length);
 });
 ```
 
-**v3 Code:**
+**Código v3:**
 
 ```javascript
-// No external dependencies needed!
-async function batchCreate(companyId, invoices) {
+// Não precisa de dependências externas!
+async function criarEmLote(companyId, invoices) {
   const results = await Promise.allSettled(
     invoices.map(data => 
       nfe.serviceInvoices.create(companyId, data)
@@ -523,146 +532,145 @@ async function batchCreate(companyId, invoices) {
   const succeeded = results.filter(r => r.status === 'fulfilled');
   const failed = results.filter(r => r.status === 'rejected');
   
-  console.log(`✅ ${succeeded.length} succeeded`);
-  console.log(`❌ ${failed.length} failed`);
+  console.log(`✅ ${succeeded.length} com sucesso`);
+  console.log(`❌ ${failed.length} falharam`);
   
   return { succeeded, failed };
 }
 ```
 
-### Certificate Management Migration
+### Migração de Gerenciamento de Certificados
 
-The certificate management in v3 has been significantly enhanced:
+O gerenciamento de certificados no v3 foi significativamente aprimorado:
 
-**v2 Approach:**
+**Abordagem v2:**
 ```javascript
-// v2: Upload and hope it works
+// v2: Upload e esperar que funcione
 const fs = require('fs');
 const certBuffer = fs.readFileSync('./certificate.pfx');
 
-nfe.companies.uploadCertificate('company-id', certBuffer, 'password', (err, result) => {
+nfe.companies.uploadCertificate('company-id', certBuffer, 'senha', (err, result) => {
   if (err) {
-    console.error('Upload failed:', err);
+    console.error('Upload falhou:', err);
     return;
   }
-  console.log('Certificate uploaded');
+  console.log('Certificado carregado');
 });
 ```
 
-**v3 Approach (with validation):**
+**Abordagem v3 (com validação):**
 ```javascript
-// v3: Validate before upload
+// v3: Validar antes do upload
 import { readFile } from 'fs/promises';
-import { CertificateValidator } from '@nfe-io/sdk';
+import { CertificateValidator } from 'nfe-io';
 
 const certBuffer = await readFile('./certificate.pfx');
 
-// 1. Check file format
+// 1. Verificar formato do arquivo
 if (!CertificateValidator.isSupportedFormat('certificate.pfx')) {
-  throw new Error('Only .pfx and .p12 files are supported');
+  throw new Error('Apenas arquivos .pfx e .p12 são suportados');
 }
 
-// 2. Validate certificate
-const validation = await nfe.companies.validateCertificate(certBuffer, 'password');
+// 2. Validar certificado
+const validation = await nfe.companies.validateCertificate(certBuffer, 'senha');
 if (!validation.valid) {
-  throw new Error(`Invalid certificate: ${validation.error}`);
+  throw new Error(`Certificado inválido: ${validation.error}`);
 }
 
-console.log('Certificate expires:', validation.metadata?.validTo);
+console.log('Certificado expira em:', validation.metadata?.validTo);
 
-// 3. Upload (will also validate automatically)
+// 3. Upload (também valida automaticamente)
 const result = await nfe.companies.uploadCertificate('company-id', {
   file: certBuffer,
-  password: 'password',
+  password: 'senha',
   filename: 'certificate.pfx'
 });
 
 console.log(result.message);
 ```
 
-**v3 Monitoring:**
+**Monitoramento v3:**
 ```javascript
-// Set up monitoring for expiring certificates
-async function checkCertificates() {
-  const expiring = await nfe.companies.getCompaniesWithExpiringCertificates(30);
+// Configurar monitoramento de certificados expirando
+async function verificarCertificados() {
+  const expirando = await nfe.companies.getCompaniesWithExpiringCertificates(30);
   
-  for (const company of expiring) {
-    const warning = await nfe.companies.checkCertificateExpiration(company.id, 30);
+  for (const company of expirando) {
+    const alerta = await nfe.companies.checkCertificateExpiration(company.id, 30);
     
-    if (warning) {
+    if (alerta) {
       console.warn(`⚠️  ${company.name}`);
-      console.warn(`   Certificate expires in ${warning.daysRemaining} days`);
-      console.warn(`   Expiration date: ${warning.expiresOn.toLocaleDateString()}`);
+      console.warn(`   Certificado expira em ${alerta.daysRemaining} dias`);
+      console.warn(`   Data de expiração: ${alerta.expiresOn.toLocaleDateString()}`);
       
-      // Send alert to admin
-      await sendAdminAlert({
-        company: company.name,
-        daysRemaining: warning.daysRemaining
+      // Enviar alerta ao administrador
+      await enviarAlertaAdmin({
+        empresa: company.name,
+        diasRestantes: alerta.daysRemaining
       });
     }
   }
 }
 
-// Run daily
-setInterval(checkCertificates, 24 * 60 * 60 * 1000);
+// Executar diariamente
+setInterval(verificarCertificados, 24 * 60 * 60 * 1000);
 ```
 
-## FAQ
+## Perguntas Frequentes (FAQ)
 
-### Q: Can I use v2 and v3 together during migration?
+### P: Posso usar v2 e v3 juntos durante a migração?
 
-**A:** Yes! They use different package names (`nfe-io` vs `@nfe-io/sdk`), so you can run them side-by-side.
+**R:** Sim! Eles usam nomes de pacote diferentes (`nfe-io` v2 vs `nfe-io` v3), mas você pode identificá-los pela versão.
 
 ```javascript
-// v2
+// v2 (versão 2.x.x)
 const nfeV2 = require('nfe-io')('api-key');
 
-// v3
-const { NfeClient } = require('@nfe-io/sdk');
+// v3 (versão 3.x.x)
+const { NfeClient } = require('nfe-io');
 const nfeV3 = new NfeClient({ apiKey: 'api-key' });
 ```
 
-### Q: Do I need to change my API key?
+### P: Preciso alterar minha API key?
 
-**A:** No! Your existing API key works with both v2 and v3.
+**R:** Não! Sua API key existente funciona tanto com v2 quanto com v3.
 
-### Q: What if I'm still on Node.js 16?
+### P: E se eu ainda estiver no Node.js 16?
 
-**A:** You must upgrade to Node.js 18+ to use v3. Consider:
-- Upgrading Node.js (recommended)
-- Staying on v2 until you can upgrade
-- Using Node Version Manager (nvm) to test v3
+**R:** Você deve atualizar para Node.js 18+ para usar v3. Considere:
+- Atualizar Node.js (recomendado)
+- Permanecer no v2 até poder atualizar
+- Usar Node Version Manager (nvm) para testar v3
 
-### Q: Are there any data format changes?
+### P: Há mudanças no formato de dados?
 
-**A:** No! The API request/response formats are the same. Only the SDK interface changed.
+**R:** Não! Os formatos de request/response da API são os mesmos. Apenas a interface do SDK mudou.
 
-### Q: What happens to my v2 code after migration?
+### P: O que acontece com meu código v2 após a migração?
 
-**A:** Keep it until you've fully migrated and tested. Then remove the `nfe-io` package.
+**R:** Mantenha-o até que você tenha migrado e testado completamente. Depois, atualize para a versão 3.x.x.
 
-### Q: Is there a performance difference?
+### P: Há diferença de desempenho?
 
-**A:** Yes! v3 is faster:
-- No external dependencies = faster startup
-- Native fetch API = better performance
-- Built-in retry = better reliability
+**R:** Sim! v3 é mais rápido:
+- Sem dependências externas = inicialização mais rápida
+- Fetch API nativo = melhor desempenho
+- Retry integrado = maior confiabilidade
 
-### Q: Can I use v3 with JavaScript (not TypeScript)?
+### P: Posso usar v3 com JavaScript (não TypeScript)?
 
-**A:** Absolutely! TypeScript types are optional. v3 works great with plain JavaScript.
+**R:** Com certeza! Os tipos TypeScript são opcionais. v3 funciona perfeitamente com JavaScript puro.
 
-### Q: What about backwards compatibility?
+### P: E quanto à compatibilidade com versões anteriores?
 
-**A:** v3 is **not** backwards compatible with v2. This is why we changed the package name. Follow this guide to migrate.
+**R:** v3 **não é** compatível com v2. Por isso usamos controle de versão semântico. Siga este guia para migrar.
 
-## Need Help?
+## Precisa de Ajuda?
 
-- 📖 [Full Documentation](https://nfe.io/docs/)
-- 🐛 [Report Issues](https://github.com/nfe/client-nodejs/issues)
-- 📧 [Email Support](mailto:suporte@nfe.io)
-- 💬 [Community](https://nfe.io/community)
+- 📖 [Documentação Completa](https://nfe.io/docs/)
+- 🐛 [Reportar Problemas](https://github.com/nfe/client-nodejs/issues)
+- 📧 [Suporte por Email](mailto:suporte@nfe.io)
 
 ---
 
-**Happy migrating! 🚀**
+**Boa migração! 🚀**
