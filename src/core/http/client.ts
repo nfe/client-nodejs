@@ -268,7 +268,7 @@ export class HttpClient {
 
   private buildHeaders(data?: unknown): Record<string, string> {
     const headers: Record<string, string> = {
-      'Authorization': this.config.apiKey,
+      'X-NFE-APIKEY': this.config.apiKey,
       'Accept': 'application/json',
       'User-Agent': this.getUserAgent(),
     };
