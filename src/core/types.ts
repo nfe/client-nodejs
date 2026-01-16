@@ -8,24 +8,6 @@
  */
 
 // ============================================================================
-// Generated Types (from OpenAPI specs)
-// ============================================================================
-
-export type {
-  // Main entity types
-  ServiceInvoice,
-  Company,
-  LegalPerson,
-  NaturalPerson,
-} from '../generated/index.js';
-
-// Type aliases for convenience
-export type { ServiceInvoice as ServiceInvoiceData } from '../generated/index.js';
-export type { Company as CompanyData } from '../generated/index.js';
-export type { LegalPerson as LegalPersonData } from '../generated/index.js';
-export type { NaturalPerson as NaturalPersonData } from '../generated/index.js';
-
-// ============================================================================
 // SDK-Specific Types (not in generated code)
 // ============================================================================
 
@@ -76,6 +58,78 @@ export interface AsyncResponse {
   code: 202;
   status: 'pending';
   location: string;
+}
+
+// Service Invoice Specific Types
+// ----------------------------------------------------------------------------
+
+/** Flow status for service invoice processing */
+export type FlowStatus =
+  | 'CancelFailed'
+  | 'IssueFailed'
+  | 'Issued'
+  | 'Cancelled'
+  | 'PullFromCityHall'
+  | 'WaitingCalculateTaxes'
+  | 'WaitingDefineRpsNumber'
+  | 'WaitingSend'
+  | 'WaitingSendCancel'
+  | 'WaitingReturn'
+  | 'WaitingDownload';
+
+/** Terminal states that end async processing */
+export const TERMINAL_FLOW_STATES: FlowStatus[] = [
+  'Issued',
+  'IssueFailed',
+  'Cancelled',
+  'CancelFailed',
+];
+
+/** Check if a flow status is terminal (ends processing) */
+export function isTerminalFlowStatus(status: FlowStatus): boolean {
+  return TERMINAL_FLOW_STATES.includes(status);
+}
+
+/** Async response with extracted invoice ID */
+export interface ServiceInvoiceAsyncResponse extends AsyncResponse {
+  /** Invoice ID extracted from location header */
+  invoiceId: string;
+}
+
+/** Options for listing service invoices */
+export interface ListServiceInvoicesOptions extends PaginationOptions {
+  /** Filter by issued date start (yyyy-MM-dd) */
+  issuedBegin?: string;
+  /** Filter by issued date end (yyyy-MM-dd) */
+  issuedEnd?: string;
+  /** Filter by created date start (yyyy-MM-dd) */
+  createdBegin?: string;
+  /** Filter by created date end (yyyy-MM-dd) */
+  createdEnd?: string;
+  /** Include totals in response */
+  hasTotals?: boolean;
+}
+
+/** Options for automatic polling in createAndWait */
+export interface PollingOptions {
+  /** Total timeout in milliseconds @default 120000 (2 minutes) */
+  timeout?: number;
+  /** Initial delay before first poll @default 1000 (1 second) */
+  initialDelay?: number;
+  /** Maximum delay between polls @default 10000 (10 seconds) */
+  maxDelay?: number;
+  /** Backoff multiplier for exponential backoff @default 1.5 */
+  backoffFactor?: number;
+  /** Callback invoked after each poll attempt */
+  onPoll?: (attempt: number, flowStatus: FlowStatus) => void;
+}
+
+/** Response from sendEmail operation */
+export interface SendEmailResponse {
+  /** Whether email was sent successfully */
+  sent: boolean;
+  /** Optional message about the send operation */
+  message?: string;
 }
 
 // Backward Compatibility Type Aliases
@@ -186,3 +240,80 @@ export interface ApiErrorResponse {
   message: string;
   details?: unknown;
 }
+
+// ============================================================================
+// Service Invoice Type Exports from Generated Schema
+// ============================================================================
+
+// Import the operations type from generated spec
+import type { operations } from '../generated/nf-servico-v1.js';
+
+// Re-export ServiceInvoice operation types for convenience
+export type ServiceInvoicesGetOperation = operations['ServiceInvoices_Get'];
+export type ServiceInvoicesPostOperation = operations['ServiceInvoices_Post'];
+export type ServiceInvoicesGetByIdOperation = operations['ServiceInvoices_idGet'];
+export type ServiceInvoicesDeleteOperation = operations['ServiceInvoices_Delete'];
+export type ServiceInvoicesSendEmailOperation = operations['ServiceInvoices_SendEmail'];
+export type ServiceInvoicesGetPdfOperation = operations['ServiceInvoices_GetDocumentPdf'];
+export type ServiceInvoicesGetXmlOperation = operations['ServiceInvoices_GetDocumentXml'];
+
+/**
+ * Service Invoice response type (from GET operations)
+ * The main type representing a Service Invoice in the system
+ */
+export type ServiceInvoiceData =
+  NonNullable<
+    NonNullable<
+      ServiceInvoicesGetOperation['responses']['200']['content']['application/json']['serviceInvoices']
+    >[number]
+  >;
+
+/**
+ * Service Invoice creation request body
+ * Type for the data sent when creating a new service invoice
+ */
+export type CreateServiceInvoiceData =
+  ServiceInvoicesPostOperation['requestBody']['content']['application/json'];
+
+/**
+ * Service Invoice list response
+ * Type for the complete list response including metadata
+ */
+export type ServiceInvoiceListResponse =
+  ServiceInvoicesGetOperation['responses']['200']['content']['application/json'];
+
+/**
+ * Service Invoice single item response
+ * Type for a single invoice retrieval
+ */
+export type ServiceInvoiceSingleResponse =
+  ServiceInvoicesGetByIdOperation['responses']['200']['content']['application/json'];
+
+// Backward compatibility aliases
+export type { ServiceInvoiceData as ServiceInvoice };
+
+// TODO: Add proper type exports when implementing other resources
+/** Placeholder: Company type - to be properly defined when implementing Companies resource */
+export type Company = {
+  id?: string;
+  name: string;
+  federalTaxNumber: number;
+  email: string;
+  [key: string]: unknown;
+};
+
+/** Placeholder: Legal Person type - to be properly defined when implementing LegalPeople resource */
+export type LegalPerson = {
+  id?: string;
+  federalTaxNumber: string;
+  name: string;
+  [key: string]: unknown;
+};
+
+/** Placeholder: Natural Person type - to be properly defined when implementing NaturalPeople resource */
+export type NaturalPerson = {
+  id?: string;
+  federalTaxNumber: string;
+  name: string;
+  [key: string]: unknown;
+};
