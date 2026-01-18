@@ -125,14 +125,17 @@ describe('ServiceInvoices Resource', () => {
       json: () => Promise.resolve(mockResponse)
     });
 
-    const invoice = await client.serviceInvoices.create('company-123', {
+    const result = await client.serviceInvoices.create('company-123', {
       cityServiceCode: '12345',
       description: 'Test service',
       servicesAmount: 100.00
     });
 
-    expect(invoice.id).toBe('123');
-    expect(invoice.flowStatus).toBe('WaitingSend');
+    expect(result.status).toBe('immediate');
+    if (result.status === 'immediate') {
+      expect(result.invoice.id).toBe('123');
+      expect(result.invoice.flowStatus).toBe('WaitingSend');
+    }
   });
 
   it('should handle async polling', async () => {
@@ -151,7 +154,7 @@ describe('ServiceInvoices Resource', () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 202,
-        headers: createMockHeaders([['location', '/invoices/123']]),
+        headers: createMockHeaders([['location', '/companies/company-123/serviceinvoices/123']]),
         json: () => Promise.resolve(mockPendingResponse)
       })
       .mockResolvedValueOnce({

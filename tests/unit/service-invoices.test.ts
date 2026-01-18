@@ -42,7 +42,10 @@ describe('ServiceInvoicesResource', () => {
         `/companies/${TEST_COMPANY_ID}/serviceinvoices`,
         invoiceData
       );
-      expect(result).toEqual(mockInvoice);
+      expect(result).toEqual({ status: 'immediate', invoice: mockInvoice });
+      if (result.status === 'immediate') {
+        expect(result.invoice.id).toBe(TEST_INVOICE_ID);
+      }
     });
 
     it('should handle async response (202 status)', async () => {
@@ -67,8 +70,19 @@ describe('ServiceInvoicesResource', () => {
 
       const result = await serviceInvoices.create(TEST_COMPANY_ID, invoiceData);
 
-      expect(result).toEqual(asyncResponse);
-      expect((result as AsyncResponse).status).toBe('pending');
+      expect(result).toEqual({
+        status: 'async',
+        response: {
+          code: 202,
+          status: 'pending',
+          location: asyncResponse.location,
+          invoiceId: TEST_INVOICE_ID,
+        },
+      });
+      if (result.status === 'async') {
+        expect(result.response.status).toBe('pending');
+        expect(result.response.invoiceId).toBe(TEST_INVOICE_ID);
+      }
     });
   });
 
@@ -179,7 +193,9 @@ describe('ServiceInvoicesResource', () => {
       const result = await serviceInvoices.downloadPdf(TEST_COMPANY_ID, TEST_INVOICE_ID);
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}/pdf`
+        `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}/pdf`,
+        undefined,
+        { Accept: 'application/pdf' }
       );
       expect(result).toEqual(mockPdfData);
     });
@@ -196,7 +212,9 @@ describe('ServiceInvoicesResource', () => {
       const result = await serviceInvoices.downloadPdf(TEST_COMPANY_ID);
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        `/companies/${TEST_COMPANY_ID}/serviceinvoices/pdf`
+        `/companies/${TEST_COMPANY_ID}/serviceinvoices/pdf`,
+        undefined,
+        { Accept: 'application/pdf' }
       );
       expect(result).toEqual(mockPdfData);
     });
@@ -215,7 +233,9 @@ describe('ServiceInvoicesResource', () => {
       const result = await serviceInvoices.downloadXml(TEST_COMPANY_ID, TEST_INVOICE_ID);
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}/xml`
+        `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}/xml`,
+        undefined,
+        { Accept: 'application/xml' }
       );
       expect(result).toEqual(mockXmlData);
     });
@@ -232,7 +252,9 @@ describe('ServiceInvoicesResource', () => {
       const result = await serviceInvoices.downloadXml(TEST_COMPANY_ID);
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        `/companies/${TEST_COMPANY_ID}/serviceinvoices/xml`
+        `/companies/${TEST_COMPANY_ID}/serviceinvoices/xml`,
+        undefined,
+        { Accept: 'application/xml' }
       );
       expect(result).toEqual(mockXmlData);
     });
