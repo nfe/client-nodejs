@@ -186,137 +186,859 @@ All resources follow a consistent pattern with standard CRUD operations plus res
 
 **Resource:** `nfe.serviceInvoices`
 
-Service invoice operations (NFS-e).
+Complete service invoice (NFS-e) operations including creation, retrieval, email delivery, document downloads, and cancellation. Supports both synchronous and asynchronous invoice processing with automatic polling capabilities.
 
-#### `create(companyId: string, data: ServiceInvoiceData): Promise<ServiceInvoice>`
+---
 
-Create a new service invoice.
+#### Core Operations
+
+##### `create(companyId: string, data: ServiceInvoiceData): Promise<ServiceInvoiceCreateResult>`
+
+Create a new service invoice. Returns either a completed invoice (201) or async processing result (202).
 
 **Parameters:**
 
-- `companyId` - Company ID
-- `data` - Invoice data
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID issuing the invoice |
+| `data` | `ServiceInvoiceData` | Invoice data (see structure below) |
 
-**Returns:** Created invoice (may have `status: 'pending'` for async processing)
+**Returns:** `Promise<ServiceInvoiceCreateResult>` - Discriminated union:
+- **201 Created (Synchronous)**: Returns complete `ServiceInvoice` with `id`, `number`, `status`
+- **202 Accepted (Asynchronous)**: Returns `{ flowStatus, flowMessage?, location? }` for polling
 
-**Example:**
+**Invoice Data Structure:**
 
 ```typescript
+interface ServiceInvoiceData {
+  // Required fields
+  borrower: {
+    federalTaxNumber: number;        // CPF (11 digits) or CNPJ (14 digits)
+    name: string;
+    email?: string;
+    address?: {
+      country: string;                // 'BRA'
+      postalCode: string;             // CEP: '01310-100'
+      street: string;
+      number: string;
+      additionalInformation?: string;
+      district: string;
+      city: {
+        code: string;                  // IBGE code: '3550308'
+        name: string;
+      };
+      state: string;                   // UF: 'SP'
+    };
+  };
+  cityServiceCode: string;             // Municipal service code
+  description: string;                 // Service description
+  servicesAmount: number;              // Amount in BRL (e.g., 1500.00)
+
+  // Optional fields
+  rpsSerialNumber?: string;            // RPS series
+  rpsNumber?: number;                  // RPS number
+  issuedOn?: string;                   // ISO date: '2024-01-15'
+  deductions?: number;                 // Deductions amount
+  discountUnconditioned?: number;      // Unconditional discount
+  discountConditioned?: number;        // Conditional discount
+  taxes?: {
+    retainIss?: boolean;
+    iss?: number;
+    pis?: number;
+    cofins?: number;
+    inss?: number;
+    ir?: number;
+    csll?: number;
+  };
+}
+```
+
+**Examples:**
+
+```typescript
+// Example 1: Basic invoice creation (may be sync or async)
+const result = await nfe.serviceInvoices.create('company-id', {
+  borrower: {
+    federalTaxNumber: 12345678901,
+    name: 'João da Silva',
+    email: 'joao@example.com',
+  },
+  cityServiceCode: '10677',
+  description: 'Consulting services',
+  servicesAmount: 1500.00,
+});
+
+// Check if synchronous (201) or asynchronous (202)
+if ('id' in result) {
+  // Synchronous - invoice issued immediately
+  console.log('Invoice issued:', result.number);
+  console.log('Status:', result.status);
+} else {
+  // Asynchronous - needs polling
+  console.log('Processing:', result.flowStatus);
+  console.log('Poll URL:', result.location);
+  
+  // Use pollUntilComplete or createAndWait instead
+  const invoice = await nfe.pollUntilComplete(result.location, {
+    intervalMs: 2000,
+    timeoutMs: 60000,
+  });
+  console.log('Invoice issued:', invoice.number);
+}
+
+// Example 2: Invoice with full details
 const invoice = await nfe.serviceInvoices.create('company-id', {
   borrower: {
-    name: 'Client Name',
-    email: 'client@example.com',
-    federalTaxNumber: '12345678000190',
+    federalTaxNumber: 12345678000190,
+    name: 'Acme Corporation',
+    email: 'finance@acme.com',
     address: {
       country: 'BRA',
       postalCode: '01310-100',
       street: 'Av. Paulista',
-      number: '1000',
+      number: '1578',
+      district: 'Bela Vista',
       city: {
         code: '3550308',
-        name: 'São Paulo'
+        name: 'São Paulo',
       },
-      state: 'SP'
-    }
+      state: 'SP',
+    },
   },
   cityServiceCode: '01234',
-  description: 'Service description',
-  servicesAmount: 1000.00,
-  rpsSerialNumber: 'ABC',
-  rpsNumber: 123
+  description: 'Software development services',
+  servicesAmount: 5000.00,
+  rpsSerialNumber: 'A',
+  rpsNumber: 123,
+  deductions: 100.00,
+  taxes: {
+    retainIss: false,
+    iss: 5.0, // 5%
+  },
 });
 ```
 
-#### `createAndWait(companyId: string, data: ServiceInvoiceData, pollOptions?: PollOptions): Promise<ServiceInvoice>`
+**Error Handling:**
 
-Create invoice and automatically poll until processing completes.
+- `ValidationError` (400): Invalid invoice data
+- `AuthenticationError` (401): Invalid API key
+- `NotFoundError` (404): Company not found
+- `InternalError` (500): Server error
+
+```typescript
+try {
+  const result = await nfe.serviceInvoices.create(companyId, data);
+} catch (error) {
+  if (error instanceof ValidationError) {
+    console.error('Invalid data:', error.message);
+  } else if (error instanceof AuthenticationError) {
+    console.error('Invalid API key');
+  }
+}
+```
+
+---
+
+##### `createAndWait(companyId: string, data: ServiceInvoiceData, options?: WaitOptions): Promise<ServiceInvoice>`
+
+**⭐ Recommended**: Create invoice with automatic polling for async processing. Simplifies async workflow.
 
 **Parameters:**
 
-- `companyId` - Company ID
-- `data` - Invoice data
-- `pollOptions` - Polling configuration (optional)
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID |
+| `data` | `ServiceInvoiceData` | Invoice data |
+| `options` | `WaitOptions` | Polling configuration (optional) |
 
-**Returns:** Completed invoice
+**Wait Options:**
 
-**Example:**
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `pollingInterval` | `number` | `2000` | Delay between status checks (ms) |
+| `maxWaitTime` | `number` | `60000` | Maximum wait time (ms) |
+
+**Returns:** `Promise<ServiceInvoice>` - Completed invoice with `id`, `number`, `status: 'Issued'`
+
+**Examples:**
 
 ```typescript
-const invoice = await nfe.serviceInvoices.createAndWait('company-id', data, {
-  maxAttempts: 30,
-  interval: 2000
+// Example 1: Simple usage (recommended)
+const invoice = await nfe.serviceInvoices.createAndWait('company-id', {
+  borrower: {
+    federalTaxNumber: 12345678901,
+    name: 'João da Silva',
+    email: 'joao@example.com',
+  },
+  cityServiceCode: '10677',
+  description: 'Consulting services',
+  servicesAmount: 1500.00,
 });
 
 console.log('Invoice issued:', invoice.number);
+console.log('Status:', invoice.status); // 'Issued'
+
+// Example 2: Custom polling configuration
+const invoice = await nfe.serviceInvoices.createAndWait('company-id', data, {
+  pollingInterval: 3000,  // Check every 3 seconds
+  maxWaitTime: 120000,    // Wait up to 2 minutes
+});
+
+// Example 3: With error handling
+try {
+  const invoice = await nfe.serviceInvoices.createAndWait('company-id', data, {
+    maxWaitTime: 60000,
+  });
+  
+  console.log('✅ Invoice issued successfully');
+  console.log(`   Number: ${invoice.number}`);
+  console.log(`   Amount: R$ ${invoice.servicesAmount}`);
+} catch (error) {
+  if (error.message.includes('timeout')) {
+    console.error('⏱️  Invoice processing timeout - may complete later');
+  } else if (error.message.includes('failed')) {
+    console.error('❌ Invoice processing failed:', error.message);
+  }
+}
 ```
 
-#### `list(companyId: string, options?: PaginationOptions): Promise<ListResponse<ServiceInvoice>>`
+**When to use:**
+- ✅ You want immediate invoice results without manual polling
+- ✅ You can wait 5-30 seconds for processing
+- ✅ Simple workflows where async complexity isn't needed
 
-List service invoices for a company.
+**When NOT to use:**
+- ❌ Background job processing (use `create()` + queue)
+- ❌ Batch operations (use `createBatch()`)
+- ❌ Need to track processing separately
+
+---
+
+##### `list(companyId: string, options?: ListOptions): Promise<ServiceInvoice[]>`
+
+List service invoices for a company with pagination and filtering.
 
 **Parameters:**
 
-- `companyId` - Company ID
-- `options` - Pagination options (optional)
-  - `pageCount` - Items per page
-  - `pageIndex` - Page number (0-indexed)
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID |
+| `options` | `ListOptions` | Filtering and pagination (optional) |
 
-**Example:**
+**List Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `pageCount` | `number` | Items per page (default: 25) |
+| `pageIndex` | `number` | Page number, 0-indexed (default: 0) |
+| `searchPeriod` | `object` | Date range filter |
+| `searchPeriod.startDate` | `string` | Start date: 'YYYY-MM-DD' |
+| `searchPeriod.endDate` | `string` | End date: 'YYYY-MM-DD' |
+
+**Returns:** `Promise<ServiceInvoice[]>` - Array of invoices
+
+**Examples:**
 
 ```typescript
-const result = await nfe.serviceInvoices.list('company-id', {
-  pageCount: 50,
-  pageIndex: 0
+// Example 1: List all (first page)
+const invoices = await nfe.serviceInvoices.list('company-id');
+console.log(`Found ${invoices.length} invoices`);
+
+// Example 2: Pagination
+const page2 = await nfe.serviceInvoices.list('company-id', {
+  pageCount: 50,   // 50 per page
+  pageIndex: 1,    // Second page (0-indexed)
 });
 
-console.log('Total invoices:', result.totalCount);
-console.log('Invoices:', result.items);
+// Example 3: Date filtering
+const lastMonth = await nfe.serviceInvoices.list('company-id', {
+  searchPeriod: {
+    startDate: '2024-01-01',
+    endDate: '2024-01-31',
+  },
+  pageCount: 100,
+});
+
+// Example 4: Process all invoices
+let pageIndex = 0;
+let allInvoices = [];
+
+while (true) {
+  const page = await nfe.serviceInvoices.list('company-id', {
+    pageCount: 100,
+    pageIndex,
+  });
+  
+  allInvoices.push(...page);
+  
+  if (page.length < 100) break; // Last page
+  pageIndex++;
+}
+
+console.log(`Total invoices: ${allInvoices.length}`);
+
+// Example 5: Find specific invoices
+const recentHighValue = await nfe.serviceInvoices.list('company-id', {
+  searchPeriod: {
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+  },
+});
+
+const filtered = recentHighValue.filter(inv => inv.servicesAmount > 5000);
+console.log(`High-value invoices: ${filtered.length}`);
 ```
 
-#### `retrieve(companyId: string, invoiceId: string): Promise<ServiceInvoice>`
+---
 
-Get a specific service invoice.
+##### `retrieve(companyId: string, invoiceId: string): Promise<ServiceInvoice>`
+
+Get a specific service invoice by ID with complete details.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID |
+| `invoiceId` | `string` | Invoice ID |
+
+**Returns:** `Promise<ServiceInvoice>` - Complete invoice object
+
+**Examples:**
 
 ```typescript
+// Example 1: Basic retrieval
 const invoice = await nfe.serviceInvoices.retrieve('company-id', 'invoice-id');
+
+console.log('Invoice:', invoice.number);
+console.log('Amount:', invoice.servicesAmount);
+console.log('Status:', invoice.status);
+console.log('Issued:', invoice.issuedOn);
+
+// Example 2: Check invoice details
+const invoice = await nfe.serviceInvoices.retrieve('company-id', 'invoice-id');
+
+console.log('Borrower:', invoice.borrower.name);
+console.log('Service:', invoice.description);
+console.log('Tax Amount:', invoice.taxes?.iss || 0);
+
+// Example 3: Verify invoice exists before operation
+async function sendInvoiceIfExists(companyId, invoiceId) {
+  try {
+    const invoice = await nfe.serviceInvoices.retrieve(companyId, invoiceId);
+    
+    if (invoice.status === 'Issued') {
+      await nfe.serviceInvoices.sendEmail(companyId, invoiceId, {
+        emails: [invoice.borrower.email],
+      });
+      console.log('Email sent successfully');
+    } else {
+      console.log('Invoice not ready:', invoice.status);
+    }
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      console.error('Invoice not found');
+    }
+  }
+}
 ```
 
-#### `cancel(companyId: string, invoiceId: string): Promise<ServiceInvoice>`
+**Error Handling:**
 
-Cancel a service invoice.
+- `NotFoundError` (404): Invoice or company not found
+- `AuthenticationError` (401): Invalid API key
+
+---
+
+##### `getStatus(companyId: string, invoiceId: string): Promise<InvoiceStatus>`
+
+Check invoice processing status (useful for async invoices).
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID |
+| `invoiceId` | `string` | Invoice ID |
+
+**Returns:** `Promise<InvoiceStatus>` with:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Current status (see status values below) |
+| `isComplete` | `boolean` | `true` if processing finished (success or failure) |
+| `isFailed` | `boolean` | `true` if processing failed |
+
+**Status Values:**
+
+| Status | isComplete | isFailed | Description |
+|--------|-----------|----------|-------------|
+| `Issued` | `true` | `false` | ✅ Invoice issued successfully |
+| `IssueFailed` | `true` | `true` | ❌ Issuance failed |
+| `Cancelled` | `true` | `false` | 🚫 Invoice cancelled |
+| `CancellationFailed` | `true` | `true` | ❌ Cancellation failed |
+| `WaitingSend` | `false` | `false` | ⏳ Pending |
+| `WaitingSendAuthorize` | `false` | `false` | ⏳ Awaiting authorization |
+| `Processing` | `false` | `false` | ⏳ Processing |
+
+**Examples:**
 
 ```typescript
+// Example 1: Simple status check
+const status = await nfe.serviceInvoices.getStatus('company-id', 'invoice-id');
+
+console.log('Status:', status.status);
+console.log('Complete:', status.isComplete ? 'Yes' : 'No');
+console.log('Failed:', status.isFailed ? 'Yes' : 'No');
+
+// Example 2: Manual polling loop
+async function waitForInvoice(companyId, invoiceId, maxAttempts = 30) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const status = await nfe.serviceInvoices.getStatus(companyId, invoiceId);
+    
+    if (status.isComplete) {
+      if (status.isFailed) {
+        throw new Error(`Invoice processing failed: ${status.status}`);
+      }
+      
+      console.log('Invoice complete:', status.status);
+      return await nfe.serviceInvoices.retrieve(companyId, invoiceId);
+    }
+    
+    console.log(`Attempt ${i + 1}: ${status.status}`);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+  
+  throw new Error('Polling timeout');
+}
+
+// Example 3: Status-based logic
+const status = await nfe.serviceInvoices.getStatus('company-id', 'invoice-id');
+
+if (status.status === 'Issued') {
+  console.log('✅ Ready to send email');
+  await nfe.serviceInvoices.sendEmail(/* ... */);
+} else if (status.isFailed) {
+  console.error('❌ Failed:', status.status);
+} else {
+  console.log('⏳ Still processing:', status.status);
+}
+```
+
+---
+
+##### `cancel(companyId: string, invoiceId: string): Promise<ServiceInvoice>`
+
+Cancel an issued service invoice.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID |
+| `invoiceId` | `string` | Invoice ID to cancel |
+
+**Returns:** `Promise<ServiceInvoice>` - Cancelled invoice with `status: 'Cancelled'`
+
+**Examples:**
+
+```typescript
+// Example 1: Simple cancellation
 const cancelled = await nfe.serviceInvoices.cancel('company-id', 'invoice-id');
+console.log('Status:', cancelled.status); // 'Cancelled'
+
+// Example 2: Conditional cancellation
+const invoice = await nfe.serviceInvoices.retrieve('company-id', 'invoice-id');
+
+if (invoice.status === 'Issued') {
+  const cancelled = await nfe.serviceInvoices.cancel('company-id', 'invoice-id');
+  console.log('✅ Invoice cancelled');
+} else {
+  console.log('⚠️  Invoice cannot be cancelled:', invoice.status);
+}
+
+// Example 3: Batch cancellation with error handling
+const invoiceIds = ['id-1', 'id-2', 'id-3'];
+
+for (const invoiceId of invoiceIds) {
+  try {
+    await nfe.serviceInvoices.cancel('company-id', invoiceId);
+    console.log(`✅ Cancelled: ${invoiceId}`);
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      console.log(`⚠️  Not found: ${invoiceId}`);
+    } else {
+      console.error(`❌ Error cancelling ${invoiceId}:`, error.message);
+    }
+  }
+}
 ```
 
-#### `sendEmail(companyId: string, invoiceId: string, emails: string[]): Promise<void>`
+**Error Handling:**
 
-Send invoice by email.
+- `NotFoundError` (404): Invoice not found
+- `ValidationError` (400): Invoice cannot be cancelled (already cancelled, etc.)
+
+---
+
+#### Email & Downloads
+
+##### `sendEmail(companyId: string, invoiceId: string, options: SendEmailOptions): Promise<void>`
+
+Send invoice via email to specified recipients.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID |
+| `invoiceId` | `string` | Invoice ID |
+| `options` | `SendEmailOptions` | Email configuration |
+
+**Email Options:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emails` | `string[]` | Recipient email addresses |
+
+**Examples:**
 
 ```typescript
-await nfe.serviceInvoices.sendEmail('company-id', 'invoice-id', [
-  'client@example.com',
-  'finance@example.com'
-]);
+// Example 1: Send to single recipient
+await nfe.serviceInvoices.sendEmail('company-id', 'invoice-id', {
+  emails: ['client@example.com'],
+});
+
+console.log('✅ Email sent');
+
+// Example 2: Send to multiple recipients
+await nfe.serviceInvoices.sendEmail('company-id', 'invoice-id', {
+  emails: [
+    'client@example.com',
+    'finance@example.com',
+    'accounting@example.com',
+  ],
+});
+
+// Example 3: Send after invoice creation
+const invoice = await nfe.serviceInvoices.createAndWait('company-id', data);
+
+await nfe.serviceInvoices.sendEmail('company-id', invoice.id, {
+  emails: [invoice.borrower.email],
+});
+
+console.log(`Email sent to ${invoice.borrower.email}`);
+
+// Example 4: Bulk email sending
+const invoices = await nfe.serviceInvoices.list('company-id');
+
+for (const invoice of invoices) {
+  if (invoice.status === 'Issued' && invoice.borrower.email) {
+    try {
+      await nfe.serviceInvoices.sendEmail('company-id', invoice.id, {
+        emails: [invoice.borrower.email],
+      });
+      console.log(`✅ Sent: ${invoice.number}`);
+    } catch (error) {
+      console.error(`❌ Failed ${invoice.number}:`, error.message);
+    }
+  }
+}
 ```
 
-#### `downloadPdf(companyId: string, invoiceId: string): Promise<Buffer>`
+---
 
-Download invoice PDF.
+##### `downloadPdf(companyId: string, invoiceId?: string): Promise<Buffer>`
+
+Download invoice PDF. If `invoiceId` is omitted, downloads all invoices as ZIP.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID |
+| `invoiceId` | `string` | Invoice ID (optional - omit for bulk ZIP) |
+
+**Returns:** `Promise<Buffer>` - PDF file as Buffer (or ZIP for bulk)
+
+**Examples:**
 
 ```typescript
+import { writeFileSync } from 'fs';
+
+// Example 1: Download single invoice PDF
 const pdfBuffer = await nfe.serviceInvoices.downloadPdf('company-id', 'invoice-id');
-await fs.writeFile('invoice.pdf', pdfBuffer);
+
+// Validate PDF signature
+if (pdfBuffer.toString('utf8', 0, 4) === '%PDF') {
+  console.log('✅ Valid PDF');
+}
+
+// Save to file
+writeFileSync('invoice.pdf', pdfBuffer);
+console.log('Saved invoice.pdf');
+
+// Example 2: Download all invoices as ZIP
+const zipBuffer = await nfe.serviceInvoices.downloadPdf('company-id');
+
+writeFileSync(`invoices_${Date.now()}.zip`, zipBuffer);
+console.log('Saved ZIP with all invoices');
+
+// Example 3: Download and send via HTTP response (Express)
+app.get('/invoice/:id/pdf', async (req, res) => {
+  try {
+    const pdfBuffer = await nfe.serviceInvoices.downloadPdf(
+      req.user.companyId,
+      req.params.id
+    );
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="invoice-${req.params.id}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    res.status(404).json({ error: 'Invoice not found' });
+  }
+});
+
+// Example 4: Download after creation
+const invoice = await nfe.serviceInvoices.createAndWait('company-id', data);
+
+const pdf = await nfe.serviceInvoices.downloadPdf('company-id', invoice.id);
+writeFileSync(`invoice_${invoice.number}.pdf`, pdf);
+console.log(`Downloaded invoice ${invoice.number}`);
 ```
 
-#### `downloadXml(companyId: string, invoiceId: string): Promise<string>`
+**Error Handling:**
 
-Download invoice XML.
+- `NotFoundError` (404): Invoice not ready or not found
+
+---
+
+##### `downloadXml(companyId: string, invoiceId?: string): Promise<Buffer>`
+
+Download invoice XML. If `invoiceId` is omitted, downloads all invoices as ZIP.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID |
+| `invoiceId` | `string` | Invoice ID (optional - omit for bulk ZIP) |
+
+**Returns:** `Promise<Buffer>` - XML file as Buffer (or ZIP for bulk)
+
+**Examples:**
 
 ```typescript
-const xml = await nfe.serviceInvoices.downloadXml('company-id', 'invoice-id');
-await fs.writeFile('invoice.xml', xml);
+import { writeFileSync } from 'fs';
+
+// Example 1: Download single invoice XML
+const xmlBuffer = await nfe.serviceInvoices.downloadXml('company-id', 'invoice-id');
+
+// Convert Buffer to string
+const xmlString = xmlBuffer.toString('utf8');
+console.log('XML preview:', xmlString.substring(0, 100));
+
+// Validate XML signature
+if (xmlString.startsWith('<?xml')) {
+  console.log('✅ Valid XML');
+}
+
+// Save to file
+writeFileSync('invoice.xml', xmlBuffer);
+
+// Example 2: Download all invoices as ZIP
+const zipBuffer = await nfe.serviceInvoices.downloadXml('company-id');
+writeFileSync(`invoices_xml_${Date.now()}.zip`, zipBuffer);
+
+// Example 3: Parse XML for integration
+import { parseString } from 'xml2js';
+
+const xmlBuffer = await nfe.serviceInvoices.downloadXml('company-id', 'invoice-id');
+const xmlString = xmlBuffer.toString('utf8');
+
+parseString(xmlString, (err, result) => {
+  if (err) throw err;
+  console.log('Parsed XML:', result);
+  // Process structured data
+});
+
+// Example 4: Bulk download and extract
+const zipBuffer = await nfe.serviceInvoices.downloadXml('company-id');
+writeFileSync('invoices.zip', zipBuffer);
+
+// Extract ZIP using library like 'adm-zip'
+// const AdmZip = require('adm-zip');
+// const zip = new AdmZip(zipBuffer);
+// zip.extractAllTo('./invoices/', true);
 ```
+
+---
+
+#### Advanced Operations
+
+##### `createBatch(companyId: string, invoicesData: ServiceInvoiceData[], options?: BatchOptions): Promise<ServiceInvoice[]>`
+
+Create multiple invoices concurrently with concurrency control.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `companyId` | `string` | Company ID |
+| `invoicesData` | `ServiceInvoiceData[]` | Array of invoice data |
+| `options` | `BatchOptions` | Batch configuration (optional) |
+
+**Batch Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `waitForComplete` | `boolean` | `true` | Wait for all invoices to complete processing |
+| `maxConcurrent` | `number` | `5` | Maximum concurrent requests |
+| `pollingInterval` | `number` | `2000` | Polling interval in ms (if waitForComplete=true) |
+| `maxWaitTime` | `number` | `60000` | Max wait time per invoice in ms |
+
+**Returns:** `Promise<ServiceInvoice[]>` - Array of created invoices
+
+**Examples:**
+
+```typescript
+// Example 1: Basic batch creation
+const invoicesData = [
+  {
+    borrower: { federalTaxNumber: 111, name: 'Client 1', email: 'client1@example.com' },
+    cityServiceCode: '10677',
+    description: 'Service 1',
+    servicesAmount: 1000,
+  },
+  {
+    borrower: { federalTaxNumber: 222, name: 'Client 2', email: 'client2@example.com' },
+    cityServiceCode: '10677',
+    description: 'Service 2',
+    servicesAmount: 2000,
+  },
+  {
+    borrower: { federalTaxNumber: 333, name: 'Client 3', email: 'client3@example.com' },
+    cityServiceCode: '10677',
+    description: 'Service 3',
+    servicesAmount: 3000,
+  },
+];
+
+const invoices = await nfe.serviceInvoices.createBatch('company-id', invoicesData);
+
+console.log(`Created ${invoices.length} invoices`);
+invoices.forEach(inv => console.log(`- ${inv.number}: R$ ${inv.servicesAmount}`));
+
+// Example 2: Custom concurrency
+const invoices = await nfe.serviceInvoices.createBatch('company-id', invoicesData, {
+  maxConcurrent: 3,      // Process 3 at a time
+  waitForComplete: true, // Wait for all to finish
+});
+
+// Example 3: Batch without waiting (fire and forget)
+const results = await nfe.serviceInvoices.createBatch('company-id', invoicesData, {
+  waitForComplete: false, // Don't wait for async processing
+  maxConcurrent: 10,
+});
+
+// Results may contain async processing info (location, flowStatus)
+results.forEach(result => {
+  if ('id' in result) {
+    console.log(`Issued: ${result.id}`);
+  } else {
+    console.log(`Processing: ${result.location}`);
+  }
+});
+
+// Example 4: Read from CSV and batch create
+import { parse } from 'csv-parse/sync';
+import { readFileSync } from 'fs';
+
+const csv = readFileSync('invoices.csv', 'utf8');
+const records = parse(csv, { columns: true });
+
+const invoicesData = records.map(row => ({
+  borrower: {
+    federalTaxNumber: parseInt(row.cpf),
+    name: row.name,
+    email: row.email,
+  },
+  cityServiceCode: row.serviceCode,
+  description: row.description,
+  servicesAmount: parseFloat(row.amount),
+}));
+
+console.log(`Creating ${invoicesData.length} invoices from CSV...`);
+
+const invoices = await nfe.serviceInvoices.createBatch('company-id', invoicesData, {
+  maxConcurrent: 5,
+  waitForComplete: true,
+});
+
+console.log(`✅ Created ${invoices.length} invoices`);
+
+// Example 5: Error handling in batch
+try {
+  const invoices = await nfe.serviceInvoices.createBatch('company-id', invoicesData);
+  console.log('All succeeded');
+} catch (error) {
+  console.error('Batch creation failed:', error.message);
+  // Note: Some invoices may have been created successfully
+  // Check partial results if needed
+}
+```
+
+**Performance Notes:**
+
+- Default concurrency (5) is safe for most APIs
+- Increase `maxConcurrent` carefully to avoid rate limiting
+- Large batches (>100 invoices) should be split into chunks
+- Use `waitForComplete: false` for background processing
+
+---
+
+#### Type Reference
+
+**ServiceInvoice:**
+
+```typescript
+interface ServiceInvoice {
+  id: string;
+  number?: string;
+  status: 'Issued' | 'Cancelled' | 'Processing' | 'IssueFailed';
+  flowStatus?: string;
+  flowMessage?: string;
+  borrower: {
+    federalTaxNumber: number;
+    name: string;
+    email?: string;
+    address?: Address;
+  };
+  cityServiceCode: string;
+  description: string;
+  servicesAmount: number;
+  deductions?: number;
+  discountUnconditioned?: number;
+  discountConditioned?: number;
+  issuedOn?: string;
+  rpsSerialNumber?: string;
+  rpsNumber?: number;
+  taxes?: {
+    retainIss?: boolean;
+    iss?: number;
+    pis?: number;
+    cofins?: number;
+    inss?: number;
+    ir?: number;
+    csll?: number;
+  };
+}
+```
+
+---
 
 ### Companies
 
