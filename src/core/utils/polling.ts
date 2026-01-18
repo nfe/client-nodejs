@@ -99,6 +99,7 @@ export async function poll<T>(options: PollingOptions<T>): Promise<T> {
   let delay = initialDelay;
   let attempt = 0;
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     attempt++;
 
