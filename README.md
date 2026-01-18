@@ -155,36 +155,92 @@ O SDK fornece os seguintes recursos:
 Gerenciar NFS-e (Nota Fiscal de Serviço Eletrônica):
 
 ```typescript
-// Criar nota fiscal (retorna imediatamente ou async 202)
-const notaFiscal = await nfe.serviceInvoices.create(empresaId, dadosNota);
-
-// Criar e aguardar conclusão (lida com processamento assíncrono)
-const notaFiscal = await nfe.serviceInvoices.createAndWait(empresaId, dadosNota, {
-  maxAttempts: 30,
-  intervalMs: 2000
+// ⭐ RECOMENDADO: Criar e aguardar conclusão (lida com processamento assíncrono)
+const notaFiscal = await nfe.serviceInvoices.createAndWait(empresaId, {
+  borrower: {
+    federalTaxNumber: 12345678901,
+    name: 'João da Silva',
+    email: 'joao@example.com',
+  },
+  cityServiceCode: '10677',
+  description: 'Serviços de consultoria',
+  servicesAmount: 1500.00,
+}, {
+  pollingInterval: 2000,  // Verificar a cada 2 segundos
+  maxWaitTime: 60000,     // Aguardar até 60 segundos
 });
 
-// Listar notas fiscais com paginação
-const resultado = await nfe.serviceInvoices.list(empresaId, {
-  page: 1,
-  pageSize: 50
+console.log(`✅ Nota fiscal emitida: ${notaFiscal.number}`);
+
+// Criar nota fiscal manualmente (retorna 201 imediato ou 202 async)
+const result = await nfe.serviceInvoices.create(empresaId, dadosNota);
+
+// Verificar se é síncrono (201) ou assíncrono (202)
+if ('id' in result) {
+  // Síncrono - nota emitida imediatamente
+  console.log('Nota emitida:', result.number);
+} else {
+  // Assíncrono - requer polling
+  console.log('Processando:', result.flowStatus);
+  // Use createAndWait() ou pollUntilComplete() em vez disso
+}
+
+// Listar notas fiscais com filtros
+const notas = await nfe.serviceInvoices.list(empresaId, {
+  pageCount: 50,
+  pageIndex: 0,
+  searchPeriod: {
+    startDate: '2024-01-01',
+    endDate: '2024-01-31',
+  },
 });
 
 // Buscar nota fiscal específica
-const notaFiscal = await nfe.serviceInvoices.retrieve(empresaId, notaFiscalId);
+const nota = await nfe.serviceInvoices.retrieve(empresaId, notaFiscalId);
+
+// Verificar status de processamento
+const status = await nfe.serviceInvoices.getStatus(empresaId, notaFiscalId);
+console.log(`Status: ${status.status}, Completo: ${status.isComplete}`);
 
 // Cancelar nota fiscal
 const notaCancelada = await nfe.serviceInvoices.cancel(empresaId, notaFiscalId);
 
 // Enviar nota fiscal por email
-await nfe.serviceInvoices.sendEmail(empresaId, notaFiscalId);
+await nfe.serviceInvoices.sendEmail(empresaId, notaFiscalId, {
+  emails: ['cliente@example.com', 'financeiro@example.com'],
+});
 
-// Baixar PDF
+// Baixar PDF (single ou bulk)
 const pdfBuffer = await nfe.serviceInvoices.downloadPdf(empresaId, notaFiscalId);
+fs.writeFileSync('nota.pdf', pdfBuffer);
+
+// Baixar todas as notas como ZIP
+const zipBuffer = await nfe.serviceInvoices.downloadPdf(empresaId);
+fs.writeFileSync('todas-notas.zip', zipBuffer);
 
 // Baixar XML
-const xmlData = await nfe.serviceInvoices.downloadXml(empresaId, notaFiscalId);
+const xmlBuffer = await nfe.serviceInvoices.downloadXml(empresaId, notaFiscalId);
+fs.writeFileSync('nota.xml', xmlBuffer);
+
+// Criar múltiplas notas em lote (batch)
+const notasData = [/* ... array de dados de notas ... */];
+const notas = await nfe.serviceInvoices.createBatch(empresaId, notasData, {
+  waitForComplete: true,  // Aguardar todas completarem
+  maxConcurrent: 5,       // Processar 5 por vez
+});
+
+console.log(`✅ ${notas.length} notas fiscais criadas em lote`);
 ```
+
+**Recursos Avançados:**
+
+- ⏱️ **Polling Automático**: `createAndWait()` lida automaticamente com processamento assíncrono
+- 📦 **Criação em Lote**: `createBatch()` cria múltiplas notas com controle de concorrência
+- 📥 **Downloads Bulk**: Baixe todas as notas como ZIP (PDF ou XML)
+- 🔍 **Verificação de Status**: `getStatus()` verifica se nota completou processamento
+- 🎯 **Discriminated Unions**: TypeScript detecta automaticamente tipo de resposta (201 vs 202)
+
+---
 
 #### 🏢 Empresas (`nfe.companies`)
 
