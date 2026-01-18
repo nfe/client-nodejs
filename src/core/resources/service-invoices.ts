@@ -443,7 +443,7 @@ export class ServiceInvoicesResource {
     return {
       status,
       invoice,
-      isComplete: isTerminalFlowStatus(status) && status === 'Issued',
+      isComplete: isTerminalFlowStatus(status),
       isFailed: ['CancelFailed', 'IssueFailed'].includes(status),
     };
   }
@@ -496,7 +496,7 @@ export class ServiceInvoicesResource {
    * Location format: /v1/companies/{companyId}/serviceinvoices/{invoiceId}
    */
   private extractInvoiceIdFromLocation(location: string): string {
-    const match = location.match(/serviceinvoices\/([a-f0-9-]+)/i);
+    const match = location.match(/serviceinvoices\/([a-z0-9-]+)/i);
 
     if (!match || !match[1]) {
       throw new InvoiceProcessingError(
