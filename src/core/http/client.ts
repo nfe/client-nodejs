@@ -40,9 +40,13 @@ export class HttpClient {
   // Public HTTP Methods
   // --------------------------------------------------------------------------
 
-  async get<T = unknown>(path: string, params?: Record<string, unknown>): Promise<HttpResponse<T>> {
+  async get<T = unknown>(
+    path: string,
+    params?: Record<string, unknown>,
+    customHeaders?: Record<string, string>
+  ): Promise<HttpResponse<T>> {
     const url = this.buildUrl(path, params);
-    return this.request<T>('GET', url);
+    return this.request<T>('GET', url, undefined, customHeaders);
   }
 
   async post<T = unknown>(path: string, data?: unknown): Promise<HttpResponse<T>> {
@@ -67,14 +71,15 @@ export class HttpClient {
   private async request<T>(
     method: string,
     url: string,
-    data?: unknown
+    data?: unknown,
+    customHeaders?: Record<string, string>
   ): Promise<HttpResponse<T>> {
     const { maxRetries, baseDelay } = this.config.retryConfig;
     let lastError: NfeError | undefined;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        const response = await this.executeRequest<T>(method, url, data);
+        const response = await this.executeRequest<T>(method, url, data, customHeaders);
         return response;
       } catch (error) {
         lastError = error as NfeError;
@@ -102,13 +107,14 @@ export class HttpClient {
   private async executeRequest<T>(
     method: string,
     url: string,
-    data?: unknown
+    data?: unknown,
+    customHeaders?: Record<string, string>
   ): Promise<HttpResponse<T>> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
     try {
-      const headers = this.buildHeaders(data);
+      const headers = this.buildHeaders(data, customHeaders);
       const body = this.buildBody(data);
 
       const response = await fetch(url, {
@@ -266,7 +272,7 @@ export class HttpClient {
     return url;
   }
 
-  private buildHeaders(data?: unknown): Record<string, string> {
+  private buildHeaders(data?: unknown, customHeaders?: Record<string, string>): Record<string, string> {
     const headers: Record<string, string> = {
       'X-NFE-APIKEY': this.config.apiKey,
       'Accept': 'application/json',
@@ -276,6 +282,11 @@ export class HttpClient {
     // Add Content-Type for requests with body (but not FormData)
     if (data !== undefined && data !== null && !this.isFormData(data)) {
       headers['Content-Type'] = 'application/json';
+    }
+
+    // Merge custom headers (allowing override of defaults)
+    if (customHeaders) {
+      Object.assign(headers, customHeaders);
     }
 
     return headers;
