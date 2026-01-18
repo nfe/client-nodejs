@@ -1,0 +1,17 @@
+{
+  "federalTaxNumber": 12345678000195,
+  "name": "Empresa Teste Wrapper",
+  "email": "teste-wrapper@example.com",
+  "address": {
+    "country": "BRA",
+    "postalCode": "01310-100",
+    "street": "Av. Paulista",
+    "number": "1000",
+    "district": "Bela Vista",
+    "city": {
+      "code": "3550308",
+      "name": "São Paulo"
+    },
+    "state": "SP"
+  }
+}

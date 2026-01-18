@@ -1,0 +1,630 @@
+openapi: 3.0.4
+info:
+  title: Batch Processor API
+  version: v1
+paths:
+  /api/notifications/zip:
+    post:
+      tags:
+        - Notification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZipRequest'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/ZipRequest'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/ZipRequest'
+      responses:
+        '200':
+          description: OK
+  '/api/notifications/{id}':
+    post:
+      tags:
+        - Notification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: path
+          in: query
+          schema:
+            type: string
+        - name: outputType
+          in: query
+          schema:
+            $ref: '#/components/schemas/OutputType'
+      responses:
+        '200':
+          description: OK
+  /api/notifications/workflow/finished:
+    post:
+      tags:
+        - Notification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              format: uuid
+          text/json:
+            schema:
+              type: string
+              format: uuid
+          application/*+json:
+            schema:
+              type: string
+              format: uuid
+      responses:
+        '200':
+          description: OK
+  /api/processing-jobs/resources/outputs:
+    get:
+      tags:
+        - ProcessingJobs
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResourceInfo'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResourceInfo'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResourceInfo'
+        '401':
+          description: Unauthorized
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/processing-jobs:
+    get:
+      tags:
+        - ProcessingJobs
+      parameters:
+        - name: PageSize
+          in: query
+          schema:
+            type: integer
+            format: int32
+        - name: Direction
+          in: query
+          schema:
+            $ref: '#/components/schemas/SortDirection'
+        - name: Order
+          in: query
+          schema:
+            $ref: '#/components/schemas/SortOrder'
+        - name: Cursor.Value
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: HasCursor
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchSummaryResponsePage'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchSummaryResponsePage'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchSummaryResponsePage'
+        '401':
+          description: Unauthorized
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    post:
+      tags:
+        - ProcessingJobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartProcessingJobRequest'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/StartProcessingJobRequest'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/StartProcessingJobRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchesResponse'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchesResponse'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchesResponse'
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/api/processing-jobs/{id}':
+    get:
+      tags:
+        - ProcessingJobs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/StatusProcess'
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchDetailResponse'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchDetailResponse'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchDetailResponse'
+        '401':
+          description: Unauthorized
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    delete:
+      tags:
+        - ProcessingJobs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchDetailResponse'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchDetailResponse'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingBatchDetailResponse'
+        '401':
+          description: Unauthorized
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+components:
+  schemas:
+    BatchProcessResponse:
+      required:
+        - createdAt
+      type: object
+      properties:
+        input:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        statusReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        outPuts:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutPutResponse'
+          nullable: true
+      additionalProperties: false
+    Environment:
+      enum:
+        - Test
+        - Production
+      type: string
+    FileParsingOptionsRequest:
+      type: object
+      properties:
+        columnToParse:
+          type: integer
+          description: Coluna que está o input
+          format: int32
+          example: 1
+        parsingType:
+          $ref: '#/components/schemas/ParsingType'
+      additionalProperties: false
+    GuidPaginationCursor:
+      type: object
+      properties:
+        value:
+          type: string
+          format: uuid
+      additionalProperties: false
+    InputInfoRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          description: Nome do processo
+          nullable: true
+          example: s3://bucket/input.json
+        parsingOptions:
+          $ref: '#/components/schemas/FileParsingOptionsRequest'
+        useCache:
+          type: boolean
+          description: Habilitar Cache
+          example: true
+      additionalProperties: false
+    InputsResponse:
+      type: object
+      properties:
+        totalInputs:
+          type: integer
+          format: int32
+        outputs:
+          type: array
+          items:
+            type: string
+          nullable: true
+      additionalProperties: false
+    OutPutLinkResponse:
+      type: object
+      properties:
+        fileName:
+          type: string
+          nullable: true
+        url:
+          type: string
+          nullable: true
+      additionalProperties: false
+    OutPutResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        outPutLink:
+          $ref: '#/components/schemas/OutPutLinkResponse'
+      additionalProperties: false
+    OutputType:
+      enum:
+        - PDF
+        - XML
+        - Csv
+      type: string
+    ParsingType:
+      enum:
+        - Csv
+        - Xls
+      type: string
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: { }
+    ProcessingBatchDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          nullable: true
+        createdBy:
+          type: string
+          nullable: true
+        resourceName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        inputs:
+          $ref: '#/components/schemas/InputsResponse'
+        metrics:
+          $ref: '#/components/schemas/ProcessingMetricsResponse'
+        status:
+          type: string
+          nullable: true
+        stage:
+          type: string
+          nullable: true
+        batchProcesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchProcessResponse'
+          nullable: true
+      additionalProperties: false
+    ProcessingBatchSummaryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        createdBy:
+          type: string
+          nullable: true
+        resourceName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        metrics:
+          $ref: '#/components/schemas/ProcessingMetricsResponse'
+        inputs:
+          $ref: '#/components/schemas/InputsResponse'
+        status:
+          type: string
+          nullable: true
+        stage:
+          type: string
+          nullable: true
+        autoGenerated:
+          type: boolean
+        outPuts:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutPutResponse'
+          nullable: true
+      additionalProperties: false
+    ProcessingBatchSummaryResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessingBatchSummaryResponse'
+          nullable: true
+        nextCursor:
+          $ref: '#/components/schemas/GuidPaginationCursor'
+        previousCursor:
+          $ref: '#/components/schemas/GuidPaginationCursor'
+        hasNext:
+          type: boolean
+          readOnly: true
+        hasPrevious:
+          type: boolean
+          readOnly: true
+      additionalProperties: false
+    ProcessingBatchesResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          nullable: true
+      additionalProperties: false
+    ProcessingMetricsResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int32
+        totalSuccess:
+          type: integer
+          format: int32
+        totalError:
+          type: integer
+          format: int32
+      additionalProperties: false
+    ResourceInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+          nullable: true
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutputType'
+          nullable: true
+      additionalProperties: false
+    ResourceInfoRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID da fonte de dados
+          format: int32
+          example: 1
+        name:
+          type: string
+          description: Nome da fonte de dados
+          nullable: true
+          example: NFeSefaz
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutputType'
+          description: Tipos de saidas
+          nullable: true
+          example:
+            - PDF
+            - XML
+      additionalProperties: false
+    SortDirection:
+      enum:
+        - Forward
+        - Backward
+      type: string
+    SortOrder:
+      enum:
+        - Asc
+        - Desc
+      type: string
+    StartProcessingJobRequest:
+      type: object
+      properties:
+        createdBy:
+          type: string
+          description: Quem criou a requisição
+          nullable: true
+          example: joao.souza
+        input:
+          $ref: '#/components/schemas/InputInfoRequest'
+        name:
+          type: string
+          description: Nome do processo
+          nullable: true
+          example: Processamento de Dados
+        resource:
+          $ref: '#/components/schemas/ResourceInfoRequest'
+        environment:
+          $ref: '#/components/schemas/Environment'
+      additionalProperties: false
+    StatusProcess:
+      enum:
+        - Pending
+        - Running
+        - Completed
+        - Duplicated
+        - Error
+        - PartialSuccess
+        - Succeed
+      type: string
+    ZipRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/OutputType'
+        blobName:
+          type: string
+          nullable: true
+      additionalProperties: false
+  securitySchemes:
+    Authorization_Header:
+      type: apiKey
+      description: 'Chave de API no header: `Authorization: sua-chave`'
+      name: Authorization
+      in: header
+security:
+  - Authorization_Header: [ ]

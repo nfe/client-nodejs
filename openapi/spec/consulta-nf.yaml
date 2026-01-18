@@ -1,0 +1,3118 @@
+swagger: "2.0"
+host: nfe.api.nfe.io
+info:
+  title: Consulta de Notas Fiscais
+  version: v2
+  description: "# Introducão\nSeja bem-vindo a documentação da API de consulta de Notas Fiscais!\nNossa API foi criada utilizando o padrão REST que possibilita a integração de seu sistema ao nosso, sendo assim você também pode extender ou recriar as funcionalidades existentes na nossa plataforma, tudo isso consumindo a API que está documentada abaixo.\n\n\n# Como usar a API?\nLogo a seguir você encontrará todos os recursos e metódos suportados pela API, sendo que essa página possibilita que você teste os recursos e métodos diretamente através dela.\n\n\n# Autenticação\nVocê precisa de uma chave de API (API Key) para identificar a conta que está realizando solicitações para a API. \nPara isso você deve colocar sua chave de API no campo que se encontra topo desta página para que os métodos funcionem corretamente.\nNo seu código e integração temos suporte para autenticação de diversas formas sendo eles: \nHTTP Header (Authorization ou X-NFEIO-APIKEY) ou HTTP Query String (api_key) nos dois modos passando o valor da sua chave de api (API Key).\n<!-- ReDoc-Inject: <security-definitions> -->\n"
+paths:
+  /v2/productinvoices/{accessKey}:
+    get:
+      tags:
+        - ProductInvoicesV2
+      summary: Consulta de Nota Fiscal Eletrônica na SEFAZ por Chave de Acesso
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2ProductinvoicesByAccessKeyGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: accessKey
+          in: path
+          description: Chave de Acesso
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            type: object
+            properties:
+              currentStatus:
+                description: Situação Atual
+                enum:
+                  - unknown
+                  - authorized
+                  - canceled
+                type: string
+              stateCode:
+                format: int32
+                description: Código da UF do emitente do Documento Fiscal (cUF)
+                type: integer
+              checkCode:
+                format: int64
+                description: Código Numérico que compõe a Chave de Acesso (cNF)
+                type: integer
+              operationNature:
+                description: Descrição da Natureza da Operação (natOp)
+                type: string
+              paymentType:
+                description: "Indicador da forma de pagamento (indPag)\r\n<remarks>\r\n 0 - Pagamento à vista (InCash)\r\n 1 - Pagamento a prazo (Term)\r\n 2 - Outros (Others)\r\n</remarks>"
+                enum:
+                  - inCash
+                  - term
+                  - others
+                type: string
+              codeModel:
+                format: int32
+                description: Código do Modelo do Documento Fiscal (mod)
+                type: integer
+              serie:
+                format: int32
+                description: Série do Documento Fiscal (serie)
+                type: integer
+              number:
+                format: int64
+                description: Número do Documento Fiscal (nNF)
+                type: integer
+              issuedOn:
+                format: date-time
+                description: "Data de emissão do Documento Fiscal (dhEmi)\r\n<remarks>\r\n    Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.\r\n</remarks>"
+                type: string
+              operationOn:
+                format: date-time
+                description: "Data e Hora de Saída ou da Entrada da Mercadoria/Produto (dhSaiEnt)\r\n<remarks>\r\n    Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.\r\n</remarks>"
+                type: string
+              operationType:
+                description: Tipo de Operação (tpNF)
+                enum:
+                  - incoming
+                  - outgoing
+                type: string
+              destination:
+                description: Identificador de local de destino da operação (idDest)
+                enum:
+                  - international_Operation
+                  - interstate_Operation
+                  - internal_Operation
+                type: string
+              cityCode:
+                format: int32
+                description: Código do Município de Ocorrência do Fato Gerador (cMunFG)
+                type: integer
+              printType:
+                description: Formato de Impressão do DANFE (tpImp)
+                enum:
+                  - none
+                  - nFeNormalPortrait
+                  - nFeNormalLandscape
+                  - nFeSimplified
+                  - dANFE_NFC_E
+                  - dANFE_NFC_E_MSG_ELETRONICA
+                type: string
+              issueType:
+                description: Tipo de Emissão da NF-e (tpEmis)
+                enum:
+                  - cONTINGENCIA_OFF_LINE_NFC_E
+                  - cONTINGENCIA_SVC_RS
+                  - cONTINGENCIA_SVC_AN
+                  - cONTINGENCIA_FS_DA
+                  - cONTINGENCIA_DPEC
+                  - cONTINGENCIA_SCAN
+                  - cONTINGENCIA_FS_IA
+                  - normal
+                type: string
+              checkCodeDigit:
+                format: int32
+                description: Dígito Verificador da Chave de Acesso da NF-e (cDV)
+                type: integer
+              environmentType:
+                description: Identificação do Ambiente (tpAmb)
+                enum:
+                  - production
+                  - test
+                type: string
+              purposeType:
+                description: Finalidade de emissão da NF-e (finNFe)
+                enum:
+                  - devolution
+                  - adjustment
+                  - complement
+                  - normal
+                type: string
+              consumerType:
+                description: Indica operação com Consumidor final  (indFinal)
+                enum:
+                  - normal
+                  - finalConsumer
+                type: string
+              presenceType:
+                description: Indicador de presença do comprador no estabelecimento comercial no momento da operação (indPres)
+                enum:
+                  - none
+                  - presence
+                  - internet
+                  - telephone
+                  - delivery
+                  - presenceOutOfStore
+                  - othersNoPresente
+                type: string
+              processType:
+                description: Processo de emissão da NF-e (procEmi)
+                enum:
+                  - ownSoftware
+                  - fiscoSingle
+                  - taxPayerSingle
+                  - fiscoSoftware
+                type: string
+              invoiceVersion:
+                description: Versão do Processo de emissão da NF-e (verProc)
+                type: string
+              xmlVersion:
+                description: Versão do leiaute (versao)
+                type: string
+              contingencyOn:
+                format: date-time
+                description: "Data e Hora da entrada em contingência (dhCont)\r\n<remarks>\r\n    Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD\r\n</remarks>"
+                type: string
+              contingencyJustification:
+                description: Justificativa da entrada em contingência (xJust)
+                type: string
+              issuer:
+                description: Grupo de identificação do emitente da NF-e (emit)
+                type: object
+                properties:
+                  federalTaxNumber:
+                    format: double
+                    description: CNPJ do emitente (CNPJ) / CPF do remetente (CPF)
+                    type: number
+                  name:
+                    description: Razão Social ou Nome do emitente (xNome)
+                    type: string
+                  tradeName:
+                    description: Nome fantasia (xFant)
+                    type: string
+                  address:
+                    description: Endereço do emitente (enderEmit)
+                    type: object
+                    properties:
+                      phone:
+                        type: string
+                      state:
+                        type: string
+                      city:
+                        type: object
+                        properties:
+                          code:
+                            type: string
+                          name:
+                            type: string
+                      district:
+                        type: string
+                      additionalInformation:
+                        type: string
+                      streetSuffix:
+                        type: string
+                      street:
+                        type: string
+                      number:
+                        type: string
+                      postalCode:
+                        type: string
+                      country:
+                        type: string
+                  stateTaxNumber:
+                    description: Inscrição Estadual (IE)
+                    type: string
+                  codeTaxRegime:
+                    description: Código de Regime Tributário (CRT)
+                    enum:
+                      - national_Simple
+                      - national_Simple_Brute
+                      - normal_Regime
+                    type: string
+                  cnae:
+                    format: int64
+                    description: CNAE fiscal (CNAE)
+                    type: integer
+                  im:
+                    description: Inscrição Municipal do Prestador de Serviço (IM)
+                    type: string
+                  iest:
+                    format: int64
+                    description: IE do Substituto Tributário (IEST)
+                    type: integer
+                  type:
+                    description: 'Tipo da pessoa: Jurídica ou Física'
+                    enum:
+                      - undefined
+                      - naturalPerson
+                      - legalEntity
+                    type: string
+              buyer:
+                description: Grupo de identificação do Destinatário da NF-e (dest)
+                type: object
+                properties:
+                  federalTaxNumber:
+                    format: double
+                    description: "CNPJ do Destinantario (CNPJ) / CPF do destinatário (CPF) /\r\nIdentificação do destinatário no caso de comprador estrangeiro (idEstrangeiro)"
+                    type: number
+                  name:
+                    description: Razão Social ou nome do destinatário (xNome)
+                    type: string
+                  address:
+                    description: Identificação do Endereço (enderDest)
+                    type: object
+                    properties:
+                      phone:
+                        type: string
+                      state:
+                        type: string
+                      city:
+                        type: object
+                        properties:
+                          code:
+                            type: string
+                          name:
+                            type: string
+                      district:
+                        type: string
+                      additionalInformation:
+                        type: string
+                      streetSuffix:
+                        type: string
+                      street:
+                        type: string
+                      number:
+                        type: string
+                      postalCode:
+                        type: string
+                      country:
+                        type: string
+                  stateTaxNumber:
+                    description: Inscrição Estadual (IE)
+                    type: string
+                  stateTaxNumberIndicator:
+                    format: int32
+                    description: Indicador Inscrição Estadual (indIEDest)
+                    type: integer
+                  email:
+                    description: Email (email)
+                    type: string
+                  type:
+                    description: 'Tipo da pessoa: Jurídica ou Física'
+                    enum:
+                      - undefined
+                      - naturalPerson
+                      - legalEntity
+                    type: string
+              totals:
+                description: Grupo Totais da NF-e (total)
+                type: object
+                properties:
+                  icms:
+                    description: Grupo de Valores Totais referentes ao ICMS (ICMSTot)
+                    type: object
+                    properties:
+                      baseTax:
+                        format: double
+                        description: Base de Cálculo do ICMS (vBC)
+                        type: number
+                      icmsAmount:
+                        format: double
+                        description: Valor Total do ICMS (vICMS)
+                        type: number
+                      icmsExemptAmount:
+                        format: double
+                        description: Valor ICMS Total desonerado (vICMSDeson)
+                        type: number
+                      stCalculationBasisAmount:
+                        format: double
+                        description: Base de Cálculo do ICMS Substituição Tributária (vBCST)
+                        type: number
+                      stAmount:
+                        format: double
+                        description: Valor Total do ICMS ST (vST)
+                        type: number
+                      productAmount:
+                        format: double
+                        description: Valor Total dos produtos e serviços (vProd)
+                        type: number
+                      freightAmount:
+                        format: double
+                        description: Valor Total do Frete (vFrete)
+                        type: number
+                      insuranceAmount:
+                        format: double
+                        description: Valor Total do Seguro (vSeg)
+                        type: number
+                      discountAmount:
+                        format: double
+                        description: Valor Total do Desconto (vDesc)
+                        type: number
+                      iiAmount:
+                        format: double
+                        description: Valor Total do Imposto de Importação (vII)
+                        type: number
+                      ipiAmount:
+                        format: double
+                        description: Valor Total do IPI (vIPI)
+                        type: number
+                      pisAmount:
+                        format: double
+                        description: Valor do PIS (vPIS)
+                        type: number
+                      cofinsAmount:
+                        format: double
+                        description: Valor do COFINS (vCOFINS)
+                        type: number
+                      othersAmount:
+                        format: double
+                        description: Outras Despesas acessórias (vOutro)
+                        type: number
+                      invoiceAmount:
+                        format: double
+                        description: Valor Total da NF-e (vNF)
+                        type: number
+                      fcpufDestinationAmount:
+                        format: double
+                        description: Valor Total ICMS FCP UF Destino
+                        type: number
+                      icmsufDestinationAmount:
+                        format: double
+                        description: Valor Total ICMS Interestadual UF Destino
+                        type: number
+                      icmsufSenderAmount:
+                        format: double
+                        description: Valor Total ICMS Interestadual UF Rem.
+                        type: number
+                      federalTaxesAmount:
+                        format: double
+                        description: Valor aproximado total de tributos federais, estaduais e municipais. (vTotTrib)
+                        type: number
+                      fcpAmount:
+                        format: double
+                        description: Valor Total do FCP - Valor do ICMS relativo ao Fundo de Combate à Pobreza (vFCP)
+                        type: number
+                      fcpstAmount:
+                        format: double
+                        description: Valor Total do FCP retido por ST - Valor do ICMS relativo ao Fundo de Combate à Pobreza (vFCP) retido por substituição tributária.
+                        type: number
+                      fcpstRetAmount:
+                        format: double
+                        description: Valor Total do FCP retido por anteriormente por ST - Valor do ICMS relativo ao Fundo de Combate à Pobreza (vFCP) retido anteriormente por substituição tributária.
+                        type: number
+                      ipiDevolAmount:
+                        format: double
+                        description: Valor total do IPI devolvido (vIPIDevol)
+                        type: number
+                  issqn:
+                    description: Grupo de Valores Totais referentes ao ISSQN (ISSQNtot)
+                    type: object
+                    properties:
+                      totalServiceNotTaxedICMS:
+                        format: double
+                        description: Valor Total Serv.Não Tributados p/ ICMS
+                        type: number
+                      baseRateISS:
+                        format: double
+                        description: Base de Cálculo do ISS
+                        type: number
+                      totalISS:
+                        format: double
+                        description: Valor Total do ISS
+                        type: number
+                      valueServicePIS:
+                        format: double
+                        description: Valor do PIS sobre Serviços
+                        type: number
+                      valueServiceCOFINS:
+                        format: double
+                        description: Valor da COFINS sobre Serviços
+                        type: number
+                      provisionService:
+                        format: date-time
+                        description: Data Prestação Serviço
+                        type: string
+                      deductionReductionBC:
+                        format: double
+                        description: Valor Dedução para Redução da BC
+                        type: number
+                      valueOtherRetention:
+                        format: double
+                        description: Valor Outras Retenções
+                        type: number
+                      discountUnconditional:
+                        format: double
+                        description: Valor Desconto Incondicionado
+                        type: number
+                      discountConditioning:
+                        format: double
+                        description: Valor Desconto Condicionado
+                        type: number
+                      totalRetentionISS:
+                        format: double
+                        description: Valor Total Retenção ISS
+                        type: number
+                      codeTaxRegime:
+                        format: double
+                        description: Código Regime Tributação
+                        type: number
+              transport:
+                description: Grupo de Informações do Transporte da NF-e (transp)
+                type: object
+                properties:
+                  freightModality:
+                    format: int32
+                    description: Modalidade do frete (modFrete)
+                    type: integer
+                  transportGroup:
+                    description: Grupo Transportador (transporta)
+                    type: object
+                    properties:
+                      cityName:
+                        description: Nome do Município (xMun)
+                        type: string
+                      federalTaxNumber:
+                        description: CNPJ do Transportador (CNPJ) ou CPF do Transportador (CPF)
+                        type: string
+                      cpf:
+                        description: CPF do Transportador (CPF)
+                        type: string
+                      name:
+                        description: Razão Social ou nome (xNome)
+                        type: string
+                      stateTaxNumber:
+                        description: Inscrição Estadual do Transportador (IE)
+                        type: string
+                      fullAddress:
+                        description: Endereço Completo (xEnder)
+                        type: string
+                      state:
+                        description: Sigla da UF (UF)
+                        type: string
+                      transportRetention:
+                        description: Grupo de Retenção do ICMS do transporte
+                        type: string
+                  reboque:
+                    description: Grupo Reboque (reboque)
+                    type: object
+                    properties:
+                      plate:
+                        description: Placa do Veiculo (placa)
+                        type: string
+                      uf:
+                        description: UF Veiculo Reboque (UF)
+                        type: string
+                      rntc:
+                        description: Registro Nacional de Transportador de Carga (ANTT) (RNTC)
+                        type: string
+                      wagon:
+                        description: Identificação do Vagão (vagao)
+                        type: string
+                      ferry:
+                        description: Identificação da Balsa (balsa)
+                        type: string
+                  volume:
+                    description: Grupo Volumes (vol)
+                    type: object
+                    properties:
+                      volumeQuantity:
+                        format: int32
+                        description: Quantidade de volumes transportados (qVol)
+                        type: integer
+                      species:
+                        description: Espécie dos volumes transportados (esp)
+                        type: string
+                      brand:
+                        description: Marca dos Volumes Transportados (marca)
+                        type: string
+                      volumeNumeration:
+                        description: Numeração dos Volumes Transportados (nVol)
+                        type: string
+                      netWeight:
+                        format: double
+                        description: Peso Liquido(em Kg) (pesoL)
+                        type: number
+                      grossWeight:
+                        format: double
+                        description: Peso Bruto(em Kg) (pesoB)
+                        type: number
+                  transportVehicle:
+                    description: Grupo Veiculo (veicTransp)
+                    type: object
+                    properties:
+                      plate:
+                        description: Placa do Veiculo (placa)
+                        type: string
+                      state:
+                        description: Sigla da UF (UF)
+                        type: string
+                      rntc:
+                        description: Registro Nacional de Transportador de Carga (ANTT) (RNTC)
+                        type: string
+                  sealNumber:
+                    description: Número dos Lacres
+                    type: string
+                  transpRate:
+                    description: Grupo Retenção ICMS transporte (retTransp)
+                    type: object
+                    properties:
+                      serviceAmount:
+                        format: double
+                        description: Valor do Serviço (vServ)
+                        type: number
+                      bcRetentionAmount:
+                        format: double
+                        description: BC da Retenção do ICMS (vBCRet)
+                        type: number
+                      icmsRetentionRate:
+                        format: double
+                        description: Alíquota da Retenção (pICMSRet) //Change to Rate
+                        type: number
+                      icmsRetentionAmount:
+                        format: double
+                        description: Valor do ICMS Retido (vICMSRet)
+                        type: number
+                      cfop:
+                        format: int64
+                        description: CFOP de Serviço de Transporte (CFOP)
+                        type: integer
+                      cityGeneratorFactCode:
+                        format: int64
+                        description: Código do Municipio de ocorrencia do fato gerador do ICMS do Transpote (cMunFG)
+                        type: integer
+              additionalInformation:
+                description: Informacoes Adicionais (infAdic)
+                type: object
+                properties:
+                  fisco:
+                    description: Informações Adicionais de Interesse do Fisco (infAdFisco)
+                    type: string
+                  taxpayer:
+                    description: Informações Complementares de interesse do Contribuinte (infCpl)
+                    type: string
+                  xmlAuthorized:
+                    description: Informações Complementares de interesse do Contribuinte (infCpl)
+                    type: array
+                    items:
+                      format: int64
+                      type: integer
+                  effort:
+                    type: string
+                  order:
+                    type: string
+                  contract:
+                    type: string
+                  taxDocumentsReference:
+                    description: Documentos Fiscais Referenciados (NFref)
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        taxCouponInformation:
+                          description: Informações do Cupom Fiscal referenciado (refECF)
+                          type: object
+                          properties:
+                            modelDocumentFiscal:
+                              description: Modelo de Documento Fiscal
+                              type: string
+                            orderECF:
+                              description: Número de Ordem Sequencial do ECF
+                              type: string
+                            orderCountOperation:
+                              format: int32
+                              description: Número do Contador de Ordem de Operação
+                              type: integer
+                        documentInvoiceReference:
+                          description: Informação da NF modelo 1/1A referenciada (refNF)
+                          type: object
+                          properties:
+                            state:
+                              format: double
+                              description: Código da UF
+                              type: number
+                            yearMonth:
+                              description: Ano / Mês
+                              type: string
+                            federalTaxNumber:
+                              description: CNPJ
+                              type: string
+                            model:
+                              description: Modelo
+                              type: string
+                            series:
+                              description: Série
+                              type: string
+                            number:
+                              description: Número
+                              type: string
+                        accessKey:
+                          description: Chave de Acesso (refNFe)
+                          type: string
+                  taxpayerComments:
+                    description: Grupo do campo de uso livre do contribuinte (obsCont)
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          description: Campo
+                          type: string
+                        text:
+                          description: Texto
+                          type: string
+                  referencedProcess:
+                    description: Grupo do Processos referenciados (procRef)
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        identifierConcessory:
+                          type: string
+                        identifierOrigin:
+                          format: int32
+                          type: integer
+              protocol:
+                description: Informações do Protocolo de resposta. TAG a ser assinada (protNFe)
+                type: object
+                properties:
+                  id:
+                    description: Identificador da TAG a ser assinada, somente precisa ser informado se a UF assinar a resposta. (ID)
+                    type: string
+                  environmentType:
+                    description: 'Identificação do Ambiente: 1 – Produção/2 - Homologação (tpAmb)'
+                    enum:
+                      - production
+                      - test
+                    type: string
+                  applicationVersion:
+                    description: Versão do Aplicativo que processou o Lote (verAplic)
+                    type: string
+                  accessKey:
+                    description: Chave de Acesso da NF-e (chNFe)
+                    type: string
+                  receiptOn:
+                    format: date-time
+                    description: "Preenchido com a data e hora do processamento  (dhRecbto)\r\n<remarks>\r\n    Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD\r\n</remarks>"
+                    type: string
+                  protocolNumber:
+                    description: Número do Protocolo da NF-e (nProt)
+                    type: string
+                  validatorDigit:
+                    description: (Digest Value) da NF-e processada Utilizado para conferir a integridade da NFe original. (digVal)
+                    type: string
+                  statusCode:
+                    format: int32
+                    description: Código do status da resposta para a NF-e (cStat)
+                    type: integer
+                  description:
+                    description: Descrição literal do status da resposta para a NF-e (xMotivo)
+                    type: string
+                  signature:
+                    description: "Assinatura XML do grupo identificado pelo atributo “Id”  (Signature)\r\nA decisão de assinar a mensagem fica a critério da UF interessada."
+                    type: string
+              items:
+                type: array
+                items:
+                  description: Grupo do detalhamento de Produtos e Serviços da NF-e (det)
+                  type: object
+                  properties:
+                    code:
+                      description: Código do produto ou serviço (cProd)
+                      type: string
+                    codeGTIN:
+                      description: "GTIN (Global Trade Item Number) do produto, \r\nantigo código EAN ou código de barras (cEAN)"
+                      type: string
+                    description:
+                      description: Descrição do produto ou serviço (xProd)
+                      type: string
+                    ncm:
+                      description: Código NCM com 8 dígitos ou 2 dígitos (gênero) (NCM)
+                      type: string
+                    extipi:
+                      description: EX_TIPI (EXTIPI)
+                      type: string
+                    cfop:
+                      format: int64
+                      description: Código Fiscal de Operações e Prestações (CFOP)
+                      type: integer
+                    unit:
+                      description: Unidade Comercial (uCom)
+                      type: string
+                    quantity:
+                      format: double
+                      description: Quantidade Comercial (qCom)
+                      type: number
+                    unitAmount:
+                      format: double
+                      description: Valor Unitário de Comercialização (vUnCom)
+                      type: number
+                    totalAmount:
+                      format: double
+                      description: Valor Total Bruto dos Produtos ou Serviços (vProd)
+                      type: number
+                    eanTaxableCode:
+                      description: "GTIN (Global Trade Item Number) da unidade tributável, \r\nantigo código EAN ou código de barras (cEANTrib)"
+                      type: string
+                    unitTax:
+                      description: Unidade Tributável (uTrib)
+                      type: string
+                    quantityTax:
+                      format: double
+                      description: Quantidade Tributável (qTrib)
+                      type: number
+                    taxUnitAmount:
+                      format: double
+                      description: Valor Unitário de tributação (vUnTrib)
+                      type: number
+                    freightAmount:
+                      format: double
+                      description: Valor Total do Frete (vFrete)
+                      type: number
+                    insuranceAmount:
+                      format: double
+                      description: Valor Total do Seguro (vSeg)
+                      type: number
+                    discountAmount:
+                      format: double
+                      description: Valor do Desconto (vDesc)
+                      type: number
+                    othersAmount:
+                      format: double
+                      description: Outras despesas acessórias (vOutro)
+                      type: number
+                    totalIndicator:
+                      description: "Indica se valor do Item (vProd) \r\nentra no valor total da NF-e (vProd) (indTot)"
+                      type: boolean
+                    cest:
+                      description: Código especificador da substituição tributária (CEST)
+                      type: string
+                    tax:
+                      description: Tributos incidentes no Produto ou Serviço (imposto)
+                      type: object
+                      properties:
+                        totalTax:
+                          format: double
+                          description: Valor aproximado total de tributos federais, estaduais e municipais. (vTotTrib)
+                          type: number
+                        icms:
+                          description: Dados do ICMS Normal e ST (ICMS)
+                          type: object
+                          properties:
+                            origin:
+                              description: Origem da mercadoria (orig)
+                              type: string
+                            cst:
+                              description: Tributação do ICMS (CST)
+                              type: string
+                            baseTaxModality:
+                              description: Modalidade de determinação da BC do ICMS (modBC)
+                              type: string
+                            baseTax:
+                              format: double
+                              description: Valor da BC do ICMS (vBC)
+                              type: number
+                            baseTaxSTModality:
+                              description: Modalidade de determinação da BC do ICMS ST (modBCST)
+                              type: string
+                            baseTaxSTReduction:
+                              format: double
+                              description: "pRedBCST\r\nPercentual da Redução de BC do ICMS ST (pRedBCST)"
+                              type: number
+                            baseTaxSTAmount:
+                              format: double
+                              description: Valor da BC do ICMS ST (vBCST)
+                              type: number
+                            baseTaxReduction:
+                              format: double
+                              description: Percentual da Redução de BC (pRedBC)
+                              type: number
+                            stRate:
+                              format: double
+                              description: Alíquota do imposto do ICMS ST (pICMSST)
+                              type: number
+                            stAmount:
+                              format: double
+                              description: Valor do ICMS ST (vICMSST)
+                              type: number
+                            stMarginAmount:
+                              format: double
+                              description: Percentual da margem de valor Adicionado do ICMS ST (pMVAST)
+                              type: number
+                            csosn:
+                              description: "101- Tributada pelo Simples Nacional com permissão de crédito. (v.2.0) (CSOSN)\r\nCódigo de Situação da Operação – Simples Nacional"
+                              type: string
+                            rate:
+                              format: double
+                              description: Alíquota do imposto (pICMS)
+                              type: number
+                            amount:
+                              format: double
+                              description: "Valor do ICMS (vICMS)\r\n\r\nO valor do ICMS desonerado será informado apenas nas operações:\r\na) com produtos beneficiados com a desoneração condicional do ICMS.\r\nb) destinadas à SUFRAMA, informando-se o valor que seria devido se não houvesse isenção.\r\nc) de venda a órgãos da administração pública direta e suas fundações e\r\nautarquias com isenção do ICMS. (NT 2011/004)"
+                              type: number
+                            snCreditRate:
+                              description: Alíquota aplicável de cálculo do crédito (Simples Nacional). (pCredSN)
+                              type: string
+                            snCreditAmount:
+                              description: Valor crédito do ICMS que pode ser aproveitado nos termos do art. 23 da LC 123 (Simples Nacional)
+                              type: string
+                            stMarginAddedAmount:
+                              description: "Percentual da margem de valor Adicionado do ICMS ST (vCredICMSSN)\r\n0 – Preço tabelado ou máximo sugerido;\r\n1 - Lista Negativa (valor);\r\n2 - Lista Positiva (valor);\r\n3 - Lista Neutra (valor);\r\n4 - Margem Valor Agregado (%);\r\n5 - Pauta (valor);"
+                              type: string
+                            stRetentionAmount:
+                              description: "Valor do ICMS ST retido (vICMSSTRet)\r\nValor do ICMS ST cobrado anteriormente por ST (v2.0) (vICMS)"
+                              type: string
+                            baseSTRetentionAmount:
+                              description: Valor da BC do ICMS ST retido
+                              type: string
+                            baseTaxOperationPercentual:
+                              type: string
+                            ufst:
+                              description: "UF para qual é devido o ICMS ST (UFST)\r\nSigla da UF para qual é devido o ICMS ST da operação. (v2.0)"
+                              type: string
+                            amountSTUnfounded:
+                              format: double
+                              description: Valor ICMS Desonerado
+                              type: number
+                            amountSTReason:
+                              description: Motivo Desoneração ICMS
+                              type: string
+                            baseSNRetentionAmount:
+                              description: Valor da BC do ICMS ST retido
+                              type: string
+                            snRetentionAmount:
+                              description: Valor do ICMS ST retido
+                              type: string
+                            amountOperation:
+                              description: Valor do ICMS da Operação
+                              type: string
+                            percentualDeferment:
+                              description: Percentual do Diferimento
+                              type: string
+                            baseDeferred:
+                              description: Valor do ICMS Diferido
+                              type: string
+                            fcpRate:
+                              format: double
+                              description: Percentual do FCP - Valor do ICMS relativo ao Fundo de Combate à Pobreza (pFCP)  (Percentual máximo permitido é 2%)
+                              type: number
+                            fcpAmount:
+                              format: double
+                              description: Valor Total do FCP - Valor do ICMS relativo ao Fundo de Combate à Pobreza (vFCP)
+                              type: number
+                            fcpstRate:
+                              format: double
+                              description: Percentual do FCP retido por ST - Valor do ICMS relativo ao Fundo de Combate à Pobreza (pFCPST) retido por substituição tributária.
+                              type: number
+                            fcpstAmount:
+                              format: double
+                              description: Valor Total do FCP retido por ST - Valor do ICMS relativo ao Fundo de Combate à Pobreza (vFCPST) retido por substituição tributária.
+                              type: number
+                            fcpstRetRate:
+                              format: double
+                              description: Percentual do FCP retido por anteriormente por ST - Valor do ICMS relativo ao Fundo de Combate à Pobreza (pFCPSTRet) retido anteriormente por substituição tributária.
+                              type: number
+                            fcpstRetAmount:
+                              format: double
+                              description: Valor Total do FCP retido por anteriormente por ST - Valor do ICMS relativo ao Fundo de Combate à Pobreza (vFCPSTRet) retido anteriormente por substituição tributária.
+                              type: number
+                            bcfcpstAmount:
+                              format: double
+                              description: Informar o valor da Base de Cálculo do FCP (vBCFCPST)
+                              type: number
+                            finalConsumerRate:
+                              format: double
+                              description: Modalidade de determinação da BC do ICMS (pST)
+                              type: number
+                            bcstRetIssuerAmount:
+                              format: double
+                              description: Valor do BC do ICMS ST retido na UF remetente (vBCSTRet)
+                              type: number
+                            stRetIssuerAmout:
+                              format: double
+                              description: Valor do ICMS ST retido na UF remetente (vICMSSTRet)
+                              type: number
+                            bcstBuyerAmount:
+                              format: double
+                              description: Valor da BC do ICMS ST da UF destino  (vBCSTDest)
+                              type: number
+                            stBuyerAmout:
+                              format: double
+                              description: Valor do ICMS ST da UF destino  (vICMSSTDest)
+                              type: number
+                            substituteAmount:
+                              format: double
+                              description: 'Valor do ICMS próprio do Substituto (tag: vICMSSubstituto)'
+                              type: number
+                        ipi:
+                          description: Grupo IPI (IPI)
+                          type: object
+                          properties:
+                            classification:
+                              description: "clEnq\r\nClasse de enquadramento do IPI para Cigarros e Bebidas (clEnq)"
+                              type: string
+                            producerCNPJ:
+                              description: CNPJ do produtor da mercadoria, quando diferente do emitente. Somente para os casos de exportação direta ou indireta. (CNPJProd)
+                              type: string
+                            stampCode:
+                              description: Código do selo de controle IPI (cSelo)(
+                              type: string
+                            stampQuantity:
+                              format: double
+                              description: Quantidade de selo de controle (qSelo)
+                              type: number
+                            classificationCode:
+                              description: Código de Enquadramento Legal do IPI (cEnq)
+                              type: string
+                            cst:
+                              description: Código da situação tributária do IPI (CST)
+                              type: string
+                            base:
+                              description: Valor da BC do IPI (vBC)
+                              type: string
+                            rate:
+                              format: double
+                              description: Alíquota do IPI (pIPI)
+                              type: number
+                            unitQuantity:
+                              format: double
+                              description: Quantidade total na unidade padrão para tributação (somente para os produtos tributados por unidade) (qUnid)
+                              type: number
+                            unitAmount:
+                              format: double
+                              description: Valor por Unidade Tributável (vUnid)
+                              type: number
+                            amount:
+                              format: double
+                              description: Valor IPI (vIPI)
+                              type: number
+                        ii:
+                          description: Grupo Imposto de Importação (II)
+                          type: object
+                          properties:
+                            baseTax:
+                              description: Valor BC do Imposto de Importação (vBC)
+                              type: string
+                            customsExpenditureAmount:
+                              description: Valor despesas aduaneiras (vDespAdu)
+                              type: string
+                            amount:
+                              format: double
+                              description: Valor Imposto de Importação (vII)
+                              type: number
+                            iofAmount:
+                              format: double
+                              description: Valor Imposto sobre Operações Financeiras (vIOF)
+                              type: number
+                        pis:
+                          description: Grupo PIS (PIS)
+                          type: object
+                          properties:
+                            cst:
+                              description: Código de Situação Tributária do PIS (CST)
+                              type: string
+                            baseTax:
+                              format: double
+                              description: Valor da Base de Cálculo do PIS (vBC)
+                              type: number
+                            rate:
+                              format: double
+                              description: Alíquota do PIS (em percentual) (pPIS)
+                              type: number
+                            amount:
+                              format: double
+                              description: Valor do PIS (vPIS)
+                              type: number
+                            baseTaxProductQuantity:
+                              format: double
+                              description: Quantidade Vendida (qBCProd)
+                              type: number
+                            productRate:
+                              format: double
+                              description: Alíquota do PIS (em reais) (vAliqProd)
+                              type: number
+                        cofins:
+                          description: Grupo COFINS (COFINS)
+                          type: object
+                          properties:
+                            cst:
+                              description: "Código de Situação Tributária da COFINS\r\n<para>Obs: 01 – Operação Tributável (base de cálculo = valor da operação \r\nalíquota normal (cumulativo/não cumulativo));\r\n02 - Operação Tributável (base de cálculo = valor da operação (alíquota diferenciada));</para> (CST)"
+                              type: string
+                            baseTax:
+                              format: double
+                              description: Valor da Base de Cálculo da COFINS (vBC)
+                              type: number
+                            rate:
+                              format: double
+                              description: Alíquota da COFINS (em percentual) (pCOFINS)
+                              type: number
+                            amount:
+                              format: double
+                              description: Valor da COFINS (vCOFINS)
+                              type: number
+                            baseTaxProductQuantity:
+                              format: double
+                              description: Quantidade Vendida (qBCProd)
+                              type: number
+                            productRate:
+                              format: double
+                              description: Alíquota da COFINS (em reais) (vAliqProd)
+                              type: number
+                        icmsDestination:
+                          description: Informação do ICMS Interestadual (ICMSUFDest)
+                          type: object
+                          properties:
+                            vBCUFDest:
+                              format: double
+                              description: Valor da Base de Cálculo do ICMS na UF de destino. (vBCUFDest)
+                              type: number
+                            pFCPUFDest:
+                              format: double
+                              description: Percentual adicional inserido na alíquota interna da UF de destino, relativo ao Fundo de Combate à Pobreza (FCP) naquela UF (pFCPUFDest)
+                              type: number
+                            pICMSUFDest:
+                              format: double
+                              description: Alíquota adotada nas operações internas na UF de destino para o produto / mercadoria (pICMSUFDest)
+                              type: number
+                            pICMSInter:
+                              format: double
+                              description: Alíquota interestadual das UF envolvidas (pICMSInter)
+                              type: number
+                            pICMSInterPart:
+                              format: double
+                              description: Percentual de ICMS Interestadual para a UF de destino (pICMSInterPart)
+                              type: number
+                            vFCPUFDest:
+                              format: double
+                              description: Valor do ICMS relativo ao Fundo de Combate à Pobreza (FCP) da UF de destino (vFCPUFDest)
+                              type: number
+                            vICMSUFDest:
+                              format: double
+                              description: Valor do ICMS Interestadual para a UF de destino (vICMSUFDest)
+                              type: number
+                            vICMSUFRemet:
+                              format: double
+                              description: Valor do ICMS Interestadual para a UF do remetente (vICMSUFRemet)
+                              type: number
+                            vBCFCPUFDest:
+                              format: double
+                              description: Valor da BC FCP na UF de destino (vBCFCPUFDest)
+                              type: number
+                    additionalInformation:
+                      description: Informações Adicionais do Produto (infAdProd)
+                      type: string
+                    numberOrderBuy:
+                      description: Número do pedido de compra (xPed)
+                      type: string
+                    itemNumberOrderBuy:
+                      format: int32
+                      description: Item do Pedido de Compra (nItemPed)
+                      type: integer
+                    medicineDetail:
+                      description: Detalhamento de Medicamentos e de matérias-primas farmacêuticas (med)
+                      type: object
+                      properties:
+                        maximumPrice:
+                          format: double
+                          description: Preço máximo consumidor (vPMC)
+                          type: number
+                        anvisaCode:
+                          description: Código de Produto da ANVISA (cProdANVISA);
+                          type: string
+                        batchId:
+                          description: Número do Lote de medicamentos ou de matérias-primas farmacêuticas (nLote)
+                          type: string
+                        batchQuantity:
+                          format: double
+                          description: Quantidade de produto no Lote de medicamentos ou de matérias-primas farmacêuticas (qLote)
+                          type: number
+                        manufacturedOn:
+                          format: date-time
+                          description: Data de fabricação (dFab)
+                          type: string
+                        expireOn:
+                          format: date-time
+                          description: Data de validade (dVal)
+                          type: string
+                    fuel:
+                      description: Detalhamento de combustível (comb)
+                      type: object
+                      properties:
+                        codeANP:
+                          description: "    LA02 - Código de produto da ANP (cProdANP)\r\nVersão 3.00\r\nVersão 4.00"
+                          type: string
+                        percentageNG:
+                          format: double
+                          description: "    LA03 - Percentual de Gás Natural para o produto GLP (cProdANP=210203001) (pMixGN)\r\nVersão 3.00"
+                          type: number
+                        descriptionANP:
+                          description: "LA03 - Descrição do produto conforme ANP (descANP)\r\nVersão 4.00"
+                          type: string
+                        percentageGLP:
+                          format: double
+                          description: "LA03a - Percentual do GLP derivado do petróleo no produto GLP (cProdANP=210203001) (pGLP)\r\nVersão 4.00"
+                          type: number
+                        percentageNGn:
+                          format: double
+                          description: "LA03b - Percentual de Gás Natural Nacional – GLGNn para o produto GLP (cProdANP= 210203001) (pGNn)\r\nVersão 4.00"
+                          type: number
+                        percentageGNi:
+                          format: double
+                          description: "LA03c - Percentual de Gás Natural Importado – GLGNi para o produto GLP (cProdANP= 210203001) (pGNi)\r\nVersão 4.00"
+                          type: number
+                        startingAmount:
+                          format: double
+                          description: "LA03d - Valor de partida (cProdANP=210203001) (vPart)\r\nVersão 4.00"
+                          type: number
+                        codif:
+                          description: LA04 - Código de autorização / registro do CODIF (CODIF)
+                          type: string
+                        amountTemp:
+                          format: double
+                          description: LA05 - Quantidade de combustível faturada à temperatura ambiente (qTemp)
+                          type: number
+                        stateBuyer:
+                          description: LA06 - Sigla da UF de consumo (UFCons)
+                          type: string
+                        cide:
+                          description: LA07 - Informações da CIDE (CIDE)
+                          type: object
+                          properties:
+                            bc:
+                              format: double
+                              description: LA08 - BC da CIDE (qBCProd)
+                              type: number
+                            rate:
+                              format: double
+                              description: LA09 - Valor da alíquota da CIDE (vAliqProd)
+                              type: number
+                            cideAmount:
+                              format: double
+                              description: LA10 - Valor da CIDE (vCIDE)
+                              type: number
+                        pump:
+                          description: LA11 - Informações do grupo de “encerrante” (encerrante)
+                          type: object
+                          properties:
+                            spoutNumber:
+                              format: int32
+                              description: LA12 - Número de identificação do bico utilizado no abastecimento (nBico)
+                              type: integer
+                            number:
+                              format: int32
+                              description: LA13 - Número de identificação da bomba ao qual o bico está interligado (nBomba)
+                              type: integer
+                            tankNumber:
+                              format: int32
+                              description: LA14 - Número de identificação do tanque ao qual o bico está interligado (nTanque)
+                              type: integer
+                            beginningAmount:
+                              format: double
+                              description: LA15 - Valor do Encerrante no início do abastecimento (vEncIni)
+                              type: number
+                            endAmount:
+                              format: double
+                              description: LA16 - Valor do Encerrante no final do abastecimento (vEncFin)
+                              type: number
+              billing:
+                description: Grupo Cobrança (cobr)
+                type: object
+                properties:
+                  bill:
+                    description: Grupo Fatura (fat)
+                    type: object
+                    properties:
+                      number:
+                        description: Número da Fatura (nFat)
+                        type: string
+                      originalAmount:
+                        format: double
+                        description: Valor Original da Fatura (vOrig)
+                        type: number
+                      discountAmount:
+                        format: double
+                        description: Valor do desconto (vDesc)
+                        type: number
+                      netAmount:
+                        format: double
+                        description: Valor Líquido da Fatura (vLiq)
+                        type: number
+                  duplicates:
+                    description: Grupo Duplicata (dup)
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        duplicateNumber:
+                          description: Número da Duplicata (nDup)
+                          type: string
+                        expirationOn:
+                          format: date-time
+                          description: Data de vencimento (dVenc)
+                          type: string
+                        amount:
+                          format: double
+                          description: Valor da duplicata (vDup)
+                          type: number
+              payment:
+                description: Grupo de Formas de Pagamento (pag)
+                type: array
+                items:
+                  description: Grupo de Formas de Pagamento (pag)
+                  type: object
+                  properties:
+                    paymentDetail:
+                      description: "YA01a - Grupo Detalhamento da Forma de Pagamento (detPag)\r\nVERSÃO 4.00"
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          method:
+                            description: Forma de pagamento (tPag)
+                            enum:
+                              - cash
+                              - cheque
+                              - creditCard
+                              - debitCard
+                              - storeCredict
+                              - foodVouchers
+                              - mealVouchers
+                              - giftVouchers
+                              - fuelVouchers
+                              - commercialDuplicate
+                              - bankSlip
+                              - unpaid
+                              - others
+                            type: string
+                          amount:
+                            format: double
+                            description: Valor do Pagamento (vPag)
+                            type: number
+                          card:
+                            description: Grupo de Cartões (card)
+                            type: object
+                            properties:
+                              federalTaxNumber:
+                                description: CNPJ da Credenciadora de cartão de crédito e/ou débito (CNPJ)
+                                type: string
+                              flag:
+                                description: Bandeira da operadora de cartão de crédito e/ou débito (tBand)
+                                enum:
+                                  - visa
+                                  - mastercard
+                                  - americanExpress
+                                  - sorocred
+                                  - dinnersClub
+                                  - elo
+                                  - hipercard
+                                  - aura
+                                  - cabal
+                                  - outros
+                                type: string
+                              authorization:
+                                description: Número de autorização da operação cartão de crédito e/ou débito (cAut)
+                                type: string
+                              integrationPaymentType:
+                                description: YA04a - Tipo de Integração para pagamento (tpIntegra)
+                                enum:
+                                  - integrated
+                                  - notIntegrated
+                                type: string
+                    payBack:
+                      format: double
+                      description: "Valor do troco (vTroco)\r\nVERSÃO 4.00"
+                      type: number
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Nota Fiscal não foi encontrada
+          schema:
+            type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+      security:
+        - Authorization_Header:
+            - apiKey
+        - Authorization_QueryParam:
+            - apiKey
+  /v2/productinvoices/{accessKey}.pdf:
+    get:
+      tags:
+        - ProductInvoicesV2
+      summary: Consulta de Nota Fiscal Eletrônica na SEFAZ por Chave de Acesso gerando pdf
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2ProductinvoicesByAccessKey}.pdfGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: accessKey
+          in: path
+          description: Chave de Acesso
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            type: object
+            properties:
+              fileStream:
+                type: object
+                properties:
+                  canRead:
+                    type: boolean
+                    readOnly: true
+                  canSeek:
+                    type: boolean
+                    readOnly: true
+                  canTimeout:
+                    type: boolean
+                    readOnly: true
+                  canWrite:
+                    type: boolean
+                    readOnly: true
+                  length:
+                    format: int64
+                    type: integer
+                    readOnly: true
+                  position:
+                    format: int64
+                    type: integer
+                  readTimeout:
+                    format: int32
+                    type: integer
+                  writeTimeout:
+                    format: int32
+                    type: integer
+              contentType:
+                type: string
+                readOnly: true
+              fileDownloadName:
+                type: string
+              lastModified:
+                format: date-time
+                type: string
+              entityTag:
+                type: object
+                properties:
+                  tag:
+                    readOnly: true
+                    type: object
+                    properties:
+                      buffer:
+                        type: string
+                        readOnly: true
+                      offset:
+                        format: int32
+                        type: integer
+                        readOnly: true
+                      length:
+                        format: int32
+                        type: integer
+                        readOnly: true
+                      value:
+                        type: string
+                        readOnly: true
+                      hasValue:
+                        type: boolean
+                        readOnly: true
+                  isWeak:
+                    type: boolean
+                    readOnly: true
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Nota Fiscal não foi encontrada
+          schema:
+            type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+      security:
+        - Authorization_Header:
+            - apiKey
+        - Authorization_QueryParam:
+            - apiKey
+  /v2/productinvoices/{accessKey}.xml:
+    get:
+      tags:
+        - ProductInvoicesV2
+      summary: Consulta de Nota Fiscal Eletrônica na SEFAZ por Chave de Acesso
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2ProductinvoicesByAccessKey}.xmlGet
+      consumes: []
+      produces:
+        - application/xml
+        - application/json
+      parameters:
+        - name: accessKey
+          in: path
+          description: Chave de Acesso
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            type: object
+            properties:
+              versao:
+                type: string
+              nFe:
+                type: object
+                properties:
+                  infNFe:
+                    type: object
+                    properties:
+                      versao:
+                        type: string
+                      id:
+                        type: string
+                      ide:
+                        type: object
+                        properties:
+                          cUF:
+                            enum:
+                              - aC
+                              - aL
+                              - aP
+                              - aM
+                              - bA
+                              - cE
+                              - dF
+                              - eS
+                              - gO
+                              - mA
+                              - mT
+                              - mS
+                              - mG
+                              - pA
+                              - pB
+                              - pR
+                              - pE
+                              - pI
+                              - rJ
+                              - rN
+                              - rS
+                              - rO
+                              - rR
+                              - sC
+                              - sP
+                              - sE
+                              - tO
+                              - aN
+                              - eX
+                            type: string
+                          cNF:
+                            type: string
+                          natOp:
+                            type: string
+                          indPag:
+                            enum:
+                              - ipVista
+                              - ipPrazo
+                              - ipOutras
+                            type: string
+                          indPagSpecified:
+                            type: boolean
+                            readOnly: true
+                          mod:
+                            enum:
+                              - nFe
+                              - mDFe
+                              - nFCe
+                              - cTe
+                              - cTeOS
+                            type: string
+                          serie:
+                            format: int32
+                            type: integer
+                          nNF:
+                            format: int64
+                            type: integer
+                          dEmi:
+                            format: date-time
+                            type: string
+                          proxydEmi:
+                            type: string
+                          dSaiEnt:
+                            format: date-time
+                            type: string
+                          proxydSaiEnt:
+                            type: string
+                          dhEmi:
+                            format: date-time
+                            type: string
+                          proxyDhEmi:
+                            type: string
+                          dhSaiEnt:
+                            format: date-time
+                            type: string
+                          proxydhSaiEnt:
+                            type: string
+                          tpNF:
+                            enum:
+                              - tnEntrada
+                              - tnSaida
+                            type: string
+                          idDest:
+                            enum:
+                              - doInterna
+                              - doInterestadual
+                              - doExterior
+                            type: string
+                          cMunFG:
+                            format: int64
+                            type: integer
+                          tpImp:
+                            enum:
+                              - tiSemGeracao
+                              - tiRetrato
+                              - tiPaisagem
+                              - tiSimplificado
+                              - tiNFCe
+                              - tiMsgEletronica
+                            type: string
+                          tpEmis:
+                            enum:
+                              - teNormal
+                              - teFSIA
+                              - teSCAN
+                              - teEPEC
+                              - teFSDA
+                              - teSVCAN
+                              - teSVCRS
+                              - teOffLine
+                            type: string
+                          cDV:
+                            format: int32
+                            type: integer
+                          tpAmb:
+                            enum:
+                              - taProducao
+                              - taHomologacao
+                            type: string
+                          finNFe:
+                            enum:
+                              - fnNormal
+                              - fnComplementar
+                              - fnAjuste
+                              - fnDevolucao
+                            type: string
+                          indFinal:
+                            enum:
+                              - cfNao
+                              - cfConsumidorFinal
+                            type: string
+                          indPres:
+                            enum:
+                              - pcNao
+                              - pcPresencial
+                              - pcInternet
+                              - pcTeleatendimento
+                              - pcEntregaDomicilio
+                              - pcPresencialForaEstabelecimento
+                              - pcOutros
+                            type: string
+                          procEmi:
+                            enum:
+                              - peAplicativoContribuinte
+                              - peAvulsaFisco
+                              - peAvulsaContribuinte
+                              - peContribuinteAplicativoFisco
+                            type: string
+                          verProc:
+                            type: string
+                          dhCont:
+                            format: date-time
+                            type: string
+                          proxydhCont:
+                            type: string
+                          xJust:
+                            type: string
+                          nFref:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                refNFe:
+                                  type: string
+                                refNF:
+                                  type: object
+                                  properties:
+                                    cUF:
+                                      enum:
+                                        - aC
+                                        - aL
+                                        - aP
+                                        - aM
+                                        - bA
+                                        - cE
+                                        - dF
+                                        - eS
+                                        - gO
+                                        - mA
+                                        - mT
+                                        - mS
+                                        - mG
+                                        - pA
+                                        - pB
+                                        - pR
+                                        - pE
+                                        - pI
+                                        - rJ
+                                        - rN
+                                        - rS
+                                        - rO
+                                        - rR
+                                        - sC
+                                        - sP
+                                        - sE
+                                        - tO
+                                        - aN
+                                        - eX
+                                      type: string
+                                    aamm:
+                                      type: string
+                                    cnpj:
+                                      type: string
+                                    mod:
+                                      enum:
+                                        - modelo
+                                        - modelo2
+                                      type: string
+                                    serie:
+                                      format: int32
+                                      type: integer
+                                    nNF:
+                                      format: int32
+                                      type: integer
+                                refNFP:
+                                  type: object
+                                  properties:
+                                    cUF:
+                                      enum:
+                                        - aC
+                                        - aL
+                                        - aP
+                                        - aM
+                                        - bA
+                                        - cE
+                                        - dF
+                                        - eS
+                                        - gO
+                                        - mA
+                                        - mT
+                                        - mS
+                                        - mG
+                                        - pA
+                                        - pB
+                                        - pR
+                                        - pE
+                                        - pI
+                                        - rJ
+                                        - rN
+                                        - rS
+                                        - rO
+                                        - rR
+                                        - sC
+                                        - sP
+                                        - sE
+                                        - tO
+                                        - aN
+                                        - eX
+                                      type: string
+                                    aamm:
+                                      type: string
+                                    cnpj:
+                                      type: string
+                                    cpf:
+                                      type: string
+                                    ie:
+                                      type: string
+                                    mod:
+                                      type: string
+                                    serie:
+                                      format: int32
+                                      type: integer
+                                    nNF:
+                                      format: int32
+                                      type: integer
+                                refCTe:
+                                  type: string
+                                refECF:
+                                  type: object
+                                  properties:
+                                    mod:
+                                      type: string
+                                    nECF:
+                                      format: int32
+                                      type: integer
+                                    nCOO:
+                                      format: int32
+                                      type: integer
+                      emit:
+                        type: object
+                        properties:
+                          cnpj:
+                            type: string
+                          cpf:
+                            type: string
+                          xNome:
+                            type: string
+                          xFant:
+                            type: string
+                          enderEmit:
+                            type: object
+                            properties:
+                              xLgr:
+                                type: string
+                              nro:
+                                type: string
+                              xCpl:
+                                type: string
+                              xBairro:
+                                type: string
+                              cMun:
+                                format: int64
+                                type: integer
+                              xMun:
+                                type: string
+                              uf:
+                                type: string
+                              cep:
+                                type: string
+                              cPais:
+                                format: int32
+                                type: integer
+                              xPais:
+                                type: string
+                              fone:
+                                format: int64
+                                type: integer
+                          ie:
+                            type: string
+                          iest:
+                            type: string
+                          im:
+                            type: string
+                          cnae:
+                            type: string
+                          crt:
+                            enum:
+                              - simplesNacional
+                              - simplesNacionalExcessoSublimite
+                              - regimeNormal
+                            type: string
+                      avulsa:
+                        type: object
+                        properties:
+                          cnpj:
+                            type: string
+                          xOrgao:
+                            type: string
+                          matr:
+                            type: string
+                          xAgente:
+                            type: string
+                          fone:
+                            type: string
+                          uf:
+                            type: string
+                          nDAR:
+                            type: string
+                          dEmi:
+                            type: string
+                          vDAR:
+                            format: double
+                            type: number
+                          repEmi:
+                            type: string
+                          dPag:
+                            type: string
+                      dest:
+                        type: object
+                        properties:
+                          cnpj:
+                            type: string
+                          cpf:
+                            type: string
+                          idEstrangeiro:
+                            type: string
+                          xNome:
+                            type: string
+                          enderDest:
+                            type: object
+                            properties:
+                              xLgr:
+                                type: string
+                              nro:
+                                type: string
+                              xCpl:
+                                type: string
+                              xBairro:
+                                type: string
+                              cMun:
+                                format: int64
+                                type: integer
+                              xMun:
+                                type: string
+                              uf:
+                                type: string
+                              cep:
+                                type: string
+                              cPais:
+                                format: int32
+                                type: integer
+                              xPais:
+                                type: string
+                              fone:
+                                format: int64
+                                type: integer
+                          indIEDest:
+                            enum:
+                              - contribuinteICMS
+                              - isento
+                              - naoContribuinte
+                            type: string
+                          ie:
+                            type: string
+                          isuf:
+                            type: string
+                          im:
+                            type: string
+                          email:
+                            type: string
+                      retirada:
+                        type: object
+                        properties:
+                          cnpj:
+                            type: string
+                          cpf:
+                            type: string
+                          xLgr:
+                            type: string
+                          nro:
+                            type: string
+                          xCpl:
+                            type: string
+                          xBairro:
+                            type: string
+                          cMun:
+                            format: int64
+                            type: integer
+                          xMun:
+                            type: string
+                          uf:
+                            type: string
+                      entrega:
+                        type: object
+                        properties:
+                          cnpj:
+                            type: string
+                          cpf:
+                            type: string
+                          xLgr:
+                            type: string
+                          nro:
+                            type: string
+                          xCpl:
+                            type: string
+                          xBairro:
+                            type: string
+                          cMun:
+                            format: int64
+                            type: integer
+                          xMun:
+                            type: string
+                          uf:
+                            type: string
+                      autXML:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            cnpj:
+                              type: string
+                            cpf:
+                              type: string
+                      det:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            nItem:
+                              format: int32
+                              type: integer
+                            prod:
+                              type: object
+                              properties:
+                                cProd:
+                                  type: string
+                                cEAN:
+                                  type: string
+                                xProd:
+                                  type: string
+                                ncm:
+                                  type: string
+                                nve:
+                                  type: array
+                                  items:
+                                    type: string
+                                cest:
+                                  type: string
+                                indEscala:
+                                  enum:
+                                    - s
+                                    - n
+                                  type: string
+                                indEscalaSpecified:
+                                  type: boolean
+                                  readOnly: true
+                                cnpjFab:
+                                  type: string
+                                cBenef:
+                                  type: string
+                                extipi:
+                                  type: string
+                                cfop:
+                                  format: int32
+                                  type: integer
+                                uCom:
+                                  type: string
+                                qCom:
+                                  format: double
+                                  type: number
+                                vUnCom:
+                                  format: double
+                                  type: number
+                                vProd:
+                                  format: double
+                                  type: number
+                                cEANTrib:
+                                  type: string
+                                uTrib:
+                                  type: string
+                                qTrib:
+                                  format: double
+                                  type: number
+                                vUnTrib:
+                                  format: double
+                                  type: number
+                                vFrete:
+                                  format: double
+                                  type: number
+                                vSeg:
+                                  format: double
+                                  type: number
+                                vDesc:
+                                  format: double
+                                  type: number
+                                vOutro:
+                                  format: double
+                                  type: number
+                                indTot:
+                                  enum:
+                                    - valorDoItemNaoCompoeTotalNF
+                                    - valorDoItemCompoeTotalNF
+                                  type: string
+                                di:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      nDI:
+                                        type: string
+                                      dDI:
+                                        format: date-time
+                                        type: string
+                                      proxydDI:
+                                        type: string
+                                      xLocDesemb:
+                                        type: string
+                                      ufDesemb:
+                                        type: string
+                                      dDesemb:
+                                        format: date-time
+                                        type: string
+                                      proxydDesemb:
+                                        type: string
+                                      tpViaTransp:
+                                        enum:
+                                          - maritima
+                                          - fluvial
+                                          - lacustre
+                                          - aerea
+                                          - postal
+                                          - ferroviaria
+                                          - rodoviaria
+                                          - condutoRedeTransmissão
+                                          - meiosProprios
+                                          - entradaSaidaficta
+                                          - courier
+                                          - handcarry
+                                        type: string
+                                      vAFRMM:
+                                        format: double
+                                        type: number
+                                      tpIntermedio:
+                                        enum:
+                                          - contaPropria
+                                          - contaeOrdem
+                                          - porEncomenda
+                                        type: string
+                                      cnpj:
+                                        type: string
+                                      ufTerceiro:
+                                        type: string
+                                      cExportador:
+                                        type: string
+                                      adi:
+                                        type: array
+                                        items:
+                                          type: object
+                                          properties:
+                                            nAdicao:
+                                              format: int32
+                                              type: integer
+                                            nSeqAdic:
+                                              format: int32
+                                              type: integer
+                                            cFabricante:
+                                              type: string
+                                            vDescDI:
+                                              format: double
+                                              type: number
+                                            nDraw:
+                                              type: string
+                                detExport:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      nDraw:
+                                        type: string
+                                      exportInd:
+                                        type: object
+                                        properties:
+                                          nRE:
+                                            type: string
+                                          chNFe:
+                                            type: string
+                                          qExport:
+                                            format: double
+                                            type: number
+                                xPed:
+                                  type: string
+                                nItemPed:
+                                  format: int32
+                                  type: integer
+                                nFCI:
+                                  type: string
+                                rastro:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      nLote:
+                                        type: string
+                                      qLote:
+                                        format: double
+                                        type: number
+                                      dFab:
+                                        format: date-time
+                                        type: string
+                                      proxydFab:
+                                        type: string
+                                      dVal:
+                                        format: date-time
+                                        type: string
+                                      proxydVal:
+                                        type: string
+                                      cAgreg:
+                                        type: string
+                                produtoEspecifico:
+                                  type: object
+                                  properties: {}
+                                nRECOPI:
+                                  type: string
+                            imposto:
+                              type: object
+                              properties:
+                                vTotTrib:
+                                  format: double
+                                  type: number
+                                icms:
+                                  type: object
+                                  properties:
+                                    tipoICMS:
+                                      type: object
+                                      properties: {}
+                                issqn:
+                                  type: object
+                                  properties:
+                                    vBC:
+                                      format: double
+                                      type: number
+                                    vAliq:
+                                      format: double
+                                      type: number
+                                    vISSQN:
+                                      format: double
+                                      type: number
+                                    cMunFG:
+                                      format: int64
+                                      type: integer
+                                    cListServ:
+                                      type: string
+                                    vDeducao:
+                                      format: double
+                                      type: number
+                                    vOutro:
+                                      format: double
+                                      type: number
+                                    vDescIncond:
+                                      format: double
+                                      type: number
+                                    vDescCond:
+                                      format: double
+                                      type: number
+                                    vISSRet:
+                                      format: double
+                                      type: number
+                                    indISS:
+                                      enum:
+                                        - iiExigivel
+                                        - iiNaoIncidencia
+                                        - iiIsencao
+                                        - iiExportacao
+                                        - iiImunidade
+                                        - iiExigSuspDecisaoJudicial
+                                        - iiExigSuspProcessoAdm
+                                      type: string
+                                    cServico:
+                                      type: string
+                                    cMun:
+                                      format: int64
+                                      type: integer
+                                    cPais:
+                                      format: int32
+                                      type: integer
+                                    nProcesso:
+                                      type: string
+                                    indIncentivo:
+                                      enum:
+                                        - iiSim
+                                        - iiNao
+                                      type: string
+                                ipi:
+                                  type: object
+                                  properties:
+                                    clEnq:
+                                      type: string
+                                    cnpjProd:
+                                      type: string
+                                    cSelo:
+                                      type: string
+                                    qSelo:
+                                      format: int32
+                                      type: integer
+                                    cEnq:
+                                      format: int32
+                                      type: integer
+                                    tipoIPI:
+                                      type: object
+                                      properties: {}
+                                ii:
+                                  type: object
+                                  properties:
+                                    vBC:
+                                      format: double
+                                      type: number
+                                    vDespAdu:
+                                      format: double
+                                      type: number
+                                    vII:
+                                      format: double
+                                      type: number
+                                    vIOF:
+                                      format: double
+                                      type: number
+                                pis:
+                                  type: object
+                                  properties:
+                                    tipoPIS:
+                                      type: object
+                                      properties: {}
+                                pisst:
+                                  type: object
+                                  properties:
+                                    vBC:
+                                      format: double
+                                      type: number
+                                    pPIS:
+                                      format: double
+                                      type: number
+                                    qBCProd:
+                                      format: double
+                                      type: number
+                                    vAliqProd:
+                                      format: double
+                                      type: number
+                                    vPIS:
+                                      format: double
+                                      type: number
+                                cofins:
+                                  type: object
+                                  properties:
+                                    tipoCOFINS:
+                                      type: object
+                                      properties: {}
+                                cofinsst:
+                                  type: object
+                                  properties:
+                                    vBC:
+                                      format: double
+                                      type: number
+                                    pCOFINS:
+                                      format: double
+                                      type: number
+                                    qBCProd:
+                                      format: double
+                                      type: number
+                                    vAliqProd:
+                                      format: double
+                                      type: number
+                                    vCOFINS:
+                                      format: double
+                                      type: number
+                                icmsufDest:
+                                  type: object
+                                  properties:
+                                    vBCUFDest:
+                                      format: double
+                                      type: number
+                                    vBCFCPUFDest:
+                                      format: double
+                                      type: number
+                                    vBCFCPUFDestSpecified:
+                                      type: boolean
+                                      readOnly: true
+                                    pFCPUFDest:
+                                      format: double
+                                      type: number
+                                    pICMSUFDest:
+                                      format: double
+                                      type: number
+                                    pICMSInter:
+                                      format: double
+                                      type: number
+                                    pICMSInterPart:
+                                      format: double
+                                      type: number
+                                    vFCPUFDest:
+                                      format: double
+                                      type: number
+                                    vICMSUFDest:
+                                      format: double
+                                      type: number
+                                    vICMSUFRemet:
+                                      format: double
+                                      type: number
+                            impostoDevol:
+                              type: object
+                              properties:
+                                pDevol:
+                                  format: double
+                                  type: number
+                                ipi:
+                                  type: object
+                                  properties:
+                                    vIPIDevol:
+                                      format: double
+                                      type: number
+                            infAdProd:
+                              type: string
+                      total:
+                        type: object
+                        properties:
+                          icmsTot:
+                            type: object
+                            properties:
+                              vBC:
+                                format: double
+                                type: number
+                              vICMS:
+                                format: double
+                                type: number
+                              vICMSDeson:
+                                format: double
+                                type: number
+                              vFCPUFDest:
+                                format: double
+                                type: number
+                              vICMSUFDest:
+                                format: double
+                                type: number
+                              vICMSUFRemet:
+                                format: double
+                                type: number
+                              vFCP:
+                                format: double
+                                type: number
+                              vFCPSpecified:
+                                type: boolean
+                                readOnly: true
+                              vBCST:
+                                format: double
+                                type: number
+                              vST:
+                                format: double
+                                type: number
+                              vFCPST:
+                                format: double
+                                type: number
+                              vFCPSTSpecified:
+                                type: boolean
+                                readOnly: true
+                              vFCPSTRet:
+                                format: double
+                                type: number
+                              vFCPSTRetSpecified:
+                                type: boolean
+                                readOnly: true
+                              vProd:
+                                format: double
+                                type: number
+                              vFrete:
+                                format: double
+                                type: number
+                              vSeg:
+                                format: double
+                                type: number
+                              vDesc:
+                                format: double
+                                type: number
+                              vII:
+                                format: double
+                                type: number
+                              vIPI:
+                                format: double
+                                type: number
+                              vIPIDevol:
+                                format: double
+                                type: number
+                              vIPIDevolSpecified:
+                                type: boolean
+                                readOnly: true
+                              vPIS:
+                                format: double
+                                type: number
+                              vCOFINS:
+                                format: double
+                                type: number
+                              vOutro:
+                                format: double
+                                type: number
+                              vNF:
+                                format: double
+                                type: number
+                              vTotTrib:
+                                format: double
+                                type: number
+                          issqNtot:
+                            type: object
+                            properties:
+                              vServ:
+                                format: double
+                                type: number
+                              vBC:
+                                format: double
+                                type: number
+                              vISS:
+                                format: double
+                                type: number
+                              vPIS:
+                                format: double
+                                type: number
+                              vCOFINS:
+                                format: double
+                                type: number
+                              dCompet:
+                                type: string
+                              vDeducao:
+                                format: double
+                                type: number
+                              vOutro:
+                                format: double
+                                type: number
+                              vDescIncond:
+                                format: double
+                                type: number
+                              vDescCond:
+                                format: double
+                                type: number
+                              vISSRet:
+                                format: double
+                                type: number
+                              cRegTrib:
+                                enum:
+                                  - tISSMicroempresaMunicipal
+                                  - rTISSEstimativa
+                                  - rTISSSociedadeProfissionais
+                                  - rTISSCooperativa
+                                  - rTISSMEI
+                                  - rTISSMEEPP
+                                type: string
+                          retTrib:
+                            type: object
+                            properties:
+                              vRetPIS:
+                                format: double
+                                type: number
+                              vRetCOFINS:
+                                format: double
+                                type: number
+                              vRetCSLL:
+                                format: double
+                                type: number
+                              vBCIRRF:
+                                format: double
+                                type: number
+                              vIRRF:
+                                format: double
+                                type: number
+                              vBCRetPrev:
+                                format: double
+                                type: number
+                              vRetPrev:
+                                format: double
+                                type: number
+                      transp:
+                        type: object
+                        properties:
+                          modFrete:
+                            enum:
+                              - mfContaEmitenteOumfContaRemetente
+                              - mfContaDestinatario
+                              - mfContaTerceiros
+                              - mfProprioContaRemente
+                              - mfProprioContaDestinatario
+                              - mfSemFrete
+                            type: string
+                          modFreteSpecified:
+                            type: boolean
+                            readOnly: true
+                          transporta:
+                            type: object
+                            properties:
+                              cnpj:
+                                type: string
+                              cpf:
+                                type: string
+                              xNome:
+                                type: string
+                              ie:
+                                type: string
+                              xEnder:
+                                type: string
+                              xMun:
+                                type: string
+                              uf:
+                                type: string
+                          retTransp:
+                            type: object
+                            properties:
+                              vServ:
+                                format: double
+                                type: number
+                              vBCRet:
+                                format: double
+                                type: number
+                              pICMSRet:
+                                format: double
+                                type: number
+                              vICMSRet:
+                                format: double
+                                type: number
+                              cfop:
+                                format: int32
+                                type: integer
+                              cMunFG:
+                                format: int64
+                                type: integer
+                          veicTransp:
+                            type: object
+                            properties:
+                              placa:
+                                type: string
+                              uf:
+                                type: string
+                              rntc:
+                                type: string
+                          reboque:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                placa:
+                                  type: string
+                                uf:
+                                  type: string
+                                rntc:
+                                  type: string
+                          vol:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                qVol:
+                                  format: int32
+                                  type: integer
+                                esp:
+                                  type: string
+                                marca:
+                                  type: string
+                                nVol:
+                                  type: string
+                                pesoL:
+                                  format: double
+                                  type: number
+                                pesoB:
+                                  format: double
+                                  type: number
+                                lacres:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      nLacre:
+                                        type: string
+                          vagao:
+                            type: string
+                          balsa:
+                            type: string
+                      cobr:
+                        type: object
+                        properties:
+                          fat:
+                            type: object
+                            properties:
+                              nFat:
+                                type: string
+                              vOrig:
+                                format: double
+                                type: number
+                              vDesc:
+                                format: double
+                                type: number
+                              vLiq:
+                                format: double
+                                type: number
+                          dup:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                nDup:
+                                  type: string
+                                dVenc:
+                                  format: date-time
+                                  type: string
+                                proxydVenc:
+                                  type: string
+                                vDup:
+                                  format: double
+                                  type: number
+                      pag:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            detPag:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  indPag:
+                                    enum:
+                                      - ipDetPgVista
+                                      - ipDetPgPrazo
+                                    type: string
+                                  indPagSpecified:
+                                    type: boolean
+                                    readOnly: true
+                                  tPag:
+                                    enum:
+                                      - fpDinheiro
+                                      - fpCheque
+                                      - fpCartaoCredito
+                                      - fpCartaoDebito
+                                      - fpCreditoLoja
+                                      - fpValeAlimentacao
+                                      - fpValeRefeicao
+                                      - fpValePresente
+                                      - fpValeCombustivel
+                                      - fpDuplicataMercantil
+                                      - fpBoletoBancario
+                                      - fpSemPagamento
+                                      - fpOutro
+                                    type: string
+                                  vPag:
+                                    format: double
+                                    type: number
+                                  card:
+                                    type: object
+                                    properties:
+                                      tpIntegra:
+                                        enum:
+                                          - tipIntegradoAutomacao
+                                          - tipNaoIntegrado
+                                        type: string
+                                      cnpj:
+                                        type: string
+                                      tBand:
+                                        enum:
+                                          - bcVisa
+                                          - bcMasterCard
+                                          - bcAmericanExpress
+                                          - bcSorocred
+                                          - bcDinersClub
+                                          - elo
+                                          - hipercard
+                                          - aura
+                                          - cabal
+                                          - bcOutros
+                                        type: string
+                                      cAut:
+                                        type: string
+                            vTroco:
+                              format: double
+                              type: number
+                            vTrocoSpecified:
+                              type: boolean
+                              readOnly: true
+                            tPag:
+                              enum:
+                                - fpDinheiro
+                                - fpCheque
+                                - fpCartaoCredito
+                                - fpCartaoDebito
+                                - fpCreditoLoja
+                                - fpValeAlimentacao
+                                - fpValeRefeicao
+                                - fpValePresente
+                                - fpValeCombustivel
+                                - fpDuplicataMercantil
+                                - fpBoletoBancario
+                                - fpSemPagamento
+                                - fpOutro
+                              type: string
+                            tPagSpecified:
+                              type: boolean
+                              readOnly: true
+                            vPag:
+                              format: double
+                              type: number
+                            vPagSpecified:
+                              type: boolean
+                              readOnly: true
+                            card:
+                              type: object
+                              properties:
+                                tpIntegra:
+                                  enum:
+                                    - tipIntegradoAutomacao
+                                    - tipNaoIntegrado
+                                  type: string
+                                cnpj:
+                                  type: string
+                                tBand:
+                                  enum:
+                                    - bcVisa
+                                    - bcMasterCard
+                                    - bcAmericanExpress
+                                    - bcSorocred
+                                    - bcDinersClub
+                                    - elo
+                                    - hipercard
+                                    - aura
+                                    - cabal
+                                    - bcOutros
+                                  type: string
+                                cAut:
+                                  type: string
+                      infAdic:
+                        type: object
+                        properties:
+                          infAdFisco:
+                            type: string
+                          infCpl:
+                            type: string
+                          obsCont:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                xCampo:
+                                  type: string
+                                xTexto:
+                                  type: string
+                          obsFisco:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                xCampo:
+                                  type: string
+                                xTexto:
+                                  type: string
+                          procRef:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                nProc:
+                                  type: string
+                                indProc:
+                                  enum:
+                                    - ipSEFAZ
+                                    - ipJusticaFederal
+                                    - ipJusticaEstadual
+                                    - ipSecexRFB
+                                    - ipOutros
+                                  type: string
+                      exporta:
+                        type: object
+                        properties:
+                          ufSaidaPais:
+                            type: string
+                          xLocExporta:
+                            type: string
+                          xLocDespacho:
+                            type: string
+                      compra:
+                        type: object
+                        properties:
+                          xNEmp:
+                            type: string
+                          xPed:
+                            type: string
+                          xCont:
+                            type: string
+                      cana:
+                        type: object
+                        properties:
+                          safra:
+                            type: string
+                          ref:
+                            type: string
+                          forDia:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                dia:
+                                  format: int32
+                                  type: integer
+                                qtde:
+                                  format: double
+                                  type: number
+                                qTotMes:
+                                  format: double
+                                  type: number
+                                qTotAnt:
+                                  format: double
+                                  type: number
+                                qTotGer:
+                                  format: double
+                                  type: number
+                          deduc:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                xDed:
+                                  type: string
+                                vDed:
+                                  format: double
+                                  type: number
+                                vFor:
+                                  format: double
+                                  type: number
+                                vTotDed:
+                                  format: double
+                                  type: number
+                                vLiqFor:
+                                  format: double
+                                  type: number
+                      infRespTec:
+                        type: object
+                        properties:
+                          cnpj:
+                            type: string
+                          xContato:
+                            type: string
+                          email:
+                            type: string
+                          fone:
+                            type: string
+                          idCSRT:
+                            type: string
+                          proxyidCSRT:
+                            type: string
+                          hashCSRT:
+                            type: string
+                  infNFeSupl:
+                    type: object
+                    properties:
+                      qrCode:
+                        type: string
+                      urlChave:
+                        type: string
+                  signature:
+                    type: object
+                    properties:
+                      signedInfo:
+                        type: object
+                        properties:
+                          canonicalizationMethod:
+                            type: object
+                            properties:
+                              algorithm:
+                                type: string
+                          signatureMethod:
+                            type: object
+                            properties:
+                              algorithm:
+                                type: string
+                          reference:
+                            type: object
+                            properties:
+                              uri:
+                                type: string
+                              transforms:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    algorithm:
+                                      type: string
+                              digestMethod:
+                                type: object
+                                properties:
+                                  algorithm:
+                                    type: string
+                              digestValue:
+                                type: string
+                      signatureValue:
+                        type: string
+                      keyInfo:
+                        type: object
+                        properties:
+                          x509Data:
+                            type: object
+                            properties:
+                              x509Certificate:
+                                type: string
+              protNFe:
+                type: object
+                properties:
+                  versao:
+                    type: string
+                  infProt:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      tpAmb:
+                        enum:
+                          - taProducao
+                          - taHomologacao
+                        type: string
+                      verAplic:
+                        type: string
+                      chNFe:
+                        type: string
+                      dhRecbto:
+                        format: date-time
+                        type: string
+                      proxyDhRecbto:
+                        type: string
+                      nProt:
+                        type: string
+                      digVal:
+                        type: string
+                      cStat:
+                        format: int32
+                        type: integer
+                      xMotivo:
+                        type: string
+                      signature:
+                        type: object
+                        properties:
+                          signedInfo:
+                            type: object
+                            properties:
+                              canonicalizationMethod:
+                                type: object
+                                properties:
+                                  algorithm:
+                                    type: string
+                              signatureMethod:
+                                type: object
+                                properties:
+                                  algorithm:
+                                    type: string
+                              reference:
+                                type: object
+                                properties:
+                                  uri:
+                                    type: string
+                                  transforms:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        algorithm:
+                                          type: string
+                                  digestMethod:
+                                    type: object
+                                    properties:
+                                      algorithm:
+                                        type: string
+                                  digestValue:
+                                    type: string
+                          signatureValue:
+                            type: string
+                          keyInfo:
+                            type: object
+                            properties:
+                              x509Data:
+                                type: object
+                                properties:
+                                  x509Certificate:
+                                    type: string
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Nota Fiscal não foi encontrada
+          schema:
+            type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+      security:
+        - Authorization_Header:
+            - apiKey
+        - Authorization_QueryParam:
+            - apiKey
+  /v2/productinvoices/events/{accessKey}:
+    get:
+      tags:
+        - ProductInvoicesV2
+      summary: Consulta de Eventos da Nota Fiscal Eletrônica na SEFAZ por Chave de Acesso
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2ProductinvoicesEventsByAccessKeyGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: accessKey
+          in: path
+          description: Chave de Acesso
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            type: object
+            properties:
+              events:
+                description: Lista de eventos vinculado à nota fiscal
+                type: array
+                items:
+                  required:
+                    - authorizedOn
+                    - description
+                  type: object
+                  properties:
+                    stateCode:
+                      format: int32
+                      description: "Órgão autor do registro do evento\r\nAC = 12,\r\nAL = 27,\r\nAM = 13,\r\nAP = 16,\r\nBA = 29,\r\nCE = 23,\r\nDF = 53,\r\nES = 32,\r\nGO = 52,\r\nMA = 21,\r\nMG = 31,\r\nMS = 50,\r\nMT = 51,\r\nPA = 15,\r\nPB = 25,\r\nPE = 26,\r\nPI = 22,\r\nPR = 41,\r\nRJ = 33,\r\nRN = 24,\r\nRR = 14,\r\nRS = 43,\r\nSC = 42,\r\nSE = 28,\r\nSP = 35,\r\nTO = 17,\r\nRO = 11,\r\nAN = 91, (Ambiente Nacional)"
+                      type: integer
+                    type:
+                      format: int32
+                      description: Código do Tipo do Evento
+                      type: integer
+                    sequence:
+                      format: int32
+                      description: Sequencial do evento para o mesmo tipo de evento (nSeqEvento)
+                      type: integer
+                    authorFederalTaxNumber:
+                      description: CNPJ/CPF do autor do evento
+                      type: string
+                    id:
+                      description: Identificador da TAG a ser assinada
+                      type: string
+                    protocol:
+                      format: int64
+                      description: Número do Protocolo do evento
+                      type: integer
+                    authorizedOn:
+                      format: date-time
+                      description: "Data de autorização da ocorrência/evento\r\n<remarks>\r\n    Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.\r\n</remarks>"
+                      type: string
+                    description:
+                      description: Descrição do Evento – “Cancelamento registrado”
+                      type: string
+              createdOn:
+                format: date-time
+                description: "Data de consulta\r\n<remarks>\r\n    Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.\r\n</remarks>"
+                type: string
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Nota Fiscal não foi encontrada
+          schema:
+            type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+      security:
+        - Authorization_Header:
+            - apiKey
+        - Authorization_QueryParam:
+            - apiKey
+securityDefinitions:
+  Authorization_Header:
+    name: Authorization
+    in: header
+    type: apiKey
+    description: 'Autenticar usando o Cabeçalho HTTP, exemplo: "X-NFE-ApiKey {APIKEY_TOKEN}"'
+  Authorization_QueryParam:
+    name: apikey
+    in: query
+    type: apiKey
+    description: 'Autenticar usando o Parametro na URL, exemplo: "/?apikey={APIKEY_TOKEN}"'

@@ -1,0 +1,237 @@
+/**
+ * Basic SDK functionality tests
+ */
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { NfeClient } from '../src/core/client';
+import {
+  NfeError,
+  AuthenticationError,
+  BadRequestError
+} from '../src/core/errors';
+
+// Helper to create mock Headers object (same as http-client.test.ts)
+function createMockHeaders(entries: [string, string][]): any {
+  const map = new Map(entries.map(([k, v]) => [k.toLowerCase(), v]));
+  return {
+    get: (key: string) => map.get(key.toLowerCase()) || null,
+    has: (key: string) => map.has(key.toLowerCase()),
+    entries: () => map.entries(),
+    keys: () => map.keys(),
+    values: () => map.values(),
+    forEach: (callback: (value: string, key: string) => void) => {
+      map.forEach((value, key) => callback(value, key));
+    },
+  };
+}
+
+describe('NfeClient Core', () => {
+  let client: NfeClient;
+
+  beforeEach(() => {
+    // Mock fetch globally
+    global.fetch = vi.fn();
+
+    client = new NfeClient({
+      apiKey: 'test-key',
+      environment: 'development'
+    });
+  });
+
+  it('should create client with valid config', () => {
+    expect(client).toBeInstanceOf(NfeClient);
+    const config = client.getConfig();
+    expect(config.apiKey).toBe('test-key');
+    expect(config.environment).toBe('development');
+  });
+
+  it('should throw error for invalid config', () => {
+    // Unset environment variable to ensure validation runs
+    const originalEnv = process.env.NFE_API_KEY;
+    delete process.env.NFE_API_KEY;
+
+    expect(() => {
+      new NfeClient({ apiKey: '' });
+    }).toThrow();
+
+    // Restore environment
+    if (originalEnv) process.env.NFE_API_KEY = originalEnv;
+  });
+
+  it('should use same URL for both environments', () => {
+    const productionClient = new NfeClient({
+      apiKey: 'test',
+      environment: 'production'
+    });
+    const developmentClient = new NfeClient({
+      apiKey: 'test',
+      environment: 'development'
+    });
+    // Both should use the same API endpoint
+    expect(productionClient.getConfig().baseUrl).toBe('https://api.nfe.io/v1');
+    expect(developmentClient.getConfig().baseUrl).toBe('https://api.nfe.io/v1');
+  });
+});
+
+describe('Error System', () => {
+  it('should create proper error hierarchy', () => {
+    const authError = new AuthenticationError('Invalid API key');
+    expect(authError).toBeInstanceOf(NfeError);
+    expect(authError).toBeInstanceOf(AuthenticationError);
+    expect(authError.type).toBe('AuthenticationError');
+    expect(authError.code).toBe(401);
+  });
+
+  it('should create bad request errors', () => {
+    const badRequest = new BadRequestError('Invalid data', {
+      field: 'Invalid field value'
+    });
+    expect(badRequest).toBeInstanceOf(BadRequestError);
+    expect(badRequest.type).toBe('ValidationError');
+    expect(badRequest.code).toBe(400);
+    expect(badRequest.details).toEqual({
+      field: 'Invalid field value'
+    });
+  });
+});
+
+describe('ServiceInvoices Resource', () => {
+  let client: NfeClient;
+
+  beforeEach(() => {
+    global.fetch = vi.fn();
+    client = new NfeClient({
+      apiKey: 'test-key',
+      environment: 'development'
+    });
+  });
+
+  it('should create service invoice', async () => {
+    const mockResponse = {
+      id: '123',
+      flowStatus: 'WaitingSend',
+      _links: {
+        self: { href: '/invoices/123' }
+      }
+    };
+
+    // Mock 201 response (synchronous invoice creation)
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      status: 201,
+      headers: createMockHeaders([
+        ['content-type', 'application/json']
+      ]),
+      json: () => Promise.resolve(mockResponse)
+    });
+
+    const result = await client.serviceInvoices.create('company-123', {
+      cityServiceCode: '12345',
+      description: 'Test service',
+      servicesAmount: 100.00
+    });
+
+    expect(result.status).toBe('immediate');
+    if (result.status === 'immediate') {
+      expect(result.invoice.id).toBe('123');
+      expect(result.invoice.flowStatus).toBe('WaitingSend');
+    }
+  });
+
+  it('should handle async polling', async () => {
+    const mockPendingResponse = {
+      id: '123',
+      flowStatus: 'WaitingSend'
+    };
+
+    const mockCompletedResponse = {
+      id: '123',
+      flowStatus: 'Issued',
+      rpsNumber: 1001
+    };
+
+    (global.fetch as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 202,
+        headers: createMockHeaders([['location', '/companies/company-123/serviceinvoices/123']]),
+        json: () => Promise.resolve(mockPendingResponse)
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: createMockHeaders([['content-type', 'application/json']]),
+        json: () => Promise.resolve(mockCompletedResponse)
+      });
+
+    const invoice = await client.serviceInvoices.createAndWait(
+      'company-123',
+      {
+        cityServiceCode: '12345',
+        description: 'Test service',
+        servicesAmount: 100.00
+      },
+      { maxAttempts: 2, interval: 100 }
+    );
+
+    expect(invoice.flowStatus).toBe('Issued');
+    expect(invoice.rpsNumber).toBe(1001);
+  });
+});
+
+describe('Companies Resource', () => {
+  let client: NfeClient;
+
+  beforeEach(() => {
+    global.fetch = vi.fn();
+    client = new NfeClient({
+      apiKey: 'test-key'
+    });
+  });
+
+  it('should list companies', async () => {
+    const mockResponse = {
+      companies: [
+        { id: '1', name: 'Company 1' },
+        { id: '2', name: 'Company 2' }
+      ]
+    };
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: createMockHeaders([['content-type', 'application/json']]),
+      json: () => Promise.resolve(mockResponse)
+    });
+
+    const companies = await client.companies.list();
+    expect(companies.data).toHaveLength(2);
+    expect(companies.data[0].name).toBe('Company 1');
+  });
+
+  it('should create company', async () => {
+    const mockResponse = {
+      companies: {
+        id: 'new-company-id',
+        name: 'Test Company',
+        email: 'test@company.com'
+      }
+    };
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      status: 201,
+      headers: createMockHeaders([['content-type', 'application/json']]),
+      json: () => Promise.resolve(mockResponse)
+    });
+
+    const company = await client.companies.create({
+      name: 'Test Company',
+      email: 'test@company.com',
+      federalTaxNumber: 12345678000276
+    });
+
+    expect(company.id).toBe('new-company-id');
+    expect(company.name).toBe('Test Company');
+  });
+});

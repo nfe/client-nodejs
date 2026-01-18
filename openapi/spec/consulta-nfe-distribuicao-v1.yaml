@@ -1,0 +1,1774 @@
+openapi: 3.0.0
+info:
+  title: Consulta de NF-e (Distribuição)
+  description: "# Introdução\nSeja bem-vindo a documentação da API de Consulta de NF-e (Distribuição)!\nNossa API foi criada utilizando o padrão REST que possibilita a integração de seu sistema ao nosso, sendo assim você também pode extender ou recriar as funcionalidades existentes na nossa plataforma, tudo isso consumindo a API que está documentada abaixo.\n\nEsta API tem como objetivo manipular o produto de consulta de NF-e. O processo tem como pré-requisitos o cadastro de uma empresa, na sequência o cadastro de um certificado A1 válido desta empresa, e o cadastro de um endpoint de webhook para você receber as notificações. Para mais detalhes de como cadastrar empresa, certificado e webhook, você pode ver nossa documentação da nota fiscal de produto, ou fazer o procedimento via dashboard da nfe.io. \n\nCom os pré-requisitos atendidos, o próximo passo é habilitar a busca automática e observar os webhooks chegando em seu endpoint cadastrado.\n\n\n# Como usar a API?\nLogo a seguir você encontrará todos os recursos e metódos suportados pela API, sendo que essa página possibilita que você teste os recursos e métodos diretamente através dela.\n\n# Autenticação\nVocê precisa de uma chave de API (API Key) para identificar a conta que está realizando solicitações para a API. \nPara isso você deve colocar sua chave de API no campo que se encontra no topo desta página para que os métodos funcionem corretamente.\nNo seu código de integração temos suporte para autenticação de diversas formas sendo eles: \nHTTP Header (Authorization ou X-NFEIO-APIKEY) ou HTTP Query String (api_key) nos dois modos passando o valor da sua chave de api (API Key).\n"
+  contact: {}
+  version: "1.0"
+servers:
+  - url: https://api.nfse.io/v2/companies/{company_id}/inbound
+    variables:
+      company_id:
+        default: <string>
+        description: '(Required) '
+paths:
+  /{access_key}/xml:
+    get:
+      tags:
+        - xml
+      summary: Obter o XML de um CT-e ou NF-e pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      operationId: ObteroXMLdeumCT-eouNF-epelachavedeacessode44dígitos
+      parameters:
+        - name: access_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /{access_key}/events/{event_key}/xml:
+    get:
+      tags:
+        - xml
+      summary: Obter o XML de um evento ref. a um CT-e ou NF-e pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      operationId: ObteroXMLdeumeventoref.aumCT-eouNF-epelachavedeacessode44dígitos
+      parameters:
+        - name: access_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: event_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /{access_key}/pdf:
+    get:
+      tags:
+        - pdf
+      summary: Obter o PDF de uma NF-e pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      operationId: ObteroPDFdeumaNF-epelachavedeacessode44dígitos
+      parameters:
+        - name: access_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /{access_key}/events/{event_key}:
+    get:
+      tags:
+        - '{event_key}'
+      summary: Obter os detalhes de um evento ref. a um CT-e ou NF-e pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      operationId: Obterosdetalhesdeumeventoref.aumCT-eouNF-epelachavedeacessode44dígitos
+      parameters:
+        - name: access_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: event_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Sucessonarequisio'
+                  - example:
+                      id: <string>
+                      createdOn: <dateTime>
+                      accessKey: <string>
+                      parentAccessKey: <string>
+                      company:
+                        id: <string>
+                        federalTaxNumber: <string>
+                      issuer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      buyer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      transportation:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      links:
+                        xml: <string>
+                        pdf: <string>
+                      xmlUrl: <string>
+                      federalTaxNumberSender: <string>
+                      nameSender: <string>
+                      type: null
+                      nsu: <string>
+                      nsuParent: <string>
+                      nfeNumber: <string>
+                      nfeSerialNumber: <string>
+                      issuedOn: <dateTime>
+                      description: <string>
+                      totalInvoiceAmount: <string>
+                      operationType: null
+              example:
+                id: <string>
+                createdOn: <dateTime>
+                accessKey: <string>
+                parentAccessKey: <string>
+                company:
+                  id: <string>
+                  federalTaxNumber: <string>
+                issuer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                buyer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                transportation:
+                  federalTaxNumber: <string>
+                  name: <string>
+                links:
+                  xml: <string>
+                  pdf: <string>
+                xmlUrl: <string>
+                federalTaxNumberSender: <string>
+                nameSender: <string>
+                type: null
+                nsu: <string>
+                nsuParent: <string>
+                nfeNumber: <string>
+                nfeSerialNumber: <string>
+                issuedOn: <dateTime>
+                description: <string>
+                totalInvoiceAmount: <string>
+                operationType: null
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /productinvoice/{access_key}/events/{event_key}:
+    get:
+      tags:
+        - '{event_key}'
+      summary: Obter os detalhes de um evento ref. a um CT-e ou NF-e pela chave de acesso de 44 dígitos1
+      description: Você precisará da APIKEY para utilização
+      operationId: Obterosdetalhesdeumeventoref.aumCT-eouNF-epelachavedeacessode44dígitos1
+      parameters:
+        - name: access_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: event_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Sucessonarequisio6'
+                  - example:
+                      id: <string>
+                      createdOn: <dateTime>
+                      accessKey: <string>
+                      parentAccessKey: <string>
+                      productInvoices:
+                        - accessKey: <string>
+                        - accessKey: <string>
+                      company:
+                        id: <string>
+                        federalTaxNumber: <string>
+                      issuer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      buyer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      transportation:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      type: null
+                      nsu: <long>
+                      nfeNumber: <long>
+                      issuedOn: <dateTime>
+                      description: <string>
+                      xmlUrl: <string>
+                      federalTaxNumberSender: <string>
+                      nameSender: <string>
+                      totalInvoiceAmount: <string>
+                      links:
+                        xml: <string>
+                        pdf: <string>
+              example:
+                id: <string>
+                createdOn: <dateTime>
+                accessKey: <string>
+                parentAccessKey: <string>
+                productInvoices:
+                  - accessKey: <string>
+                  - accessKey: <string>
+                company:
+                  id: <string>
+                  federalTaxNumber: <string>
+                issuer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                buyer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                transportation:
+                  federalTaxNumber: <string>
+                  name: <string>
+                type: null
+                nsu: <long>
+                nfeNumber: <long>
+                issuedOn: <dateTime>
+                description: <string>
+                xmlUrl: <string>
+                federalTaxNumberSender: <string>
+                nameSender: <string>
+                totalInvoiceAmount: <string>
+                links:
+                  xml: <string>
+                  pdf: <string>
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /{access_key}/manifest:
+    post:
+      tags:
+        - manifest
+      summary: Enviar o evento de ciência da operação pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      operationId: Enviaroeventodeciênciadaoperaçãopelachavedeacessode44dígitos
+      parameters:
+        - name: tpEvent
+          in: query
+          description: Informar o tipo do evento de manifestação do destinatário (default = 210210 "Ciência da Operação)
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: integer
+            format: int32
+            example: 210210
+        - name: access_key
+          in: path
+          description: (Required) Informar a chave de acesso da nota
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /{access_key}:
+    get:
+      tags:
+        - '{access_key}'
+      summary: Obter os detalhes de um CT-e ou NF-e (webhook v1) pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      operationId: ObterosdetalhesdeumCT-eouNF-e(webhookv1)pelachavedeacessode44dígitos
+      parameters:
+        - name: access_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Sucessonarequisio'
+                  - example:
+                      id: <string>
+                      createdOn: <dateTime>
+                      accessKey: <string>
+                      parentAccessKey: <string>
+                      company:
+                        id: <string>
+                        federalTaxNumber: <string>
+                      issuer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      buyer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      transportation:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      links:
+                        xml: <string>
+                        pdf: <string>
+                      xmlUrl: <string>
+                      federalTaxNumberSender: <string>
+                      nameSender: <string>
+                      type: null
+                      nsu: <string>
+                      nsuParent: <string>
+                      nfeNumber: <string>
+                      nfeSerialNumber: <string>
+                      issuedOn: <dateTime>
+                      description: <string>
+                      totalInvoiceAmount: <string>
+                      operationType: null
+              example:
+                id: <string>
+                createdOn: <dateTime>
+                accessKey: <string>
+                parentAccessKey: <string>
+                company:
+                  id: <string>
+                  federalTaxNumber: <string>
+                issuer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                buyer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                transportation:
+                  federalTaxNumber: <string>
+                  name: <string>
+                links:
+                  xml: <string>
+                  pdf: <string>
+                xmlUrl: <string>
+                federalTaxNumberSender: <string>
+                nameSender: <string>
+                type: null
+                nsu: <string>
+                nsuParent: <string>
+                nfeNumber: <string>
+                nfeSerialNumber: <string>
+                issuedOn: <dateTime>
+                description: <string>
+                totalInvoiceAmount: <string>
+                operationType: null
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /productinvoice/{access_key}:
+    get:
+      tags:
+        - '{access_key}'
+      summary: Obter os detalhes de uma NF-e (webhook v2) pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      operationId: ObterosdetalhesdeumaNF-e(webhookv2)pelachavedeacessode44dígitos
+      parameters:
+        - name: access_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Sucessonarequisio'
+                  - example:
+                      id: <string>
+                      createdOn: <dateTime>
+                      accessKey: <string>
+                      parentAccessKey: <string>
+                      company:
+                        id: <string>
+                        federalTaxNumber: <string>
+                      issuer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      buyer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      transportation:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      links:
+                        xml: <string>
+                        pdf: <string>
+                      xmlUrl: <string>
+                      federalTaxNumberSender: <string>
+                      nameSender: <string>
+                      type: null
+                      nsu: <string>
+                      nsuParent: <string>
+                      nfeNumber: <string>
+                      nfeSerialNumber: <string>
+                      issuedOn: <dateTime>
+                      description: <string>
+                      totalInvoiceAmount: <string>
+                      operationType: null
+              example:
+                id: <string>
+                createdOn: <dateTime>
+                accessKey: <string>
+                parentAccessKey: <string>
+                company:
+                  id: <string>
+                  federalTaxNumber: <string>
+                issuer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                buyer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                transportation:
+                  federalTaxNumber: <string>
+                  name: <string>
+                links:
+                  xml: <string>
+                  pdf: <string>
+                xmlUrl: <string>
+                federalTaxNumberSender: <string>
+                nameSender: <string>
+                type: null
+                nsu: <string>
+                nsuParent: <string>
+                nfeNumber: <string>
+                nfeSerialNumber: <string>
+                issuedOn: <dateTime>
+                description: <string>
+                totalInvoiceAmount: <string>
+                operationType: null
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /productinvoices:
+    post:
+      tags:
+        - productinvoices
+      summary: Ativar busca automática de documentos e Eventos relacionados a Nota Fiscal Eletrônica (NF-e)
+      description: Você precisará do APIKEY para utilização
+      operationId: AtivarbuscaautomáticadedocumentoseEventosrelacionadosaNotaFiscalEletrônica(NF-e)
+      parameters:
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        description: ""
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AtivarbuscaautomticadedocumentoseEventosrelacionadosaNotaFiscalEletrnicaNF-eRequest'
+                - example:
+                    startFromNsu: "999999"
+                    startFromDate: <dateTime>
+                    environmentSEFAZ: Production
+                    automaticManifesting:
+                      minutesToWaitAwarenessOperation: "30"
+                    webhookVersion: "2"
+            example:
+              startFromNsu: "999999"
+              startFromDate: <dateTime>
+              environmentSEFAZ: Production
+              automaticManifesting:
+                minutesToWaitAwarenessOperation: "30"
+              webhookVersion: "2"
+        required: true
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Sucessonarequisio2'
+                  - example:
+                      startFromNsu: <long>
+                      startFromDate: <dateTime>
+                      environmentSEFAZ: null
+                      automaticManifesting:
+                        minutesToWaitAwarenessOperation: <integer>
+                      webhookVersion: <integer>
+                      companyId: <string>
+                      status: null
+                      createdOn: <dateTime>
+                      modifiedOn: <dateTime>
+              example:
+                startFromNsu: <long>
+                startFromDate: <dateTime>
+                environmentSEFAZ: null
+                automaticManifesting:
+                  minutesToWaitAwarenessOperation: <integer>
+                webhookVersion: <integer>
+                companyId: <string>
+                status: null
+                createdOn: <dateTime>
+                modifiedOn: <dateTime>
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+    delete:
+      tags:
+        - productinvoices
+      summary: Desativar busca automática de documentos e Eventos relacionados a Nota Fiscal Eletrônica (NF-e)
+      description: Você precisará do APIKEY para utilização
+      operationId: DesativarbuscaautomáticadedocumentoseEventosrelacionadosaNotaFiscalEletrônica(NF-e)
+      parameters:
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Sucessonarequisio2'
+                  - example:
+                      startFromNsu: <long>
+                      startFromDate: <dateTime>
+                      environmentSEFAZ: null
+                      automaticManifesting:
+                        minutesToWaitAwarenessOperation: <integer>
+                      webhookVersion: <integer>
+                      companyId: <string>
+                      status: null
+                      createdOn: <dateTime>
+                      modifiedOn: <dateTime>
+              example:
+                startFromNsu: <long>
+                startFromDate: <dateTime>
+                environmentSEFAZ: null
+                automaticManifesting:
+                  minutesToWaitAwarenessOperation: <integer>
+                webhookVersion: <integer>
+                companyId: <string>
+                status: null
+                createdOn: <dateTime>
+                modifiedOn: <dateTime>
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+    get:
+      tags:
+        - productinvoices
+      summary: Obter detalhes da parametrização do serviço de distribuição (NF-e)
+      description: Você precisará do APIKEY para utilização
+      operationId: Obterdetalhesdaparametrizaçãodoserviçodedistribuição(NF-e)
+      parameters:
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Sucessonarequisio2'
+                  - example:
+                      startFromNsu: <long>
+                      startFromDate: <dateTime>
+                      environmentSEFAZ: null
+                      automaticManifesting:
+                        minutesToWaitAwarenessOperation: <integer>
+                      webhookVersion: <integer>
+                      companyId: <string>
+                      status: null
+                      createdOn: <dateTime>
+                      modifiedOn: <dateTime>
+              example:
+                startFromNsu: <long>
+                startFromDate: <dateTime>
+                environmentSEFAZ: null
+                automaticManifesting:
+                  minutesToWaitAwarenessOperation: <integer>
+                webhookVersion: <integer>
+                companyId: <string>
+                status: null
+                createdOn: <dateTime>
+                modifiedOn: <dateTime>
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /productinvoice/{access_key}/json:
+    get:
+      tags:
+        - json
+      summary: Obter o json de uma NF-e pela chave de acesso de 44 dígitos
+      description: Você precisará da APIKEY para utilização
+      operationId: ObterojsondeumaNF-epelachavedeacessode44dígitos
+      parameters:
+        - name: access_key
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Sucessonarequisio'
+                  - example:
+                      id: <string>
+                      createdOn: <dateTime>
+                      accessKey: <string>
+                      parentAccessKey: <string>
+                      company:
+                        id: <string>
+                        federalTaxNumber: <string>
+                      issuer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      buyer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      transportation:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      links:
+                        xml: <string>
+                        pdf: <string>
+                      xmlUrl: <string>
+                      federalTaxNumberSender: <string>
+                      nameSender: <string>
+                      type: null
+                      nsu: <string>
+                      nsuParent: <string>
+                      nfeNumber: <string>
+                      nfeSerialNumber: <string>
+                      issuedOn: <dateTime>
+                      description: <string>
+                      totalInvoiceAmount: <string>
+                      operationType: null
+              example:
+                id: <string>
+                createdOn: <dateTime>
+                accessKey: <string>
+                parentAccessKey: <string>
+                company:
+                  id: <string>
+                  federalTaxNumber: <string>
+                issuer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                buyer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                transportation:
+                  federalTaxNumber: <string>
+                  name: <string>
+                links:
+                  xml: <string>
+                  pdf: <string>
+                xmlUrl: <string>
+                federalTaxNumberSender: <string>
+                nameSender: <string>
+                type: null
+                nsu: <string>
+                nsuParent: <string>
+                nfeNumber: <string>
+                nfeSerialNumber: <string>
+                issuedOn: <dateTime>
+                description: <string>
+                totalInvoiceAmount: <string>
+                operationType: null
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+  /productinvoice/{access_key_or_nsu}/processwebhook:
+    post:
+      tags:
+        - processwebhook
+      summary: Reprocessar o webhook pela chave de acesso de 44 dígitos ou pelo NSU
+      description: Você precisará da APIKEY para utilização
+      operationId: Reprocessarowebhookpelachavedeacessode44dígitosoupeloNSU
+      parameters:
+        - name: access_key_or_nsu
+          in: path
+          description: (Required)
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: <string>
+        - name: Accept
+          in: header
+          description: ""
+          required: true
+          style: simple
+          schema:
+            type: string
+            example: application/json
+      responses:
+        "200":
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Sucessonarequisio6'
+                  - example:
+                      id: <string>
+                      createdOn: <dateTime>
+                      accessKey: <string>
+                      parentAccessKey: <string>
+                      productInvoices:
+                        - accessKey: <string>
+                        - accessKey: <string>
+                      company:
+                        id: <string>
+                        federalTaxNumber: <string>
+                      issuer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      buyer:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      transportation:
+                        federalTaxNumber: <string>
+                        name: <string>
+                      type: null
+                      nsu: <long>
+                      nfeNumber: <long>
+                      issuedOn: <dateTime>
+                      description: <string>
+                      xmlUrl: <string>
+                      federalTaxNumberSender: <string>
+                      nameSender: <string>
+                      totalInvoiceAmount: <string>
+                      links:
+                        xml: <string>
+                        pdf: <string>
+              example:
+                id: <string>
+                createdOn: <dateTime>
+                accessKey: <string>
+                parentAccessKey: <string>
+                productInvoices:
+                  - accessKey: <string>
+                  - accessKey: <string>
+                company:
+                  id: <string>
+                  federalTaxNumber: <string>
+                issuer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                buyer:
+                  federalTaxNumber: <string>
+                  name: <string>
+                transportation:
+                  federalTaxNumber: <string>
+                  name: <string>
+                type: null
+                nsu: <long>
+                nfeNumber: <long>
+                issuedOn: <dateTime>
+                description: <string>
+                xmlUrl: <string>
+                federalTaxNumberSender: <string>
+                nameSender: <string>
+                totalInvoiceAmount: <string>
+                links:
+                  xml: <string>
+                  pdf: <string>
+        "400":
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "401":
+          description: Unauthorized
+          headers: {}
+          content: {}
+        "403":
+          description: Forbidden
+          headers: {}
+          content: {}
+        "404":
+          description: Not Found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+        "500":
+          description: Internal Server Error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                example: <string>
+              example: <string>
+      deprecated: false
+components:
+  schemas:
+    Sucessonarequisio:
+      title: Sucessonarequisio
+      required:
+        - id
+        - createdOn
+        - accessKey
+        - parentAccessKey
+        - company
+        - issuer
+        - buyer
+        - transportation
+        - links
+        - xmlUrl
+        - federalTaxNumberSender
+        - nameSender
+        - type
+        - nsu
+        - nsuParent
+        - nfeNumber
+        - nfeSerialNumber
+        - issuedOn
+        - description
+        - totalInvoiceAmount
+        - operationType
+      type: object
+      properties:
+        id:
+          type: string
+        createdOn:
+          type: string
+        accessKey:
+          type: string
+        parentAccessKey:
+          type: string
+        company:
+          $ref: '#/components/schemas/Company'
+        issuer:
+          $ref: '#/components/schemas/Issuer'
+        buyer:
+          $ref: '#/components/schemas/Buyer'
+        transportation:
+          $ref: '#/components/schemas/Transportation'
+        links:
+          $ref: '#/components/schemas/Links'
+        xmlUrl:
+          type: string
+        federalTaxNumberSender:
+          type: string
+        nameSender:
+          type: string
+        type:
+          type: string
+          nullable: true
+        nsu:
+          type: string
+        nsuParent:
+          type: string
+        nfeNumber:
+          type: string
+        nfeSerialNumber:
+          type: string
+        issuedOn:
+          type: string
+        description:
+          type: string
+        totalInvoiceAmount:
+          type: string
+        operationType:
+          type: string
+          nullable: true
+      example:
+        id: <string>
+        createdOn: <dateTime>
+        accessKey: <string>
+        parentAccessKey: <string>
+        company:
+          id: <string>
+          federalTaxNumber: <string>
+        issuer:
+          federalTaxNumber: <string>
+          name: <string>
+        buyer:
+          federalTaxNumber: <string>
+          name: <string>
+        transportation:
+          federalTaxNumber: <string>
+          name: <string>
+        links:
+          xml: <string>
+          pdf: <string>
+        xmlUrl: <string>
+        federalTaxNumberSender: <string>
+        nameSender: <string>
+        type: null
+        nsu: <string>
+        nsuParent: <string>
+        nfeNumber: <string>
+        nfeSerialNumber: <string>
+        issuedOn: <dateTime>
+        description: <string>
+        totalInvoiceAmount: <string>
+        operationType: null
+    Company:
+      title: Company
+      required:
+        - id
+        - federalTaxNumber
+      type: object
+      properties:
+        id:
+          type: string
+        federalTaxNumber:
+          type: string
+      example:
+        id: <string>
+        federalTaxNumber: <string>
+    Issuer:
+      title: Issuer
+      required:
+        - federalTaxNumber
+        - name
+      type: object
+      properties:
+        federalTaxNumber:
+          type: string
+        name:
+          type: string
+      example:
+        federalTaxNumber: <string>
+        name: <string>
+    Buyer:
+      title: Buyer
+      required:
+        - federalTaxNumber
+        - name
+      type: object
+      properties:
+        federalTaxNumber:
+          type: string
+        name:
+          type: string
+      example:
+        federalTaxNumber: <string>
+        name: <string>
+    Transportation:
+      title: Transportation
+      required:
+        - federalTaxNumber
+        - name
+      type: object
+      properties:
+        federalTaxNumber:
+          type: string
+        name:
+          type: string
+      example:
+        federalTaxNumber: <string>
+        name: <string>
+    Links:
+      title: Links
+      required:
+        - xml
+        - pdf
+      type: object
+      properties:
+        xml:
+          type: string
+        pdf:
+          type: string
+      example:
+        xml: <string>
+        pdf: <string>
+    AtivarbuscaautomticadedocumentoseEventosrelacionadosaNotaFiscalEletrnicaNF-eRequest:
+      title: AtivarbuscaautomticadedocumentoseEventosrelacionadosaNotaFiscalEletrnicaNF-eRequest
+      required:
+        - startFromNsu
+        - startFromDate
+        - environmentSEFAZ
+        - automaticManifesting
+        - webhookVersion
+      type: object
+      properties:
+        startFromNsu:
+          type: string
+        startFromDate:
+          type: string
+        environmentSEFAZ:
+          type: string
+        automaticManifesting:
+          $ref: '#/components/schemas/AutomaticManifesting'
+        webhookVersion:
+          type: string
+      example:
+        startFromNsu: "999999"
+        startFromDate: <dateTime>
+        environmentSEFAZ: Production
+        automaticManifesting:
+          minutesToWaitAwarenessOperation: "30"
+        webhookVersion: "2"
+    AutomaticManifesting:
+      title: AutomaticManifesting
+      required:
+        - minutesToWaitAwarenessOperation
+      type: object
+      properties:
+        minutesToWaitAwarenessOperation:
+          type: string
+      example:
+        minutesToWaitAwarenessOperation: "30"
+    Sucessonarequisio2:
+      title: Sucessonarequisio2
+      required:
+        - startFromNsu
+        - startFromDate
+        - environmentSEFAZ
+        - automaticManifesting
+        - webhookVersion
+        - companyId
+        - status
+        - createdOn
+        - modifiedOn
+      type: object
+      properties:
+        startFromNsu:
+          type: string
+        startFromDate:
+          type: string
+        environmentSEFAZ:
+          type: string
+          nullable: true
+        automaticManifesting:
+          $ref: '#/components/schemas/AutomaticManifesting'
+        webhookVersion:
+          type: string
+        companyId:
+          type: string
+        status:
+          type: string
+          nullable: true
+        createdOn:
+          type: string
+        modifiedOn:
+          type: string
+      example:
+        startFromNsu: <long>
+        startFromDate: <dateTime>
+        environmentSEFAZ: null
+        automaticManifesting:
+          minutesToWaitAwarenessOperation: <integer>
+        webhookVersion: <integer>
+        companyId: <string>
+        status: null
+        createdOn: <dateTime>
+        modifiedOn: <dateTime>
+    Sucessonarequisio6:
+      title: Sucessonarequisio6
+      required:
+        - id
+        - createdOn
+        - accessKey
+        - parentAccessKey
+        - productInvoices
+        - company
+        - issuer
+        - buyer
+        - transportation
+        - type
+        - nsu
+        - nfeNumber
+        - issuedOn
+        - description
+        - xmlUrl
+        - federalTaxNumberSender
+        - nameSender
+        - totalInvoiceAmount
+        - links
+      type: object
+      properties:
+        id:
+          type: string
+        createdOn:
+          type: string
+        accessKey:
+          type: string
+        parentAccessKey:
+          type: string
+        productInvoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductInvoice'
+          description: ""
+        company:
+          $ref: '#/components/schemas/Company'
+        issuer:
+          $ref: '#/components/schemas/Issuer'
+        buyer:
+          $ref: '#/components/schemas/Buyer'
+        transportation:
+          $ref: '#/components/schemas/Transportation'
+        type:
+          type: string
+          nullable: true
+        nsu:
+          type: string
+        nfeNumber:
+          type: string
+        issuedOn:
+          type: string
+        description:
+          type: string
+        xmlUrl:
+          type: string
+        federalTaxNumberSender:
+          type: string
+        nameSender:
+          type: string
+        totalInvoiceAmount:
+          type: string
+        links:
+          $ref: '#/components/schemas/Links'
+      example:
+        id: <string>
+        createdOn: <dateTime>
+        accessKey: <string>
+        parentAccessKey: <string>
+        productInvoices:
+          - accessKey: <string>
+          - accessKey: <string>
+        company:
+          id: <string>
+          federalTaxNumber: <string>
+        issuer:
+          federalTaxNumber: <string>
+          name: <string>
+        buyer:
+          federalTaxNumber: <string>
+          name: <string>
+        transportation:
+          federalTaxNumber: <string>
+          name: <string>
+        type: null
+        nsu: <long>
+        nfeNumber: <long>
+        issuedOn: <dateTime>
+        description: <string>
+        xmlUrl: <string>
+        federalTaxNumberSender: <string>
+        nameSender: <string>
+        totalInvoiceAmount: <string>
+        links:
+          xml: <string>
+          pdf: <string>
+    ProductInvoice:
+      title: ProductInvoice
+      required:
+        - accessKey
+      type: object
+      properties:
+        accessKey:
+          type: string
+      example:
+        accessKey: <string>
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: Authorization
+      in: header
+security:
+  - apiKey: []
+tags:
+  - name: xml
+  - name: pdf
+  - name: '{event_key}'
+  - name: manifest
+  - name: '{access_key}'
+  - name: productinvoices
+  - name: json
+  - name: processwebhook

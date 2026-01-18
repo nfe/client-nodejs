@@ -1,0 +1,851 @@
+openapi: 3.0.1
+info:
+  title: Cálculo de Impostos
+  description: "# Introdução\r\n\r\nSeja bem-vindo a documentação da API de Cálculo de Impostos!\r\nNossa API foi criada utilizando o padrão REST que possibilita a integração de seu sistema ao nosso, sendo assim você também pode extender ou recriar as funcionalidades existentes na nossa plataforma, tudo isso consumindo a API que está documentada abaixo.\r\n\r\n# Como usar a API?\r\nLogo a seguir você encontrará todos os recursos e métodos suportados pela API, sendo que essa página possibilita que você teste os recursos e métodos diretamente através dela.\r\n\r\n# Autenticação\r\nVocê precisa de uma chave de API (API Key) para identificar a conta que está realizando solicitações para a API.\r\nPara isso você deve colocar sua chave de API no campo que se encontra no topo desta página para que os métodos funcionem corretamente.\r\nNo seu código de integração temos suporte para autenticação de diversas formas sendo eles:\r\nHTTP Header (Authorization ou X-NFEIO-APIKEY) ou HTTP Query String (api_key) nos dois modos passando o valor da sua chave de api (API Key)."
+  version: v1
+paths:
+  /tax-codes/operation-code:
+    get:
+      tags:
+        - Códigos Auxiliares
+      summary: Listar Códigos de Operação
+      parameters:
+        - name: pageIndex
+          in: query
+          description: Índice da página para paginação
+          schema:
+            type: integer
+            format: int32
+            default: 1
+        - name: pageCount
+          in: query
+          description: Número de itens por página
+          schema:
+            type: integer
+            format: int32
+            default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxCodePaginatedResponse'
+  /tax-codes/acquisition-purpose:
+    get:
+      tags:
+        - Códigos Auxiliares
+      summary: Listar Finalidades de Aquisição
+      parameters:
+        - name: pageIndex
+          in: query
+          description: Índice da página para paginação
+          schema:
+            type: integer
+            format: int32
+            default: 1
+        - name: pageCount
+          in: query
+          description: Número de itens por página
+          schema:
+            type: integer
+            format: int32
+            default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxCodePaginatedResponse'
+  /tax-codes/issuer-tax-profile:
+    get:
+      tags:
+        - Códigos Auxiliares
+      summary: Listar Perfis Fiscais do Emissor
+      parameters:
+        - name: pageIndex
+          in: query
+          description: Índice da página para paginação
+          schema:
+            type: integer
+            format: int32
+            default: 1
+        - name: pageCount
+          in: query
+          description: Número de itens por página
+          schema:
+            type: integer
+            format: int32
+            default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxCodePaginatedResponse'
+  /tax-codes/recipient-tax-profile:
+    get:
+      tags:
+        - Códigos Auxiliares
+      summary: Listar Perfis Fiscais do Destinatário
+      parameters:
+        - name: pageIndex
+          in: query
+          description: Índice da página para paginação
+          schema:
+            type: integer
+            format: int32
+            default: 1
+        - name: pageCount
+          in: query
+          description: Número de itens por página
+          schema:
+            type: integer
+            format: int32
+            default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxCodePaginatedResponse'
+  /tax-rules/{tenantId}/engine/calculate:
+    post:
+      tags:
+        - Motor de Cálculo
+      summary: Calcula os impostos de uma operação.
+      parameters:
+        - name: tenantId
+          in: path
+          description: O identificador da conta.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: A solicitação contendo os detalhes da operação e produtos.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateRequest'
+          application/jose:
+            schema:
+              $ref: '#/components/schemas/CalculateRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateResponse'
+            application/jose:
+              schema:
+                $ref: '#/components/schemas/CalculateResponse'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/jose:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "422":
+          description: Unprocessable Content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/jose:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+components:
+  schemas:
+    CalculateItemRequest:
+      required:
+        - id
+        - operationCode
+        - origin
+        - quantity
+        - unitAmount
+      type: object
+      properties:
+        id:
+          minLength: 1
+          type: string
+          description: Identificador do Item
+        operationCode:
+          maximum: 9999
+          minimum: 1
+          type: integer
+          description: Código interno para determinação de natureza de operação
+          format: int32
+        acquisitionPurpose:
+          type: string
+          description: Finalidade
+          nullable: true
+        issuerTaxProfile:
+          type: string
+          description: Perfil do Emitente para Cálculo de Impostos do Item
+          nullable: true
+        recipientTaxProfile:
+          type: string
+          description: Perfil do Tomador para Cálculo de Impostos do Item
+          nullable: true
+        sku:
+          type: string
+          description: Código do Produto
+          nullable: true
+        ncm:
+          maxLength: 8
+          minLength: 0
+          type: string
+          description: Nomenclatura Comum do Mercosul
+          nullable: true
+        cest:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Código Especificador da Substituição Tributária
+          nullable: true
+        benefit:
+          type: string
+          description: Código do benefício fiscal
+          nullable: true
+        exTipi:
+          maxLength: 3
+          minLength: 1
+          type: string
+          description: Código EX da TIPI
+          nullable: true
+        origin:
+          $ref: '#/components/schemas/Origin'
+        gtin:
+          type: string
+          description: Global Trade Item Number
+          nullable: true
+        quantity:
+          type: number
+          description: Quantidade Tributável
+          format: double
+        unitAmount:
+          type: number
+          description: Valor Unitário Tributável
+          format: double
+        freightAmount:
+          type: number
+          description: Valor do Frete
+          format: double
+          nullable: true
+        insuranceAmount:
+          type: number
+          description: Valor do Seguro
+          format: double
+          nullable: true
+        discountAmount:
+          type: number
+          description: Valor do Desconto
+          format: double
+          nullable: true
+        othersAmount:
+          type: number
+          description: Outras despesas acessórias
+          format: double
+          nullable: true
+        icms:
+          $ref: '#/components/schemas/Icms'
+        ii:
+          $ref: '#/components/schemas/Ii'
+      additionalProperties: false
+    CalculateItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identificador do Item
+          nullable: true
+        cfop:
+          type: integer
+          description: Código Fiscal de Operações e Prestações
+          format: int32
+        cest:
+          type: string
+          description: Código Especificador de Substituição Tributária
+          nullable: true
+        benefit:
+          type: string
+          description: Código do benefício fiscal
+          nullable: true
+        icms:
+          $ref: '#/components/schemas/Icms'
+        icmsUfDest:
+          $ref: '#/components/schemas/IcmsUfDest'
+        pis:
+          $ref: '#/components/schemas/Pis'
+        cofins:
+          $ref: '#/components/schemas/Cofins'
+        ipi:
+          $ref: '#/components/schemas/Ipi'
+        ii:
+          $ref: '#/components/schemas/Ii'
+        additionalInformation:
+          type: string
+          description: Informações Adicionais do Produto
+          nullable: true
+        lastModified:
+          type: string
+          description: Data da última alteração da regra
+          format: date-time
+        productId:
+          type: string
+          description: Registered Product Id
+          nullable: true
+      additionalProperties: false
+    CalculateRequest:
+      required:
+        - issuer
+        - items
+        - operationType
+        - recipient
+      type: object
+      properties:
+        collectionId:
+          type: string
+          description: Identificador da Coleção de Produtos
+          nullable: true
+        issuer:
+          $ref: '#/components/schemas/CalculateRequestIssuer'
+        recipient:
+          $ref: '#/components/schemas/CalculateRequestRecipient'
+        operationType:
+          $ref: '#/components/schemas/OperationType'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalculateItemRequest'
+          description: Lista de Produtos
+        isProductRegistration:
+          type: boolean
+          description: Identificador da tipo de requisição (emissão de nota fiscal ou cadastro de produto)
+      additionalProperties: false
+    CalculateRequestIssuer:
+      required:
+        - state
+        - taxRegime
+      type: object
+      properties:
+        taxRegime:
+          $ref: '#/components/schemas/TaxRegime'
+        taxProfile:
+          type: string
+          description: Perfil Padrão do Emitente para Cálculo de Impostos
+          nullable: true
+        state:
+          $ref: '#/components/schemas/State'
+      additionalProperties: false
+    CalculateRequestRecipient:
+      required:
+        - state
+      type: object
+      properties:
+        taxRegime:
+          $ref: '#/components/schemas/TaxRegime'
+        taxProfile:
+          type: string
+          description: Perfil Padrão do Tomador para Cálculo de Impostos
+          nullable: true
+        state:
+          $ref: '#/components/schemas/State'
+      additionalProperties: false
+    CalculateResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalculateItemResponse'
+          nullable: true
+      additionalProperties: false
+    Cofins:
+      type: object
+      properties:
+        cst:
+          type: string
+          description: Código de Situação Tributária da COFINS
+          nullable: true
+        vBC:
+          type: string
+          description: Valor da Base de Cálculo do COFINS
+          nullable: true
+        pCOFINS:
+          type: string
+          description: Alíquota do COFINS (em percentual)
+          nullable: true
+        vCOFINS:
+          type: string
+          description: Valor do COFINS
+          nullable: true
+        qBCProd:
+          type: string
+          description: Quantidade Vendida
+          nullable: true
+        vAliqProd:
+          type: string
+          description: Alíquota do COFINS (em reais)
+          nullable: true
+      additionalProperties: false
+    Icms:
+      type: object
+      properties:
+        orig:
+          type: string
+          description: Origem da mercadoria
+          nullable: true
+        cst:
+          type: string
+          description: Tributação do ICMS
+          nullable: true
+        csosn:
+          type: string
+          description: Código de Situação da Operação – Simples Nacional
+          nullable: true
+        modBC:
+          type: string
+          description: Modalidade de determinação da BC do ICMS
+          nullable: true
+        vBC:
+          type: string
+          description: Valor da BC do ICMS
+          nullable: true
+        pRedBC:
+          type: string
+          description: Percentual da Redução de BC
+          nullable: true
+        cBenefRBC:
+          type: string
+          description: Código do benefício fiscal relacionado a redução de base
+          nullable: true
+        pICMS:
+          type: string
+          description: Alíquota do imposto
+          nullable: true
+        vICMS:
+          type: string
+          description: Valor do ICMS
+          nullable: true
+        vICMSOp:
+          type: string
+          description: Valor do ICMS da Operação
+          nullable: true
+        modBCST:
+          type: string
+          description: Modalidade de determinação da BC do ICMS ST
+          nullable: true
+        vBCST:
+          type: string
+          description: Valor da BC do ICMS ST
+          nullable: true
+        pRedBCST:
+          type: string
+          description: Percentual da Redução de BC do ICMS ST
+          nullable: true
+        pICMSST:
+          type: string
+          description: Alíquota do imposto do ICMS ST
+          nullable: true
+        vICMSST:
+          type: string
+          description: Valor do ICMS ST
+          nullable: true
+        pMVAST:
+          type: string
+          description: Percentual da margem de valor Adicionado do ICMS ST
+          nullable: true
+        pST:
+          type: string
+          description: Alíquota suportada pelo Consumidor Final
+          nullable: true
+        vBCSTRet:
+          type: string
+          description: Valor da BC do ICMS ST retido
+          nullable: true
+        vICMSSTRet:
+          type: string
+          description: Valor do ICMS ST retido
+          nullable: true
+        vBCFCP:
+          type: string
+          description: Valor da Base de Cálculo do FCP
+          nullable: true
+        pFCP:
+          type: string
+          description: Percentual do ICMS relativo ao Fundo de Combate à Pobreza(FCP)
+          nullable: true
+        vFCP:
+          type: string
+          description: Valor do Fundo de Combate à Pobreza (FCP)
+          nullable: true
+        vBCFCPST:
+          type: string
+          description: Valor da Base de Cálculo do FCP retido por Substituição Tributária
+          nullable: true
+        pFCPST:
+          type: string
+          description: Percentual do FCP retido por Substituição Tributária
+          nullable: true
+        vFCPST:
+          type: string
+          description: Valor do FCP retido por Substituição Tributária
+          nullable: true
+        vBCFCPSTRet:
+          type: string
+          description: Valor da Base de Cálculo do FCP retido anteriormente
+          nullable: true
+        pFCPSTRet:
+          type: string
+          description: Percentual do FCP retido anteriormente por Substituição Tributária
+          nullable: true
+        vFCPSTRet:
+          type: string
+          description: Valor do FCP retido por Substituição Tributária
+          nullable: true
+        vBCEfet:
+          type: string
+          description: Valor da base de cálculo efetiva
+          nullable: true
+        pRedBCEfet:
+          type: string
+          description: Percentual de redução da base de cálculo efetiva
+          nullable: true
+        pICMSEfet:
+          type: string
+          description: Alíquota do ICMS efetiva
+          nullable: true
+        vICMSEfet:
+          type: string
+          description: Valor do ICMS efetivo
+          nullable: true
+        pDif:
+          type: string
+          description: Percentual do diferimento
+          nullable: true
+        vICMSDif:
+          type: string
+          description: Valor do ICMS diferido
+          nullable: true
+        vICMSSubstituto:
+          type: string
+          description: Valor do ICMS próprio do Substituto
+          nullable: true
+        pCredSN:
+          type: string
+          description: Alíquota aplicável de cálculo do crédito (Simples Nacional)
+          nullable: true
+        vCredICMSSN:
+          type: string
+          description: Valor crédito do ICMS que pode ser aproveitado nos termos do art. 23 da LC 123 (Simples Nacional)
+          nullable: true
+        pFCPDif:
+          type: string
+          description: Percentual do diferimento do ICMS relativo ao Fundo de Combate à Pobreza(FCP)
+          nullable: true
+        vFCPDif:
+          type: string
+          description: Valor do ICMS relativo ao Fundo de Combate à Pobreza (FCP) diferido
+          nullable: true
+        vFCPEfet:
+          type: string
+          description: Valor efetivo do ICMS relativo ao Fundo de Combate à Pobreza(FCP)
+          nullable: true
+        vICMSDeson:
+          type: string
+          description: Valor do ICMS desonerado
+          nullable: true
+        motDesICMS:
+          type: string
+          description: Motivo da desoneração do ICMS
+          nullable: true
+        vICMSSTDeson:
+          type: string
+          description: Valor do ICMS- ST desonerado
+          nullable: true
+        motDesICMSST:
+          type: string
+          description: Motivo da desoneração do ICMS- ST
+          nullable: true
+        indDeduzDeson:
+          type: string
+          description: Indica se o valor do ICMS desonerado (vICMSDeson) deduz do valor do item(vProd).
+          nullable: true
+      additionalProperties: false
+    IcmsUfDest:
+      type: object
+      properties:
+        vBCUFDest:
+          type: string
+          description: Valor da BC do ICMS na UF de destino
+          nullable: true
+        vBCFCPUFDest:
+          type: string
+          description: Valor da BC FCP na UF de destino
+          nullable: true
+        pFCPUFDest:
+          type: string
+          description: "Percentual do ICMS relativo ao Fundo de Combate à\r\nPobreza (FCP) na UF de destino"
+          nullable: true
+        pICMSUFDest:
+          type: string
+          description: Alíquota interna da UF de destino
+          nullable: true
+        pICMSInter:
+          type: string
+          description: Alíquota interestadual das UF envolvidas
+          nullable: true
+        pICMSInterPart:
+          type: string
+          description: Percentual provisório de partilha do ICMS Interestadual
+          nullable: true
+        vFCPUFDest:
+          type: string
+          description: Valor da BC FCP na UF de destino
+          nullable: true
+        vICMSUFDest:
+          type: string
+          description: Valor do ICMS Interestadual para a UF de destino
+          nullable: true
+        vICMSUFRemet:
+          type: string
+          description: Valor do ICMS Interestadual para a UF do remetente
+          nullable: true
+      additionalProperties: false
+    Ii:
+      type: object
+      properties:
+        vBC:
+          type: string
+          description: Valor BC do Imposto de Importação
+          nullable: true
+        vDespAdu:
+          type: string
+          description: Valor despesas aduaneiras
+          nullable: true
+        vII:
+          type: string
+          description: Valor Imposto de Importação
+          nullable: true
+        vIOF:
+          type: string
+          description: Valor Imposto sobre Operações Financeiras
+          nullable: true
+        vEncCamb:
+          type: string
+          description: Valor dos encargos cambiais
+          nullable: true
+        pCredSN:
+          type: string
+          description: Alíquota do Simples Nacional aplicável no cálculo do crédito pelo contribuinte destinatário.
+          nullable: true
+        vCredICMSSN:
+          type: string
+          description: Valor crédito do ICMS que pode ser aproveitado nos termos do art. 23 da LC 123 (Simples Nacional)
+          nullable: true
+        infCustoAquis:
+          type: string
+          description: "Ativação do cálculo do custo de aquisição:\r\n0 – Inativo\r\n1 – Ativo"
+          nullable: true
+      additionalProperties: false
+    Ipi:
+      type: object
+      properties:
+        cEnq:
+          type: string
+          description: Código de Enquadramento Legal do IPI
+          nullable: true
+        cst:
+          type: string
+          description: Código da situação tributária do IPI
+          nullable: true
+        vBC:
+          type: string
+          description: Valor da BC do IPI
+          nullable: true
+        pIPI:
+          type: string
+          description: Alíquota do IPI
+          nullable: true
+        qUnid:
+          type: string
+          description: Quantidade total na unidade padrão para tributação (somente para os produtos tributados por unidade)
+          nullable: true
+        vUnid:
+          type: string
+          description: Valor por Unidade Tributável
+          nullable: true
+        vIPI:
+          type: string
+          description: Valor do IPI
+          nullable: true
+      additionalProperties: false
+    OperationType:
+      enum:
+        - Outgoing
+        - Incoming
+      type: string
+      description: "<p>Possible values:</p>\r\n<ul>\r\n<li><b>Outgoing</b>: 0 - Saída</li>\r\n<li><b>Incoming</b>: 1 - Entrada</li>\r\n</ul>\r\n"
+    Origin:
+      enum:
+        - National
+        - ForeignDirectImport
+        - ForeignInternalMarket
+        - NationalWith40To70Import
+        - NationalPpb
+        - NationalWithLess40Import
+        - ForeignDirectImportWithoutNationalSimilar
+        - ForeignInternalMarketWithoutNationalSimilar
+        - NationalWithGreater70Import
+      type: string
+      description: "<p>Possible values:</p>\r\n<ul>\r\n<li><b>National</b>: 0 - Nacional, exceto as indicadas nos códigos 3, 4, 5 e 8</li>\r\n<li><b>ForeignDirectImport</b>: 1 - Estrangeira - Importação direta, exceto a indicada no código 6</li>\r\n<li><b>ForeignInternalMarket</b>: 2 - Estrangeira - Adquirida no mercado interno, exceto a indicada no código 7</li>\r\n<li><b>NationalWith40To70Import</b>: 3 - Nacional, mercadoria ou bem com Conteúdo de Importação superior a 40% e inferior ou igual a 70%</li>\r\n<li><b>NationalPpb</b>: 4 - Nacional, cuja produção tenha sido feita em conformidade com os PPB de que tratam as legislações citadas nos ajustes</li>\r\n<li><b>NationalWithLess40Import</b>: 5 - Nacional, mercadoria ou bem com Conteúdo de Importação inferior ou igual a 40%</li>\r\n<li><b>ForeignDirectImportWithoutNationalSimilar</b>: 6 - Estrangeira - Importação direta, sem similar nacional, constante em lista da CAMEX e gás natural</li>\r\n<li><b>ForeignInternalMarketWithoutNationalSimilar</b>: 7 - Estrangeira - Adquirida no mercado interno, sem similar nacional, constante em lista da CAMEX e gás natural</li>\r\n<li><b>NationalWithGreater70Import</b>: 8 - Nacional, mercadoria ou bem com Conteúdo de Importação superior a 70%</li>\r\n</ul>\r\n"
+    Pis:
+      type: object
+      properties:
+        cst:
+          type: string
+          description: Código de Situação Tributária do PIS
+          nullable: true
+        vBC:
+          type: string
+          description: Valor da Base de Cálculo do PIS
+          nullable: true
+        pPIS:
+          type: string
+          description: Alíquota do PIS (em percentual)
+          nullable: true
+        vPIS:
+          type: string
+          description: Valor do PIS
+          nullable: true
+        qBCProd:
+          type: string
+          description: Quantidade Vendida
+          nullable: true
+        vAliqProd:
+          type: string
+          description: Alíquota do PIS (em reais)
+          nullable: true
+      additionalProperties: false
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: {}
+    State:
+      enum:
+        - AC
+        - AL
+        - AP
+        - AM
+        - BA
+        - CE
+        - DF
+        - ES
+        - GO
+        - MA
+        - MT
+        - MS
+        - MG
+        - PA
+        - PB
+        - PR
+        - PE
+        - PI
+        - RJ
+        - RN
+        - RS
+        - RO
+        - RR
+        - SC
+        - SP
+        - SE
+        - TO
+        - EX
+      type: string
+      description: "<p>Possible values:</p>\r\n<ul>\r\n<li><b>AC</b>: Acre</li>\r\n<li><b>AL</b>: Alagoas</li>\r\n<li><b>AP</b>: Amapá</li>\r\n<li><b>AM</b>: Amazonas</li>\r\n<li><b>BA</b>: Bahia</li>\r\n<li><b>CE</b>: Ceará</li>\r\n<li><b>DF</b>: Distrito Federal</li>\r\n<li><b>ES</b>: Espírito Santo</li>\r\n<li><b>GO</b>: Goiás</li>\r\n<li><b>MA</b>: Maranhão</li>\r\n<li><b>MT</b>: Mato Grosso</li>\r\n<li><b>MS</b>: Mato Grosso do Sul</li>\r\n<li><b>MG</b>: Minas Gerais</li>\r\n<li><b>PA</b>: Pará</li>\r\n<li><b>PB</b>: Paraíba</li>\r\n<li><b>PR</b>: Paraná</li>\r\n<li><b>PE</b>: Pernambuco</li>\r\n<li><b>PI</b>: Piauí</li>\r\n<li><b>RJ</b>: Rio de Janeiro</li>\r\n<li><b>RN</b>: Rio Grande do Norte</li>\r\n<li><b>RS</b>: Rio Grande do Sul</li>\r\n<li><b>RO</b>: Rondônia</li>\r\n<li><b>RR</b>: Roraima</li>\r\n<li><b>SC</b>: Santa Catarina</li>\r\n<li><b>SP</b>: São Paulo</li>\r\n<li><b>SE</b>: Sergipe</li>\r\n<li><b>TO</b>: Tocantins</li>\r\n<li><b>EX</b>: Exterior</li>\r\n</ul>\r\n"
+    TaxCode:
+      type: object
+      properties:
+        code:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+      additionalProperties: false
+    TaxCodePaginatedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxCode'
+          nullable: true
+        currentPage:
+          type: integer
+          format: int32
+        totalPages:
+          type: integer
+          format: int32
+          readOnly: true
+        totalCount:
+          type: integer
+          format: int64
+      additionalProperties: false
+    TaxRegime:
+      enum:
+        - NationalSimple
+        - RealProfit
+        - PresumedProfit
+        - NationalSimpleSublimitExceeded
+        - IndividualMicroEnterprise
+        - Exempt
+      type: string
+      description: "<p>Possible values:</p>\r\n<ul>\r\n<li><b>NationalSimple</b>: Simples Nacional</li>\r\n<li><b>RealProfit</b>: Lucro Real</li>\r\n<li><b>PresumedProfit</b>: Lucro Presumido</li>\r\n<li><b>NationalSimpleSublimitExceeded</b>: Simples Nacional sublimite excedido</li>\r\n<li><b>IndividualMicroEnterprise</b>: Microempreendedor Individual</li>\r\n<li><b>Exempt</b>: Isento</li>\r\n</ul>\r\n"
+  securitySchemes:
+    Authorization_Header:
+      type: apiKey
+      description: Autenticar usando o cabeçalho HTTP
+      name: Authorization
+      in: header
+    Authorization_QueryParam:
+      type: apiKey
+      description: Autenticar usando o parâmetro na URL
+      name: apikey
+      in: query
+    Authorization_JwtBearer:
+      type: http
+      description: Autenticar usando o cabeçalho HTTP
+      scheme: bearer
+      bearerFormat: Json Web Token
+security:
+  - Authorization_Header: []
+    Authorization_QueryParam: []
+  - Authorization_JwtBearer: []
+tags:
+  - name: Códigos Auxiliares
+    description: Nesta sessão estão disponíveis informações necessárias para listar os códigos auxiliares disponíveis para serem utilizados nas chamadas com cálculo de impostos.

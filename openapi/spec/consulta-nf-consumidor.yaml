@@ -1,0 +1,1278 @@
+swagger: "2.0"
+info:
+  version: v1
+  title: Consumer Invoices API
+  description: <h3>Como utilizar esta documentação ?</h3><p>Certifique-se que sua chave da API está preenchida no topo desta página para este recurso funcionar da maneira correta. Abaixo você poderá conferir a lista de recursos que podem ser manipulados através da API. Clicando em cada um dos métodos, você poderá verificar a lista de parâmetros, possíveis retornos e também um formulário. Este formulário pode ser utilizado para efetuar requisições reais na API.</p>
+host: nfe.api.nfe.io
+paths:
+  /v1/consumerinvoices/coupon/{accessKey}:
+    get:
+      tags:
+        - Coupon
+      summary: Consulta de Cupom Fiscal Eletrônico por Chave de Acesso
+      description: Você precisará do APIKEY da Empresa
+      operationId: V1ConsumerinvoicesCouponByAccessKeyGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: accessKey
+          in: path
+          description: Chave de Acesso
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.TaxCouponResource'
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Nota Fiscal não foi encontrada
+          schema:
+            type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+      security:
+        - Authorization_Header:
+            - apiKey
+        - Authorization_QueryParam:
+            - apiKey
+  /v1/consumerinvoices/coupon/{accessKey}.xml:
+    get:
+      tags:
+        - Coupon
+      summary: Consulta de Cupom Fiscal Eletrônico por Chave de Acesso
+      description: Você precisará do APIKEY da Empresa
+      operationId: V1ConsumerinvoicesCouponByAccessKey}.xmlGet
+      consumes: []
+      produces:
+        - application/xml
+        - application/json
+      parameters:
+        - name: accessKey
+          in: path
+          description: Chave de Acesso
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFe'
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Nota Fiscal não foi encontrada
+          schema:
+            type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: string
+      security:
+        - Authorization_Header:
+            - apiKey
+        - Authorization_QueryParam:
+            - apiKey
+definitions:
+  DataTech.Services.Domain.Models.Cfe.TaxCouponResource:
+    description: Cupom fiscal eletrônico (CFe)
+    type: object
+    properties:
+      currentStatus:
+        description: Situação Atual
+        enum:
+          - Unknown
+          - Authorized
+          - Canceled
+        type: string
+      number:
+        format: int64
+        description: Número do Documento Fiscal (nNF)
+        type: integer
+      satSerie:
+        description: Número de Série do SAT (nserieSAT)
+        type: string
+      softwareVersion:
+        description: Versão do Software Básico (versaoSB)
+        type: string
+      softwareFederalTaxNumber:
+        format: int64
+        description: CNPJ Software House (CNPJ)
+        type: integer
+      accessKey:
+        description: Chave de Acesso (Id)
+        type: string
+      cashier:
+        format: int64
+        description: Número do Caixa (numeroCaixa)
+        type: integer
+      issuedOn:
+        format: date-time
+        description: "Data de emissão do Documento Fiscal\r\n<remarks>\r\n    Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.\r\n</remarks>"
+        type: string
+      createdOn:
+        format: date-time
+        description: "Data de consulta\r\n<remarks>\r\n    Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD.\r\n</remarks>"
+        type: string
+      xmlVersion:
+        description: Versão do leiaute (versaoDadosEnt)
+        type: string
+      issuer:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponIssuerResource'
+        description: Emitente (emit)
+      buyer:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponBuyerResource'
+        description: Destinatario (dest)
+      totals:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponTotalResource'
+        description: Grupo de Valores Totais (total)
+      delivery:
+        $ref: '#/definitions/DataTech.Api.Resources.TaxCoupon.CouponDeliveryResource'
+        description: Dados do Local da Entrega (entrega)
+      additionalInformation:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponAdditionalInformationResource'
+        description: Informacoes Adicionais (infAdic)
+      items:
+        description: Detalhamento do produto (det)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponItemResource'
+      payment:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponPaymentResource'
+        description: Grupo de Formas de Pagamento (pgto)
+  DataTech.Services.Domain.Models.Cfe.CouponIssuerResource:
+    description: Emitente (emit)
+    type: object
+    properties:
+      federalTaxNumber:
+        format: int64
+        description: CNPJ do emitente (CNPJ) / CPF do remetente (CPF)
+        type: integer
+      type:
+        description: 'Tipo da pessoa: Jurídica ou Física'
+        enum:
+          - Undefined
+          - NaturalPerson
+          - LegalEntity
+        type: string
+      name:
+        description: Razão Social ou Nome do emitente (xNome)
+        type: string
+      tradeName:
+        description: Nome fantasia (xFant)
+        type: string
+      address:
+        $ref: '#/definitions/DataTech.Api.Resources.AddressResourceItem'
+        description: Endereço do emitente (enderEmit)
+      stateTaxNumber:
+        description: Inscrição Estadual (IE)
+        type: string
+      taxRegime:
+        description: "Código de Regime Tributário (CRT)\r\n<remarks>\r\n    1 - Simples Nacional (National_Simple)\r\n    2 - Simples Nacional, excesso sublimite de receita bruta (National_Simple_Brute)\r\n    3 - Regime Normal (Normal_Regime)\r\n</remarks>"
+        enum:
+          - National_Simple
+          - National_Simple_Brute
+          - Normal_Regime
+        type: string
+      municipalTaxNumber:
+        description: Inscrição Municipal do Prestador de Serviço (IM)
+        type: string
+      iss:
+        description: Regime Especial de Tributação do ISSQN (cRegTrib)
+        type: string
+      avarageIndicator:
+        description: Indicador de Rateio do Desconto Sobre Subtotal (indRatISSQN)
+        type: boolean
+  DataTech.Services.Domain.Models.Cfe.CouponBuyerResource:
+    type: object
+    properties:
+      pretectedPersonalInformation:
+        description: CNPJ do Destinantario (CNPJ) / CPF do destinatário (CPF) - Protegido
+        type: string
+      federalTaxNumber:
+        format: int64
+        description: CNPJ do Destinantario (CNPJ) / CPF do destinatário (CPF)
+        type: integer
+      name:
+        description: Razão Social ou nome do destinatário (xNome)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.CouponTotalResource:
+    description: Grupo de Valores Totais do CF-e
+    type: object
+    properties:
+      icms:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponICMSTotalResource'
+        description: Grupo de Valores Totais referentes ao ICMS (ICMSTot)
+      issqn:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponISSQNTotalResource'
+        description: Grupo de Valores Totais referentes ao ISSQN (ISSQNtot)
+      totalAmount:
+        format: double
+        description: Valor dos Tributos Aproximado do CFe-SAT Lei12471/12 (vCFeLei12741)
+        type: number
+      couponAmount:
+        format: double
+        description: Valor Total do CF-e (vCFe)
+        type: number
+  DataTech.Api.Resources.TaxCoupon.CouponDeliveryResource:
+    type: object
+    properties:
+      address:
+        $ref: '#/definitions/DataTech.Api.Resources.AddressResourceItem'
+        description: Endereço
+  DataTech.Services.Domain.Models.Cfe.CouponAdditionalInformationResource:
+    description: Informacoes Adicionais (infAdic)
+    type: object
+    properties:
+      taxpayer:
+        description: Informações Complementares de interesse do Contribuinte (infCpl)
+        type: string
+      fisco:
+        description: Informações Adicionais de Interesse do Fisco (obsFisco)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.FiscoFieldsResource'
+      referencedDocuments:
+        description: Documentos Fiscais Referenciados
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponTaxReferencedDocumentsResource'
+  DataTech.Services.Domain.Models.Cfe.CouponItemResource:
+    description: Produto (prod)
+    type: object
+    properties:
+      description:
+        description: Descrição do produto ou serviço (xProd)
+        type: string
+      quantity:
+        format: double
+        description: Quantidade Comercial (qCom)
+        type: number
+      unit:
+        description: Unidade Comercial (uCom)
+        type: string
+      code:
+        description: Código do produto ou serviço (cProd)
+        type: string
+      codeGTIN:
+        description: "GTIN (Global Trade Item Number) do produto, \r\nantigo código EAN ou código de barras (cEAN)"
+        type: string
+      ncm:
+        description: Código NCM com 8 dígitos ou 2 dígitos (gênero) (NCM)
+        type: string
+      cfop:
+        format: int64
+        description: Código Fiscal de Operações e Prestações (CFOP)
+        type: integer
+      cest:
+        description: Código especificador da substituição tributária (CEST)
+        type: string
+      unitAmount:
+        format: double
+        description: Valor Unitário de Comercialização (vUnCom)
+        type: number
+      discountAmount:
+        format: double
+        description: Valor do Desconto (vDesc)
+        type: number
+      othersAmount:
+        format: double
+        description: Outras despesas acessórias (vOutro)
+        type: number
+      additionalInformation:
+        description: Informações Adicionais do Produto (infAdProd)
+        type: string
+      itemNumberOrderBuy:
+        format: int32
+        description: Item do Pedido de Compra (nItem)
+        type: integer
+      netAmount:
+        format: double
+        description: Valor Líquido (vItem)
+        type: number
+      grossAmount:
+        format: double
+        description: Valor Bruto (vProd)
+        type: number
+      rule:
+        description: "Indicador da regra de cálculo utilizada para Valor Bruto dos Produtos e Serviços\r\n    <para>A - Arredondamento</para><para>T - Truncamento</para>"
+        type: string
+      apportionmentDiscountAmount:
+        format: double
+        description: Rateio desconto (vRatDesc)
+        type: number
+      apportionmentAmount:
+        format: double
+        description: Rateio acréscimo (vRatAcr)
+        type: number
+      fisco:
+        description: Observação fisco (obsFiscoDet)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.FiscoFieldsResource'
+      tax:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponItemTaxResource'
+        description: Tributos incidentes no Produto ou Serviço (imposto)
+  DataTech.Services.Domain.Models.Cfe.CouponPaymentResource:
+    description: Grupo de Formas de Pagamento (pgto)
+    type: object
+    properties:
+      payBack:
+        format: double
+        description: Valor do troco (vTroco)
+        type: number
+      paymentDetails:
+        description: Grupo Detalhamento da Forma de Pagamento (MP)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponPaymentDetailResource'
+  DataTech.Api.Resources.AddressResourceItem:
+    description: Endereço
+    type: object
+    properties:
+      state:
+        description: Estado
+        type: string
+      city:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.CityBase'
+        description: Cidade
+      district:
+        description: Bairro
+        type: string
+      additionalInformation:
+        description: Informações adicionais
+        type: string
+      streetSuffix:
+        description: Sufixo da rua
+        type: string
+      street:
+        description: Nome da rua
+        type: string
+      number:
+        description: Número
+        type: string
+      numberMin:
+        type: string
+      numberMax:
+        type: string
+      postalCode:
+        description: CEP
+        type: string
+      country:
+        description: País
+        type: string
+  DataTech.Services.Domain.Models.Cfe.CouponICMSTotalResource:
+    description: Grupo de Valores Totais referentes ao ICMS (ICMSTot)
+    type: object
+    properties:
+      productAmount:
+        format: double
+        description: Valor Total dos produtos e serviços (vProd)
+        type: number
+      discountAmount:
+        format: double
+        description: Valor Total do Desconto (vDesc)
+        type: number
+      othersAmount:
+        format: double
+        description: Outras Despesas acessórias (vOutro)
+        type: number
+      icmsAmount:
+        format: double
+        description: Valor total de ICMS (vICMS)
+        type: number
+      inputDiscountAmount:
+        format: double
+        description: Valor de Entrada de desconto sobre subtotal (vDescSubtot)
+        type: number
+      inputAdditionAmount:
+        format: double
+        description: Valor de Entrada de acréscimo sobre subtotal (vAcresSubtot)
+        type: number
+      pisAmount:
+        format: double
+        description: Valor do PIS (vPIS)
+        type: number
+      cofinsAmount:
+        format: double
+        description: Valor do COFINS (vCOFINS)
+        type: number
+      pisstAmount:
+        format: double
+        description: Valor do PIS ST (vPISST)
+        type: number
+      cofinsstAmount:
+        format: double
+        description: Valor do COFINS ST (vCOFINSST)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.CouponISSQNTotalResource:
+    description: Grupo de Valores Totais referentes ao ISSQN (ISSQNtot)
+    type: object
+    properties:
+      baseAmount:
+        format: double
+        description: Base de Cálculo do ISSQN (vBC)
+        type: number
+      issAmount:
+        format: double
+        description: Valor total de ISSQN (vISS)
+        type: number
+      pisAmount:
+        format: double
+        description: Valor do PIS (vPIS)
+        type: number
+      cofinsAmount:
+        format: double
+        description: Valor do COFINS (vCOFINS)
+        type: number
+      pisstAmount:
+        format: double
+        description: Valor do PIS ST (vPISST)
+        type: number
+      cofinsstAmount:
+        format: double
+        description: Valor do COFINS ST (vCOFINSST)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.FiscoFieldsResource:
+    description: Observação fisco (obsFiscoDet)
+    type: object
+    properties:
+      key:
+        description: Campo (xCampoDet)
+        type: string
+      value:
+        description: Texto (xTextoDet)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.CouponTaxReferencedDocumentsResource:
+    type: object
+    properties:
+      accessKey:
+        description: Chave de Acesso (refNFe)
+        type: string
+      order:
+        format: int32
+        description: Número da ordem
+        type: integer
+  DataTech.Services.Domain.Models.Cfe.CouponItemTaxResource:
+    description: Tributos incidentes no Produto ou Serviço (imposto)
+    type: object
+    properties:
+      totalTax:
+        format: double
+        description: Valor aproximado total de tributos federais, estaduais e municipais. (vItem12741)
+        type: number
+      icms:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponIcmsTaxResource'
+        description: Dados do ICMS Normal e ST (ICMS)
+      pis:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponPisTaxResource'
+        description: Grupo PIS (PIS)
+      cofins:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponCofinsTaxResource'
+        description: Grupo COFINS (COFINS)
+      issqn:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponISSQNResource'
+        description: Grupo Imposto Sobre Serviço de Qualquer Natureza (ISSQN)
+  DataTech.Services.Domain.Models.Cfe.CouponPaymentDetailResource:
+    description: Grupo Detalhamento da Forma de Pagamento (MP)
+    type: object
+    properties:
+      method:
+        description: Código do meio de pagamento (cMP)
+        enum:
+          - Cash
+          - Cheque
+          - CreditCard
+          - DebitCard
+          - StoreCredict
+          - FoodVouchers
+          - MealVouchers
+          - GiftVouchers
+          - FuelVouchers
+          - CommercialDuplicate
+          - BankSlip
+          - BankDeposit
+          - InstantPayment
+          - WireTransfer
+          - Cashback
+          - Unpaid
+          - Others
+        type: string
+      amount:
+        format: double
+        description: Valor do meio de pagamento (vMP)
+        type: number
+      card:
+        description: Grupo de Cartões (card)
+        type: string
+  DataTech.Services.Domain.Models.CityBase:
+    type: object
+    properties:
+      code:
+        description: Código do município (cMun)
+        type: string
+      name:
+        description: Nome do município (xMun)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.CouponIcmsTaxResource:
+    description: Dados do ICMS Normal e ST (ICMS)
+    type: object
+    properties:
+      origin:
+        description: Origem da mercadoria (Orig)
+        type: string
+      cst:
+        description: Tributação do ICMS (CST)
+        type: string
+      csosn:
+        description: "101- Tributada pelo Simples Nacional com permissão de crédito. (v.2.0) (CSOSN)\r\nCódigo de Situação da Operação – Simples Nacional"
+        type: string
+      amount:
+        format: double
+        description: "Valor do ICMS (vICMS)\r\n\r\nO valor do ICMS desonerado será informado apenas nas operações:\r\na) com produtos beneficiados com a desoneração condicional do ICMS.\r\nb) destinadas à SUFRAMA, informando-se o valor que seria devido se não houvesse isenção.\r\nc) de venda a órgãos da administração pública direta e suas fundações e\r\nautarquias com isenção do ICMS. (NT 2011/004)"
+        type: number
+      rate:
+        format: double
+        description: Alíquota do imposto (pICMS)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.CouponPisTaxResource:
+    description: Grupo PIS (PIS)
+    type: object
+    properties:
+      cst:
+        description: Código de Situação Tributária do PIS (CST)
+        type: string
+      st:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponTaxBaseResource'
+        description: Substituição Tributária
+      baseTax:
+        format: double
+        description: Valor da Base de Cálculo (vBC)
+        type: number
+      rate:
+        format: double
+        description: Alíquota do (em percentual) (pPIS)
+        type: number
+      amount:
+        format: double
+        description: Valor
+        type: number
+      rateAmount:
+        format: double
+        description: Alíquota (em reais) (vAliqProd)
+        type: number
+      quantity:
+        format: double
+        description: Quantidade Vendida (qBCProd)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.CouponCofinsTaxResource:
+    description: Grupo COFINS (COFINS)
+    type: object
+    properties:
+      cst:
+        description: "Código de Situação Tributária da COFINS\r\n<para>Obs: 01 – Operação Tributável (base de cálculo = valor da operação \r\nalíquota normal (cumulativo/não cumulativo));\r\n02 - Operação Tributável (base de cálculo = valor da operação (alíquota diferenciada));</para> (CST)"
+        type: string
+      st:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.CouponTaxBaseResource'
+        description: Substituição Tributária
+      baseTax:
+        format: double
+        description: Valor da Base de Cálculo (vBC)
+        type: number
+      rate:
+        format: double
+        description: Alíquota do (em percentual) (pPIS)
+        type: number
+      amount:
+        format: double
+        description: Valor
+        type: number
+      rateAmount:
+        format: double
+        description: Alíquota (em reais) (vAliqProd)
+        type: number
+      quantity:
+        format: double
+        description: Quantidade Vendida (qBCProd)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.CouponISSQNResource:
+    description: Grupo Imposto Sobre Serviço de Qualquer Natureza (ISSQN)
+    type: object
+    properties:
+      deductionsAmount:
+        format: double
+        description: Valor dedução para redução da Base de Cálculo (vDeducISSQN)
+        type: number
+      baseTax:
+        format: double
+        description: Valor da Base de Cálculo do ISSQN (vBC)
+        type: number
+      rate:
+        format: double
+        description: Alíquota do ISSQN (vAliq)
+        type: number
+      amount:
+        format: double
+        description: Valor do ISSQN (vISSQN)
+        type: number
+      federalServiceCode:
+        description: Item da Lista de Serviços (cListServ)
+        type: string
+      cityServiceCode:
+        description: Código do serviço prestado dentro do município (cServTribMun)
+        type: string
+      cityCode:
+        format: int64
+        description: Código do Município do Fato Gerador do ISSQN (cMunFG)
+        type: integer
+      taxIncentive:
+        description: Incentivo Fiscal do ISSQN (indIncFisc)
+        enum:
+          - Yes
+          - No
+        type: string
+      operationNature:
+        description: Natureza de operação do ISSQN (cNatOp)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.CouponTaxBaseResource:
+    type: object
+    properties:
+      baseTax:
+        format: double
+        description: Valor da Base de Cálculo (vBC)
+        type: number
+      rate:
+        format: double
+        description: Alíquota do (em percentual) (pPIS)
+        type: number
+      amount:
+        format: double
+        description: Valor
+        type: number
+      rateAmount:
+        format: double
+        description: Alíquota (em reais) (vAliqProd)
+        type: number
+      quantity:
+        format: double
+        description: Quantidade Vendida (qBCProd)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.xml.CFe:
+    description: Cupom fiscal eletrônico (CFe)
+    type: object
+    properties:
+      infCFe:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.InfCFe'
+        description: Grupo das informações (infCFe)
+  DataTech.Services.Domain.Models.Cfe.xml.InfCFe:
+    type: object
+    properties:
+      ide:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.Ide'
+        description: Grupo das informações de identificação (ide)
+      emit:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.Emit'
+        description: Emitente (emit)
+      dest:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.Dest'
+        description: Destinatario (dest)
+      det:
+        description: Detalhamento do produto (det)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.Det'
+      total:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFeTotal'
+        description: Grupo de Valores Totais (total)
+      pgto:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.Pgto'
+        description: Grupo de Formas de Pagamento (pgto)
+      infAdic:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.InfAdic'
+        description: Informacoes Adicionais (infAdic)
+      entrega:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.Entrega'
+        description: Dados do Local da Entrega (entrega)
+      versaoSB:
+        description: Versão do Software Básico (versaoSB)
+        type: string
+      versaoDadosEnt:
+        description: Versão do leiaute (versaoDadosEnt)
+        type: string
+      versao:
+        description: Versão (versao)
+        type: string
+      id:
+        description: Chave de Acesso (Id)
+        type: string
+      chCanc:
+        description: Chave de acesso do CF-e a ser cancelado (chCanc)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.Ide:
+    description: Grupo das informações de identificação do CF-e (ide)
+    type: object
+    properties:
+      cUF:
+        format: int32
+        description: Código da UF do emitente do Documento Fiscal. Utilizar a Tabela do IBGE. (cUF)
+        type: integer
+      cNF:
+        description: Código numérico que compõe a Chave de Acesso. Número aleatório gerado pelo emitente para cada NF-e. (cNF)
+        type: string
+      mod:
+        description: Código do Modelo do documento fiscal (mod)
+        type: string
+      nserieSAT:
+        description: Número de Série do SAT (nserieSAT)
+        type: string
+      nCFe:
+        description: Número do Documento Fiscal (nNF)
+        type: string
+      dEmi:
+        format: date-time
+        type: string
+      proxydEmi:
+        description: Proxy para dEmi no formato AAAAMMDD (dEmi)
+        type: string
+      hEmi:
+        type: string
+      proxyHEmi:
+        description: Proxy para hEmi no formato HHMMSS (hEmi)
+        type: string
+      cDV:
+        format: int32
+        description: Digito Verificador da Chave de Acesso da NF-e (cDV)
+        type: integer
+      tpAmb:
+        description: Identificação do Ambiente (tpAmb)
+        enum:
+          - Producao
+          - Homologacao
+        type: string
+      cnpj:
+        description: CNPJ Software House (CNPJ)
+        type: string
+      signAC:
+        description: Assinatura do aplicativo comercial (signAC)
+        type: string
+      assinaturaQRCODE:
+        description: Assinatura digital para uso em QRCODE(assinaturaQRCODE)
+        type: string
+      numeroCaixa:
+        description: Número do Caixa (numeroCaixa)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.Emit:
+    description: Emitente (emit)
+    type: object
+    properties:
+      cnpj:
+        description: CNPJ do emitente (CNPJ)
+        type: string
+      xNome:
+        description: Razão Social ou Nome do emitente (xNome)
+        type: string
+      xFant:
+        description: Nome fantasia (xFant)
+        type: string
+      enderEmit:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.EnderEmit'
+        description: Endereço do emitente (enderEmit)
+      ie:
+        description: Inscrição Estadual (IE)
+        type: string
+      im:
+        description: Inscrição Municipal do Prestador de Serviço (IM)
+        type: string
+      cRegTrib:
+        description: "Código de Regime Tributário (CRT)\r\n<remarks>\r\n    1 - Simples Nacional (National_Simple)\r\n    2 - Simples Nacional, excesso sublimite de receita bruta (National_Simple_Brute)\r\n    3 - Regime Normal (Normal_Regime)\r\n</remarks>"
+        enum:
+          - SimplesNacional
+          - SimplesNacionalExcessoSublimite
+          - RegimeNormal
+        type: string
+      cRegTribISSQN:
+        description: Regime Especial de Tributação do ISSQN (cRegTrib)
+        type: string
+      indRatISSQN:
+        description: Indicador de Rateio do Desconto Sobre Subtotal (indRatISSQN)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.Dest:
+    description: Destinatario (dest)
+    type: object
+    properties:
+      cnpj:
+        description: CNPJ do Destinantario (CNPJ)
+        type: string
+      cpf:
+        description: CPF do destinatário (CPF)
+        type: string
+      xNome:
+        description: Razão Social ou nome do destinatário (xNome)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.Det:
+    description: Detalhamento do produto (det)
+    type: object
+    properties:
+      prod:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.Prod'
+        description: Produto (prod)
+      imposto:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.Imposto'
+        description: Tributos incidentes no Produto ou Serviço (imposto)
+      nItem:
+        format: int32
+        description: Item do Pedido de Compra (nItem)
+        type: integer
+  DataTech.Services.Domain.Models.Cfe.xml.CFeTotal:
+    description: Grupo de Valores Totais (total)
+    type: object
+    properties:
+      icmsTot:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFeICMSTot'
+        description: Grupo de Valores Totais referentes ao ICMS (ICMSTot)
+      issqNtot:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFeISSQNTot'
+        description: Grupo de Valores Totais referentes ao ISSQN (ISSQNtot)
+      descAcrEntr:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.DescAcrEntr'
+        description: Grupo de valores de entrada de Desconto/Acréscimo sobre Subtotal (DescAcrEntr)
+      vCFe:
+        format: double
+        description: Valor Total do CF-e (vCFe)
+        type: number
+      vCFeLei12741:
+        format: double
+        description: Valor dos Tributos Aproximado do CFe-SAT Lei12471/12 (vCFeLei12741)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.xml.Pgto:
+    description: Grupo de Formas de Pagamento (pgto)
+    type: object
+    properties:
+      mp:
+        description: Grupo Detalhamento da Forma de Pagamento (MP)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.MP'
+      vTroco:
+        format: double
+        description: Valor do troco (vTroco)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.xml.InfAdic:
+    description: Informacoes Adicionais (infAdic)
+    type: object
+    properties:
+      infCpl:
+        description: Informações Complementares de interesse do Contribuinte (infCpl)
+        type: string
+      obsFisco:
+        description: Informações Adicionais de Interesse do Fisco (obsFisco)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.ObsFisco'
+  DataTech.Services.Domain.Models.Cfe.xml.Entrega:
+    description: Dados do Local da Entrega (entrega)
+    type: object
+    properties:
+      uf:
+        description: Estado (UF)
+        type: string
+      xLgr:
+        description: Logradouro do Endereco (xLgr)
+        type: string
+      nro:
+        description: Número (nro)
+        type: string
+      xCpl:
+        description: Complemento (xCpl)
+        type: string
+      xBairro:
+        description: Bairro (xBairro)
+        type: string
+      xMun:
+        description: Município (xMun)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.EnderEmit:
+    type: object
+    properties:
+      cep:
+        description: Código do CEP (CEP)
+        type: string
+      xLgr:
+        description: Logradouro do Endereco (xLgr)
+        type: string
+      nro:
+        description: Número (nro)
+        type: string
+      xCpl:
+        description: Complemento (xCpl)
+        type: string
+      xBairro:
+        description: Bairro (xBairro)
+        type: string
+      xMun:
+        description: Município (xMun)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.Prod:
+    type: object
+    properties:
+      cProd:
+        description: Código do produto ou serviço (cProd)
+        type: string
+      cEAN:
+        description: "GTIN (Global Trade Item Number) do produto, \r\nantigo código EAN ou código de barras (cEAN)"
+        type: string
+      xProd:
+        description: Descrição do produto ou serviço (xProd)
+        type: string
+      ncm:
+        description: Código NCM com 8 dígitos ou 2 dígitos (gênero) (NCM)
+        type: string
+      cfop:
+        format: int32
+        description: Código Fiscal de Operações e Prestações (CFOP)
+        type: integer
+      uCom:
+        description: Unidade Comercial (uCom)
+        type: string
+      qCom:
+        format: double
+        description: Quantidade Comercial (qCom)
+        type: number
+      vUnCom:
+        format: double
+        description: Valor Unitário de Comercialização (vUnCom)
+        type: number
+      vProd:
+        format: double
+        description: Valor Bruto (vProd)
+        type: number
+      indRegra:
+        description: "Indicador da regra de cálculo utilizada para Valor Bruto dos Produtos e Serviços\r\n    <para>A - Arredondamento</para><para>T - Truncamento</para>"
+        type: string
+      vDesc:
+        format: double
+        description: Valor do Desconto (vDesc)
+        type: number
+      vOutro:
+        format: double
+        description: Outras despesas acessórias (vOutro)
+        type: number
+      vItem:
+        format: double
+        description: Valor Líquido (vItem)
+        type: number
+      vRatDesc:
+        format: double
+        description: Rateio desconto (vRatDesc)
+        type: number
+      vRatAcr:
+        format: double
+        description: Rateio acréscimo (vRatAcr)
+        type: number
+      obsFiscoDet:
+        description: Observação fisco (obsFiscoDet)
+        type: array
+        items:
+          $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.ObsFiscoDet'
+  DataTech.Services.Domain.Models.Cfe.xml.Imposto:
+    description: Tributos incidentes no Produto ou Serviço (imposto)
+    type: object
+    properties:
+      vItem12741:
+        format: double
+        description: Valor aproximado total de tributos federais, estaduais e municipais. (vItem12741)
+        type: number
+      icms:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFeICMS'
+        description: Dados do ICMS Normal e ST (ICMS)
+      pis:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFePIS'
+        description: Grupo PIS (PIS)
+      cofins:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFeCOFINS'
+        description: Grupo COFINS (COFINS)
+      cofinsst:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFeCOFINSST'
+        description: Grupo COFINS Substituição Tributária (COFINSST)
+      pisst:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFePISST'
+        description: Grupo PIS Substituição Tributária (PISST)
+      issqn:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFeISSQN'
+        description: Grupo Imposto Sobre Serviço de Qualquer Natureza (ISSQN)
+  DataTech.Services.Domain.Models.Cfe.xml.CFeICMSTot:
+    description: Grupo de Valores Totais referentes ao ICMS (ICMSTot)
+    type: object
+    properties:
+      vICMS:
+        format: double
+        description: Valor total de ICMS (vICMS)
+        type: number
+      vProd:
+        format: double
+        description: Valor Total dos produtos e serviços (vProd)
+        type: number
+      vDesc:
+        format: double
+        description: Valor Total do Desconto (vDesc)
+        type: number
+      vPIS:
+        format: double
+        description: Valor do PIS (vPIS)
+        type: number
+      vCOFINS:
+        format: double
+        description: Valor do COFINS (vCOFINS)
+        type: number
+      vPISST:
+        format: double
+        description: Valor do PIS ST (vPISST)
+        type: number
+      vCOFINSST:
+        format: double
+        description: Valor do COFINS ST (vCOFINSST)
+        type: number
+      vOutro:
+        format: double
+        description: Outras Despesas acessórias (vOutro)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.xml.CFeISSQNTot:
+    description: Grupo de Valores Totais referentes ao ISSQN (ISSQNtot)
+    type: object
+    properties:
+      vBC:
+        format: double
+        description: Base de Cálculo do ISSQN (vBC)
+        type: number
+      vISS:
+        format: double
+        description: Valor total de ISSQN (vISS)
+        type: number
+      vPIS:
+        format: double
+        description: Valor do PIS (vPIS)
+        type: number
+      vCOFINS:
+        format: double
+        description: Valor do COFINS (vCOFINS)
+        type: number
+      vPISST:
+        format: double
+        description: Valor do PIS ST (vPISST)
+        type: number
+      vCOFINSST:
+        format: double
+        description: Valor do COFINS ST (vCOFINSST)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.xml.DescAcrEntr:
+    description: Grupo de valores de entrada de Desconto/Acréscimo sobre Subtotal (DescAcrEntr)
+    type: object
+    properties:
+      vDescSubtot:
+        format: double
+        description: Valor de Entrada de Desconto sobre Subtotal
+        type: number
+      vAcresSubtot:
+        format: double
+        description: Valor de Entrada de Acréscimo sobre Subtotal
+        type: number
+  DataTech.Services.Domain.Models.Cfe.xml.MP:
+    description: Grupo Detalhamento da Forma de Pagamento (MP)
+    type: object
+    properties:
+      cMP:
+        description: Código do meio de pagamento (cMP)
+        enum:
+          - fpDinheiro
+          - fpCheque
+          - fpCartaoCredito
+          - fpCartaoDebito
+          - fpCreditoLoja
+          - fpValeAlimentacao
+          - fpValeRefeicao
+          - fpValePresente
+          - fpValeCombustivel
+          - fpDuplicataMercantil
+          - fpBoletoBancario
+          - fpSemPagamento
+          - fpOutro
+          - fpDepositoBancario
+          - fpPagamentoInstantaneoPIX
+          - fpTransferenciabancaria
+          - fpProgramadefidelidade
+        type: string
+      vMP:
+        format: double
+        description: Valor do meio de pagamento (vMP)
+        type: number
+      cAdmc:
+        description: Credenciadora de cartão de débito ou crédito (cAmd)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.ObsFisco:
+    description: Informações Adicionais de Interesse do Fisco (obsFisco)
+    type: object
+    properties:
+      xTexto:
+        description: Texto (xTexto)
+        type: string
+      xCampo:
+        description: Campo (xCampo)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.ObsFiscoDet:
+    description: Observação fisco (obsFiscoDet)
+    type: object
+    properties:
+      xTextoDet:
+        description: Texto (xTextoDet)
+        type: string
+      xCampoDet:
+        description: Campo (xCampoDet)
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.CFeICMS:
+    description: Dados do ICMS Normal (ICMS)
+    type: object
+    properties:
+      tipo:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFeICMSBase'
+        description: "<para>(ICMS00) - Grupo Tributação do ICMS= 00</para>\r\n<para>(ICMS40) - Grupo Tributação ICMS = 40, 41, 50</para>\r\n<para>(ICMS60) - Grupo Tributação ICMS = 60</para>\r\n<para>(ICMSSN102) - Grupo CRT=1 – Simples Nacional e CSOSN=102, 103, 300 ou 400</para>\r\n<para>(ICMSSN500) - Grupo CRT=1 – Simples Nacional e CSOSN=500</para>\r\n<para>(ICMSSN900) - Grupo CRT=1 – Simples Nacional e CSOSN=900</para>"
+  DataTech.Services.Domain.Models.Cfe.xml.CFePIS:
+    description: Grupo PIS (PIS)
+    type: object
+    properties:
+      tipo:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFePISBase'
+        description: "<para>(PISAliq) - Grupo PIS tributado pela alíquota</para>\r\n<para>(PISNT) - Grupo PIS não tributado</para>\r\n<para>(PISQtde) - Grupo PIS quantidade</para>\r\n<para>(PISOutr) - Grupo PIS outros</para>\r\n<para>(PISSN) - Grupo PIS simples nacional</para>"
+  DataTech.Services.Domain.Models.Cfe.xml.CFeCOFINS:
+    description: Grupo COFINS (COFINS)
+    type: object
+    properties:
+      tipo:
+        $ref: '#/definitions/DataTech.Services.Domain.Models.Cfe.xml.CFeCOFINSBase'
+        description: "<para>(COFINSAliq) - Grupo COFINS tributado pela alíquota</para>\r\n<para>(COFINSNT) - Grupo COFINS não tributado</para>\r\n<para>(COFINSQtde) - Grupo COFINS quantidade</para>\r\n<para>(COFINSOutr) - Grupo COFINS outros</para>\r\n<para>(COFINSSN) - Grupo COFINS simples nacional</para>"
+  DataTech.Services.Domain.Models.Cfe.xml.CFeCOFINSST:
+    description: Grupo COFINS Substituição Tributária (COFINSST)
+    type: object
+    properties:
+      vBC:
+        format: double
+        description: Valor da Base de Cálculo da COFINS (vBC)
+        type: number
+      pCOFINS:
+        format: double
+        description: Alíquota da COFINS (em percentual) (pCOFINS)
+        type: number
+      qBCProd:
+        format: double
+        description: Quantidade Vendida (qBCProd)
+        type: number
+      vAliqProd:
+        format: double
+        description: Alíquota da COFINS (em reais) (vAliqProd)
+        type: number
+      vCOFINS:
+        format: double
+        description: Valor da COFINS (vCOFINS)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.xml.CFePISST:
+    description: Grupo PIS Substituição Tributária (PISST)
+    type: object
+    properties:
+      vBC:
+        format: double
+        description: Valor da Base de Cálculo do PIS (vBC)
+        type: number
+      pPIS:
+        format: double
+        description: Alíquota do PIS (em percentual) (pPIS)
+        type: number
+      qBCProd:
+        format: double
+        description: Quantidade Vendida (qBCProd)
+        type: number
+      vAliqProd:
+        format: double
+        description: Alíquota do PIS (em reais) (vAliqProd)
+        type: number
+      vPIS:
+        format: double
+        description: Valor do PIS (vPIS)
+        type: number
+  DataTech.Services.Domain.Models.Cfe.xml.CFeISSQN:
+    description: Grupo Imposto Sobre Serviço de Qualquer Natureza (ISSQN)
+    type: object
+    properties:
+      vDeducISSQN:
+        format: double
+        description: Valor dedução para redução da Base de Cálculo (vDeducISSQN)
+        type: number
+      vBC:
+        format: double
+        description: Valor da Base de Cálculo do ISSQN (vBC)
+        type: number
+      vAliq:
+        format: double
+        description: Alíquota do ISSQN (vAliq)
+        type: number
+      vISSQN:
+        format: double
+        description: Valor do ISSQN (vISSQN)
+        type: number
+      cMunFG:
+        format: int64
+        description: Código do Município do Fato Gerador do ISSQN (cMunFG)
+        type: integer
+      cListServ:
+        description: Item da Lista de Serviços (cListServ)
+        type: string
+      cServTribMun:
+        description: Código do serviço prestado dentro do município (cServTribMun)
+        type: string
+      cNatOp:
+        description: Natureza de operação do ISSQN (cNatOp)
+        type: string
+      indIncentivo:
+        description: Incentivo Fiscal do ISSQN (indIncFisc)
+        enum:
+          - iiSim
+          - iiNao
+        type: string
+  DataTech.Services.Domain.Models.Cfe.xml.CFeICMSBase:
+    type: object
+    properties: {}
+  DataTech.Services.Domain.Models.Cfe.xml.CFePISBase:
+    type: object
+    properties: {}
+  DataTech.Services.Domain.Models.Cfe.xml.CFeCOFINSBase:
+    type: object
+    properties: {}
+securityDefinitions:
+  Authorization_Header:
+    name: Authorization
+    in: header
+    type: apiKey
+    description: 'Autenticar usando o Cabeçalho HTTP, exemplo: "X-NFE-ApiKey {APIKEY_TOKEN}"'
+  Authorization_QueryParam:
+    name: apikey
+    in: query
+    type: apiKey
+    description: 'Autenticar usando o Parametro na URL, exemplo: "/?apikey={APIKEY_TOKEN}"'
+security:
+  - Authorization_Header: []
+    Authorization_QueryParam: []

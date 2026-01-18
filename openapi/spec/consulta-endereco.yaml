@@ -1,0 +1,342 @@
+swagger: "2.0"
+host: address.api.nfe.io
+info:
+  title: Consulta de Endereço
+  version: v2
+  description: "# Introducão\nSeja bem-vindo a documentação da API de consulta de Endereços!\nNossa API foi criada utilizando o padrão REST que possibilita a integração de seu sistema ao nosso, sendo assim você também pode extender ou recriar as funcionalidades existentes na nossa plataforma, tudo isso consumindo a API que está documentada abaixo.\n\n\n# Como usar a API?\nLogo a seguir você encontrará todos os recursos e metódos suportados pela API, sendo que essa página possibilita que você teste os recursos e métodos diretamente através dela.\n\n\n# Autenticação\nVocê precisa de uma chave de API (API Key) para identificar a conta que está realizando solicitações para a API. \nPara isso você deve colocar sua chave de API no campo que se encontra topo desta página para que os métodos funcionem corretamente.\nNo seu código e integração temos suporte para autenticação de diversas formas sendo eles: \nHTTP Header (Authorization ou X-NFEIO-APIKEY) ou HTTP Query String (api_key) nos dois modos passando o valor da sua chave de api (API Key).\n<!-- ReDoc-Inject: <security-definitions> -->\n"
+paths:
+  /v2/addresses/{postalCode}:
+    get:
+      tags:
+        - Addresses
+      summary: Consulta de Endereço por CEP
+      description: "### Informações adicionais\r\n \r\nUtilize esta requisição para consultar os dados de um **Endereço** através do CEP.\r\nOs dados do **Endereço** são consultados no Diretório Nacional de Endereço (DNE) dos Correios \r\nunificando com os dados de Cidades do IBGE."
+      operationId: V2AddressesByPostalCodeGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: postalCode
+          in: path
+          description: Código do CEP
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            type: object
+            properties:
+              addresses:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    state:
+                      type: string
+                    city:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+                    district:
+                      type: string
+                    additionalInformation:
+                      type: string
+                    streetSuffix:
+                      type: string
+                    street:
+                      type: string
+                    number:
+                      type: string
+                    numberMin:
+                      type: string
+                    numberMax:
+                      type: string
+                    postalCode:
+                      type: string
+                    country:
+                      type: string
+        "400":
+          description: Algum parametro informado não é válido, verificar resposta
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Nenhum endereço foi encontrado com o CEP informado
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+      security:
+        - Authorization_Header:
+            - apiKey
+        - Authorization_QueryParam:
+            - apiKey
+  /v2/addresses:
+    get:
+      tags:
+        - Addresses
+      summary: Pesquisa de Endereço por campos
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2AddressesGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: $filter
+          in: query
+          description: Termo genérico de pesquisa
+          required: false
+          type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            type: object
+            properties:
+              addresses:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    state:
+                      type: string
+                    city:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+                    district:
+                      type: string
+                    additionalInformation:
+                      type: string
+                    streetSuffix:
+                      type: string
+                    street:
+                      type: string
+                    number:
+                      type: string
+                    numberMin:
+                      type: string
+                    numberMax:
+                      type: string
+                    postalCode:
+                      type: string
+                    country:
+                      type: string
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Termos não encontrados
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+      security:
+        - Authorization_Header:
+            - apiKey
+        - Authorization_QueryParam:
+            - apiKey
+  /v2/addresses/{term}:
+    get:
+      tags:
+        - Addresses
+      summary: Pesquisa de Endereço por termo genérico
+      description: Você precisará do APIKEY da Empresa
+      operationId: V2AddressesByTermGet
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: term
+          in: path
+          description: Termo genérico de pesquisa
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Sucesso na requisição
+          schema:
+            type: object
+            properties:
+              addresses:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    state:
+                      type: string
+                    city:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+                    district:
+                      type: string
+                    additionalInformation:
+                      type: string
+                    streetSuffix:
+                      type: string
+                    street:
+                      type: string
+                    number:
+                      type: string
+                    numberMin:
+                      type: string
+                    numberMax:
+                      type: string
+                    postalCode:
+                      type: string
+                    country:
+                      type: string
+        "400":
+          description: Algum parametro informado não é válido
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+        "401":
+          description: Não autorizado, verificar o cabeçalho do HTTP Authorization
+        "403":
+          description: Accesso proibido
+        "404":
+          description: Nenhum endereço encontrado para o termo
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+        "500":
+          description: Erro no processamento
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+      security:
+        - Authorization_Header:
+            - apiKey
+        - Authorization_QueryParam:
+            - apiKey
+securityDefinitions:
+  Authorization_Header:
+    name: Authorization
+    in: header
+    type: apiKey
+    description: 'Autenticar usando o Cabeçalho HTTP, exemplo: "X-NFE-ApiKey {APIKEY_TOKEN}"'
+  Authorization_QueryParam:
+    name: apikey
+    in: query
+    type: apiKey
+    description: 'Autenticar usando o Parametro na URL, exemplo: "/?apikey={APIKEY_TOKEN}"'

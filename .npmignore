@@ -1,1 +1,158 @@
-test
+# ============================================================================
+# NFE.io SDK v3 - NPM Ignore Configuration
+# ============================================================================
+# Only ship production-ready files to NPM
+# Everything here is EXCLUDED from the published package
+
+# ----------------------------------------------------------------------------
+# Source Files (we ship compiled dist/ instead)
+# ----------------------------------------------------------------------------
+src/
+tests/
+examples/
+
+# ----------------------------------------------------------------------------
+# Development Configuration
+# ----------------------------------------------------------------------------
+.github/
+.vscode/
+.idea/
+*.iml
+
+# TypeScript Config
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+
+# Linting & Formatting
+.eslintrc.cjs
+.eslintrc.js
+.prettierrc.json
+.prettierignore
+.editorconfig
+
+# CI/CD
+.travis.yml
+.circleci/
+.gitlab-ci.yml
+azure-pipelines.yml
+
+# ----------------------------------------------------------------------------
+# Testing & Coverage
+# ----------------------------------------------------------------------------
+tests/
+test/
+coverage/
+.nyc_output/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+vitest.config.ts
+
+# ----------------------------------------------------------------------------
+# Documentation (keep only README, CHANGELOG, MIGRATION)
+# ----------------------------------------------------------------------------
+docs/
+*.md
+!README.md
+!CHANGELOG.md
+!MIGRATION.md
+!LICENSE.md
+!LICENSE
+
+# Development docs
+AGENTS.md
+CONTRIBUTING.md
+architecture-examples.md
+implementation-roadmap.md
+mcp-n8n-examples.md
+README-v2.md
+README_RELEASE.md
+RELEASE_CHECKLIST.md
+RELEASE_COMMANDS.ps1
+RELEASE_COMMANDS.sh
+RELEASE_SCRIPTS_COMPARISON.md
+
+# ----------------------------------------------------------------------------
+# Build & Development Tools
+# ----------------------------------------------------------------------------
+scripts/
+samples/
+openapi/
+
+# Build artifacts (we ship dist/ but not build tools)
+tsup.config.ts
+*.tsbuildinfo
+
+# ----------------------------------------------------------------------------
+# Version Control
+# ----------------------------------------------------------------------------
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+# ----------------------------------------------------------------------------
+# Package Manager Files
+# ----------------------------------------------------------------------------
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.npmrc
+.yarnrc
+.yarnrc.yml
+.pnpmfile.cjs
+
+# Package versions
+package.json.v3
+package-v3.json
+CHANGELOG-v3.md
+
+# ----------------------------------------------------------------------------
+# Temporary & Cache Files
+# ----------------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tgz
+*.tar.gz
+node_modules/
+.cache/
+.temp/
+tmp/
+temp/
+
+# ----------------------------------------------------------------------------
+# OS Files
+# ----------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ----------------------------------------------------------------------------
+# Environment Files
+# ----------------------------------------------------------------------------
+.env
+.env.*
+*.local
+
+# ----------------------------------------------------------------------------
+# Legacy Files (v2)
+# ----------------------------------------------------------------------------
+lib/
+VERSION
+CHANGELOG
+
+# ============================================================================
+# What WILL be published (defined in package.json "files" field):
+# - dist/              (compiled code)
+# - README.md          (documentation)
+# - CHANGELOG.md       (release notes)
+# - MIGRATION.md       (v2->v3 guide)
+# - LICENSE            (if present)
+# - package.json       (package metadata)
+# ============================================================================

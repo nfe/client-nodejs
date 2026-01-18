@@ -1,0 +1,18 @@
+{
+  "federalTaxNumber": 11222333000181,
+  "name": "Test Company via curl",
+  "email": "test@example.com",
+  "taxRegime": 1,
+  "address": {
+    "country": "BRA",
+    "postalCode": "01310-100",
+    "street": "Av. Paulista",
+    "number": "1578",
+    "district": "Bela Vista",
+    "city": {
+      "code": "3550308",
+      "name": "São Paulo"
+    },
+    "state": "SP"
+  }
+}
