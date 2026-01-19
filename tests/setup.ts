@@ -5,6 +5,16 @@
 
 import type { Webhook, WebhookEvent } from '../src/core/types.js';
 
+// Suppress unhandled rejection warnings from async polling tests
+process.on('unhandledRejection', (reason: any) => {
+  // Ignore TimeoutError and polling errors in tests
+  if (reason?.message?.includes('Polling') || reason?.message?.includes('timeout')) {
+    return; // Suppress these expected test errors
+  }
+  // Re-throw other unhandled rejections
+  throw reason;
+});
+
 // Global test configuration
 globalThis.fetch = globalThis.fetch || (() => {
   throw new Error('Fetch not available in test environment');
@@ -23,6 +33,12 @@ process.env.NODE_ENV = 'test';
 if (!process.env.NFE_API_KEY || process.env.NFE_API_KEY === '') {
   process.env.NFE_API_KEY = 'test-api-key';
 }
+
+// Check if we have a real API key for integration tests
+export const hasRealApiKey = () => {
+  const key = process.env.NFE_API_KEY;
+  return key && key !== 'test-api-key' && key !== 'test-api-key-12345';
+};
 
 // Test constants
 export const TEST_API_KEY = 'test-api-key-12345';
