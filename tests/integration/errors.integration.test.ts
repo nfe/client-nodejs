@@ -19,7 +19,9 @@ import {
   RateLimitError,
 } from '../../src/core/errors/index.js';
 
-describe('Error Handling Integration Tests', () => {
+const hasApiKey = !!process.env.NFE_API_KEY;
+
+describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
   let client: NfeClient;
 
   beforeAll(() => {

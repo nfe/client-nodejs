@@ -14,7 +14,9 @@ import {
 } from './setup.js';
 import { NfeClient } from '../../src/core/client.js';
 
-describe('Companies Integration Tests', () => {
+const hasApiKey = !!process.env.NFE_API_KEY;
+
+describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
   let client: NfeClient;
   const createdCompanyIds: string[] = [];
 

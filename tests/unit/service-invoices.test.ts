@@ -481,7 +481,7 @@ describe('ServiceInvoicesResource', () => {
 
       await expect(
         serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData)
-      ).rejects.toThrow('Unexpected response from invoice creation');
+      ).rejects.toThrow('Async response (202) received but no Location header found');
     });
 
     it('should extract path from full URL in location header', async () => {
@@ -589,7 +589,7 @@ describe('ServiceInvoicesResource', () => {
 
       const result = await serviceInvoices.getStatus(TEST_COMPANY_ID, TEST_INVOICE_ID);
 
-      expect(result.isComplete).toBe(false);
+      expect(result.isComplete).toBe(true); // IssueFailed is a terminal status
       expect(result.isFailed).toBe(true);
     });
 
