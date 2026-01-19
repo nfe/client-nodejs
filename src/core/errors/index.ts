@@ -1,6 +1,6 @@
 /**
  * NFE.io SDK v3 - Error Classes
- * 
+ *
  * Comprehensive error handling system that maintains compatibility
  * with v2 error types while providing modern TypeScript benefits
  */
@@ -12,6 +12,7 @@
 export class NfeError extends Error {
   public readonly type: string = 'NfeError';
   public readonly code?: number | undefined;
+  public readonly status?: number | undefined;
   public readonly details?: unknown;
   public readonly raw?: unknown;
 
@@ -19,6 +20,7 @@ export class NfeError extends Error {
     super(message);
     this.name = this.constructor.name;
     this.code = code;
+    this.status = code; // Alias for compatibility
     this.details = details;
     this.raw = details;
 

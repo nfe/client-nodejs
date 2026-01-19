@@ -5,6 +5,22 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.0.1] - 2026-01-18
+
+### 🐛 Correções
+
+- **Testes**: Adicionada propriedade `status` como alias de `code` em `NfeError` para compatibilidade
+- **Service Invoices**: Corrigida extração de path do location header para preservar prefixo `/v1`
+- **Service Invoices**: Corrigido `getStatus` para identificar corretamente status de falha como terminal
+- **Testes de Integração**: Agora são pulados gracefully quando `NFE_API_KEY` não está definida
+- **Testes Unitários**: Corrigidas múltiplas assertions e timeouts
+- **Mensagens de Erro**: Melhoradas mensagens de erro para respostas async sem Location header
+
+### 📝 Documentação
+
+- Melhorada documentação de extração de path do location header
+
+---
 
 ## [3.0.0] - 2026-01-18
 

@@ -92,14 +92,18 @@ export class ServiceInvoicesResource {
 
       // Extract invoice ID from location
       // Location format: /v1/companies/{companyId}/serviceinvoices/{invoiceId}
+      // or full URL: https://api.nfe.io/v1/companies/{companyId}/serviceinvoices/{invoiceId}
       const invoiceId = this.extractInvoiceIdFromLocation(location);
+
+      // Keep full path for polling (with or without /v1 prefix)
+      const fullPath = location.startsWith('http') ? new URL(location).pathname : location;
 
       return {
         status: 'async',
         response: {
           code: 202,
           status: 'pending',
-          location,
+          location: fullPath,
           invoiceId,
         },
       };

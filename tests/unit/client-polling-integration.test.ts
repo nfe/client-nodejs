@@ -369,14 +369,15 @@ describe('Client Polling Integration', () => {
       let postCallCount = 0;
       vi.spyOn(mockHttpClient, 'post').mockImplementation(async () => {
         const index = postCallCount++;
+        const location = `/companies/${TEST_COMPANY_ID}/serviceinvoices/${invoices[index].id}`;
         return {
           data: {
             code: 202,
             status: 'pending',
-            location: `/companies/${TEST_COMPANY_ID}/serviceinvoices/${invoices[index].id}`,
+            location,
           },
           status: 202,
-          headers: {},
+          headers: { location },
         };
       });
 
@@ -443,7 +444,7 @@ describe('Client Polling Integration', () => {
 
       await expect(
         client.serviceInvoices.createAndWait(TEST_COMPANY_ID, invoiceData)
-      ).rejects.toThrow('Unexpected response from invoice creation');
+      ).rejects.toThrow('Async response (202) received but no Location header found');
     });
 
     it('should handle invoice with id and number but no status', async () => {
