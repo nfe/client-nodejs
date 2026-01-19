@@ -11,7 +11,9 @@ describe('Polling Utility', () => {
     vi.useFakeTimers();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Ensure all pending timers are cleared to avoid unhandled rejections
+    await vi.runAllTimersAsync().catch(() => {});
     vi.restoreAllMocks();
   });
 
