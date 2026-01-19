@@ -29,7 +29,12 @@ export const INTEGRATION_TEST_CONFIG = {
 // Check if integration tests should run
 export function shouldRunIntegrationTests(): boolean {
   const apiKey = INTEGRATION_TEST_CONFIG.apiKey;
-  const hasApiKey = apiKey.length > 0 && apiKey !== 'undefined' && apiKey !== 'null';
+  // Consider test keys as invalid for integration tests
+  const hasApiKey = apiKey.length > 0 &&
+                    apiKey !== 'undefined' &&
+                    apiKey !== 'null' &&
+                    apiKey !== 'test-api-key' &&
+                    apiKey !== 'test-api-key-12345';
   const isCI = process.env.CI === 'true';
   const forceRun = process.env.RUN_INTEGRATION_TESTS === 'true';
 
@@ -39,10 +44,7 @@ export function shouldRunIntegrationTests(): boolean {
   return hasApiKey && (forceRun || !isCI);
 }// Skip test if integration tests shouldn't run
 export function skipIfNoApiKey() {
-  if (!shouldRunIntegrationTests()) {
-    return 'skip';
-  }
-  return false;
+  return !shouldRunIntegrationTests();
 }
 
 // Create client for integration tests
