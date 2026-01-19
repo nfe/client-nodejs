@@ -23,9 +23,9 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     },
     "./package.json": "./package.json"
   },
@@ -57,7 +57,8 @@
     "examples": "node examples/run-examples.js",
     "examples:setup": "node examples/setup.js",
     "examples:test": "node examples/test-connection.js",
-    "prepublishOnly": "npm run build && npm test -- --run",
+    "prepublishOnly": "npm run build",
+    "prepublish:test": "npm run build && npm test -- --run",
     "release": "npm run build && npm test -- --run && npm publish"
   },
   "dependencies": {},
