@@ -651,13 +651,6 @@ npm run build
 
 Contribuições são bem-vindas! Por favor, veja [CONTRIBUTING.md](./CONTRIBUTING.md) para orientações.
 
-### Extensões Oficiais
-
-O SDK foi projetado para ser extensível. Extensões oficiais:
-
-- **[@nfe-io/mcp-server](https://github.com/nfe/mcp-server)** - Servidor Model Context Protocol para integração com LLMs
-- **[@nfe-io/n8n-nodes](https://github.com/nfe/n8n-nodes)** - Nós de automação de workflow n8n
-
 ## 📄 Licença
 
 MIT © [NFE.io](https://nfe.io)
@@ -667,15 +660,6 @@ MIT © [NFE.io](https://nfe.io)
 - 📧 Email: suporte@nfe.io
 - 📖 Documentação: https://nfe.io/docs/
 - 🐛 Issues: https://github.com/nfe/client-nodejs/issues
-
-## 🗺️ Roadmap
-
-- [x] Validação de spec OpenAPI e geração de tipos
-- [ ] Helpers para rate limiting
-- [ ] Helpers para paginação
-- [ ] Interceptors de request/response
-- [ ] Estratégias de retry customizadas
-- [ ] Suporte para navegadores (via bundlers)
 
 ---
 
