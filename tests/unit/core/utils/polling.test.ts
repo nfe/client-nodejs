@@ -12,9 +12,12 @@ describe('Polling Utility', () => {
   });
 
   afterEach(async () => {
-    // Ensure all pending timers are cleared to avoid unhandled rejections
-    await vi.runAllTimersAsync().catch(() => {});
+    // Clear all timers first to prevent them from firing
+    vi.clearAllTimers();
+    // Restore mocks
     vi.restoreAllMocks();
+    // Use real timers again
+    vi.useRealTimers();
   });
 
   describe('poll()', () => {
@@ -145,13 +148,15 @@ describe('Polling Utility', () => {
         isComplete,
         timeout: 5000,
         initialDelay: 1000,
-      });
+      }).catch(err => err); // Catch to prevent unhandled rejection
 
       // Advance time beyond timeout
       await vi.advanceTimersByTimeAsync(6000);
 
-      await expect(promise).rejects.toThrow(TimeoutError);
-      await expect(promise).rejects.toThrow(/timeout exceeded/i);
+      // Wait for promise to settle
+      const error = await promise;
+      expect(error).toBeInstanceOf(TimeoutError);
+      expect(error.message).toMatch(/timeout exceeded/i);
     });
 
     it('should invoke onPoll callback on each attempt', async () => {
@@ -281,13 +286,15 @@ describe('Polling Utility', () => {
       const fn = vi.fn().mockResolvedValue({ ready: false });
       const isComplete = vi.fn().mockReturnValue(false);
 
-      const promise = pollWithRetries(fn, isComplete, 3, 1000);
+      const promise = pollWithRetries(fn, isComplete, 3, 1000).catch(err => err); // Catch to prevent unhandled rejection
 
       await vi.advanceTimersByTimeAsync(1000);
       await vi.advanceTimersByTimeAsync(1000);
       await vi.advanceTimersByTimeAsync(0);
 
-      await expect(promise).rejects.toThrow(/failed after 3 attempts/i);
+      // Wait for promise to settle
+      const error = await promise;
+      expect(error.message).toMatch(/failed after 3 attempts/i);
       expect(fn).toHaveBeenCalledTimes(3);
     });
   });
