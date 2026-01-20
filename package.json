@@ -1,7 +1,7 @@
 {
   "name": "nfe-io",
-  "version": "3.0.2",
-  "description": "Official NFE.io SDK for Node.js 18+ - TypeScript native with zero runtime dependencies",
+  "version": "v3.0.2",
+  "description": "Official NFE.io SDK for Node.js - TypeScript native with zero runtime dependencies",
   "keywords": [
     "nfe",
     "nfse",
@@ -12,7 +12,7 @@
   ],
   "author": {
     "name": "NFE.io Team",
-    "email": "dev@nfe.io"
+    "email": "suporte@nfe.io"
   },
   "license": "MIT",
   "repository": {
