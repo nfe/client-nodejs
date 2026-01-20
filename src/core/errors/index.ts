@@ -33,6 +33,11 @@ export class NfeError extends Error {
     }
   }
 
+  // Alias for statusCode (used in tests)
+  get statusCode(): number | undefined {
+    return this.code;
+  }
+
   /** Convert error to JSON for logging/debugging */
   toJSON() {
     return {

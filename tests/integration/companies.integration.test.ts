@@ -14,21 +14,16 @@ import {
 } from './setup.js';
 import { NfeClient } from '../../src/core/client.js';
 
-const hasApiKey = !!process.env.NFE_API_KEY;
-
-describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
+// Integration tests should skip unless explicitly enabled
+describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
   let client: NfeClient;
   const createdCompanyIds: string[] = [];
 
   beforeAll(() => {
-    if (skipIfNoApiKey()) {
-      console.log('Skipping integration tests - no API key configured');
-    } else {
-      client = createIntegrationClient();
-      logTestInfo('Running Companies integration tests', {
-        environment: INTEGRATION_TEST_CONFIG.environment,
-      });
-    }
+    client = createIntegrationClient();
+    logTestInfo('Running Companies integration tests', {
+      environment: INTEGRATION_TEST_CONFIG.environment,
+    });
   });
 
   afterEach(async () => {
@@ -39,7 +34,7 @@ describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
     createdCompanyIds.length = 0;
   });
 
-  it.skipIf(skipIfNoApiKey())('should create a company', async () => {
+  it('should create a company', async () => {
     const companyData = {
       ...TEST_COMPANY_DATA,
       name: `Test Company ${Date.now()}`,
@@ -57,7 +52,7 @@ describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
     logTestInfo('Company created', { id: company.id });
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should retrieve a company by id', async () => {
+  it('should retrieve a company by id', async () => {
     // Create company first
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -75,7 +70,7 @@ describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
     expect(retrieved.name).toBe(companyData.name);
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should list companies', async () => {
+  it('should list companies', async () => {
     // Create at least one company
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -99,7 +94,7 @@ describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
     expect(hasCompanies).toBe(true);
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should update a company', async () => {
+  it('should update a company', async () => {
     // Create company first
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -120,7 +115,7 @@ describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
     expect(updated.name).toBe(updatedName);
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should delete a company', async () => {
+  it('should delete a company', async () => {
     // Create company first
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -143,7 +138,7 @@ describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
     }
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should handle 404 for non-existent company', async () => {
+  it('should handle 404 for non-existent company', async () => {
     const fakeId = 'non-existent-id-' + Date.now();
 
     logTestInfo('Testing 404 error', { id: fakeId });
@@ -152,7 +147,7 @@ describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
     ).rejects.toThrow();
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should validate required fields on create', async () => {
+  it('should validate required fields on create', async () => {
     const invalidData = {
       // Missing required fields
       name: 'Invalid Company',
@@ -164,7 +159,7 @@ describe.skipIf(!hasApiKey)('Companies Integration Tests', () => {
     ).rejects.toThrow();
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should allow duplicate federalTaxNumber', async () => {
+  it('should allow duplicate federalTaxNumber', async () => {
     // Create first company
     const companyData = {
       ...TEST_COMPANY_DATA,

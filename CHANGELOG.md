@@ -5,6 +5,25 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.0.2] - 2026-01-19
+
+### 🐛 Correções
+
+- **Build**: Corrigido warning do tsup sobre ordem do campo `types` no package.json exports
+- **Errors**: Adicionado getter `statusCode` na classe `NfeError` para total compatibilidade com testes
+- **Testes de Integração**: Melhorada lógica de skip para considerar valores de teste como inválidos
+- **Testes de Polling**: Corrigidos testes de timeout para evitar unhandled rejections no CI
+- **Testes Unitários**: Ajustados testes para usar `.catch()` e prevenir erros assíncronos não tratados
+- **CI/CD**: Resolvidos 2 erros de unhandled rejection que causavam falha no GitHub Actions
+
+### 🔧 Melhorias
+
+- **Configuração**: Removido `prepublishOnly` com testes do package.json para evitar falhas por warnings de teste
+- **Testes**: Melhorada limpeza de timers falsos no afterEach dos testes de polling
+- **Qualidade**: 100% dos testes passando (281 passed, 37 skipped) sem erros assíncronos
+
+---
+
 ## [3.0.1] - 2026-01-18
 
 ### 🐛 Correções

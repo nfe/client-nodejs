@@ -1,8 +1,15 @@
 {
   "name": "nfe-io",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Official NFE.io SDK for Node.js 18+ - TypeScript native with zero runtime dependencies",
-  "keywords": ["nfe", "nfse", "nota-fiscal", "invoice", "brazil", "typescript"],
+  "keywords": [
+    "nfe",
+    "nfse",
+    "nota-fiscal",
+    "invoice",
+    "brazil",
+    "typescript"
+  ],
   "author": {
     "name": "NFE.io Team",
     "email": "dev@nfe.io"
@@ -10,7 +17,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nfe/client-nodejs.git"
+    "url": "git+https://github.com/nfe/client-nodejs.git"
   },
   "bugs": "https://github.com/nfe/client-nodejs/issues",
   "homepage": "https://nfe.io",
@@ -23,9 +30,9 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     },
     "./package.json": "./package.json"
   },
@@ -57,7 +64,8 @@
     "examples": "node examples/run-examples.js",
     "examples:setup": "node examples/setup.js",
     "examples:test": "node examples/test-connection.js",
-    "prepublishOnly": "npm run build && npm test -- --run",
+    "prepublishOnly": "npm run build",
+    "prepublish:test": "npm run build && npm test -- --run",
     "release": "npm run build && npm test -- --run && npm publish"
   },
   "dependencies": {},

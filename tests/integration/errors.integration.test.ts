@@ -19,23 +19,17 @@ import {
   RateLimitError,
 } from '../../src/core/errors/index.js';
 
-const hasApiKey = !!process.env.NFE_API_KEY;
-
-describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
+describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
   let client: NfeClient;
 
   beforeAll(() => {
-    if (skipIfNoApiKey()) {
-      console.log('Skipping integration tests - no API key configured');
-    } else {
-      client = createIntegrationClient();
-      logTestInfo('Running error handling integration tests', {
-        environment: INTEGRATION_TEST_CONFIG.environment,
-      });
-    }
+    client = createIntegrationClient();
+    logTestInfo('Running Error Handling integration tests', {
+      environment: INTEGRATION_TEST_CONFIG.environment,
+    });
   });
 
-  it.skipIf(skipIfNoApiKey())('should handle 401 authentication error', async () => {
+  it('should handle 401 authentication error', async () => {
     // Create client with invalid API key
     const invalidClient = new NfeClient({
       apiKey: 'invalid-api-key-12345',
@@ -58,7 +52,7 @@ describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
     }
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should handle 404 not found error', async () => {
+  it('should handle 404 not found error', async () => {
     const fakeCompanyId = 'non-existent-company-' + Date.now();
 
     logTestInfo('Testing 404 not found error', { id: fakeCompanyId });
@@ -75,7 +69,7 @@ describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
     }
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should handle 400 validation error', async () => {
+  it('should handle 400 validation error', async () => {
     const invalidData = {
       name: 'Invalid Company',
       // Missing required fields
@@ -95,7 +89,7 @@ describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
     }
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should handle network timeout', async () => {
+  it('should handle network timeout', async () => {
     // Create client with very short timeout
     const timeoutClient = new NfeClient({
       apiKey: INTEGRATION_TEST_CONFIG.apiKey,
@@ -121,7 +115,7 @@ describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
     }
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should retry on transient errors', async () => {
+  it('should retry on transient errors', async () => {
     // This test verifies that retry logic works
     // We can't easily trigger transient errors from client side,
     // but we can verify the retry configuration is respected
@@ -147,7 +141,7 @@ describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
     logTestInfo('Retry configuration test passed');
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should respect rate limiting (if enforced)', async () => {
+  it('should respect rate limiting (if enforced)', async () => {
     // Make multiple rapid requests to potentially trigger rate limiting
     // Note: Test environment might not enforce rate limits strictly
 
@@ -177,7 +171,7 @@ describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
     expect(results.length).toBe(10);
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout * 2 });
 
-  it.skipIf(skipIfNoApiKey())('should handle malformed response gracefully', async () => {
+  it('should handle malformed response gracefully', async () => {
     // Test with invalid endpoint that might return unexpected format
     const fakeEndpoint = '/v1/invalid-endpoint-test-' + Date.now();
 
@@ -198,7 +192,7 @@ describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
     }
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should preserve error details from API', async () => {
+  it('should preserve error details from API', async () => {
     const invalidData = {
       name: 'Test',
       // Missing federalTaxNumber
@@ -228,7 +222,7 @@ describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
     }
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should handle concurrent requests correctly', async () => {
+  it('should handle concurrent requests correctly', async () => {
     // Test that concurrent requests don't interfere with each other
     logTestInfo('Testing concurrent requests');
 
@@ -249,7 +243,7 @@ describe.skipIf(!hasApiKey)('Error Handling Integration Tests', () => {
     logTestInfo('Concurrent requests handled correctly');
   }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
 
-  it.skipIf(skipIfNoApiKey())('should handle empty response lists', async () => {
+  it('should handle empty response lists', async () => {
     // Test listing resources that might be empty
     // This depends on account state, but should handle gracefully
 
