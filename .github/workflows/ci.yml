@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ v3, main ]
+    branches: [ v3, main, 'release/*', 'hotfix/*', 'dependabot/*', 'renovate/*', 'feature/*' ]
   pull_request:
     branches: [ v3, main ]
 
