@@ -45,14 +45,19 @@ describe('NfeClient Core', () => {
     expect(config.environment).toBe('development');
   });
 
-  it('should throw error for invalid config', () => {
+  it('should throw error when accessing resource without api key', () => {
     // Unset environment variable to ensure validation runs
     const originalEnv = process.env.NFE_API_KEY;
     delete process.env.NFE_API_KEY;
 
+    // Creating client with empty apiKey should NOT throw immediately (lazy validation)
+    const clientWithoutKey = new NfeClient({ apiKey: '' });
+    expect(clientWithoutKey).toBeInstanceOf(NfeClient);
+
+    // But accessing a resource that requires apiKey should throw
     expect(() => {
-      new NfeClient({ apiKey: '' });
-    }).toThrow();
+      clientWithoutKey.serviceInvoices;
+    }).toThrow(/API key required/);
 
     // Restore environment
     if (originalEnv) process.env.NFE_API_KEY = originalEnv;

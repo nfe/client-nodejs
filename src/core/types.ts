@@ -15,8 +15,10 @@
 // ----------------------------------------------------------------------------
 
 export interface NfeConfig {
-  /** NFE.io API Key (required) */
-  apiKey: string;
+  /** NFE.io API Key for main resources (companies, invoices, etc.) */
+  apiKey?: string;
+  /** NFE.io API Key specifically for Address API (optional, falls back to apiKey) */
+  addressApiKey?: string;
   /** Environment to use (both use same endpoint, differentiated by API key) */
   environment?: 'production' | 'development';
   /** Custom base URL (overrides environment) */
@@ -184,6 +186,64 @@ export interface Webhook {
 export type WebhookEvent = 'invoice.created' | 'invoice.issued' | 'invoice.cancelled' | 'invoice.failed';
 
 // ============================================================================
+// Address Types (for Address Lookup API)
+// ============================================================================
+
+/**
+ * City information with IBGE code
+ */
+export interface AddressCity {
+  /** IBGE city code */
+  code: string;
+  /** City name */
+  name: string;
+}
+
+/**
+ * Complete address information from Correios DNE
+ */
+export interface Address {
+  /** State abbreviation (e.g., 'SP', 'RJ') */
+  state: string;
+  /** City information with IBGE code */
+  city: AddressCity;
+  /** District/neighborhood name */
+  district: string;
+  /** Additional address information */
+  additionalInformation: string;
+  /** Street type suffix (e.g., 'Avenida', 'Rua') */
+  streetSuffix: string;
+  /** Street name */
+  street: string;
+  /** Address number */
+  number: string;
+  /** Minimum number in range */
+  numberMin: string;
+  /** Maximum number in range */
+  numberMax: string;
+  /** Postal code (CEP) */
+  postalCode: string;
+  /** Country code */
+  country: string;
+}
+
+/**
+ * Response from address lookup endpoints
+ */
+export interface AddressLookupResponse {
+  /** Array of matching addresses */
+  addresses: Address[];
+}
+
+/**
+ * Options for address search
+ */
+export interface AddressSearchOptions {
+  /** OData filter expression (e.g., "city eq 'São Paulo'") */
+  filter?: string;
+}
+
+// ============================================================================
 // API Response Types
 // ============================================================================
 
@@ -229,7 +289,24 @@ export interface PollOptions {
 // Utility Types
 // ============================================================================
 
-export type RequiredNfeConfig = Required<NfeConfig>;
+/**
+ * Internal normalized configuration after processing NfeConfig.
+ * API keys remain optional since validation is done lazily when resources are accessed.
+ */
+export interface RequiredNfeConfig {
+  /** Main API key (may be undefined if only using address API) */
+  apiKey: string | undefined;
+  /** Address API key (may be undefined, will fallback to apiKey) */
+  addressApiKey: string | undefined;
+  /** Environment */
+  environment: 'production' | 'development';
+  /** Base URL for main API */
+  baseUrl: string;
+  /** Request timeout */
+  timeout: number;
+  /** Retry configuration */
+  retryConfig: Required<RetryConfig>;
+}
 
 /** Extract resource ID from response or input */
 export type ResourceId = string;

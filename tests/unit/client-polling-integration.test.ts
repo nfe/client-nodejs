@@ -15,7 +15,11 @@ describe('Client Polling Integration', () => {
 
   beforeEach(() => {
     client = new NfeClient({ apiKey: TEST_API_KEY });
-    mockHttpClient = (client as any).http;
+    // Force HTTP client initialization by accessing a resource
+    // This triggers lazy creation of the internal _http client
+    void client.serviceInvoices;
+    // Access the now-initialized private http client for mocking
+    mockHttpClient = (client as any)._http;
   });
 
   describe('end-to-end invoice creation with polling', () => {

@@ -75,6 +75,12 @@ export type {
   Webhook,
   WebhookEvent,
 
+  // Address types
+  Address,
+  AddressCity,
+  AddressLookupResponse,
+  AddressSearchOptions,
+
   // Common types
   EntityType,
   TaxRegime,
