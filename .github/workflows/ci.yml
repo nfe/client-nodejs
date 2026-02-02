@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ v3, main, 'release/*', 'hotfix/*', 'dependabot/*', 'renovate/*', 'feature/*' ]
+    branches: [ master, 'release/*', 'hotfix/*', 'dependabot/*', 'renovate/*', 'feature/*' ]
   pull_request:
-    branches: [ v3, main ]
+    branches: [ master ]
 
 jobs:
   test:
