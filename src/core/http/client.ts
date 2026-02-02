@@ -398,7 +398,7 @@ export function createHttpClient(config: HttpConfig): HttpClient {
 /**
  * Create default retry configuration
  */
-export function createDefaultRetryConfig(): RetryConfig {
+export function createDefaultRetryConfig(): Required<RetryConfig> {
   return {
     maxRetries: 3,
     baseDelay: 1000,

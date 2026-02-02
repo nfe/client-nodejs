@@ -25,7 +25,9 @@ import {
   CompaniesResource,
   LegalPeopleResource,
   NaturalPeopleResource,
-  WebhooksResource
+  WebhooksResource,
+  AddressesResource,
+  ADDRESS_API_BASE_URL
 } from './resources/index.js';
 
 // ============================================================================
@@ -105,11 +107,22 @@ import {
  * @see {@link CompaniesResource} for company operations
  */
 export class NfeClient {
-  /** @internal HTTP client for making API requests */
-  private readonly http: HttpClient;
+  /** @internal HTTP client for main API requests (created lazily) */
+  private _http: HttpClient | undefined;
+
+  /** @internal HTTP client for address API requests (created lazily) */
+  private _addressHttp: HttpClient | undefined;
 
   /** @internal Normalized client configuration */
   private readonly config: RequiredNfeConfig;
+
+  /** @internal Cached resource instances */
+  private _serviceInvoices: ServiceInvoicesResource | undefined;
+  private _companies: CompaniesResource | undefined;
+  private _legalPeople: LegalPeopleResource | undefined;
+  private _naturalPeople: NaturalPeopleResource | undefined;
+  private _webhooks: WebhooksResource | undefined;
+  private _addresses: AddressesResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -122,6 +135,7 @@ export class NfeClient {
    * - Automatic polling for async invoice processing
    *
    * @see {@link ServiceInvoicesResource}
+   * @throws {ConfigurationError} If API key is not configured
    *
    * @example
    * ```typescript
@@ -132,7 +146,12 @@ export class NfeClient {
    * });
    * ```
    */
-  public readonly serviceInvoices: ServiceInvoicesResource;
+  get serviceInvoices(): ServiceInvoicesResource {
+    if (!this._serviceInvoices) {
+      this._serviceInvoices = new ServiceInvoicesResource(this.getMainHttpClient());
+    }
+    return this._serviceInvoices;
+  }
 
   /**
    * Companies API resource
@@ -144,6 +163,7 @@ export class NfeClient {
    * - Batch operations
    *
    * @see {@link CompaniesResource}
+   * @throws {ConfigurationError} If API key is not configured
    *
    * @example
    * ```typescript
@@ -154,7 +174,12 @@ export class NfeClient {
    * });
    * ```
    */
-  public readonly companies: CompaniesResource;
+  get companies(): CompaniesResource {
+    if (!this._companies) {
+      this._companies = new CompaniesResource(this.getMainHttpClient());
+    }
+    return this._companies;
+  }
 
   /**
    * Legal People API resource
@@ -166,6 +191,7 @@ export class NfeClient {
    * - Batch operations
    *
    * @see {@link LegalPeopleResource}
+   * @throws {ConfigurationError} If API key is not configured
    *
    * @example
    * ```typescript
@@ -175,7 +201,12 @@ export class NfeClient {
    * });
    * ```
    */
-  public readonly legalPeople: LegalPeopleResource;
+  get legalPeople(): LegalPeopleResource {
+    if (!this._legalPeople) {
+      this._legalPeople = new LegalPeopleResource(this.getMainHttpClient());
+    }
+    return this._legalPeople;
+  }
 
   /**
    * Natural People API resource
@@ -187,6 +218,7 @@ export class NfeClient {
    * - Batch operations
    *
    * @see {@link NaturalPeopleResource}
+   * @throws {ConfigurationError} If API key is not configured
    *
    * @example
    * ```typescript
@@ -196,7 +228,12 @@ export class NfeClient {
    * });
    * ```
    */
-  public readonly naturalPeople: NaturalPeopleResource;
+  get naturalPeople(): NaturalPeopleResource {
+    if (!this._naturalPeople) {
+      this._naturalPeople = new NaturalPeopleResource(this.getMainHttpClient());
+    }
+    return this._naturalPeople;
+  }
 
   /**
    * Webhooks API resource
@@ -209,6 +246,7 @@ export class NfeClient {
    * - List available event types
    *
    * @see {@link WebhooksResource}
+   * @throws {ConfigurationError} If API key is not configured
    *
    * @example
    * ```typescript
@@ -218,7 +256,40 @@ export class NfeClient {
    * });
    * ```
    */
-  public readonly webhooks: WebhooksResource;
+  get webhooks(): WebhooksResource {
+    if (!this._webhooks) {
+      this._webhooks = new WebhooksResource(this.getMainHttpClient());
+    }
+    return this._webhooks;
+  }
+
+  /**
+   * Addresses API resource
+   *
+   * @description
+   * Provides operations for looking up Brazilian addresses:
+   * - Lookup by postal code (CEP)
+   * - Search by filter
+   * - Search by generic term
+   *
+   * **Note:** This resource uses a different API host (address.api.nfe.io).
+   * Configure `addressApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link AddressesResource}
+   * @throws {ConfigurationError} If no API key is configured (addressApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * const result = await nfe.addresses.lookupByPostalCode('01310-100');
+   * console.log(result.addresses[0].street); // 'Paulista'
+   * ```
+   */
+  get addresses(): AddressesResource {
+    if (!this._addresses) {
+      this._addresses = new AddressesResource(this.getAddressHttpClient());
+    }
+    return this._addresses;
+  }
 
   /**
    * Create a new NFE.io API client
@@ -256,29 +327,97 @@ export class NfeClient {
    *   }
    * });
    * ```
+   *
+   * @example With only address API key
+   * ```typescript
+   * // Only use address lookup, no main API access
+   * const nfe = new NfeClient({
+   *   addressApiKey: 'address-api-key'
+   * });
+   * await nfe.addresses.lookupByPostalCode('01310-100');
+   * ```
    */
-  constructor(config: NfeConfig) {
-    // Validate and normalize configuration
-    this.config = this.validateAndNormalizeConfig(config);
-
-    // Validate Node.js environment
+  constructor(config: NfeConfig = {}) {
+    // Validate Node.js environment first
     this.validateEnvironment();
 
-    // Create HTTP client
-    const httpConfig = buildHttpConfig(
-      this.config.apiKey,
-      this.getBaseUrl(),
-      this.config.timeout,
-      this.config.retryConfig
-    );
-    this.http = new HttpClient(httpConfig);
+    // Validate and normalize configuration (no longer requires apiKey)
+    this.config = this.validateAndNormalizeConfig(config);
 
-    // Initialize resources
-    this.serviceInvoices = new ServiceInvoicesResource(this.http);
-    this.companies = new CompaniesResource(this.http);
-    this.legalPeople = new LegalPeopleResource(this.http);
-    this.naturalPeople = new NaturalPeopleResource(this.http);
-    this.webhooks = new WebhooksResource(this.http);
+    // Resources are initialized lazily via getters
+  }
+
+  // --------------------------------------------------------------------------
+  // HTTP Client Management (Lazy Initialization)
+  // --------------------------------------------------------------------------
+
+  /**
+   * Get or create the main API HTTP client
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getMainHttpClient(): HttpClient {
+    if (!this._http) {
+      const apiKey = this.resolveMainApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for this resource. Set "apiKey" in config or NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        this.config.baseUrl,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._http = new HttpClient(httpConfig);
+    }
+    return this._http;
+  }
+
+  /**
+   * Get or create the Address API HTTP client
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getAddressHttpClient(): HttpClient {
+    if (!this._addressHttp) {
+      const apiKey = this.resolveAddressApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for Addresses. Set "addressApiKey" or "apiKey" in config, or NFE_ADDRESS_API_KEY/NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        ADDRESS_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._addressHttp = new HttpClient(httpConfig);
+    }
+    return this._addressHttp;
+  }
+
+  /**
+   * Resolve the main API key using fallback chain
+   */
+  private resolveMainApiKey(): string | undefined {
+    return (
+      this.config.apiKey ||
+      this.getEnvironmentVariable('NFE_API_KEY')
+    );
+  }
+
+  /**
+   * Resolve the Address API key using fallback chain
+   * Order: addressApiKey → apiKey → NFE_ADDRESS_API_KEY → NFE_API_KEY
+   */
+  private resolveAddressApiKey(): string | undefined {
+    return (
+      this.config.addressApiKey ||
+      this.config.apiKey ||
+      this.getEnvironmentVariable('NFE_ADDRESS_API_KEY') ||
+      this.getEnvironmentVariable('NFE_API_KEY')
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -286,14 +425,9 @@ export class NfeClient {
   // --------------------------------------------------------------------------
 
   private validateAndNormalizeConfig(config: NfeConfig): RequiredNfeConfig {
-    if (!config.apiKey || config.apiKey.trim() === '') {
-      // Try to get from environment variable
-      const envApiKey = this.getEnvironmentVariable('NFE_API_KEY');
-      if (!envApiKey || envApiKey.trim() === '') {
-        throw ErrorFactory.fromMissingApiKey();
-      }
-      config.apiKey = envApiKey;
-    }
+    // API keys are now optional - validated lazily when resources are accessed
+    const apiKey = config.apiKey?.trim() || undefined;
+    const addressApiKey = config.addressApiKey?.trim() || undefined;
 
     // Normalize environment
     const environment = config.environment || 'production';
@@ -304,13 +438,19 @@ export class NfeClient {
       );
     }
 
-    // Set defaults
+    // Set defaults - ensure retryConfig has all required properties
+    const defaultRetryConfig = createDefaultRetryConfig();
+    const retryConfig = config.retryConfig
+      ? { ...defaultRetryConfig, ...config.retryConfig }
+      : defaultRetryConfig;
+
     const normalizedConfig: RequiredNfeConfig = {
-      apiKey: config.apiKey,
+      apiKey,
+      addressApiKey,
       environment,
       baseUrl: config.baseUrl || this.getDefaultBaseUrl(),
       timeout: config.timeout || 30000,
-      retryConfig: config.retryConfig || createDefaultRetryConfig(),
+      retryConfig,
     };
 
     return normalizedConfig;
@@ -320,10 +460,6 @@ export class NfeClient {
     // NFE.io API uses the same endpoint for both production and development
     // They are differentiated by the API key used, not by different URLs
     return 'https://api.nfe.io/v1';
-  }
-
-  private getBaseUrl(): string {
-    return this.config.baseUrl;
   }
 
   private getEnvironmentVariable(name: string): string | undefined {
@@ -393,20 +529,36 @@ export class NfeClient {
    * ```
    */
   public updateConfig(newConfig: Partial<NfeConfig>): void {
-    const mergedConfig = { ...this.config, ...newConfig };
-    const normalizedConfig = this.validateAndNormalizeConfig(mergedConfig);
+    // Normalize the new configuration with current values as defaults
+    const normalizedConfig = this.validateAndNormalizeConfig({
+      ...newConfig,
+      // Use current values as fallbacks for unspecified fields
+      environment: newConfig.environment ?? this.config.environment,
+      baseUrl: newConfig.baseUrl ?? this.config.baseUrl,
+      timeout: newConfig.timeout ?? this.config.timeout,
+      retryConfig: newConfig.retryConfig ?? this.config.retryConfig,
+    });
+
+    // Override API keys if they were in current config but not in newConfig
+    if (normalizedConfig.apiKey === undefined && this.config.apiKey !== undefined && newConfig.apiKey === undefined) {
+      normalizedConfig.apiKey = this.config.apiKey;
+    }
+    if (normalizedConfig.addressApiKey === undefined && this.config.addressApiKey !== undefined && newConfig.addressApiKey === undefined) {
+      normalizedConfig.addressApiKey = this.config.addressApiKey;
+    }
 
     // Update internal config
     Object.assign(this.config, normalizedConfig);
 
-    // Recreate HTTP client with new config
-    const httpConfig = buildHttpConfig(
-      this.config.apiKey,
-      this.getBaseUrl(),
-      this.config.timeout,
-      this.config.retryConfig
-    );
-    Object.assign(this.http, new HttpClient(httpConfig));
+    // Clear cached HTTP clients and resources so they're recreated with new config
+    this._http = undefined;
+    this._addressHttp = undefined;
+    this._serviceInvoices = undefined;
+    this._companies = undefined;
+    this._legalPeople = undefined;
+    this._naturalPeople = undefined;
+    this._webhooks = undefined;
+    this._addresses = undefined;
   }
 
   /**
@@ -526,7 +678,7 @@ export class NfeClient {
       try {
         // Extract path from full URL for HTTP client
         const path = this.extractPathFromUrl(locationUrl);
-        const response = await this.http.get<any>(path);
+        const response = await this.getMainHttpClient().get<any>(path);
 
         // Check completion status
         if (this.isCompleteResponse(response.data)) {
@@ -629,7 +781,7 @@ export class NfeClient {
   public async healthCheck(): Promise<{ status: 'ok' | 'error', details?: any }> {
     try {
       // Try to make a simple request (get companies list with pageCount=1)
-      await this.http.get('/companies', { pageCount: 1 });
+      await this.getMainHttpClient().get('/companies', { pageCount: 1 });
       return { status: 'ok' };
     } catch (error) {
       return {

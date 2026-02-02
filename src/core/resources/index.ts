@@ -1,6 +1,6 @@
 /**
  * NFE.io SDK v3 - Resources Index
- * 
+ *
  * Centralized exports for all API resources
  */
 
@@ -10,3 +10,4 @@ export { CompaniesResource, createCompaniesResource } from './companies.js';
 export { LegalPeopleResource } from './legal-people.js';
 export { NaturalPeopleResource } from './natural-people.js';
 export { WebhooksResource } from './webhooks.js';
+export { AddressesResource, createAddressesResource, ADDRESS_API_BASE_URL } from './addresses.js';

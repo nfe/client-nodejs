@@ -337,12 +337,41 @@ const ehValido = nfe.webhooks.validateSignature(
 );
 ```
 
+#### 📍 Endereços (`nfe.addresses`)
+
+Consultar endereços brasileiros por CEP ou termo de busca:
+
+```typescript
+// Buscar endereço por CEP
+const endereco = await nfe.addresses.lookupByPostalCode('01310-100');
+console.log(endereco.street);   // 'Avenida Paulista'
+console.log(endereco.city.name); // 'São Paulo'
+console.log(endereco.state);     // 'SP'
+
+// Buscar por termo (nome de rua, bairro, etc.)
+const resultado = await nfe.addresses.lookupByTerm('Paulista');
+for (const end of resultado.addresses) {
+  console.log(`${end.postalCode}: ${end.street}, ${end.city.name}`);
+}
+
+// Buscar com filtro OData
+const filtrado = await nfe.addresses.search({
+  filter: "city.name eq 'São Paulo'"
+});
+```
+
+> **Nota:** A API de Endereços usa um host separado (`address.api.nfe.io`). Você pode configurar uma chave API específica com `addressApiKey`, ou o SDK usará `apiKey` como fallback.
+
 ### Opções de Configuração
 
 ```typescript
 const nfe = new NfeClient({
-  // Obrigatório: Sua chave API do NFE.io
+  // Chave API principal do NFE.io (opcional se usar apenas Addresses com addressApiKey)
   apiKey: 'sua-chave-api',
+  
+  // Opcional: Chave API específica para consulta de endereços
+  // Se não fornecida, usa apiKey como fallback
+  addressApiKey: 'sua-chave-address-api',
   
   // Opcional: Ambiente (padrão: 'production')
   environment: 'production', // ou 'sandbox'
@@ -361,6 +390,24 @@ const nfe = new NfeClient({
     backoffMultiplier: 2
   }
 });
+```
+
+#### Variáveis de Ambiente
+
+O SDK suporta as seguintes variáveis de ambiente:
+
+| Variável | Descrição |
+|----------|-----------|
+| `NFE_API_KEY` | Chave API principal (fallback para `apiKey`) |
+| `NFE_ADDRESS_API_KEY` | Chave API para endereços (fallback para `addressApiKey`) |
+
+```bash
+# Configurar via ambiente
+export NFE_API_KEY="sua-chave-api"
+export NFE_ADDRESS_API_KEY="sua-chave-address"
+
+# Usar SDK sem passar chaves no código
+const nfe = new NfeClient({});
 ```
 
 ### Tratamento de Erros
