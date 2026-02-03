@@ -14,6 +14,7 @@ describe('NfeClient Multi-API Key Support', () => {
     // Clear all NFE environment variables before each test
     delete process.env.NFE_API_KEY;
     delete process.env.NFE_ADDRESS_API_KEY;
+    delete process.env.NFE_CTE_API_KEY;
   });
 
   afterEach(() => {
@@ -234,6 +235,170 @@ describe('NfeClient Multi-API Key Support', () => {
       expect(() => client.addresses).toThrow(
         /addressApiKey|apiKey/
       );
+    });
+
+    it('should have descriptive error for missing CTE API key', () => {
+      const client = new NfeClient({});
+
+      expect(() => client.transportationInvoices).toThrow(
+        /cteApiKey|apiKey/
+      );
+    });
+  });
+
+  describe('API key fallback chain for CTE API', () => {
+    beforeEach(() => {
+      // Clear CTE-specific env vars
+      delete process.env.NFE_CTE_API_KEY;
+    });
+
+    it('should use cteApiKey from config', () => {
+      const client = new NfeClient({ cteApiKey: 'cte-key' });
+
+      expect(() => client.transportationInvoices).not.toThrow();
+    });
+
+    it('should fall back to apiKey from config', () => {
+      const client = new NfeClient({ apiKey: 'main-key' });
+
+      // Should use main apiKey for CTE when cteApiKey not specified
+      expect(() => client.transportationInvoices).not.toThrow();
+    });
+
+    it('should fall back to NFE_CTE_API_KEY environment variable', () => {
+      process.env.NFE_CTE_API_KEY = 'env-cte-key';
+      const client = new NfeClient({});
+
+      expect(() => client.transportationInvoices).not.toThrow();
+    });
+
+    it('should fall back to NFE_API_KEY environment variable', () => {
+      process.env.NFE_API_KEY = 'env-main-key';
+      const client = new NfeClient({});
+
+      expect(() => client.transportationInvoices).not.toThrow();
+    });
+
+    it('should prefer cteApiKey over apiKey', () => {
+      const client = new NfeClient({
+        apiKey: 'main-key',
+        cteApiKey: 'cte-key',
+      });
+
+      expect(() => client.transportationInvoices).not.toThrow();
+      const config = client.getConfig();
+      expect(config.cteApiKey).toBe('cte-key');
+    });
+
+    it('should prefer config keys over environment variables', () => {
+      process.env.NFE_CTE_API_KEY = 'env-cte-key';
+      process.env.NFE_API_KEY = 'env-main-key';
+
+      const client = new NfeClient({ cteApiKey: 'config-cte-key' });
+
+      expect(() => client.transportationInvoices).not.toThrow();
+      const config = client.getConfig();
+      expect(config.cteApiKey).toBe('config-cte-key');
+    });
+
+    it('should throw ConfigurationError when accessing transportationInvoices without any apiKey', () => {
+      const client = new NfeClient({});
+
+      expect(() => client.transportationInvoices).toThrow(ConfigurationError);
+      expect(() => client.transportationInvoices).toThrow(/cteApiKey|apiKey/);
+    });
+  });
+
+  describe('isolated CTE resource usage', () => {
+    beforeEach(() => {
+      delete process.env.NFE_CTE_API_KEY;
+    });
+
+    it('should allow using only transportationInvoices with cteApiKey (no apiKey)', () => {
+      const client = new NfeClient({ cteApiKey: 'cte-only-key' });
+
+      // Transportation invoices should work
+      expect(() => client.transportationInvoices).not.toThrow();
+
+      // Other resources should throw
+      expect(() => client.serviceInvoices).toThrow(ConfigurationError);
+      expect(() => client.companies).toThrow(ConfigurationError);
+    });
+
+    it('should allow using only main resources with apiKey (no cteApiKey)', () => {
+      const client = new NfeClient({ apiKey: 'main-only-key' });
+
+      // Main resources should work
+      expect(() => client.serviceInvoices).not.toThrow();
+      expect(() => client.companies).not.toThrow();
+
+      // Transportation invoices should also work (falls back to apiKey)
+      expect(() => client.transportationInvoices).not.toThrow();
+    });
+
+    it('should support separate API keys for CTE and main resources', () => {
+      const client = new NfeClient({
+        apiKey: 'main-api-key',
+        cteApiKey: 'separate-cte-key',
+      });
+
+      // All resources should work
+      expect(() => client.serviceInvoices).not.toThrow();
+      expect(() => client.companies).not.toThrow();
+      expect(() => client.transportationInvoices).not.toThrow();
+
+      // Verify config has both keys
+      const config = client.getConfig();
+      expect(config.apiKey).toBe('main-api-key');
+      expect(config.cteApiKey).toBe('separate-cte-key');
+    });
+
+    it('should support all three separate API keys', () => {
+      const client = new NfeClient({
+        apiKey: 'main-api-key',
+        addressApiKey: 'separate-address-key',
+        cteApiKey: 'separate-cte-key',
+      });
+
+      // All resources should work
+      expect(() => client.serviceInvoices).not.toThrow();
+      expect(() => client.companies).not.toThrow();
+      expect(() => client.addresses).not.toThrow();
+      expect(() => client.transportationInvoices).not.toThrow();
+
+      // Verify config has all keys
+      const config = client.getConfig();
+      expect(config.apiKey).toBe('main-api-key');
+      expect(config.addressApiKey).toBe('separate-address-key');
+      expect(config.cteApiKey).toBe('separate-cte-key');
+    });
+  });
+
+  describe('CTE resource caching', () => {
+    beforeEach(() => {
+      delete process.env.NFE_CTE_API_KEY;
+    });
+
+    it('should cache transportationInvoices resource', () => {
+      const client = new NfeClient({ cteApiKey: 'test-key' });
+
+      const transportationInvoices1 = client.transportationInvoices;
+      const transportationInvoices2 = client.transportationInvoices;
+
+      expect(transportationInvoices1).toBe(transportationInvoices2);
+    });
+
+    it('should clear transportationInvoices cache on updateConfig', () => {
+      const client = new NfeClient({ cteApiKey: 'initial-key' });
+
+      const transportationInvoices1 = client.transportationInvoices;
+
+      client.updateConfig({ cteApiKey: 'new-key' });
+
+      const transportationInvoices2 = client.transportationInvoices;
+
+      // Resource should be a new instance
+      expect(transportationInvoices1).not.toBe(transportationInvoices2);
     });
   });
 });

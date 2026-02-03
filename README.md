@@ -362,6 +362,72 @@ const filtrado = await nfe.addresses.search({
 
 > **Nota:** A API de Endereços usa um host separado (`address.api.nfe.io`). Você pode configurar uma chave API específica com `addressApiKey`, ou o SDK usará `apiKey` como fallback.
 
+#### 🚚 Notas de Transporte - CT-e (`nfe.transportationInvoices`)
+
+Consultar CT-e (Conhecimento de Transporte Eletrônico) via Distribuição DFe:
+
+```typescript
+// Ativar busca automática de CT-e para uma empresa
+const settings = await nfe.transportationInvoices.enable('empresa-id');
+console.log('Status:', settings.status);
+console.log('Iniciando do NSU:', settings.startFromNsu);
+
+// Ativar a partir de um NSU específico
+const settings = await nfe.transportationInvoices.enable('empresa-id', {
+  startFromNsu: 12345
+});
+
+// Ativar a partir de uma data específica
+const settings = await nfe.transportationInvoices.enable('empresa-id', {
+  startFromDate: '2024-01-01T00:00:00Z'
+});
+
+// Verificar configurações atuais
+const config = await nfe.transportationInvoices.getSettings('empresa-id');
+console.log('Busca ativa:', config.status);
+
+// Desativar busca automática
+await nfe.transportationInvoices.disable('empresa-id');
+
+// Consultar CT-e por chave de acesso (44 dígitos)
+const cte = await nfe.transportationInvoices.retrieve(
+  'empresa-id',
+  '35240112345678000190570010000001231234567890'
+);
+console.log('Remetente:', cte.nameSender);
+console.log('Valor:', cte.totalInvoiceAmount);
+console.log('Emissão:', cte.issuedOn);
+
+// Baixar XML do CT-e
+const xml = await nfe.transportationInvoices.downloadXml(
+  'empresa-id',
+  '35240112345678000190570010000001231234567890'
+);
+fs.writeFileSync('cte.xml', xml);
+
+// Consultar evento do CT-e
+const evento = await nfe.transportationInvoices.getEvent(
+  'empresa-id',
+  '35240112345678000190570010000001231234567890',
+  'chave-evento'
+);
+
+// Baixar XML do evento
+const eventoXml = await nfe.transportationInvoices.downloadEventXml(
+  'empresa-id',
+  '35240112345678000190570010000001231234567890',
+  'chave-evento'
+);
+```
+
+> **Nota:** A API de CT-e usa um host separado (`api.nfse.io`). Você pode configurar uma chave API específica com `cteApiKey`, ou o SDK usará `apiKey` como fallback.
+
+**Pré-requisitos:**
+- Empresa deve estar cadastrada com certificado digital A1 válido
+- Webhook deve estar configurado para receber notificações de CT-e
+
+---
+
 ### Opções de Configuração
 
 ```typescript
@@ -372,6 +438,10 @@ const nfe = new NfeClient({
   // Opcional: Chave API específica para consulta de endereços
   // Se não fornecida, usa apiKey como fallback
   addressApiKey: 'sua-chave-address-api',
+  
+  // Opcional: Chave API específica para consulta de CT-e
+  // Se não fornecida, usa apiKey como fallback
+  cteApiKey: 'sua-chave-cte-api',
   
   // Opcional: Ambiente (padrão: 'production')
   environment: 'production', // ou 'sandbox'
@@ -400,11 +470,13 @@ O SDK suporta as seguintes variáveis de ambiente:
 |----------|-----------|
 | `NFE_API_KEY` | Chave API principal (fallback para `apiKey`) |
 | `NFE_ADDRESS_API_KEY` | Chave API para endereços (fallback para `addressApiKey`) |
+| `NFE_CTE_API_KEY` | Chave API para CT-e (fallback para `cteApiKey`) |
 
 ```bash
 # Configurar via ambiente
 export NFE_API_KEY="sua-chave-api"
 export NFE_ADDRESS_API_KEY="sua-chave-address"
+export NFE_CTE_API_KEY="sua-chave-cte"
 
 # Usar SDK sem passar chaves no código
 const nfe = new NfeClient({});

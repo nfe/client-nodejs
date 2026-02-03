@@ -27,8 +27,16 @@ import {
   NaturalPeopleResource,
   WebhooksResource,
   AddressesResource,
+  TransportationInvoicesResource,
   ADDRESS_API_BASE_URL
 } from './resources/index.js';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Base URL for CT-e API (Transportation Invoices) */
+export const CTE_API_BASE_URL = 'https://api.nfse.io';
 
 // ============================================================================
 // Main NFE.io Client
@@ -113,6 +121,9 @@ export class NfeClient {
   /** @internal HTTP client for address API requests (created lazily) */
   private _addressHttp: HttpClient | undefined;
 
+  /** @internal HTTP client for CT-e API requests (created lazily) */
+  private _cteHttp: HttpClient | undefined;
+
   /** @internal Normalized client configuration */
   private readonly config: RequiredNfeConfig;
 
@@ -123,6 +134,7 @@ export class NfeClient {
   private _naturalPeople: NaturalPeopleResource | undefined;
   private _webhooks: WebhooksResource | undefined;
   private _addresses: AddressesResource | undefined;
+  private _transportationInvoices: TransportationInvoicesResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -292,6 +304,45 @@ export class NfeClient {
   }
 
   /**
+   * Transportation Invoices (CT-e) API resource
+   *
+   * @description
+   * Provides operations for managing CT-e (Conhecimento de Transporte Eletrônico)
+   * documents via SEFAZ Distribuição DFe:
+   * - Enable/disable automatic CT-e search
+   * - Retrieve CT-e metadata and XML
+   * - Retrieve CT-e event metadata and XML
+   *
+   * **Prerequisites:**
+   * - Company must have a valid A1 digital certificate
+   * - Webhook must be configured to receive CT-e notifications
+   *
+   * **Note:** This resource uses a different API host (api.nfse.io).
+   * Configure `cteApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link TransportationInvoicesResource}
+   * @throws {ConfigurationError} If no API key is configured (cteApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // Enable automatic CT-e search
+   * await nfe.transportationInvoices.enable('company-id');
+   *
+   * // Retrieve CT-e metadata
+   * const cte = await nfe.transportationInvoices.retrieve(
+   *   'company-id',
+   *   '35240112345678000190570010000001231234567890'
+   * );
+   * ```
+   */
+  get transportationInvoices(): TransportationInvoicesResource {
+    if (!this._transportationInvoices) {
+      this._transportationInvoices = new TransportationInvoicesResource(this.getCteHttpClient());
+    }
+    return this._transportationInvoices;
+  }
+
+  /**
    * Create a new NFE.io API client
    *
    * @param config - Client configuration options
@@ -420,6 +471,42 @@ export class NfeClient {
     );
   }
 
+  /**
+   * Resolve the CT-e API key using fallback chain
+   * Order: cteApiKey → apiKey → NFE_CTE_API_KEY → NFE_API_KEY
+   */
+  private resolveCteApiKey(): string | undefined {
+    return (
+      this.config.cteApiKey ||
+      this.config.apiKey ||
+      this.getEnvironmentVariable('NFE_CTE_API_KEY') ||
+      this.getEnvironmentVariable('NFE_API_KEY')
+    );
+  }
+
+  /**
+   * Get or create the CT-e API HTTP client
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getCteHttpClient(): HttpClient {
+    if (!this._cteHttp) {
+      const apiKey = this.resolveCteApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for Transportation Invoices (CT-e). Set "cteApiKey" or "apiKey" in config, or NFE_CTE_API_KEY/NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        CTE_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._cteHttp = new HttpClient(httpConfig);
+    }
+    return this._cteHttp;
+  }
+
   // --------------------------------------------------------------------------
   // Configuration Management
   // --------------------------------------------------------------------------
@@ -428,6 +515,7 @@ export class NfeClient {
     // API keys are now optional - validated lazily when resources are accessed
     const apiKey = config.apiKey?.trim() || undefined;
     const addressApiKey = config.addressApiKey?.trim() || undefined;
+    const cteApiKey = config.cteApiKey?.trim() || undefined;
 
     // Normalize environment
     const environment = config.environment || 'production';
@@ -447,6 +535,7 @@ export class NfeClient {
     const normalizedConfig: RequiredNfeConfig = {
       apiKey,
       addressApiKey,
+      cteApiKey,
       environment,
       baseUrl: config.baseUrl || this.getDefaultBaseUrl(),
       timeout: config.timeout || 30000,
@@ -546,6 +635,9 @@ export class NfeClient {
     if (normalizedConfig.addressApiKey === undefined && this.config.addressApiKey !== undefined && newConfig.addressApiKey === undefined) {
       normalizedConfig.addressApiKey = this.config.addressApiKey;
     }
+    if (normalizedConfig.cteApiKey === undefined && this.config.cteApiKey !== undefined && newConfig.cteApiKey === undefined) {
+      normalizedConfig.cteApiKey = this.config.cteApiKey;
+    }
 
     // Update internal config
     Object.assign(this.config, normalizedConfig);
@@ -553,12 +645,14 @@ export class NfeClient {
     // Clear cached HTTP clients and resources so they're recreated with new config
     this._http = undefined;
     this._addressHttp = undefined;
+    this._cteHttp = undefined;
     this._serviceInvoices = undefined;
     this._companies = undefined;
     this._legalPeople = undefined;
     this._naturalPeople = undefined;
     this._webhooks = undefined;
     this._addresses = undefined;
+    this._transportationInvoices = undefined;
   }
 
   /**

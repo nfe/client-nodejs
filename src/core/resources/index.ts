@@ -11,3 +11,4 @@ export { LegalPeopleResource } from './legal-people.js';
 export { NaturalPeopleResource } from './natural-people.js';
 export { WebhooksResource } from './webhooks.js';
 export { AddressesResource, createAddressesResource, ADDRESS_API_BASE_URL } from './addresses.js';
+export { TransportationInvoicesResource, createTransportationInvoicesResource, CTE_API_BASE_URL } from './transportation-invoices.js';

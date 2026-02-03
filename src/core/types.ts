@@ -19,6 +19,8 @@ export interface NfeConfig {
   apiKey?: string;
   /** NFE.io API Key specifically for Address API (optional, falls back to apiKey) */
   addressApiKey?: string;
+  /** NFE.io API Key specifically for CT-e API (optional, falls back to apiKey) */
+  cteApiKey?: string;
   /** Environment to use (both use same endpoint, differentiated by API key) */
   environment?: 'production' | 'development';
   /** Custom base URL (overrides environment) */
@@ -298,6 +300,8 @@ export interface RequiredNfeConfig {
   apiKey: string | undefined;
   /** Address API key (may be undefined, will fallback to apiKey) */
   addressApiKey: string | undefined;
+  /** CT-e API key (may be undefined, will fallback to apiKey) */
+  cteApiKey: string | undefined;
   /** Environment */
   environment: 'production' | 'development';
   /** Base URL for main API */
@@ -394,3 +398,46 @@ export type NaturalPerson = {
   name: string;
   [key: string]: unknown;
 };
+
+// ============================================================================
+// CT-e (Transportation Invoice) Types
+// ============================================================================
+
+// Import the components type from generated spec
+import type { components as CteComponents } from '../generated/consulta-cte-v2.js';
+
+/**
+ * Transportation Invoice inbound settings
+ * Configuration for automatic CT-e search via SEFAZ Distribuição DFe
+ */
+export type TransportationInvoiceInboundSettings =
+  CteComponents['schemas']['DFe.NetCore.Domain.Resources.TransportationInvoiceInboundResource'];
+
+/**
+ * Transportation Invoice metadata
+ * Metadata of a CT-e document retrieved via Distribuição DFe
+ */
+export type TransportationInvoiceMetadata =
+  CteComponents['schemas']['DFe.NetCore.Domain.Resources.MetadataResource'];
+
+/**
+ * Options for enabling automatic CT-e search
+ */
+export interface EnableTransportationInvoiceOptions {
+  /** Start from a specific NSU (Número Sequencial Único) */
+  startFromNsu?: number;
+  /** Start from a specific date (ISO 8601 format) */
+  startFromDate?: string;
+}
+
+/**
+ * CT-e entity status
+ */
+export type TransportationInvoiceEntityStatus =
+  CteComponents['schemas']['DFe.NetCore.Domain.Enums.EntityStatus'];
+
+/**
+ * CT-e metadata resource type
+ */
+export type TransportationInvoiceMetadataType =
+  CteComponents['schemas']['DFe.NetCore.Domain.Enums.MetadataResourceType'];

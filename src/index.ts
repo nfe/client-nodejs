@@ -47,7 +47,7 @@
  * @see {@link NfeClient} - Main client class for NFE.io API
  * @see {@link createNfeClient} - Factory function for creating client instances
  */
-export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS } from './core/client.js';
+export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS, CTE_API_BASE_URL } from './core/client.js';
 
 /**
  * TypeScript type definitions for NFE.io API entities and configurations
@@ -80,6 +80,13 @@ export type {
   AddressCity,
   AddressLookupResponse,
   AddressSearchOptions,
+
+  // CT-e (Transportation Invoice) types
+  TransportationInvoiceInboundSettings,
+  TransportationInvoiceMetadata,
+  EnableTransportationInvoiceOptions,
+  TransportationInvoiceEntityStatus,
+  TransportationInvoiceMetadataType,
 
   // Common types
   EntityType,
@@ -174,6 +181,27 @@ export {
  * ```
  */
 export { CertificateValidator } from './core/utils/certificate-validator.js';
+
+// ============================================================================
+// Resource Classes (for advanced usage)
+// ============================================================================
+
+/**
+ * Transportation Invoices (CT-e) Resource
+ *
+ * @see {@link TransportationInvoicesResource} - CT-e operations via Distribuição DFe
+ *
+ * @example
+ * ```typescript
+ * import { TransportationInvoicesResource } from '@nfe-io/sdk';
+ *
+ * // For advanced usage when extending the SDK
+ * class CustomCteResource extends TransportationInvoicesResource {
+ *   // Add custom methods
+ * }
+ * ```
+ */
+export { TransportationInvoicesResource } from './core/resources/transportation-invoices.js';
 
 // ============================================================================
 // Default Export (maintains v2 compatibility)
