@@ -30,6 +30,7 @@ import {
   TransportationInvoicesResource,
   InboundProductInvoicesResource,
   ProductInvoiceQueryResource,
+  ConsumerInvoiceQueryResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL
 } from './resources/index.js';
@@ -143,6 +144,7 @@ export class NfeClient {
   private _transportationInvoices: TransportationInvoicesResource | undefined;
   private _inboundProductInvoices: InboundProductInvoicesResource | undefined;
   private _productInvoiceQuery: ProductInvoiceQueryResource | undefined;
+  private _consumerInvoiceQuery: ConsumerInvoiceQueryResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -438,6 +440,44 @@ export class NfeClient {
       this._productInvoiceQuery = new ProductInvoiceQueryResource(this.getNfeQueryHttpClient());
     }
     return this._productInvoiceQuery;
+  }
+
+  /**
+   * Consumer Invoice Query API resource (CFe-SAT)
+   *
+   * @description
+   * Provides read-only operations for querying CFe-SAT (Cupom Fiscal Eletrônico)
+   * consumer invoices by access key. No company scope required.
+   *
+   * - Retrieve full coupon details (issuer, buyer, items, totals, payment)
+   * - Download original CFe XML
+   *
+   * Uses data API key authentication on `nfe.api.nfe.io`.
+   *
+   * @see {@link ConsumerInvoiceQueryResource}
+   * @throws {ConfigurationError} If API key is not configured
+   *
+   * @example
+   * ```typescript
+   * // Retrieve coupon details
+   * const coupon = await nfe.consumerInvoiceQuery.retrieve(
+   *   '35240112345678000190590000000012341234567890'
+   * );
+   * console.log(coupon.currentStatus); // 'Authorized'
+   * console.log(coupon.issuer?.name);
+   *
+   * // Download CFe XML
+   * const xml = await nfe.consumerInvoiceQuery.downloadXml(
+   *   '35240112345678000190590000000012341234567890'
+   * );
+   * fs.writeFileSync('cfe.xml', xml);
+   * ```
+   */
+  get consumerInvoiceQuery(): ConsumerInvoiceQueryResource {
+    if (!this._consumerInvoiceQuery) {
+      this._consumerInvoiceQuery = new ConsumerInvoiceQueryResource(this.getNfeQueryHttpClient());
+    }
+    return this._consumerInvoiceQuery;
   }
 
   /**

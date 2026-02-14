@@ -1170,3 +1170,256 @@ export interface ProductInvoiceEventsResponse {
   events?: ProductInvoiceEvent[];
   createdOn?: string;
 }
+
+// ============================================================================
+// Consumer Invoice Query Types (CFe-SAT / Cupom Fiscal Eletrônico)
+// ============================================================================
+
+/** Status of a CFe-SAT consumer invoice (coupon) */
+export type CouponStatus = 'Unknown' | 'Authorized' | 'Canceled' | (string & {});
+
+/** Person type for CFe-SAT entities */
+export type CouponPersonType = 'Undefined' | 'NaturalPerson' | 'LegalEntity' | (string & {});
+
+/** Tax regime for CFe-SAT issuer */
+export type CouponTaxRegime = 'National_Simple' | 'National_Simple_Brute' | 'Normal_Regime' | (string & {});
+
+/** Payment method for CFe-SAT coupon */
+export type CouponPaymentMethod =
+  | 'Cash'
+  | 'Cheque'
+  | 'CreditCard'
+  | 'DebitCard'
+  | 'StoreCredict'
+  | 'FoodVouchers'
+  | 'MealVouchers'
+  | 'GiftVouchers'
+  | 'FuelVouchers'
+  | 'CommercialDuplicate'
+  | 'BankSlip'
+  | 'BankDeposit'
+  | 'InstantPayment'
+  | 'WireTransfer'
+  | 'Cashback'
+  | 'Unpaid'
+  | 'Others'
+  | (string & {});
+
+/** ISSQN tax incentive indicator */
+export type CouponIssqnTaxIncentive = 'Yes' | 'No' | (string & {});
+
+/** City reference in CFe-SAT */
+export interface CouponCity {
+  code?: string;
+  name?: string;
+}
+
+/** Address in CFe-SAT documents */
+export interface CouponAddress {
+  state?: string;
+  city?: CouponCity;
+  district?: string;
+  additionalInformation?: string;
+  streetSuffix?: string;
+  street?: string;
+  number?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+/** Issuer (emit) of a CFe-SAT coupon */
+export interface CouponIssuer {
+  federalTaxNumber?: number;
+  type?: CouponPersonType;
+  name?: string;
+  tradeName?: string;
+  address?: CouponAddress;
+  stateTaxNumber?: string;
+  taxRegime?: CouponTaxRegime;
+  municipalTaxNumber?: string;
+  iss?: string;
+  avarageIndicator?: boolean;
+}
+
+/** Buyer (dest) of a CFe-SAT coupon */
+export interface CouponBuyer {
+  pretectedPersonalInformation?: string;
+  federalTaxNumber?: number;
+  name?: string;
+}
+
+/** ICMS totals for a CFe-SAT coupon */
+export interface CouponIcmsTotal {
+  productAmount?: number;
+  discountAmount?: number;
+  othersAmount?: number;
+  icmsAmount?: number;
+  inputDiscountAmount?: number;
+  inputAdditionAmount?: number;
+  pisAmount?: number;
+  cofinsAmount?: number;
+  pisstAmount?: number;
+  cofinsstAmount?: number;
+}
+
+/** ISSQN totals for a CFe-SAT coupon */
+export interface CouponIssqnTotal {
+  baseAmount?: number;
+  issAmount?: number;
+  pisAmount?: number;
+  cofinsAmount?: number;
+  pisstAmount?: number;
+  cofinsstAmount?: number;
+}
+
+/** Totals for a CFe-SAT coupon */
+export interface CouponTotal {
+  icms?: CouponIcmsTotal;
+  issqn?: CouponIssqnTotal;
+  totalAmount?: number;
+  couponAmount?: number;
+}
+
+/** Tax base resource (used by PIS/COFINS ST) */
+export interface CouponTaxBase {
+  baseTax?: number;
+  rate?: number;
+  amount?: number;
+  rateAmount?: number;
+  quantity?: number;
+}
+
+/** ICMS tax data for a coupon item */
+export interface CouponIcmsTax {
+  origin?: string;
+  cst?: string;
+  csosn?: string;
+  amount?: number;
+  rate?: number;
+}
+
+/** PIS tax data for a coupon item */
+export interface CouponPisTax {
+  cst?: string;
+  st?: CouponTaxBase;
+  baseTax?: number;
+  rate?: number;
+  amount?: number;
+  rateAmount?: number;
+  quantity?: number;
+}
+
+/** COFINS tax data for a coupon item */
+export interface CouponCofinsTax {
+  cst?: string;
+  st?: CouponTaxBase;
+  baseTax?: number;
+  rate?: number;
+  amount?: number;
+  rateAmount?: number;
+  quantity?: number;
+}
+
+/** ISSQN tax data for a coupon item */
+export interface CouponIssqnTax {
+  deductionsAmount?: number;
+  baseTax?: number;
+  rate?: number;
+  amount?: number;
+  federalServiceCode?: string;
+  cityServiceCode?: string;
+  cityCode?: number;
+  taxIncentive?: CouponIssqnTaxIncentive;
+  operationNature?: string;
+}
+
+/** Tax breakdown for a coupon item */
+export interface CouponItemTax {
+  totalTax?: number;
+  icms?: CouponIcmsTax;
+  pis?: CouponPisTax;
+  cofins?: CouponCofinsTax;
+  issqn?: CouponIssqnTax;
+}
+
+/** Fisco observation field */
+export interface CouponFiscoField {
+  key?: string;
+  value?: string;
+}
+
+/** Referenced tax document */
+export interface CouponReferencedDocument {
+  accessKey?: string;
+  order?: number;
+}
+
+/** Product item in a CFe-SAT coupon */
+export interface CouponItem {
+  description?: string;
+  quantity?: number;
+  unit?: string;
+  code?: string;
+  codeGTIN?: string;
+  ncm?: string;
+  cfop?: number;
+  cest?: string;
+  unitAmount?: number;
+  discountAmount?: number;
+  othersAmount?: number;
+  additionalInformation?: string;
+  itemNumberOrderBuy?: number;
+  netAmount?: number;
+  grossAmount?: number;
+  rule?: string;
+  apportionmentDiscountAmount?: number;
+  apportionmentAmount?: number;
+  fisco?: CouponFiscoField[];
+  tax?: CouponItemTax;
+}
+
+/** Payment detail in a CFe-SAT coupon */
+export interface CouponPaymentDetail {
+  method?: CouponPaymentMethod;
+  amount?: number;
+  card?: string;
+}
+
+/** Payment group for a CFe-SAT coupon */
+export interface CouponPayment {
+  payBack?: number;
+  paymentDetails?: CouponPaymentDetail[];
+}
+
+/** Delivery information for a CFe-SAT coupon */
+export interface CouponDelivery {
+  address?: CouponAddress;
+}
+
+/** Additional information for a CFe-SAT coupon */
+export interface CouponAdditionalInformation {
+  taxpayer?: string;
+  fisco?: CouponFiscoField[];
+  referencedDocuments?: CouponReferencedDocument[];
+}
+
+/** CFe-SAT tax coupon (Cupom Fiscal Eletrônico) */
+export interface TaxCoupon {
+  currentStatus?: CouponStatus;
+  number?: number;
+  satSerie?: string;
+  softwareVersion?: string;
+  softwareFederalTaxNumber?: number;
+  accessKey?: string;
+  cashier?: number;
+  issuedOn?: string;
+  createdOn?: string;
+  xmlVersion?: string;
+  issuer?: CouponIssuer;
+  buyer?: CouponBuyer;
+  totals?: CouponTotal;
+  delivery?: CouponDelivery;
+  additionalInformation?: CouponAdditionalInformation;
+  items?: CouponItem[];
+  payment?: CouponPayment;
+}

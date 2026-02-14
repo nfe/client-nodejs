@@ -553,6 +553,28 @@ for (const event of result.events ?? []) {
 
 > **Nota:** A API de Consulta NF-e usa um host separado (`nfe.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
 
+#### 🧾 Consulta de Cupom Fiscal Eletrônico - CFe-SAT (`nfe.consumerInvoiceQuery`)
+
+Consultar CFe-SAT (Cupom Fiscal Eletrônico) por chave de acesso. Recurso somente leitura sem necessidade de escopo de empresa:
+
+```typescript
+// Consultar dados completos do cupom fiscal
+const coupon = await nfe.consumerInvoiceQuery.retrieve(
+  '35240112345678000190590000000012341234567890'
+);
+console.log('Status:', coupon.currentStatus);   // 'Authorized'
+console.log('Emissor:', coupon.issuer?.name);
+console.log('Valor:', coupon.totals?.couponAmount);
+
+// Baixar XML do CFe
+const xml = await nfe.consumerInvoiceQuery.downloadXml(
+  '35240112345678000190590000000012341234567890'
+);
+fs.writeFileSync('cfe.xml', xml);
+```
+
+> **Nota:** A API de Consulta CFe-SAT usa o mesmo host (`nfe.api.nfe.io`) e chave de API que a consulta de NF-e.
+
 ---
 
 ### Opções de Configuração

@@ -1991,6 +1991,61 @@ for (const event of result.events ?? []) {
 
 ---
 
+### Consumer Invoice Query (Consulta CFe-SAT)
+
+**Resource:** `nfe.consumerInvoiceQuery`
+
+Query CFe-SAT (Cupom Fiscal Eletrônico) consumer invoices by access key. This is a read-only resource that does not require company scope.
+
+> **Note:** This resource uses a separate API host (`nfe.api.nfe.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+#### `retrieve(accessKey: string): Promise<TaxCoupon>`
+
+Retrieve full CFe-SAT coupon details by access key.
+
+```typescript
+const coupon = await nfe.consumerInvoiceQuery.retrieve(
+  '35240112345678000190590000000012341234567890'
+);
+console.log(coupon.currentStatus); // 'Authorized'
+console.log(coupon.issuer?.name);
+console.log(coupon.totals?.couponAmount);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key (Chave de Acesso) |
+
+**Returns:** `TaxCoupon` — Full coupon details including issuer, buyer, items, totals, and payment.
+
+**Throws:**
+- `ValidationError` if access key format is invalid
+- `NotFoundError` if no coupon matches the access key (HTTP 404)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `downloadXml(accessKey: string): Promise<Buffer>`
+
+Download the raw CFe XML for a consumer invoice.
+
+```typescript
+const xmlBuffer = await nfe.consumerInvoiceQuery.downloadXml(
+  '35240112345678000190590000000012341234567890'
+);
+fs.writeFileSync('cfe.xml', xmlBuffer);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key |
+
+**Returns:** `Buffer` containing the XML binary content.
+
+---
+
 ## Types
 
 ### Core Types
