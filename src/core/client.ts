@@ -28,6 +28,7 @@ import {
   WebhooksResource,
   AddressesResource,
   TransportationInvoicesResource,
+  InboundProductInvoicesResource,
   ADDRESS_API_BASE_URL
 } from './resources/index.js';
 
@@ -135,6 +136,7 @@ export class NfeClient {
   private _webhooks: WebhooksResource | undefined;
   private _addresses: AddressesResource | undefined;
   private _transportationInvoices: TransportationInvoicesResource | undefined;
+  private _inboundProductInvoices: InboundProductInvoicesResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -340,6 +342,51 @@ export class NfeClient {
       this._transportationInvoices = new TransportationInvoicesResource(this.getCteHttpClient());
     }
     return this._transportationInvoices;
+  }
+
+  /**
+   * Inbound Product Invoices (NF-e Distribution) API resource
+   *
+   * @description
+   * Provides operations for querying NF-e documents received by a company
+   * via SEFAZ Distribuição DFe:
+   * - Enable/disable automatic NF-e distribution fetch
+   * - Retrieve inbound NF-e metadata by access key
+   * - Download NF-e documents in XML, PDF, and JSON formats
+   * - Send recipient manifest (Manifestação do Destinatário)
+   * - Reprocess webhooks
+   *
+   * **Prerequisites:**
+   * - Company must have a valid A1 digital certificate
+   * - Webhook must be configured to receive NF-e notifications
+   *
+   * **Note:** This resource uses a different API host (api.nfse.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link InboundProductInvoicesResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // Enable automatic NF-e fetch
+   * await nfe.inboundProductInvoices.enableAutoFetch('company-id', {
+   *   startFromNsu: '999999',
+   *   environmentSEFAZ: 'Production',
+   *   webhookVersion: '2'
+   * });
+   *
+   * // Get NF-e details
+   * const doc = await nfe.inboundProductInvoices.getProductInvoiceDetails(
+   *   'company-id',
+   *   '35240112345678000190550010000001231234567890'
+   * );
+   * ```
+   */
+  get inboundProductInvoices(): InboundProductInvoicesResource {
+    if (!this._inboundProductInvoices) {
+      this._inboundProductInvoices = new InboundProductInvoicesResource(this.getCteHttpClient());
+    }
+    return this._inboundProductInvoices;
   }
 
   /**

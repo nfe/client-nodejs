@@ -16,6 +16,7 @@ Complete API reference for the NFE.io Node.js SDK v3.
   - [Natural People](#natural-people)
   - [Webhooks](#webhooks)
   - [Transportation Invoices (CT-e)](#transportation-invoices-ct-e)
+  - [Inbound Product Invoices (NF-e Distribuição)](#inbound-product-invoices-nf-e-distribuição)
 - [Types](#types)
 - [Error Handling](#error-handling)
 - [Advanced Usage](#advanced-usage)
@@ -1644,6 +1645,256 @@ fs.writeFileSync('cte-event.xml', eventXml);
 
 ---
 
+### Inbound Product Invoices (NF-e Distribuição)
+
+**Resource:** `nfe.inboundProductInvoices`
+
+Query NF-e (Nota Fiscal Eletrônica de Produto) documents received via SEFAZ Distribuição NF-e.
+
+> **Note:** This resource uses a separate API host (`api.nfse.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+**Prerequisites:**
+- Company must be registered with a valid A1 digital certificate
+- Webhook must be configured to receive NF-e notifications
+
+#### `enableAutoFetch(companyId: string, options: EnableInboundOptions): Promise<InboundSettings>`
+
+Enable automatic NF-e inbound fetching for a company.
+
+```typescript
+// Enable with production environment and webhook v2
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('company-id', {
+  environmentSEFAZ: 'Production',
+  webhookVersion: '2',
+});
+
+// Enable starting from a specific NSU
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('company-id', {
+  startFromNsu: '999999',
+  environmentSEFAZ: 'Production',
+});
+
+// Enable with automatic manifesting
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('company-id', {
+  environmentSEFAZ: 'Production',
+  automaticManifesting: { minutesToWaitAwarenessOperation: '30' },
+});
+```
+
+**Options:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `startFromNsu` | `string` | Start searching from this NSU number |
+| `startFromDate` | `string` | Start searching from this date (ISO 8601) |
+| `environmentSEFAZ` | `string \| null` | SEFAZ environment ('Production', etc.) |
+| `automaticManifesting` | `AutomaticManifesting` | Auto-manifest configuration |
+| `webhookVersion` | `string` | Webhook version ('1' or '2') |
+
+#### `disableAutoFetch(companyId: string): Promise<InboundSettings>`
+
+Disable automatic NF-e inbound fetching for a company.
+
+```typescript
+const settings = await nfe.inboundProductInvoices.disableAutoFetch('company-id');
+console.log('Status:', settings.status); // 'Inactive'
+```
+
+#### `getSettings(companyId: string): Promise<InboundSettings>`
+
+Get current automatic NF-e inbound settings.
+
+```typescript
+const settings = await nfe.inboundProductInvoices.getSettings('company-id');
+console.log('Status:', settings.status);
+console.log('Environment:', settings.environmentSEFAZ);
+console.log('Webhook version:', settings.webhookVersion);
+console.log('Start NSU:', settings.startFromNsu);
+```
+
+**Response (`InboundSettings`):**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `string` | Current status ('Active', 'Inactive', etc.) |
+| `startFromNsu` | `string` | Starting NSU number |
+| `startFromDate` | `string` | Starting date (if configured) |
+| `environmentSEFAZ` | `string \| null` | SEFAZ environment |
+| `automaticManifesting` | `AutomaticManifesting` | Auto-manifest configuration |
+| `webhookVersion` | `string` | Webhook version |
+| `companyId` | `string` | Company ID |
+| `createdOn` | `string` | Creation timestamp |
+| `modifiedOn` | `string` | Last modification timestamp |
+
+#### `getDetails(companyId: string, accessKey: string): Promise<InboundInvoiceMetadata>`
+
+Retrieve NF-e metadata by 44-digit access key (webhook v1 format).
+
+```typescript
+const nfeDoc = await nfe.inboundProductInvoices.getDetails(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+console.log('Issuer:', nfeDoc.issuer?.name);
+console.log('Amount:', nfeDoc.totalInvoiceAmount);
+console.log('Issued:', nfeDoc.issuedOn);
+```
+
+#### `getProductInvoiceDetails(companyId: string, accessKey: string): Promise<InboundProductInvoiceMetadata>`
+
+Retrieve NF-e metadata by 44-digit access key (webhook v2 format, recommended).
+
+```typescript
+const nfeDoc = await nfe.inboundProductInvoices.getProductInvoiceDetails(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+console.log('Issuer:', nfeDoc.issuer?.name);
+console.log('Amount:', nfeDoc.totalInvoiceAmount);
+console.log('Product invoices:', nfeDoc.productInvoices?.length);
+```
+
+**Response (`InboundInvoiceMetadata` / `InboundProductInvoiceMetadata`):**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | Document ID |
+| `accessKey` | `string` | 44-digit access key |
+| `nsu` | `string` | NSU number |
+| `nfeNumber` | `string` | NF-e number |
+| `issuer` | `InboundIssuer` | Issuer information |
+| `buyer` | `InboundBuyer` | Buyer information |
+| `totalInvoiceAmount` | `string` | Total amount |
+| `issuedOn` | `string` | Issue date |
+| `description` | `string` | Description |
+| `links` | `InboundLinks` | XML/PDF download links |
+| `productInvoices` | `InboundProductInvoice[]` | Product invoices (v2 only) |
+
+#### `getEventDetails(companyId: string, accessKey: string, eventKey: string): Promise<InboundInvoiceMetadata>`
+
+Retrieve NF-e event metadata (webhook v1 format).
+
+```typescript
+const event = await nfe.inboundProductInvoices.getEventDetails(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  'event-key-123'
+);
+```
+
+#### `getProductInvoiceEventDetails(companyId: string, accessKey: string, eventKey: string): Promise<InboundProductInvoiceMetadata>`
+
+Retrieve NF-e event metadata (webhook v2 format).
+
+```typescript
+const event = await nfe.inboundProductInvoices.getProductInvoiceEventDetails(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  'event-key-123'
+);
+```
+
+#### `getXml(companyId: string, accessKey: string): Promise<string>`
+
+Download NF-e XML content.
+
+```typescript
+const xml = await nfe.inboundProductInvoices.getXml(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('nfe.xml', xml);
+```
+
+#### `getEventXml(companyId: string, accessKey: string, eventKey: string): Promise<string>`
+
+Download NF-e event XML content.
+
+```typescript
+const eventXml = await nfe.inboundProductInvoices.getEventXml(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  'event-key-123'
+);
+fs.writeFileSync('nfe-event.xml', eventXml);
+```
+
+#### `getPdf(companyId: string, accessKey: string): Promise<string>`
+
+Download NF-e PDF (DANFE).
+
+```typescript
+const pdf = await nfe.inboundProductInvoices.getPdf(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+```
+
+#### `getJson(companyId: string, accessKey: string): Promise<InboundInvoiceMetadata>`
+
+Get NF-e data in JSON format.
+
+```typescript
+const json = await nfe.inboundProductInvoices.getJson(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+```
+
+#### `manifest(companyId: string, accessKey: string, tpEvent?: ManifestEventType): Promise<string>`
+
+Send a manifest event for an NF-e. Defaults to `210210` (Ciência da Operação).
+
+```typescript
+// Ciência da Operação (default)
+await nfe.inboundProductInvoices.manifest(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+
+// Confirmação da Operação
+await nfe.inboundProductInvoices.manifest(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  210220
+);
+
+// Operação não Realizada
+await nfe.inboundProductInvoices.manifest(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  210240
+);
+```
+
+**Manifest Event Types:**
+
+| Code | Event |
+|------|-------|
+| `210210` | Ciência da Operação (awareness, default) |
+| `210220` | Confirmação da Operação (confirmation) |
+| `210240` | Operação não Realizada (operation not performed) |
+
+#### `reprocessWebhook(companyId: string, accessKeyOrNsu: string): Promise<InboundProductInvoiceMetadata>`
+
+Reprocess a webhook notification by access key or NSU.
+
+```typescript
+// By access key
+await nfe.inboundProductInvoices.reprocessWebhook(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+
+// By NSU
+await nfe.inboundProductInvoices.reprocessWebhook(
+  'company-id',
+  '12345'
+);
+```
+
+---
+
 ## Types
 
 ### Core Types
@@ -1922,7 +2173,12 @@ import type {
   NaturalPerson,
   Webhook,
   ListResponse,
-  PaginationOptions
+  PaginationOptions,
+  InboundInvoiceMetadata,
+  InboundProductInvoiceMetadata,
+  InboundSettings,
+  EnableInboundOptions,
+  ManifestEventType
 } from 'nfe-io';
 
 const config: NfeConfig = {

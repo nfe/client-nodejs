@@ -437,3 +437,186 @@ export type TransportationInvoiceEntityStatus =
  */
 export type TransportationInvoiceMetadataType =
   CteComponents['schemas']['DFe.NetCore.Domain.Enums.MetadataResourceType'];
+
+// ============================================================================
+// Inbound NF-e Distribution Types
+// ============================================================================
+
+/**
+ * Company reference in inbound document metadata
+ */
+export interface InboundCompany {
+  /** Company ID */
+  id: string;
+  /** Company CNPJ */
+  federalTaxNumber: string;
+}
+
+/**
+ * Issuer reference in inbound document metadata
+ */
+export interface InboundIssuer {
+  /** Issuer CNPJ */
+  federalTaxNumber: string;
+  /** Issuer name */
+  name: string;
+}
+
+/**
+ * Buyer reference in inbound document metadata
+ */
+export interface InboundBuyer {
+  /** Buyer CNPJ/CPF */
+  federalTaxNumber: string;
+  /** Buyer name */
+  name: string;
+}
+
+/**
+ * Transportation entity reference in inbound document metadata
+ */
+export interface InboundTransportation {
+  /** Transportation CNPJ */
+  federalTaxNumber: string;
+  /** Transportation name */
+  name: string;
+}
+
+/**
+ * Document download links
+ */
+export interface InboundLinks {
+  /** XML download URL */
+  xml: string;
+  /** PDF download URL */
+  pdf: string;
+}
+
+/**
+ * Product invoice reference (used in webhook v2 responses)
+ */
+export interface InboundProductInvoice {
+  /** Access key of the referenced product invoice */
+  accessKey: string;
+}
+
+/**
+ * Automatic manifesting configuration
+ */
+export interface AutomaticManifesting {
+  /** Minutes to wait before automatic awareness operation */
+  minutesToWaitAwarenessOperation: string;
+}
+
+/**
+ * Inbound invoice metadata (webhook v1 format)
+ *
+ * Contains details of an NF-e or CT-e document retrieved via Distribuição DFe.
+ * Corresponds to the generic endpoint `GET /{access_key}`.
+ */
+export interface InboundInvoiceMetadata {
+  /** Document ID */
+  id: string;
+  /** Creation timestamp */
+  createdOn: string;
+  /** 44-digit access key */
+  accessKey: string;
+  /** Parent document access key (for events) */
+  parentAccessKey: string;
+  /** Company that received the document */
+  company: InboundCompany;
+  /** Document issuer */
+  issuer: InboundIssuer;
+  /** Document buyer */
+  buyer: InboundBuyer;
+  /** Transportation entity */
+  transportation: InboundTransportation;
+  /** Download links */
+  links: InboundLinks;
+  /** XML download URL */
+  xmlUrl: string;
+  /** Sender CNPJ */
+  federalTaxNumberSender: string;
+  /** Sender name */
+  nameSender: string;
+  /** Document type */
+  type: string | null;
+  /** NSU (Número Sequencial Único) */
+  nsu: string;
+  /** Parent NSU */
+  nsuParent: string;
+  /** NF-e number */
+  nfeNumber: string;
+  /** NF-e serial number */
+  nfeSerialNumber: string;
+  /** Issue date */
+  issuedOn: string;
+  /** Document description */
+  description: string;
+  /** Total invoice amount */
+  totalInvoiceAmount: string;
+  /** Operation type */
+  operationType: string | null;
+}
+
+/**
+ * Inbound product invoice metadata (webhook v2 format)
+ *
+ * Extends the base metadata with product invoice references.
+ * Corresponds to the `GET /productinvoice/{access_key}` endpoint.
+ */
+export interface InboundProductInvoiceMetadata extends Omit<InboundInvoiceMetadata, 'nsuParent' | 'nfeSerialNumber' | 'operationType'> {
+  /** Referenced product invoices */
+  productInvoices: InboundProductInvoice[];
+}
+
+/**
+ * Inbound NF-e distribution service settings
+ *
+ * Configuration for automatic NF-e search via SEFAZ Distribuição DFe.
+ */
+export interface InboundSettings {
+  /** Starting NSU for document retrieval */
+  startFromNsu: string;
+  /** Starting date for document retrieval */
+  startFromDate: string;
+  /** SEFAZ environment (e.g., Production) */
+  environmentSEFAZ: string | null;
+  /** Automatic manifesting configuration */
+  automaticManifesting: AutomaticManifesting;
+  /** Webhook version */
+  webhookVersion: string;
+  /** Company ID */
+  companyId: string;
+  /** Service status */
+  status: string | null;
+  /** Creation timestamp */
+  createdOn: string;
+  /** Last modification timestamp */
+  modifiedOn: string;
+}
+
+/**
+ * Options for enabling automatic NF-e distribution fetch
+ */
+export interface EnableInboundOptions {
+  /** Starting NSU number */
+  startFromNsu?: string;
+  /** Starting date (ISO 8601 format) */
+  startFromDate?: string;
+  /** SEFAZ environment */
+  environmentSEFAZ?: string;
+  /** Automatic manifesting settings */
+  automaticManifesting?: AutomaticManifesting;
+  /** Webhook version */
+  webhookVersion?: string;
+}
+
+/**
+ * Manifest event types for Manifestação do Destinatário
+ *
+ * - `210210` — Ciência da Operação (awareness of the operation)
+ * - `210220` — Confirmação da Operação (confirmation of the operation)
+ * - `210240` — Operação não Realizada (operation not performed)
+ */
+export type ManifestEventType = 210210 | 210220 | 210240;

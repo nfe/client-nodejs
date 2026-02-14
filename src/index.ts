@@ -88,6 +88,20 @@ export type {
   TransportationInvoiceEntityStatus,
   TransportationInvoiceMetadataType,
 
+  // Inbound NF-e Distribution types
+  InboundInvoiceMetadata,
+  InboundProductInvoiceMetadata,
+  InboundSettings,
+  EnableInboundOptions,
+  ManifestEventType,
+  InboundCompany,
+  InboundIssuer,
+  InboundBuyer,
+  InboundTransportation,
+  InboundLinks,
+  InboundProductInvoice,
+  AutomaticManifesting,
+
   // Common types
   EntityType,
   TaxRegime,
