@@ -113,10 +113,9 @@ ${companyId ? `NFE_COMPANY_ID=${companyId}` : '# NFE_COMPANY_ID=seu-company-id-a
 # Timeout em ms (opcional)
 # NFE_TIMEOUT=30000
 
-# Chaves de API específicas (opcional)
-# Se não definidas, usa NFE_API_KEY como fallback
-# NFE_ADDRESS_API_KEY=sua-chave-address-aqui
-# NFE_CTE_API_KEY=sua-chave-cte-aqui
+# Chave de API para serviços de consulta (opcional)
+# Se não definida, usa NFE_API_KEY como fallback
+# NFE_DATA_API_KEY=sua-chave-data-aqui
 `;
 
   try {

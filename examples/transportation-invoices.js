@@ -11,12 +11,12 @@
  *
  * Configuration:
  * Set one of the following environment variables:
- * - NFE_CTE_API_KEY - Specific CT-e API key (recommended)
+ * - NFE_DATA_API_KEY - Data/query API key (recommended)
  * - NFE_API_KEY - Main API key (will be used as fallback)
  *
  * Or configure in code:
  * const nfe = new NfeClient({
- *   cteApiKey: 'your-cte-api-key',  // Or use apiKey if you have unified access
+ *   dataApiKey: 'your-data-api-key',  // Or use apiKey if you have unified access
  * });
  *
  * Usage:
@@ -34,12 +34,12 @@ import { NfeClient } from 'nfe-io';
 // ============================================================================
 
 // Create client - API key fallback chain:
-// 1. cteApiKey (config)
+// 1. dataApiKey (config)
 // 2. apiKey (config)
-// 3. NFE_CTE_API_KEY (env)
+// 3. NFE_DATA_API_KEY (env)
 // 4. NFE_API_KEY (env)
 const nfe = new NfeClient({
-  // cteApiKey: process.env.NFE_CTE_API_KEY,  // Uncomment for explicit configuration
+  // dataApiKey: process.env.NFE_DATA_API_KEY,  // Uncomment for explicit configuration
 });
 
 // ============================================================================
@@ -277,7 +277,7 @@ async function main() {
   } catch (error) {
     console.error('\n❌ Error:', error.message);
     if (error.name === 'ConfigurationError') {
-      console.error('   Make sure you have set NFE_CTE_API_KEY or NFE_API_KEY');
+      console.error('   Make sure you have set NFE_DATA_API_KEY or NFE_API_KEY');
     }
     if (error.name === 'ValidationError') {
       console.error('   Check your input parameters');

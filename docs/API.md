@@ -1513,7 +1513,7 @@ const events = await nfe.webhooks.getAvailableEvents();
 
 Manage CT-e (Conhecimento de Transporte Eletrônico) documents via SEFAZ Distribuição DFe.
 
-> **Note:** This resource uses a separate API host (`api.nfse.io`). You can configure a specific API key with `cteApiKey`, or the SDK will use `apiKey` as fallback.
+> **Note:** This resource uses a separate API host (`api.nfse.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
 
 **Prerequisites:**
 - Company must be registered with a valid A1 digital certificate
@@ -1651,8 +1651,7 @@ fs.writeFileSync('cte-event.xml', eventXml);
 ```typescript
 interface NfeConfig {
   apiKey?: string;
-  addressApiKey?: string;  // Specific API key for address lookups
-  cteApiKey?: string;      // Specific API key for CT-e (transportation invoices)
+  dataApiKey?: string;     // API key for data/query services (Addresses, CT-e, CNPJ, CPF)
   environment?: 'production' | 'development';
   baseUrl?: string;
   timeout?: number;

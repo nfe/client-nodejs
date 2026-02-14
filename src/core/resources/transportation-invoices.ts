@@ -73,7 +73,7 @@ function validateCompanyId(companyId: string): void {
  * - Webhook must be configured to receive CT-e notifications
  *
  * **Note:** This resource uses a different API host (api.nfse.io) and may require
- * a separate API key configured via `cteApiKey` in the client configuration.
+ * a separate API key configured via `dataApiKey` in the client configuration.
  * If not set, it falls back to `apiKey`.
  *
  * @example Enable automatic CT-e search

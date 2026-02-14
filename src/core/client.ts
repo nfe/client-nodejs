@@ -285,10 +285,10 @@ export class NfeClient {
    * - Search by generic term
    *
    * **Note:** This resource uses a different API host (address.api.nfe.io).
-   * Configure `addressApiKey` for a separate key, or it will fallback to `apiKey`.
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
    *
    * @see {@link AddressesResource}
-   * @throws {ConfigurationError} If no API key is configured (addressApiKey or apiKey)
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
    *
    * @example
    * ```typescript
@@ -318,10 +318,10 @@ export class NfeClient {
    * - Webhook must be configured to receive CT-e notifications
    *
    * **Note:** This resource uses a different API host (api.nfse.io).
-   * Configure `cteApiKey` for a separate key, or it will fallback to `apiKey`.
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
    *
    * @see {@link TransportationInvoicesResource}
-   * @throws {ConfigurationError} If no API key is configured (cteApiKey or apiKey)
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
    *
    * @example
    * ```typescript
@@ -379,11 +379,11 @@ export class NfeClient {
    * });
    * ```
    *
-   * @example With only address API key
+   * @example With only data API key
    * ```typescript
-   * // Only use address lookup, no main API access
+   * // Only use data services (address lookup, CT-e), no main API access
    * const nfe = new NfeClient({
-   *   addressApiKey: 'address-api-key'
+   *   dataApiKey: 'data-api-key'
    * });
    * await nfe.addresses.lookupByPostalCode('01310-100');
    * ```
@@ -431,10 +431,10 @@ export class NfeClient {
    */
   private getAddressHttpClient(): HttpClient {
     if (!this._addressHttp) {
-      const apiKey = this.resolveAddressApiKey();
+      const apiKey = this.resolveDataApiKey();
       if (!apiKey) {
         throw new ConfigurationError(
-          'API key required for Addresses. Set "addressApiKey" or "apiKey" in config, or NFE_ADDRESS_API_KEY/NFE_API_KEY environment variable.'
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
         );
       }
       const httpConfig = buildHttpConfig(
@@ -459,27 +459,14 @@ export class NfeClient {
   }
 
   /**
-   * Resolve the Address API key using fallback chain
-   * Order: addressApiKey → apiKey → NFE_ADDRESS_API_KEY → NFE_API_KEY
+   * Resolve the data API key using fallback chain
+   * Order: dataApiKey → apiKey → NFE_DATA_API_KEY → NFE_API_KEY
    */
-  private resolveAddressApiKey(): string | undefined {
+  private resolveDataApiKey(): string | undefined {
     return (
-      this.config.addressApiKey ||
+      this.config.dataApiKey ||
       this.config.apiKey ||
-      this.getEnvironmentVariable('NFE_ADDRESS_API_KEY') ||
-      this.getEnvironmentVariable('NFE_API_KEY')
-    );
-  }
-
-  /**
-   * Resolve the CT-e API key using fallback chain
-   * Order: cteApiKey → apiKey → NFE_CTE_API_KEY → NFE_API_KEY
-   */
-  private resolveCteApiKey(): string | undefined {
-    return (
-      this.config.cteApiKey ||
-      this.config.apiKey ||
-      this.getEnvironmentVariable('NFE_CTE_API_KEY') ||
+      this.getEnvironmentVariable('NFE_DATA_API_KEY') ||
       this.getEnvironmentVariable('NFE_API_KEY')
     );
   }
@@ -490,10 +477,10 @@ export class NfeClient {
    */
   private getCteHttpClient(): HttpClient {
     if (!this._cteHttp) {
-      const apiKey = this.resolveCteApiKey();
+      const apiKey = this.resolveDataApiKey();
       if (!apiKey) {
         throw new ConfigurationError(
-          'API key required for Transportation Invoices (CT-e). Set "cteApiKey" or "apiKey" in config, or NFE_CTE_API_KEY/NFE_API_KEY environment variable.'
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
         );
       }
       const httpConfig = buildHttpConfig(
@@ -514,8 +501,7 @@ export class NfeClient {
   private validateAndNormalizeConfig(config: NfeConfig): RequiredNfeConfig {
     // API keys are now optional - validated lazily when resources are accessed
     const apiKey = config.apiKey?.trim() || undefined;
-    const addressApiKey = config.addressApiKey?.trim() || undefined;
-    const cteApiKey = config.cteApiKey?.trim() || undefined;
+    const dataApiKey = config.dataApiKey?.trim() || undefined;
 
     // Normalize environment
     const environment = config.environment || 'production';
@@ -534,8 +520,7 @@ export class NfeClient {
 
     const normalizedConfig: RequiredNfeConfig = {
       apiKey,
-      addressApiKey,
-      cteApiKey,
+      dataApiKey,
       environment,
       baseUrl: config.baseUrl || this.getDefaultBaseUrl(),
       timeout: config.timeout || 30000,
@@ -632,11 +617,8 @@ export class NfeClient {
     if (normalizedConfig.apiKey === undefined && this.config.apiKey !== undefined && newConfig.apiKey === undefined) {
       normalizedConfig.apiKey = this.config.apiKey;
     }
-    if (normalizedConfig.addressApiKey === undefined && this.config.addressApiKey !== undefined && newConfig.addressApiKey === undefined) {
-      normalizedConfig.addressApiKey = this.config.addressApiKey;
-    }
-    if (normalizedConfig.cteApiKey === undefined && this.config.cteApiKey !== undefined && newConfig.cteApiKey === undefined) {
-      normalizedConfig.cteApiKey = this.config.cteApiKey;
+    if (normalizedConfig.dataApiKey === undefined && this.config.dataApiKey !== undefined && newConfig.dataApiKey === undefined) {
+      normalizedConfig.dataApiKey = this.config.dataApiKey;
     }
 
     // Update internal config

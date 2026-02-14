@@ -360,7 +360,7 @@ const filtrado = await nfe.addresses.search({
 });
 ```
 
-> **Nota:** A API de Endereços usa um host separado (`address.api.nfe.io`). Você pode configurar uma chave API específica com `addressApiKey`, ou o SDK usará `apiKey` como fallback.
+> **Nota:** A API de Endereços usa um host separado (`address.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
 
 #### 🚚 Notas de Transporte - CT-e (`nfe.transportationInvoices`)
 
@@ -420,7 +420,7 @@ const eventoXml = await nfe.transportationInvoices.downloadEventXml(
 );
 ```
 
-> **Nota:** A API de CT-e usa um host separado (`api.nfse.io`). Você pode configurar uma chave API específica com `cteApiKey`, ou o SDK usará `apiKey` como fallback.
+> **Nota:** A API de CT-e usa um host separado (`api.nfse.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
 
 **Pré-requisitos:**
 - Empresa deve estar cadastrada com certificado digital A1 válido
@@ -432,16 +432,12 @@ const eventoXml = await nfe.transportationInvoices.downloadEventXml(
 
 ```typescript
 const nfe = new NfeClient({
-  // Chave API principal do NFE.io (opcional se usar apenas Addresses com addressApiKey)
+  // Chave API principal do NFE.io (operações com documentos fiscais)
   apiKey: 'sua-chave-api',
   
-  // Opcional: Chave API específica para consulta de endereços
+  // Opcional: Chave API para serviços de consulta (Endereços, CT-e, CNPJ, CPF)
   // Se não fornecida, usa apiKey como fallback
-  addressApiKey: 'sua-chave-address-api',
-  
-  // Opcional: Chave API específica para consulta de CT-e
-  // Se não fornecida, usa apiKey como fallback
-  cteApiKey: 'sua-chave-cte-api',
+  dataApiKey: 'sua-chave-data-api',
   
   // Opcional: Ambiente (padrão: 'production')
   environment: 'production', // ou 'sandbox'
@@ -469,14 +465,12 @@ O SDK suporta as seguintes variáveis de ambiente:
 | Variável | Descrição |
 |----------|-----------|
 | `NFE_API_KEY` | Chave API principal (fallback para `apiKey`) |
-| `NFE_ADDRESS_API_KEY` | Chave API para endereços (fallback para `addressApiKey`) |
-| `NFE_CTE_API_KEY` | Chave API para CT-e (fallback para `cteApiKey`) |
+| `NFE_DATA_API_KEY` | Chave API para serviços de consulta (fallback para `dataApiKey`) |
 
 ```bash
 # Configurar via ambiente
 export NFE_API_KEY="sua-chave-api"
-export NFE_ADDRESS_API_KEY="sua-chave-address"
-export NFE_CTE_API_KEY="sua-chave-cte"
+export NFE_DATA_API_KEY="sua-chave-data"
 
 # Usar SDK sem passar chaves no código
 const nfe = new NfeClient({});

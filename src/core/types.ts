@@ -17,10 +17,8 @@
 export interface NfeConfig {
   /** NFE.io API Key for main resources (companies, invoices, etc.) */
   apiKey?: string;
-  /** NFE.io API Key specifically for Address API (optional, falls back to apiKey) */
-  addressApiKey?: string;
-  /** NFE.io API Key specifically for CT-e API (optional, falls back to apiKey) */
-  cteApiKey?: string;
+  /** NFE.io API Key for data/query services: Addresses, CT-e, CNPJ, CPF (optional, falls back to apiKey) */
+  dataApiKey?: string;
   /** Environment to use (both use same endpoint, differentiated by API key) */
   environment?: 'production' | 'development';
   /** Custom base URL (overrides environment) */
@@ -296,12 +294,10 @@ export interface PollOptions {
  * API keys remain optional since validation is done lazily when resources are accessed.
  */
 export interface RequiredNfeConfig {
-  /** Main API key (may be undefined if only using address API) */
+  /** Main API key (may be undefined if only using data services) */
   apiKey: string | undefined;
-  /** Address API key (may be undefined, will fallback to apiKey) */
-  addressApiKey: string | undefined;
-  /** CT-e API key (may be undefined, will fallback to apiKey) */
-  cteApiKey: string | undefined;
+  /** Data API key for query services: Addresses, CT-e, CNPJ, CPF (may be undefined, will fallback to apiKey) */
+  dataApiKey: string | undefined;
   /** Environment */
   environment: 'production' | 'development';
   /** Base URL for main API */
