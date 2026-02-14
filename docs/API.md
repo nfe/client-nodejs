@@ -15,6 +15,7 @@ Complete API reference for the NFE.io Node.js SDK v3.
   - [Legal People](#legal-people)
   - [Natural People](#natural-people)
   - [Webhooks](#webhooks)
+  - [Transportation Invoices (CT-e)](#transportation-invoices-ct-e)
 - [Types](#types)
 - [Error Handling](#error-handling)
 - [Advanced Usage](#advanced-usage)
@@ -1504,6 +1505,145 @@ const events = await nfe.webhooks.getAvailableEvents();
 // ['invoice.issued', 'invoice.cancelled', ...]
 ```
 
+---
+
+### Transportation Invoices (CT-e)
+
+**Resource:** `nfe.transportationInvoices`
+
+Manage CT-e (Conhecimento de Transporte Eletrônico) documents via SEFAZ Distribuição DFe.
+
+> **Note:** This resource uses a separate API host (`api.nfse.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+**Prerequisites:**
+- Company must be registered with a valid A1 digital certificate
+- Webhook must be configured to receive CT-e notifications
+
+#### `enable(companyId: string, options?: EnableTransportationInvoiceOptions): Promise<TransportationInvoiceInboundSettings>`
+
+Enable automatic CT-e search for a company.
+
+```typescript
+// Enable with default settings
+const settings = await nfe.transportationInvoices.enable('company-id');
+
+// Enable starting from a specific NSU
+const settings = await nfe.transportationInvoices.enable('company-id', {
+  startFromNsu: 12345
+});
+
+// Enable starting from a specific date
+const settings = await nfe.transportationInvoices.enable('company-id', {
+  startFromDate: '2024-01-01T00:00:00Z'
+});
+```
+
+**Options:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `startFromNsu` | `number` | Start searching from this NSU number |
+| `startFromDate` | `string` | Start searching from this date (ISO 8601) |
+
+#### `disable(companyId: string): Promise<TransportationInvoiceInboundSettings>`
+
+Disable automatic CT-e search for a company.
+
+```typescript
+const settings = await nfe.transportationInvoices.disable('company-id');
+console.log('Status:', settings.status); // 'Disabled'
+```
+
+#### `getSettings(companyId: string): Promise<TransportationInvoiceInboundSettings>`
+
+Get current automatic CT-e search settings.
+
+```typescript
+const settings = await nfe.transportationInvoices.getSettings('company-id');
+console.log('Status:', settings.status);
+console.log('Start NSU:', settings.startFromNsu);
+console.log('Created:', settings.createdOn);
+```
+
+**Response:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `string` | Current status ('Active', 'Disabled', etc.) |
+| `startFromNsu` | `number` | Starting NSU number |
+| `startFromDate` | `string` | Starting date (if configured) |
+| `createdOn` | `string` | Creation timestamp |
+| `modifiedOn` | `string` | Last modification timestamp |
+
+#### `retrieve(companyId: string, accessKey: string): Promise<TransportationInvoiceMetadata>`
+
+Retrieve CT-e metadata by its 44-digit access key.
+
+```typescript
+const cte = await nfe.transportationInvoices.retrieve(
+  'company-id',
+  '35240112345678000190570010000001231234567890'
+);
+console.log('Sender:', cte.nameSender);
+console.log('CNPJ:', cte.federalTaxNumberSender);
+console.log('Amount:', cte.totalInvoiceAmount);
+console.log('Issued:', cte.issuedOn);
+```
+
+**Response:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `accessKey` | `string` | 44-digit access key |
+| `type` | `string` | Document type |
+| `status` | `string` | Document status |
+| `nameSender` | `string` | Sender company name |
+| `federalTaxNumberSender` | `string` | Sender CNPJ |
+| `totalInvoiceAmount` | `number` | Total invoice amount |
+| `issuedOn` | `string` | Issue date |
+| `receivedOn` | `string` | Receipt date |
+
+#### `downloadXml(companyId: string, accessKey: string): Promise<string>`
+
+Download CT-e XML content.
+
+```typescript
+const xml = await nfe.transportationInvoices.downloadXml(
+  'company-id',
+  '35240112345678000190570010000001231234567890'
+);
+fs.writeFileSync('cte.xml', xml);
+```
+
+#### `getEvent(companyId: string, accessKey: string, eventKey: string): Promise<TransportationInvoiceMetadata>`
+
+Retrieve CT-e event metadata.
+
+```typescript
+const event = await nfe.transportationInvoices.getEvent(
+  'company-id',
+  '35240112345678000190570010000001231234567890',
+  'event-key-123'
+);
+console.log('Event type:', event.type);
+console.log('Event status:', event.status);
+```
+
+#### `downloadEventXml(companyId: string, accessKey: string, eventKey: string): Promise<string>`
+
+Download CT-e event XML content.
+
+```typescript
+const eventXml = await nfe.transportationInvoices.downloadEventXml(
+  'company-id',
+  '35240112345678000190570010000001231234567890',
+  'event-key-123'
+);
+fs.writeFileSync('cte-event.xml', eventXml);
+```
+
+---
+
 ## Types
 
 ### Core Types
@@ -1511,6 +1651,7 @@ const events = await nfe.webhooks.getAvailableEvents();
 ```typescript
 interface NfeConfig {
   apiKey?: string;
+  dataApiKey?: string;     // API key for data/query services (Addresses, CT-e, CNPJ, CPF)
   environment?: 'production' | 'development';
   baseUrl?: string;
   timeout?: number;

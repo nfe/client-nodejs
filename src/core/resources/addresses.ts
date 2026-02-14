@@ -68,7 +68,7 @@ function normalizePostalCode(postalCode: string): string {
  * Data is sourced from Correios DNE (Diretório Nacional de Endereços) integrated with IBGE city codes.
  *
  * **Note:** This resource uses a different API host (address.api.nfe.io) and may require
- * a separate API key configured via `addressApiKey` in the client configuration.
+ * a separate API key configured via `dataApiKey` in the client configuration.
  *
  * @example Basic postal code lookup
  * ```typescript

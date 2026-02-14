@@ -5,7 +5,7 @@
  * Brazilian addresses (CEP/postal code lookups).
  *
  * Prerequisites:
- *   - Set NFE_ADDRESS_API_KEY or NFE_API_KEY environment variable
+ *   - Set NFE_DATA_API_KEY or NFE_API_KEY environment variable
  *   - Or pass the API key directly in the configuration
  *
  * Run this example:
@@ -14,12 +14,12 @@
 
 import { NfeClient } from '../dist/index.js';
 
-// Configuration with separate address API key (optional)
+// Configuration with separate data API key (optional)
 const client = new NfeClient({
-  // You can use a separate API key for address lookups
-  // addressApiKey: process.env.NFE_ADDRESS_API_KEY,
+  // You can use a separate API key for data/query services (addresses, CT-e)
+  // dataApiKey: process.env.NFE_DATA_API_KEY,
 
-  // Or use the main API key (will be used as fallback for addresses)
+  // Or use the main API key (will be used as fallback for data services)
   apiKey: process.env.NFE_API_KEY,
 
   // Environment: 'production' or 'development'
@@ -103,21 +103,21 @@ async function searchWithFilter() {
 }
 
 /**
- * Example 4: Using only addressApiKey (isolated usage)
+ * Example 4: Using only dataApiKey (isolated usage)
  */
 async function isolatedAddressUsage() {
-  console.log('\n🔐 Example 4: Isolated Address API Usage');
+  console.log('\n🔐 Example 4: Isolated Data API Usage');
   console.log('='.repeat(50));
 
-  // Create a client with ONLY addressApiKey
-  // This is useful when you only have access to the Address API
-  const addressOnlyClient = new NfeClient({
-    addressApiKey: process.env.NFE_ADDRESS_API_KEY || process.env.NFE_API_KEY,
+  // Create a client with ONLY dataApiKey
+  // This is useful when you only have access to data/query services
+  const dataOnlyClient = new NfeClient({
+    dataApiKey: process.env.NFE_DATA_API_KEY || process.env.NFE_API_KEY,
   });
 
   try {
     // Addresses work
-    const result = await addressOnlyClient.addresses.lookupByPostalCode('20040-020');
+    const result = await dataOnlyClient.addresses.lookupByPostalCode('20040-020');
     console.log('Rio de Janeiro CEP lookup succeeded!');
     console.log(`  ${result.street}, ${result.city?.name}/${result.state}`);
   } catch (error) {
@@ -165,9 +165,9 @@ async function main() {
   console.log('🏠 NFE.io Address Lookup Examples');
   console.log('━'.repeat(50));
 
-  if (!process.env.NFE_API_KEY && !process.env.NFE_ADDRESS_API_KEY) {
+  if (!process.env.NFE_API_KEY && !process.env.NFE_DATA_API_KEY) {
     console.error('\n❌ No API key found!');
-    console.error('Please set NFE_API_KEY or NFE_ADDRESS_API_KEY environment variable.');
+    console.error('Please set NFE_API_KEY or NFE_DATA_API_KEY environment variable.');
     console.error('\nExample:');
     console.error('  export NFE_API_KEY="your-api-key"');
     console.error('  node examples/address-lookup.js');
