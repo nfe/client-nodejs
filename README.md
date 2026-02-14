@@ -575,6 +575,48 @@ fs.writeFileSync('cfe.xml', xml);
 
 > **Nota:** A API de Consulta CFe-SAT usa o mesmo host (`nfe.api.nfe.io`) e chave de API que a consulta de NF-e.
 
+#### 🏢 Consulta CNPJ / Pessoa Jurídica (`nfe.legalEntityLookup`)
+
+Consultar dados cadastrais de empresas brasileiras (CNPJ) na Receita Federal e nas SEFAZs estaduais:
+
+```typescript
+// Consulta básica por CNPJ (aceita com ou sem pontuação)
+const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+console.log('Razão Social:', result.legalEntity?.name);
+console.log('Nome Fantasia:', result.legalEntity?.tradeName);
+console.log('Status:', result.legalEntity?.status);        // 'Active'
+console.log('Porte:', result.legalEntity?.size);            // 'ME', 'EPP', etc.
+console.log('Cidade:', result.legalEntity?.address?.city?.name);
+
+// Consulta com opções
+const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
+  updateAddress: false,    // Não atualizar endereço via Correios
+  updateCityCode: true,    // Atualizar código IBGE da cidade
+});
+
+// Consultar Inscrição Estadual (IE) por estado
+const ieSP = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+for (const tax of ieSP.legalEntity?.stateTaxes ?? []) {
+  console.log(`IE: ${tax.taxNumber} - Status: ${tax.status}`);
+  console.log(`  NFe: ${tax.nfe?.status}, CTe: ${tax.cte?.status}`);
+}
+
+// Avaliar IE para emissão de nota fiscal
+const invoice = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '12345678000190');
+for (const tax of invoice.legalEntity?.stateTaxes ?? []) {
+  if (tax.status === 'Abled') {
+    console.log(`Pode emitir com IE: ${tax.taxNumber}`);
+  }
+}
+
+// Obter melhor IE sugerida para emissão
+const sugestao = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '12345678000190');
+const melhorIE = sugestao.legalEntity?.stateTaxes?.[0];
+console.log('IE recomendada:', melhorIE?.taxNumber);
+```
+
+> **Nota:** A API de Consulta CNPJ usa um host separado (`legalentity.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
 ---
 
 ### Opções de Configuração

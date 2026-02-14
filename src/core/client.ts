@@ -31,8 +31,10 @@ import {
   InboundProductInvoicesResource,
   ProductInvoiceQueryResource,
   ConsumerInvoiceQueryResource,
+  LegalEntityLookupResource,
   ADDRESS_API_BASE_URL,
-  NFE_QUERY_API_BASE_URL
+  NFE_QUERY_API_BASE_URL,
+  LEGAL_ENTITY_API_BASE_URL
 } from './resources/index.js';
 
 // ============================================================================
@@ -41,6 +43,9 @@ import {
 
 /** Base URL for CT-e API (Transportation Invoices) */
 export const CTE_API_BASE_URL = 'https://api.nfse.io';
+
+/** Base URL for Legal Entity API (CNPJ Lookup) */
+export { LEGAL_ENTITY_API_BASE_URL } from './resources/index.js';
 
 // ============================================================================
 // Main NFE.io Client
@@ -131,6 +136,9 @@ export class NfeClient {
   /** @internal HTTP client for NF-e query API requests (created lazily) */
   private _nfeQueryHttp: HttpClient | undefined;
 
+  /** @internal HTTP client for Legal Entity API requests (created lazily) */
+  private _legalEntityHttp: HttpClient | undefined;
+
   /** @internal Normalized client configuration */
   private readonly config: RequiredNfeConfig;
 
@@ -145,6 +153,7 @@ export class NfeClient {
   private _inboundProductInvoices: InboundProductInvoicesResource | undefined;
   private _productInvoiceQuery: ProductInvoiceQueryResource | undefined;
   private _consumerInvoiceQuery: ConsumerInvoiceQueryResource | undefined;
+  private _legalEntityLookup: LegalEntityLookupResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -481,6 +490,39 @@ export class NfeClient {
   }
 
   /**
+   * Legal Entity Lookup API resource (CNPJ)
+   *
+   * @description
+   * Provides read-only operations for querying Brazilian company (CNPJ) data:
+   * - Basic company info (Receita Federal registry data)
+   * - State tax registration (Inscrição Estadual) lookup
+   * - State tax evaluation for invoice issuance
+   * - Suggested optimal IE for invoice issuance
+   *
+   * **Note:** This resource uses a different API host (legalentity.api.nfe.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link LegalEntityLookupResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // Basic CNPJ lookup
+   * const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+   * console.log(result.legalEntity?.name);
+   *
+   * // State tax registration
+   * const stateTax = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+   * ```
+   */
+  get legalEntityLookup(): LegalEntityLookupResource {
+    if (!this._legalEntityLookup) {
+      this._legalEntityLookup = new LegalEntityLookupResource(this.getLegalEntityHttpClient());
+    }
+    return this._legalEntityLookup;
+  }
+
+  /**
    * Create a new NFE.io API client
    *
    * @param config - Client configuration options
@@ -653,6 +695,29 @@ export class NfeClient {
       this._nfeQueryHttp = new HttpClient(httpConfig);
     }
     return this._nfeQueryHttp;
+  }
+
+  /**
+   * Get or create the Legal Entity API HTTP client (legalentity.api.nfe.io)
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getLegalEntityHttpClient(): HttpClient {
+    if (!this._legalEntityHttp) {
+      const apiKey = this.resolveDataApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        LEGAL_ENTITY_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._legalEntityHttp = new HttpClient(httpConfig);
+    }
+    return this._legalEntityHttp;
   }
 
   // --------------------------------------------------------------------------

@@ -47,7 +47,7 @@
  * @see {@link NfeClient} - Main client class for NFE.io API
  * @see {@link createNfeClient} - Factory function for creating client instances
  */
-export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS, CTE_API_BASE_URL } from './core/client.js';
+export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS, CTE_API_BASE_URL, LEGAL_ENTITY_API_BASE_URL } from './core/client.js';
 
 /**
  * TypeScript type definitions for NFE.io API entities and configurations
@@ -165,6 +165,36 @@ export type {
   CouponDelivery,
   CouponAdditionalInformation,
   TaxCoupon,
+
+  // Legal Entity Lookup types (consulta-cnpj)
+  BrazilianState,
+  LegalEntityBasicInfoOptions,
+  LegalEntityBasicInfoResponse,
+  LegalEntityStateTaxResponse,
+  LegalEntityStateTaxForInvoiceResponse,
+  LegalEntitySize,
+  LegalEntityStatus,
+  LegalEntityUnit,
+  LegalEntityTaxRegime,
+  LegalEntityNatureCode,
+  LegalEntityStateTaxStatus,
+  LegalEntityStateTaxForInvoiceStatus,
+  LegalEntityFiscalDocumentStatus,
+  LegalEntityActivityType,
+  LegalEntityPhoneSource,
+  LegalEntityCity,
+  LegalEntityAddress,
+  LegalEntityPhone,
+  LegalEntityEconomicActivity,
+  LegalEntityNature,
+  LegalEntityQualification,
+  LegalEntityPartner,
+  LegalEntityFiscalDocumentInfo,
+  LegalEntityStateTax,
+  LegalEntityStateTaxForInvoice,
+  LegalEntityBasicInfo,
+  LegalEntityStateTaxInfo,
+  LegalEntityStateTaxForInvoiceInfo,
 
   // Common types
   EntityType,

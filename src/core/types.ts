@@ -1423,3 +1423,338 @@ export interface TaxCoupon {
   items?: CouponItem[];
   payment?: CouponPayment;
 }
+
+// ============================================================================
+// Legal Entity Lookup Types (consulta-cnpj)
+// ============================================================================
+
+/** Valid Brazilian state abbreviations (27 UFs + EX + NA) */
+export type BrazilianState =
+  | 'AC' | 'AL' | 'AM' | 'AP' | 'BA' | 'CE' | 'DF' | 'ES' | 'GO'
+  | 'MA' | 'MG' | 'MS' | 'MT' | 'PA' | 'PB' | 'PE' | 'PI' | 'PR'
+  | 'RJ' | 'RN' | 'RO' | 'RR' | 'RS' | 'SC' | 'SE' | 'SP' | 'TO'
+  | 'EX' | 'NA';
+
+/** Options for basic info lookup */
+export interface LegalEntityBasicInfoOptions {
+  /** Whether to update the address from postal service data (default: true) */
+  updateAddress?: boolean;
+  /** When updateAddress=false, whether to update only the city code from postal service data (default: false) */
+  updateCityCode?: boolean;
+}
+
+// --- Response Wrappers ---
+
+/** Response wrapper for CNPJ basic info lookup */
+export interface LegalEntityBasicInfoResponse {
+  /** Legal entity data */
+  legalEntity?: LegalEntityBasicInfo;
+}
+
+/** Response wrapper for state tax info lookup */
+export interface LegalEntityStateTaxResponse {
+  /** Legal entity state tax data */
+  legalEntity?: LegalEntityStateTaxInfo;
+}
+
+/** Response wrapper for state tax for invoice lookup */
+export interface LegalEntityStateTaxForInvoiceResponse {
+  /** Legal entity state tax data for invoice evaluation */
+  legalEntity?: LegalEntityStateTaxForInvoiceInfo;
+}
+
+// --- Core Entity Types ---
+
+/** Company size classification */
+export type LegalEntitySize = 'Unknown' | 'ME' | 'EPP' | 'DEMAIS';
+
+/** Company registration status */
+export type LegalEntityStatus = 'Unknown' | 'Active' | 'Suspended' | 'Cancelled' | 'Unabled' | 'Null';
+
+/** Organizational unit type */
+export type LegalEntityUnit = 'Headoffice' | 'Subsidiary';
+
+/** Tax regime code */
+export type LegalEntityTaxRegime = 'Unknown' | 'SimplesNacional' | 'MEI' | 'Normal';
+
+/** Legal nature classification */
+export type LegalEntityNatureCode =
+  | 'EmpresaPublica' | 'SociedadeEconomiaMista' | 'SociedadeAnonimaAberta'
+  | 'SociedadeAnonimaFechada' | 'SociedadeEmpresariaLimitada'
+  | 'SociedadeEmpresariaEmNomeColetivo' | 'SociedadeEmpresariaEmComanditaSimples'
+  | 'SociedadeEmpresariaEmComanditaporAcoes' | 'SociedadeemContaParticipacao'
+  | 'Empresario' | 'Cooperativa' | 'ConsorcioSociedades' | 'GrupoSociedades'
+  | 'EmpresaDomiciliadaExterior' | 'ClubeFundoInvestimento'
+  | 'SociedadeSimplesPura' | 'SociedadeSimplesLimitada'
+  | 'SociedadeSimplesEmNomeColetivo' | 'SociedadeSimplesEmComanditaSimples'
+  | 'EmpresaBinacional' | 'ConsorcioEmpregadores' | 'ConsorcioSimples'
+  | 'EireliNaturezaEmpresaria' | 'EireliNaturezaSimples' | 'ServicoNotarial'
+  | 'FundacaoPrivada' | 'ServicoSocialAutonomo' | 'CondominioEdilicio'
+  | 'ComissaoConciliacaoPrevia' | 'EntidadeMediacaoArbitragem'
+  | 'PartidoPolitico' | 'EntidadeSindical'
+  | 'EstabelecimentoBrasilFundacaoAssociacaoEstrangeiras'
+  | 'FundacaoAssociacaoDomiciliadaExterior' | 'OrganizacaoReligiosa'
+  | 'ComunidadeIndigena' | 'FundoPrivado' | 'AssociacaoPrivada'
+  | 'OutrasSemFimLucrativo' | 'Unknown';
+
+/** State tax registration status */
+export type LegalEntityStateTaxStatus = 'Abled' | 'Unabled' | 'Cancelled' | 'Unknown';
+
+/** Extended state tax registration status for invoice evaluation */
+export type LegalEntityStateTaxForInvoiceStatus =
+  | 'Abled' | 'Unabled' | 'Cancelled'
+  | 'UnabledTemp' | 'UnabledNotConfirmed'
+  | 'Unknown' | 'UnknownTemp' | 'UnknownNotConfirmed';
+
+/** Fiscal document contributor status */
+export type LegalEntityFiscalDocumentStatus = 'Abled' | 'Unabled' | 'Unknown';
+
+/** Economic activity type classification */
+export type LegalEntityActivityType = 'Main' | 'Secondary';
+
+/** Phone source */
+export type LegalEntityPhoneSource = 'RFB';
+
+// --- Nested Object Types ---
+
+/** City information */
+export interface LegalEntityCity {
+  /** City IBGE code */
+  code?: string;
+  /** City name */
+  name?: string;
+}
+
+/** Address from Legal Entity API */
+export interface LegalEntityAddress {
+  /** State abbreviation (UF) */
+  state?: string;
+  /** City information */
+  city?: LegalEntityCity;
+  /** District / neighborhood */
+  district?: string;
+  /** Additional address information */
+  additionalInformation?: string;
+  /** Street suffix (type) */
+  streetSuffix?: string;
+  /** Street name */
+  street?: string;
+  /** Street number */
+  number?: string;
+  /** Minimum number range */
+  numberMin?: string;
+  /** Maximum number range */
+  numberMax?: string;
+  /** Postal code (CEP) */
+  postalCode?: string;
+  /** Country */
+  country?: string;
+}
+
+/** Phone number */
+export interface LegalEntityPhone {
+  /** Area code (DDD) */
+  ddd?: string;
+  /** Phone number */
+  number?: string;
+  /** Information source */
+  source?: LegalEntityPhoneSource;
+}
+
+/** Economic activity (CNAE) */
+export interface LegalEntityEconomicActivity {
+  /** Activity classification (Main or Secondary) */
+  type?: LegalEntityActivityType;
+  /** CNAE code */
+  code?: number;
+  /** CNAE description */
+  description?: string;
+}
+
+/** Legal nature */
+export interface LegalEntityNature {
+  /** Legal nature code */
+  code?: string;
+  /** Legal nature description */
+  description?: string;
+}
+
+/** Partner qualification */
+export interface LegalEntityQualification {
+  /** Qualification code */
+  code?: string;
+  /** Qualification description */
+  description?: string;
+}
+
+/** Company partner */
+export interface LegalEntityPartner {
+  /** Partner name */
+  name?: string;
+  /** Partner qualification */
+  qualification?: LegalEntityQualification;
+}
+
+/** Fiscal document indicator (NFe/NFSe/CTe/NFCe) */
+export interface LegalEntityFiscalDocumentInfo {
+  /** Contributor status */
+  status?: LegalEntityFiscalDocumentStatus;
+  /** Data source description */
+  description?: string;
+}
+
+/** State tax registration (Inscrição Estadual) */
+export interface LegalEntityStateTax {
+  /** Registration status */
+  status?: LegalEntityStateTaxStatus;
+  /** State tax number (IE) */
+  taxNumber?: string;
+  /** Status date */
+  statusOn?: string;
+  /** Opening date */
+  openedOn?: string;
+  /** Closing date */
+  closedOn?: string;
+  /** Additional information */
+  additionalInformation?: string;
+  /** State code */
+  code?: BrazilianState;
+  /** Address */
+  address?: LegalEntityAddress;
+  /** Economic activities (CNAE) */
+  economicActivities?: LegalEntityEconomicActivity[];
+  /** NFe indicator */
+  nfe?: LegalEntityFiscalDocumentInfo;
+  /** NFSe indicator */
+  nfse?: LegalEntityFiscalDocumentInfo;
+  /** CTe indicator */
+  cte?: LegalEntityFiscalDocumentInfo;
+  /** NFCe indicator */
+  nfce?: LegalEntityFiscalDocumentInfo;
+}
+
+/** State tax registration for invoice evaluation (extended status) */
+export interface LegalEntityStateTaxForInvoice {
+  /** Registration status (extended enum) */
+  status?: LegalEntityStateTaxForInvoiceStatus;
+  /** State tax number (IE) */
+  taxNumber?: string;
+  /** Status date */
+  statusOn?: string;
+  /** Opening date */
+  openedOn?: string;
+  /** Closing date */
+  closedOn?: string;
+  /** Additional information */
+  additionalInformation?: string;
+  /** State code */
+  code?: BrazilianState;
+  /** Address */
+  address?: LegalEntityAddress;
+  /** Economic activities (CNAE) */
+  economicActivities?: LegalEntityEconomicActivity[];
+  /** NFe indicator */
+  nfe?: LegalEntityFiscalDocumentInfo;
+  /** NFSe indicator */
+  nfse?: LegalEntityFiscalDocumentInfo;
+  /** CTe indicator */
+  cte?: LegalEntityFiscalDocumentInfo;
+  /** NFCe indicator */
+  nfce?: LegalEntityFiscalDocumentInfo;
+}
+
+// --- Main Entity Types ---
+
+/** Full company data from CNPJ basic info lookup */
+export interface LegalEntityBasicInfo {
+  /** Trade name (nome fantasia) */
+  tradeName?: string;
+  /** Legal name (razão social) */
+  name?: string;
+  /** Federal tax number (CNPJ) — numeric */
+  federalTaxNumber?: number;
+  /** Company size classification */
+  size?: LegalEntitySize;
+  /** Opening date */
+  openedOn?: string;
+  /** Company address */
+  address?: LegalEntityAddress;
+  /** Phone numbers */
+  phones?: LegalEntityPhone[];
+  /** Registration status date */
+  statusOn?: string;
+  /** Registration status */
+  status?: LegalEntityStatus;
+  /** Email address */
+  email?: string;
+  /** Responsible federal entity (EFR) */
+  responsableEntity?: string;
+  /** Special status */
+  specialStatus?: string;
+  /** Special status date */
+  specialStatusOn?: string;
+  /** Query date (when the data was fetched) */
+  issuedOn?: string;
+  /** Status reason description */
+  statusReason?: string;
+  /** Share capital in BRL */
+  shareCapital?: number;
+  /** Economic activities (CNAE) */
+  economicActivities?: LegalEntityEconomicActivity[];
+  /** Legal nature */
+  legalNature?: LegalEntityNature;
+  /** Partners and administrators */
+  partners?: LegalEntityPartner[];
+  /** Registration unit (city/office) */
+  registrationUnit?: string;
+  /** Organizational unit (headquarters/subsidiary) */
+  unit?: LegalEntityUnit;
+}
+
+/** State tax information from state tax info lookup */
+export interface LegalEntityStateTaxInfo {
+  /** Trade name */
+  tradeName?: string;
+  /** Legal name */
+  name?: string;
+  /** Federal tax number (CNPJ) — numeric */
+  federalTaxNumber?: number;
+  /** Query date */
+  createdOn?: string;
+  /** Tax regime (CRT) */
+  taxRegime?: LegalEntityTaxRegime;
+  /** Legal nature code */
+  legalNature?: LegalEntityNatureCode;
+  /** Fiscal unit */
+  fiscalUnit?: string;
+  /** Registration unit */
+  createdUnit?: string;
+  /** Verification code */
+  checkCode?: string;
+  /** State tax registrations (Inscrições Estaduais) */
+  stateTaxes?: LegalEntityStateTax[];
+}
+
+/** State tax information for invoice evaluation */
+export interface LegalEntityStateTaxForInvoiceInfo {
+  /** Trade name */
+  tradeName?: string;
+  /** Legal name */
+  name?: string;
+  /** Federal tax number (CNPJ) — numeric */
+  federalTaxNumber?: number;
+  /** Query date */
+  createdOn?: string;
+  /** Tax regime (CRT) */
+  taxRegime?: LegalEntityTaxRegime;
+  /** Legal nature code */
+  legalNature?: LegalEntityNatureCode;
+  /** Fiscal unit */
+  fiscalUnit?: string;
+  /** Registration unit */
+  createdUnit?: string;
+  /** Verification code */
+  checkCode?: string;
+  /** State tax registrations for invoice evaluation (extended status) */
+  stateTaxes?: LegalEntityStateTaxForInvoice[];
+}

@@ -18,6 +18,8 @@ Complete API reference for the NFE.io Node.js SDK v3.
   - [Transportation Invoices (CT-e)](#transportation-invoices-ct-e)
   - [Inbound Product Invoices (NF-e Distribuição)](#inbound-product-invoices-nf-e-distribuição)
   - [Product Invoice Query (Consulta NF-e)](#product-invoice-query-consulta-nf-e)
+  - [Consumer Invoice Query (Consulta CFe-SAT)](#consumer-invoice-query-consulta-cfe-sat)
+  - [Legal Entity Lookup (Consulta CNPJ)](#legal-entity-lookup-consulta-cnpj)
 - [Types](#types)
 - [Error Handling](#error-handling)
 - [Advanced Usage](#advanced-usage)
@@ -2043,6 +2045,197 @@ fs.writeFileSync('cfe.xml', xmlBuffer);
 | `accessKey` | `string` | Yes | 44-digit numeric access key |
 
 **Returns:** `Buffer` containing the XML binary content.
+
+---
+
+### Legal Entity Lookup (Consulta CNPJ)
+
+**Resource:** `nfe.legalEntityLookup`
+
+Query Brazilian company (CNPJ) data from Receita Federal and state tax registries (SEFAZ). This is a read-only resource that does not require company scope.
+
+> **Note:** This resource uses a separate API host (`legalentity.api.nfe.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+#### `getBasicInfo(federalTaxNumber: string, options?: LegalEntityBasicInfoOptions): Promise<LegalEntityBasicInfoResponse>`
+
+Lookup basic company information by CNPJ from Receita Federal. Returns legal name, trade name, address, phone numbers, economic activities (CNAE), legal nature, partners, and registration status.
+
+```typescript
+const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+console.log(result.legalEntity?.name);       // 'EMPRESA LTDA'
+console.log(result.legalEntity?.status);      // 'Active'
+console.log(result.legalEntity?.address?.city?.name);
+
+// With options
+const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
+  updateAddress: false,
+  updateCityCode: true,
+});
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation (e.g., `"12345678000190"` or `"12.345.678/0001-90"`) |
+| `options` | `LegalEntityBasicInfoOptions` | No | Lookup options |
+
+**Options:**
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `updateAddress` | `boolean` | `true` | Update address from postal service data |
+| `updateCityCode` | `boolean` | `false` | Update only the city IBGE code when `updateAddress` is `false` |
+
+**Returns:** `LegalEntityBasicInfoResponse` — Company basic information including address, phones, activities, partners.
+
+**Throws:**
+- `ValidationError` if CNPJ format is invalid (not 14 digits after stripping punctuation)
+- `NotFoundError` if no company found for the given CNPJ (HTTP 404)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `getStateTaxInfo(state: string, federalTaxNumber: string): Promise<LegalEntityStateTaxResponse>`
+
+Lookup state tax registration (Inscrição Estadual) by CNPJ and state. Returns tax regime, legal nature, and state tax registration details including fiscal document indicators (NFe, NFSe, CTe, NFCe).
+
+```typescript
+const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+console.log(result.legalEntity?.taxRegime);  // 'SimplesNacional'
+
+for (const tax of result.legalEntity?.stateTaxes ?? []) {
+  console.log(`IE: ${tax.taxNumber} — Status: ${tax.status}`);
+  console.log(`  NFe: ${tax.nfe?.status}, NFSe: ${tax.nfse?.status}`);
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `state` | `string` | Yes | Brazilian state code (e.g., `"SP"`, `"RJ"`, `"MG"`). Case-insensitive. |
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation |
+
+**Returns:** `LegalEntityStateTaxResponse` — State tax registration information.
+
+**Throws:**
+- `ValidationError` if state code is invalid or CNPJ format is invalid
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `getStateTaxForInvoice(state: string, federalTaxNumber: string): Promise<LegalEntityStateTaxForInvoiceResponse>`
+
+Evaluate state tax registration for invoice issuance. Returns extended status information (including `UnabledTemp`, `UnabledNotConfirmed`) useful for determining whether product invoices (NF-e) can be issued.
+
+```typescript
+const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '12345678000190');
+for (const tax of result.legalEntity?.stateTaxes ?? []) {
+  if (tax.status === 'Abled') {
+    console.log(`Can issue invoices with IE: ${tax.taxNumber}`);
+  }
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `state` | `string` | Yes | Brazilian state code. Case-insensitive. |
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation |
+
+**Returns:** `LegalEntityStateTaxForInvoiceResponse` — State tax data with extended status for invoice evaluation.
+
+**Throws:**
+- `ValidationError` if state code is invalid or CNPJ format is invalid
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `getSuggestedStateTaxForInvoice(state: string, federalTaxNumber: string): Promise<LegalEntityStateTaxForInvoiceResponse>`
+
+Get the best (suggested) state tax registration for invoice issuance. When multiple registrations are enabled in a state, NFE.io applies evaluation criteria to recommend the optimal IE.
+
+```typescript
+const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '12345678000190');
+const bestIE = result.legalEntity?.stateTaxes?.[0];
+if (bestIE) {
+  console.log(`Recommended IE: ${bestIE.taxNumber} (${bestIE.status})`);
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `state` | `string` | Yes | Brazilian state code. Case-insensitive. |
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation |
+
+**Returns:** `LegalEntityStateTaxForInvoiceResponse` — Suggested state tax data prioritized by NFE.io criteria.
+
+**Throws:**
+- `ValidationError` if state code is invalid or CNPJ format is invalid
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### Types
+
+```typescript
+type BrazilianState =
+  | 'AC' | 'AL' | 'AM' | 'AP' | 'BA' | 'CE' | 'DF' | 'ES' | 'GO'
+  | 'MA' | 'MG' | 'MS' | 'MT' | 'PA' | 'PB' | 'PE' | 'PI' | 'PR'
+  | 'RJ' | 'RN' | 'RO' | 'RR' | 'RS' | 'SC' | 'SE' | 'SP' | 'TO'
+  | 'EX' | 'NA';
+
+interface LegalEntityBasicInfoOptions {
+  updateAddress?: boolean;
+  updateCityCode?: boolean;
+}
+
+interface LegalEntityBasicInfoResponse {
+  legalEntity?: LegalEntityBasicInfo;
+}
+
+interface LegalEntityBasicInfo {
+  tradeName?: string;
+  name?: string;
+  federalTaxNumber?: number;
+  size?: 'Unknown' | 'ME' | 'EPP' | 'DEMAIS';
+  openedOn?: string;
+  address?: LegalEntityAddress;
+  phones?: LegalEntityPhone[];
+  status?: 'Unknown' | 'Active' | 'Suspended' | 'Cancelled' | 'Unabled' | 'Null';
+  email?: string;
+  shareCapital?: number;
+  economicActivities?: LegalEntityEconomicActivity[];
+  legalNature?: LegalEntityNature;
+  partners?: LegalEntityPartner[];
+  unit?: 'Headoffice' | 'Subsidiary';
+  // ... and more fields
+}
+
+interface LegalEntityStateTaxResponse {
+  legalEntity?: LegalEntityStateTaxInfo;
+}
+
+interface LegalEntityStateTaxForInvoiceResponse {
+  legalEntity?: LegalEntityStateTaxForInvoiceInfo;
+}
+
+interface LegalEntityStateTax {
+  status?: 'Abled' | 'Unabled' | 'Cancelled' | 'Unknown';
+  taxNumber?: string;
+  code?: BrazilianState;
+  nfe?: LegalEntityFiscalDocumentInfo;
+  nfse?: LegalEntityFiscalDocumentInfo;
+  cte?: LegalEntityFiscalDocumentInfo;
+  nfce?: LegalEntityFiscalDocumentInfo;
+  // ... and more fields
+}
+
+interface LegalEntityStateTaxForInvoice {
+  status?: 'Abled' | 'Unabled' | 'Cancelled' | 'UnabledTemp' | 'UnabledNotConfirmed'
+    | 'Unknown' | 'UnknownTemp' | 'UnknownNotConfirmed';
+  taxNumber?: string;
+  // ... same structure as LegalEntityStateTax with extended status
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
 
 ---
 
