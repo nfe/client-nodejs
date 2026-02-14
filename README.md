@@ -517,6 +517,42 @@ await nfe.inboundProductInvoices.reprocessWebhook('empresa-id', '35240...');
 | `210220` | Confirmação da Operação |
 | `210240` | Operação não Realizada |
 
+#### 🔍 Consulta de NF-e por Chave de Acesso (`nfe.productInvoiceQuery`)
+
+Consultar NF-e (Nota Fiscal Eletrônica de Produto) diretamente na SEFAZ por chave de acesso. Recurso somente leitura sem necessidade de escopo de empresa:
+
+```typescript
+// Consultar dados completos da NF-e
+const invoice = await nfe.productInvoiceQuery.retrieve(
+  '35240112345678000190550010000001231234567890'
+);
+console.log('Status:', invoice.currentStatus);
+console.log('Emissor:', invoice.issuer?.name);
+console.log('Valor:', invoice.totals?.icms?.invoiceAmount);
+
+// Baixar DANFE (PDF)
+const pdf = await nfe.productInvoiceQuery.downloadPdf(
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('danfe.pdf', pdf);
+
+// Baixar XML da NF-e
+const xml = await nfe.productInvoiceQuery.downloadXml(
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('nfe.xml', xml);
+
+// Listar eventos fiscais (cancelamentos, correções, manifestações)
+const result = await nfe.productInvoiceQuery.listEvents(
+  '35240112345678000190550010000001231234567890'
+);
+for (const event of result.events ?? []) {
+  console.log(event.description, event.authorizedOn);
+}
+```
+
+> **Nota:** A API de Consulta NF-e usa um host separado (`nfe.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
 ---
 
 ### Opções de Configuração

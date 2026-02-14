@@ -17,6 +17,7 @@ Complete API reference for the NFE.io Node.js SDK v3.
   - [Webhooks](#webhooks)
   - [Transportation Invoices (CT-e)](#transportation-invoices-ct-e)
   - [Inbound Product Invoices (NF-e Distribuição)](#inbound-product-invoices-nf-e-distribuição)
+  - [Product Invoice Query (Consulta NF-e)](#product-invoice-query-consulta-nf-e)
 - [Types](#types)
 - [Error Handling](#error-handling)
 - [Advanced Usage](#advanced-usage)
@@ -1892,6 +1893,101 @@ await nfe.inboundProductInvoices.reprocessWebhook(
   '12345'
 );
 ```
+
+---
+
+### Product Invoice Query (Consulta NF-e)
+
+**Resource:** `nfe.productInvoiceQuery`
+
+Query NF-e (Nota Fiscal Eletrônica) product invoices directly on SEFAZ by access key. This is a read-only resource that does not require company scope.
+
+> **Note:** This resource uses a separate API host (`nfe.api.nfe.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+#### `retrieve(accessKey: string): Promise<ProductInvoiceDetails>`
+
+Retrieve full product invoice details from SEFAZ by access key.
+
+```typescript
+const invoice = await nfe.productInvoiceQuery.retrieve(
+  '35240112345678000190550010000001231234567890'
+);
+console.log(invoice.currentStatus); // 'authorized'
+console.log(invoice.issuer?.name);
+console.log(invoice.totals?.icms?.invoiceAmount);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key (Chave de Acesso) |
+
+**Returns:** `ProductInvoiceDetails` — Full invoice details including issuer, buyer, items, totals, transport, and payment.
+
+**Throws:**
+- `ValidationError` if access key format is invalid
+- `NotFoundError` if no invoice matches the access key (HTTP 404)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `downloadPdf(accessKey: string): Promise<Buffer>`
+
+Download the DANFE PDF for a product invoice.
+
+```typescript
+const pdfBuffer = await nfe.productInvoiceQuery.downloadPdf(
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('danfe.pdf', pdfBuffer);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key |
+
+**Returns:** `Buffer` containing the PDF binary content.
+
+#### `downloadXml(accessKey: string): Promise<Buffer>`
+
+Download the raw NF-e XML for a product invoice.
+
+```typescript
+const xmlBuffer = await nfe.productInvoiceQuery.downloadXml(
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('nfe.xml', xmlBuffer);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key |
+
+**Returns:** `Buffer` containing the XML binary content.
+
+#### `listEvents(accessKey: string): Promise<ProductInvoiceEventsResponse>`
+
+List fiscal events (cancellations, corrections, manifestations) for a product invoice.
+
+```typescript
+const result = await nfe.productInvoiceQuery.listEvents(
+  '35240112345678000190550010000001231234567890'
+);
+for (const event of result.events ?? []) {
+  console.log(event.description, event.authorizedOn);
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key |
+
+**Returns:** `ProductInvoiceEventsResponse` with an array of fiscal events and query timestamp.
 
 ---
 

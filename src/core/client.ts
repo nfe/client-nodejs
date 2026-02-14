@@ -29,7 +29,9 @@ import {
   AddressesResource,
   TransportationInvoicesResource,
   InboundProductInvoicesResource,
-  ADDRESS_API_BASE_URL
+  ProductInvoiceQueryResource,
+  ADDRESS_API_BASE_URL,
+  NFE_QUERY_API_BASE_URL
 } from './resources/index.js';
 
 // ============================================================================
@@ -125,6 +127,9 @@ export class NfeClient {
   /** @internal HTTP client for CT-e API requests (created lazily) */
   private _cteHttp: HttpClient | undefined;
 
+  /** @internal HTTP client for NF-e query API requests (created lazily) */
+  private _nfeQueryHttp: HttpClient | undefined;
+
   /** @internal Normalized client configuration */
   private readonly config: RequiredNfeConfig;
 
@@ -137,6 +142,7 @@ export class NfeClient {
   private _addresses: AddressesResource | undefined;
   private _transportationInvoices: TransportationInvoicesResource | undefined;
   private _inboundProductInvoices: InboundProductInvoicesResource | undefined;
+  private _productInvoiceQuery: ProductInvoiceQueryResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -390,6 +396,51 @@ export class NfeClient {
   }
 
   /**
+   * Product Invoice Query (NF-e) API resource
+   *
+   * @description
+   * Provides read-only operations for querying product invoices (NF-e) directly
+   * on SEFAZ by access key — no company scope required:
+   * - Retrieve full invoice details (issuer, buyer, items, totals, transport, payment)
+   * - Download DANFE PDF
+   * - Download raw NF-e XML
+   * - List fiscal events (cancellations, corrections, manifestations)
+   *
+   * **Note:** This resource uses a different API host (nfe.api.nfe.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link ProductInvoiceQueryResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // Retrieve invoice details
+   * const invoice = await nfe.productInvoiceQuery.retrieve(
+   *   '35240112345678000190550010000001231234567890'
+   * );
+   * console.log(invoice.currentStatus); // 'authorized'
+   * console.log(invoice.issuer?.name);
+   *
+   * // Download PDF
+   * const pdf = await nfe.productInvoiceQuery.downloadPdf(
+   *   '35240112345678000190550010000001231234567890'
+   * );
+   * fs.writeFileSync('danfe.pdf', pdf);
+   *
+   * // List fiscal events
+   * const events = await nfe.productInvoiceQuery.listEvents(
+   *   '35240112345678000190550010000001231234567890'
+   * );
+   * ```
+   */
+  get productInvoiceQuery(): ProductInvoiceQueryResource {
+    if (!this._productInvoiceQuery) {
+      this._productInvoiceQuery = new ProductInvoiceQueryResource(this.getNfeQueryHttpClient());
+    }
+    return this._productInvoiceQuery;
+  }
+
+  /**
    * Create a new NFE.io API client
    *
    * @param config - Client configuration options
@@ -539,6 +590,29 @@ export class NfeClient {
       this._cteHttp = new HttpClient(httpConfig);
     }
     return this._cteHttp;
+  }
+
+  /**
+   * Get or create the NF-e Query API HTTP client (nfe.api.nfe.io)
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getNfeQueryHttpClient(): HttpClient {
+    if (!this._nfeQueryHttp) {
+      const apiKey = this.resolveDataApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        NFE_QUERY_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._nfeQueryHttp = new HttpClient(httpConfig);
+    }
+    return this._nfeQueryHttp;
   }
 
   // --------------------------------------------------------------------------

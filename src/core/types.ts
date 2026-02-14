@@ -620,3 +620,553 @@ export interface EnableInboundOptions {
  * - `210240` — Operação não Realizada (operation not performed)
  */
 export type ManifestEventType = 210210 | 210220 | 210240;
+
+// ============================================================================
+// Product Invoice Query Types (consulta-nf)
+// ============================================================================
+
+// Enum string unions
+// ----------------------------------------------------------------------------
+
+/** Current status of a product invoice (NF-e) */
+export type ProductInvoiceStatus = 'unknown' | 'authorized' | 'canceled';
+
+/** Payment type indicator */
+export type ProductInvoicePaymentType = 'inCash' | 'term' | 'others';
+
+/** Operation type (incoming/outgoing) */
+export type ProductInvoiceOperationType = 'incoming' | 'outgoing';
+
+/** Destination of the operation */
+export type ProductInvoiceDestination = 'international_Operation' | 'interstate_Operation' | 'internal_Operation';
+
+/** DANFE print format */
+export type ProductInvoicePrintType = 'none' | 'nFeNormalPortrait' | 'nFeNormalLandscape' | 'nFeSimplified' | 'dANFE_NFC_E' | 'dANFE_NFC_E_MSG_ELETRONICA';
+
+/** Invoice issue type (emission contingency modes) */
+export type ProductInvoiceIssueType = 'normal' | 'cONTINGENCIA_OFF_LINE_NFC_E' | 'cONTINGENCIA_SVC_RS' | 'cONTINGENCIA_SVC_AN' | 'cONTINGENCIA_FS_DA' | 'cONTINGENCIA_DPEC' | 'cONTINGENCIA_SCAN' | 'cONTINGENCIA_FS_IA';
+
+/** Environment type */
+export type ProductInvoiceEnvironmentType = 'production' | 'test';
+
+/** Invoice purpose */
+export type ProductInvoicePurposeType = 'normal' | 'complement' | 'adjustment' | 'devolution';
+
+/** Consumer type */
+export type ProductInvoiceConsumerType = 'normal' | 'finalConsumer';
+
+/** Buyer presence indicator */
+export type ProductInvoicePresenceType = 'none' | 'presence' | 'internet' | 'telephone' | 'delivery' | 'presenceOutOfStore' | 'othersNoPresente';
+
+/** Process type for invoice emission */
+export type ProductInvoiceProcessType = 'ownSoftware' | 'fiscoSingle' | 'taxPayerSingle' | 'fiscoSoftware';
+
+/** Tax regime code */
+export type ProductInvoiceTaxRegimeCode = 'national_Simple' | 'national_Simple_Brute' | 'normal_Regime';
+
+/** Person type */
+export type ProductInvoicePersonType = 'undefined' | 'naturalPerson' | 'legalEntity';
+
+/** Payment method */
+export type ProductInvoicePaymentMethod = 'cash' | 'cheque' | 'creditCard' | 'debitCard' | 'storeCredict' | 'foodVouchers' | 'mealVouchers' | 'giftVouchers' | 'fuelVouchers' | 'commercialDuplicate' | 'bankSlip' | 'unpaid' | 'others';
+
+/** Card flag/brand */
+export type ProductInvoiceCardFlag = 'visa' | 'mastercard' | 'americanExpress' | 'sorocred' | 'dinnersClub' | 'elo' | 'hipercard' | 'aura' | 'cabal' | 'outros';
+
+/** Integration payment type */
+export type ProductInvoiceIntegrationPaymentType = 'integrated' | 'notIntegrated';
+
+// Nested types
+// ----------------------------------------------------------------------------
+
+/** City within an address */
+export interface ProductInvoiceCity {
+  code?: string;
+  name?: string;
+}
+
+/** Address for issuer or buyer */
+export interface ProductInvoiceAddress {
+  phone?: string;
+  state?: string;
+  city?: ProductInvoiceCity;
+  district?: string;
+  additionalInformation?: string;
+  streetSuffix?: string;
+  street?: string;
+  number?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+/** Invoice issuer (emitente) */
+export interface ProductInvoiceIssuer {
+  federalTaxNumber?: number;
+  name?: string;
+  tradeName?: string;
+  address?: ProductInvoiceAddress;
+  stateTaxNumber?: string;
+  codeTaxRegime?: ProductInvoiceTaxRegimeCode;
+  cnae?: number;
+  im?: string;
+  iest?: number;
+  type?: ProductInvoicePersonType;
+}
+
+/** Invoice buyer (destinatário) */
+export interface ProductInvoiceBuyer {
+  federalTaxNumber?: number;
+  name?: string;
+  address?: ProductInvoiceAddress;
+  stateTaxNumber?: string;
+  stateTaxNumberIndicator?: number;
+  email?: string;
+  type?: ProductInvoicePersonType;
+}
+
+/** ICMS totals */
+export interface ProductInvoiceIcmsTotals {
+  baseTax?: number;
+  icmsAmount?: number;
+  icmsExemptAmount?: number;
+  stCalculationBasisAmount?: number;
+  stAmount?: number;
+  productAmount?: number;
+  freightAmount?: number;
+  insuranceAmount?: number;
+  discountAmount?: number;
+  iiAmount?: number;
+  ipiAmount?: number;
+  pisAmount?: number;
+  cofinsAmount?: number;
+  othersAmount?: number;
+  invoiceAmount?: number;
+  fcpufDestinationAmount?: number;
+  icmsufDestinationAmount?: number;
+  icmsufSenderAmount?: number;
+  federalTaxesAmount?: number;
+  fcpAmount?: number;
+  fcpstAmount?: number;
+  fcpstRetAmount?: number;
+  ipiDevolAmount?: number;
+}
+
+/** ISSQN totals */
+export interface ProductInvoiceIssqnTotals {
+  totalServiceNotTaxedICMS?: number;
+  baseRateISS?: number;
+  totalISS?: number;
+  valueServicePIS?: number;
+  valueServiceCOFINS?: number;
+  provisionService?: string;
+  deductionReductionBC?: number;
+  valueOtherRetention?: number;
+  discountUnconditional?: number;
+  discountConditioning?: number;
+  totalRetentionISS?: number;
+  codeTaxRegime?: number;
+}
+
+/** Invoice totals */
+export interface ProductInvoiceTotals {
+  icms?: ProductInvoiceIcmsTotals;
+  issqn?: ProductInvoiceIssqnTotals;
+}
+
+/** ICMS tax on item */
+export interface ProductInvoiceItemIcms {
+  origin?: string;
+  cst?: string;
+  baseTaxModality?: string;
+  baseTax?: number;
+  baseTaxSTModality?: string;
+  baseTaxSTReduction?: number;
+  baseTaxSTAmount?: number;
+  baseTaxReduction?: number;
+  stRate?: number;
+  stAmount?: number;
+  stMarginAmount?: number;
+  csosn?: string;
+  rate?: number;
+  amount?: number;
+  snCreditRate?: string;
+  snCreditAmount?: string;
+  stMarginAddedAmount?: string;
+  stRetentionAmount?: string;
+  baseSTRetentionAmount?: string;
+  baseTaxOperationPercentual?: string;
+  ufst?: string;
+  amountSTUnfounded?: number;
+  amountSTReason?: string;
+  baseSNRetentionAmount?: string;
+  snRetentionAmount?: string;
+  amountOperation?: string;
+  percentualDeferment?: string;
+  baseDeferred?: string;
+  fcpRate?: number;
+  fcpAmount?: number;
+  fcpstRate?: number;
+  fcpstAmount?: number;
+  fcpstRetRate?: number;
+  fcpstRetAmount?: number;
+  bcfcpstAmount?: number;
+  finalConsumerRate?: number;
+  bcstRetIssuerAmount?: number;
+  stRetIssuerAmout?: number;
+  bcstBuyerAmount?: number;
+  stBuyerAmout?: number;
+  substituteAmount?: number;
+}
+
+/** IPI tax on item */
+export interface ProductInvoiceItemIpi {
+  classification?: string;
+  producerCNPJ?: string;
+  stampCode?: string;
+  stampQuantity?: number;
+  classificationCode?: string;
+  cst?: string;
+  base?: string;
+  rate?: number;
+  unitQuantity?: number;
+  unitAmount?: number;
+  amount?: number;
+}
+
+/** Import tax (II) on item */
+export interface ProductInvoiceItemII {
+  baseTax?: string;
+  customsExpenditureAmount?: string;
+  amount?: number;
+  iofAmount?: number;
+}
+
+/** PIS tax on item */
+export interface ProductInvoiceItemPis {
+  cst?: string;
+  baseTax?: number;
+  rate?: number;
+  amount?: number;
+  baseTaxProductQuantity?: number;
+  productRate?: number;
+}
+
+/** COFINS tax on item */
+export interface ProductInvoiceItemCofins {
+  cst?: string;
+  baseTax?: number;
+  rate?: number;
+  amount?: number;
+  baseTaxProductQuantity?: number;
+  productRate?: number;
+}
+
+/** ICMS destination (interestadual) on item */
+export interface ProductInvoiceItemIcmsDestination {
+  vBCUFDest?: number;
+  pFCPUFDest?: number;
+  pICMSUFDest?: number;
+  pICMSInter?: number;
+  pICMSInterPart?: number;
+  vFCPUFDest?: number;
+  vICMSUFDest?: number;
+  vICMSUFRemet?: number;
+  vBCFCPUFDest?: number;
+}
+
+/** Tax group on item */
+export interface ProductInvoiceItemTax {
+  totalTax?: number;
+  icms?: ProductInvoiceItemIcms;
+  ipi?: ProductInvoiceItemIpi;
+  ii?: ProductInvoiceItemII;
+  pis?: ProductInvoiceItemPis;
+  cofins?: ProductInvoiceItemCofins;
+  icmsDestination?: ProductInvoiceItemIcmsDestination;
+}
+
+/** Medicine detail on item */
+export interface ProductInvoiceItemMedicine {
+  maximumPrice?: number;
+  anvisaCode?: string;
+  batchId?: string;
+  batchQuantity?: number;
+  manufacturedOn?: string;
+  expireOn?: string;
+}
+
+/** Fuel CIDE information */
+export interface ProductInvoiceItemFuelCide {
+  bc?: number;
+  rate?: number;
+  cideAmount?: number;
+}
+
+/** Fuel pump (encerrante) information */
+export interface ProductInvoiceItemFuelPump {
+  spoutNumber?: number;
+  number?: number;
+  tankNumber?: number;
+  beginningAmount?: number;
+  endAmount?: number;
+}
+
+/** Fuel detail on item */
+export interface ProductInvoiceItemFuel {
+  codeANP?: string;
+  percentageNG?: number;
+  descriptionANP?: string;
+  percentageGLP?: number;
+  percentageNGn?: number;
+  percentageGNi?: number;
+  startingAmount?: number;
+  codif?: string;
+  amountTemp?: number;
+  stateBuyer?: string;
+  cide?: ProductInvoiceItemFuelCide;
+  pump?: ProductInvoiceItemFuelPump;
+}
+
+/** Invoice item (product/service) */
+export interface ProductInvoiceItem {
+  code?: string;
+  codeGTIN?: string;
+  description?: string;
+  ncm?: string;
+  extipi?: string;
+  cfop?: number;
+  unit?: string;
+  quantity?: number;
+  unitAmount?: number;
+  totalAmount?: number;
+  eanTaxableCode?: string;
+  unitTax?: string;
+  quantityTax?: number;
+  taxUnitAmount?: number;
+  freightAmount?: number;
+  insuranceAmount?: number;
+  discountAmount?: number;
+  othersAmount?: number;
+  totalIndicator?: boolean;
+  cest?: string;
+  tax?: ProductInvoiceItemTax;
+  additionalInformation?: string;
+  numberOrderBuy?: string;
+  itemNumberOrderBuy?: number;
+  medicineDetail?: ProductInvoiceItemMedicine;
+  fuel?: ProductInvoiceItemFuel;
+}
+
+/** Transport group (transportador) */
+export interface ProductInvoiceTransportGroup {
+  cityName?: string;
+  federalTaxNumber?: string;
+  cpf?: string;
+  name?: string;
+  stateTaxNumber?: string;
+  fullAddress?: string;
+  state?: string;
+  transportRetention?: string;
+}
+
+/** Transport reboque (trailer) */
+export interface ProductInvoiceTransportReboque {
+  plate?: string;
+  uf?: string;
+  rntc?: string;
+  wagon?: string;
+  ferry?: string;
+}
+
+/** Transport volume */
+export interface ProductInvoiceTransportVolume {
+  volumeQuantity?: number;
+  species?: string;
+  brand?: string;
+  volumeNumeration?: string;
+  netWeight?: number;
+  grossWeight?: number;
+}
+
+/** Transport vehicle */
+export interface ProductInvoiceTransportVehicle {
+  plate?: string;
+  state?: string;
+  rntc?: string;
+}
+
+/** Transport ICMS retention */
+export interface ProductInvoiceTransportRate {
+  serviceAmount?: number;
+  bcRetentionAmount?: number;
+  icmsRetentionRate?: number;
+  icmsRetentionAmount?: number;
+  cfop?: number;
+  cityGeneratorFactCode?: number;
+}
+
+/** Transport information */
+export interface ProductInvoiceTransport {
+  freightModality?: number;
+  transportGroup?: ProductInvoiceTransportGroup;
+  reboque?: ProductInvoiceTransportReboque;
+  volume?: ProductInvoiceTransportVolume;
+  transportVehicle?: ProductInvoiceTransportVehicle;
+  sealNumber?: string;
+  transpRate?: ProductInvoiceTransportRate;
+}
+
+/** Additional information */
+export interface ProductInvoiceAdditionalInfo {
+  fisco?: string;
+  taxpayer?: string;
+  xmlAuthorized?: number[];
+  effort?: string;
+  order?: string;
+  contract?: string;
+  taxDocumentsReference?: ProductInvoiceTaxDocumentRef[];
+  taxpayerComments?: ProductInvoiceTaxpayerComment[];
+  referencedProcess?: ProductInvoiceReferencedProcess[];
+}
+
+/** Tax document reference */
+export interface ProductInvoiceTaxDocumentRef {
+  taxCouponInformation?: {
+    modelDocumentFiscal?: string;
+    orderECF?: string;
+    orderCountOperation?: number;
+  };
+  documentInvoiceReference?: {
+    state?: number;
+    yearMonth?: string;
+    federalTaxNumber?: string;
+    model?: string;
+    series?: string;
+    number?: string;
+  };
+  accessKey?: string;
+}
+
+/** Taxpayer comment */
+export interface ProductInvoiceTaxpayerComment {
+  field?: string;
+  text?: string;
+}
+
+/** Referenced process */
+export interface ProductInvoiceReferencedProcess {
+  identifierConcessory?: string;
+  identifierOrigin?: number;
+}
+
+/** Protocol information */
+export interface ProductInvoiceProtocol {
+  id?: string;
+  environmentType?: ProductInvoiceEnvironmentType;
+  applicationVersion?: string;
+  accessKey?: string;
+  receiptOn?: string;
+  protocolNumber?: string;
+  validatorDigit?: string;
+  statusCode?: number;
+  description?: string;
+  signature?: string;
+}
+
+/** Payment card details */
+export interface ProductInvoicePaymentCard {
+  federalTaxNumber?: string;
+  flag?: ProductInvoiceCardFlag;
+  authorization?: string;
+  integrationPaymentType?: ProductInvoiceIntegrationPaymentType;
+}
+
+/** Payment detail entry */
+export interface ProductInvoicePaymentDetail {
+  method?: ProductInvoicePaymentMethod;
+  amount?: number;
+  card?: ProductInvoicePaymentCard;
+}
+
+/** Payment group */
+export interface ProductInvoicePayment {
+  paymentDetail?: ProductInvoicePaymentDetail[];
+  payBack?: number;
+}
+
+/** Billing bill (fatura) */
+export interface ProductInvoiceBill {
+  number?: string;
+  originalAmount?: number;
+  discountAmount?: number;
+  netAmount?: number;
+}
+
+/** Billing duplicate */
+export interface ProductInvoiceDuplicate {
+  duplicateNumber?: string;
+  expirationOn?: string;
+  amount?: number;
+}
+
+/** Billing information (cobrança) */
+export interface ProductInvoiceBilling {
+  bill?: ProductInvoiceBill;
+  duplicates?: ProductInvoiceDuplicate[];
+}
+
+/** Full product invoice details returned by SEFAZ query */
+export interface ProductInvoiceDetails {
+  currentStatus?: ProductInvoiceStatus;
+  stateCode?: number;
+  checkCode?: number;
+  operationNature?: string;
+  paymentType?: ProductInvoicePaymentType;
+  codeModel?: number;
+  serie?: number;
+  number?: number;
+  issuedOn?: string;
+  operationOn?: string;
+  operationType?: ProductInvoiceOperationType;
+  destination?: ProductInvoiceDestination;
+  cityCode?: number;
+  printType?: ProductInvoicePrintType;
+  issueType?: ProductInvoiceIssueType;
+  checkCodeDigit?: number;
+  environmentType?: ProductInvoiceEnvironmentType;
+  purposeType?: ProductInvoicePurposeType;
+  consumerType?: ProductInvoiceConsumerType;
+  presenceType?: ProductInvoicePresenceType;
+  processType?: ProductInvoiceProcessType;
+  invoiceVersion?: string;
+  xmlVersion?: string;
+  contingencyOn?: string;
+  contingencyJustification?: string;
+  issuer?: ProductInvoiceIssuer;
+  buyer?: ProductInvoiceBuyer;
+  totals?: ProductInvoiceTotals;
+  transport?: ProductInvoiceTransport;
+  additionalInformation?: ProductInvoiceAdditionalInfo;
+  protocol?: ProductInvoiceProtocol;
+  items?: ProductInvoiceItem[];
+  billing?: ProductInvoiceBilling;
+  payment?: ProductInvoicePayment[];
+}
+
+/** Fiscal event associated with a product invoice */
+export interface ProductInvoiceEvent {
+  stateCode?: number;
+  type?: number;
+  sequence?: number;
+  authorFederalTaxNumber?: string;
+  id?: string;
+  protocol?: number;
+  authorizedOn?: string;
+  description?: string;
+}
+
+/** Response from listing fiscal events for a product invoice */
+export interface ProductInvoiceEventsResponse {
+  events?: ProductInvoiceEvent[];
+  createdOn?: string;
+}

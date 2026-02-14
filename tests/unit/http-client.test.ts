@@ -605,6 +605,56 @@ it.skip('should include Basic Auth header', async () => {
     });
   });
 
+  describe('getBuffer', () => {
+    it('should make GET request with custom Accept header and return Buffer', async () => {
+      const binaryContent = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // %PDF
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: createMockHeaders([['content-type', 'application/pdf']]),
+        arrayBuffer: async () => binaryContent.buffer,
+      });
+
+      const response = await httpClient.getBuffer('/test.pdf', 'application/pdf');
+
+      expect(response.status).toBe(200);
+      expect(Buffer.isBuffer(response.data)).toBe(true);
+      const callArgs = fetchMock.mock.calls[0];
+      const headers = callArgs[1].headers;
+      // Headers may be a Headers object or plain object depending on implementation
+      const acceptValue = typeof headers.get === 'function'
+        ? headers.get('Accept')
+        : headers['Accept'] || headers['accept'];
+      expect(acceptValue).toBe('application/pdf');
+    });
+
+    it('should handle application/xml Accept header', async () => {
+      const xmlContent = new TextEncoder().encode('<?xml version="1.0"?>');
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: createMockHeaders([['content-type', 'application/xml']]),
+        arrayBuffer: async () => xmlContent.buffer,
+      });
+
+      const response = await httpClient.getBuffer('/test.xml', 'application/xml');
+
+      expect(response.status).toBe(200);
+      expect(Buffer.isBuffer(response.data)).toBe(true);
+    });
+
+    it('should propagate errors on getBuffer', async () => {
+      fetchMock.mockResolvedValue(
+        createMockErrorResponse(404, 'Not Found', { message: 'Resource not found' })
+      );
+
+      await expect(httpClient.getBuffer('/missing.pdf', 'application/pdf'))
+        .rejects.toThrow();
+    });
+  });
+
   describe('Utility Functions', () => {
     it('should create default retry config', () => {
       const retryConfig = createDefaultRetryConfig();
