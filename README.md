@@ -426,6 +426,97 @@ const eventoXml = await nfe.transportationInvoices.downloadEventXml(
 - Empresa deve estar cadastrada com certificado digital A1 válido
 - Webhook deve estar configurado para receber notificações de CT-e
 
+#### 📦 NF-e de Entrada - Distribuição (`nfe.inboundProductInvoices`)
+
+Consultar NF-e (Nota Fiscal Eletrônica de Produto) recebidas via Distribuição NF-e:
+
+```typescript
+// Ativar busca automática de NF-e para uma empresa
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('empresa-id', {
+  environmentSEFAZ: 'Production',
+  webhookVersion: '2',
+});
+console.log('Status:', settings.status);
+
+// Ativar a partir de um NSU específico
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('empresa-id', {
+  startFromNsu: '999999',
+  environmentSEFAZ: 'Production',
+});
+
+// Verificar configurações atuais
+const config = await nfe.inboundProductInvoices.getSettings('empresa-id');
+console.log('Busca ativa:', config.status);
+
+// Desativar busca automática
+await nfe.inboundProductInvoices.disableAutoFetch('empresa-id');
+
+// Consultar NF-e por chave de acesso - formato webhook v2 (recomendado)
+const nfe_doc = await nfe.inboundProductInvoices.getProductInvoiceDetails(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890'
+);
+console.log('Emissor:', nfe_doc.issuer?.name);
+console.log('Valor:', nfe_doc.totalInvoiceAmount);
+
+// Baixar XML da NF-e
+const xml = await nfe.inboundProductInvoices.getXml(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('nfe.xml', xml);
+
+// Baixar PDF (DANFE)
+const pdf = await nfe.inboundProductInvoices.getPdf(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890'
+);
+
+// Enviar manifestação (Ciência da Operação por padrão)
+await nfe.inboundProductInvoices.manifest(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890'
+);
+
+// Manifestar com evento específico
+await nfe.inboundProductInvoices.manifest(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890',
+  210220 // Confirmação da Operação
+);
+
+// Consultar evento da NF-e
+const evento = await nfe.inboundProductInvoices.getEventDetails(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890',
+  'chave-evento'
+);
+
+// Baixar XML do evento
+const eventoXml = await nfe.inboundProductInvoices.getEventXml(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890',
+  'chave-evento'
+);
+
+// Reprocessar webhook
+await nfe.inboundProductInvoices.reprocessWebhook('empresa-id', '35240...');
+```
+
+> **Nota:** A API de NF-e Distribuição usa um host separado (`api.nfse.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
+**Pré-requisitos:**
+- Empresa deve estar cadastrada com certificado digital A1 válido
+- Webhook deve estar configurado para receber notificações de NF-e
+
+**Tipos de Manifestação:**
+
+| Código | Evento |
+|--------|--------|
+| `210210` | Ciência da Operação (padrão) |
+| `210220` | Confirmação da Operação |
+| `210240` | Operação não Realizada |
+
 ---
 
 ### Opções de Configuração
