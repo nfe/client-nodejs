@@ -200,6 +200,26 @@ export type {
   NaturalPersonStatus,
   NaturalPersonStatusResponse,
 
+  // Tax Calculation types (calculo-impostos)
+  TaxOperationType,
+  TaxOrigin,
+  TaxCalcTaxRegime,
+  TaxIcms,
+  TaxIcmsUfDest,
+  TaxPis,
+  TaxCofins,
+  TaxIpi,
+  TaxIi,
+  CalculateRequestIssuer,
+  CalculateRequestRecipient,
+  CalculateItemRequest,
+  CalculateRequest,
+  CalculateItemResponse,
+  CalculateResponse,
+  TaxCode,
+  TaxCodePaginatedResponse,
+  TaxCodeListOptions,
+
   // Common types
   EntityType,
   TaxRegime,
@@ -314,6 +334,8 @@ export { CertificateValidator } from './core/utils/certificate-validator.js';
  * ```
  */
 export { TransportationInvoicesResource } from './core/resources/transportation-invoices.js';
+export { TaxCalculationResource, createTaxCalculationResource } from './core/resources/tax-calculation.js';
+export { TaxCodesResource, createTaxCodesResource } from './core/resources/tax-codes.js';
 
 // ============================================================================
 // Default Export (maintains v2 compatibility)

@@ -33,6 +33,8 @@ import {
   ConsumerInvoiceQueryResource,
   LegalEntityLookupResource,
   NaturalPersonLookupResource,
+  TaxCalculationResource,
+  TaxCodesResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL,
   LEGAL_ENTITY_API_BASE_URL,
@@ -163,6 +165,8 @@ export class NfeClient {
   private _consumerInvoiceQuery: ConsumerInvoiceQueryResource | undefined;
   private _legalEntityLookup: LegalEntityLookupResource | undefined;
   private _naturalPersonLookup: NaturalPersonLookupResource | undefined;
+  private _taxCalculation: TaxCalculationResource | undefined;
+  private _taxCodes: TaxCodesResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -557,6 +561,70 @@ export class NfeClient {
       this._naturalPersonLookup = new NaturalPersonLookupResource(this.getNaturalPersonHttpClient());
     }
     return this._naturalPersonLookup;
+  }
+
+  /**
+   * Tax Calculation Engine API resource
+   *
+   * @description
+   * Provides access to the Motor de Cálculo de Tributos (Tax Calculation Engine)
+   * for computing all applicable Brazilian taxes (ICMS, ICMS-ST, PIS, COFINS,
+   * IPI, II) on product operations.
+   *
+   * **Note:** This resource uses a different API host (api.nfse.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link TaxCalculationResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * const result = await nfe.taxCalculation.calculate('tenant-id', {
+   *   operationType: 'Outgoing',
+   *   issuer: { state: 'SP', taxRegime: 'RealProfit' },
+   *   recipient: { state: 'RJ' },
+   *   items: [{
+   *     id: '1', operationCode: 121, origin: 'National',
+   *     quantity: 10, unitAmount: 100.00, ncm: '61091000'
+   *   }]
+   * });
+   * ```
+   */
+  get taxCalculation(): TaxCalculationResource {
+    if (!this._taxCalculation) {
+      this._taxCalculation = new TaxCalculationResource(this.getCteHttpClient());
+    }
+    return this._taxCalculation;
+  }
+
+  /**
+   * Tax Codes API resource (auxiliary reference tables)
+   *
+   * @description
+   * Provides paginated listings of auxiliary tax code reference tables
+   * needed as inputs for the Tax Calculation Engine: operation codes,
+   * acquisition purposes, issuer tax profiles, and recipient tax profiles.
+   *
+   * **Note:** This resource uses a different API host (api.nfse.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link TaxCodesResource}
+   * @see {@link TaxCalculationResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * const codes = await nfe.taxCodes.listOperationCodes({ pageIndex: 1, pageCount: 20 });
+   * for (const code of codes.items ?? []) {
+   *   console.log(`${code.code} - ${code.description}`);
+   * }
+   * ```
+   */
+  get taxCodes(): TaxCodesResource {
+    if (!this._taxCodes) {
+      this._taxCodes = new TaxCodesResource(this.getCteHttpClient());
+    }
+    return this._taxCodes;
   }
 
   /**

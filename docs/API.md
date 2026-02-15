@@ -21,6 +21,8 @@ Complete API reference for the NFE.io Node.js SDK v3.
   - [Consumer Invoice Query (Consulta CFe-SAT)](#consumer-invoice-query-consulta-cfe-sat)
   - [Legal Entity Lookup (Consulta CNPJ)](#legal-entity-lookup-consulta-cnpj)
   - [Natural Person Lookup (Consulta CPF)](#natural-person-lookup-consulta-cpf)
+  - [Tax Calculation (Cálculo de Impostos)](#tax-calculation-cálculo-de-impostos)
+  - [Tax Codes (Códigos Auxiliares)](#tax-codes-códigos-auxiliares)
 - [Types](#types)
 - [Error Handling](#error-handling)
 - [Advanced Usage](#advanced-usage)
@@ -2294,6 +2296,154 @@ interface NaturalPersonStatusResponse {
   birthOn?: string;
   status?: NaturalPersonStatus;
   createdOn?: string;
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+
+---
+
+### Tax Calculation (Cálculo de Impostos)
+
+**Resource:** `nfe.taxCalculation`
+**API Host:** `api.nfse.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+Compute all applicable Brazilian taxes (ICMS, ICMS-ST, PIS, COFINS, IPI, II) for product operations using the Tax Calculation Engine (Motor de Cálculo de Tributos).
+
+#### `calculate(tenantId: string, request: CalculateRequest): Promise<CalculateResponse>`
+
+Submit an operation with issuer, recipient, operation type, and product items to compute per-item tax breakdowns.
+
+```typescript
+const result = await nfe.taxCalculation.calculate('tenant-id', {
+  operationType: 'Outgoing',
+  issuer: { state: 'SP', taxRegime: 'RealProfit' },
+  recipient: { state: 'RJ' },
+  items: [{
+    id: 'item-1',
+    operationCode: 121,
+    origin: 'National',
+    ncm: '61091000',
+    quantity: 10,
+    unitAmount: 100.00
+  }]
+});
+
+for (const item of result.items ?? []) {
+  console.log(`Item ${item.id}: CFOP ${item.cfop}`);
+  console.log(`  ICMS CST: ${item.icms?.cst}, value: ${item.icms?.vICMS}`);
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tenantId` | `string` | Yes | Subscription/account ID that scopes the tax rules |
+| `request` | `CalculateRequest` | Yes | Tax calculation request payload |
+
+**Returns:** `CalculateResponse` — Per-item tax breakdowns including CFOP, ICMS, PIS, COFINS, IPI, II.
+
+**Throws:**
+- `ValidationError` if `tenantId` is empty
+- `ValidationError` if required fields are missing (issuer, recipient, operationType, items)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+- `BadRequestError` if the API rejects the payload (HTTP 400)
+
+#### Types
+
+```typescript
+type TaxOperationType = 'Outgoing' | 'Incoming';
+
+type TaxOrigin =
+  | 'National' | 'ForeignDirectImport' | 'ForeignInternalMarket'
+  | 'NationalWith40To70Import' | 'NationalPpb' | 'NationalWithLess40Import'
+  | 'ForeignDirectImportWithoutNationalSimilar'
+  | 'ForeignInternalMarketWithoutNationalSimilar'
+  | 'NationalWithGreater70Import';
+
+type TaxCalcTaxRegime =
+  | 'NationalSimple' | 'RealProfit' | 'PresumedProfit'
+  | 'NationalSimpleSublimitExceeded' | 'IndividualMicroEnterprise' | 'Exempt';
+
+interface CalculateRequest {
+  collectionId?: string;
+  issuer: CalculateRequestIssuer;       // required: state, taxRegime
+  recipient: CalculateRequestRecipient; // required: state
+  operationType: TaxOperationType;
+  items: CalculateItemRequest[];        // required: id, operationCode, origin, quantity, unitAmount
+  isProductRegistration?: boolean;
+}
+
+interface CalculateResponse {
+  items?: CalculateItemResponse[];  // per-item: cfop, icms, pis, cofins, ipi, ii, icmsUfDest
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions including all tax component interfaces (TaxIcms, TaxPis, TaxCofins, TaxIpi, TaxIi, TaxIcmsUfDest).
+
+---
+
+### Tax Codes (Códigos Auxiliares)
+
+**Resource:** `nfe.taxCodes`
+**API Host:** `api.nfse.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+Paginated listings of auxiliary tax code reference tables needed as inputs for the Tax Calculation Engine.
+
+#### `listOperationCodes(options?: TaxCodeListOptions): Promise<TaxCodePaginatedResponse>`
+
+List operation codes (natureza de operação) — e.g., 121 = "Venda de mercadoria".
+
+```typescript
+const result = await nfe.taxCodes.listOperationCodes({ pageIndex: 1, pageCount: 20 });
+console.log(`Total: ${result.totalCount}, Page ${result.currentPage} of ${result.totalPages}`);
+for (const code of result.items ?? []) {
+  console.log(`${code.code} - ${code.description}`);
+}
+```
+
+#### `listAcquisitionPurposes(options?: TaxCodeListOptions): Promise<TaxCodePaginatedResponse>`
+
+List acquisition purposes (finalidade de aquisição).
+
+#### `listIssuerTaxProfiles(options?: TaxCodeListOptions): Promise<TaxCodePaginatedResponse>`
+
+List issuer tax profiles (perfil fiscal do emissor).
+
+#### `listRecipientTaxProfiles(options?: TaxCodeListOptions): Promise<TaxCodePaginatedResponse>`
+
+List recipient tax profiles (perfil fiscal do destinatário).
+
+**All methods accept:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `options.pageIndex` | `number` | No | Page index, 1-based (default: 1) |
+| `options.pageCount` | `number` | No | Items per page (default: 50) |
+
+**Returns:** `TaxCodePaginatedResponse` — Paginated list of tax codes.
+
+#### Types
+
+```typescript
+interface TaxCode {
+  code?: string;
+  description?: string;
+}
+
+interface TaxCodePaginatedResponse {
+  items?: TaxCode[];
+  currentPage?: number;
+  totalPages?: number;
+  totalCount?: number;
+}
+
+interface TaxCodeListOptions {
+  pageIndex?: number;
+  pageCount?: number;
 }
 ```
 

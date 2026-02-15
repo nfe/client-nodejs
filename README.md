@@ -634,6 +634,59 @@ console.log('Situação Cadastral:', result.status);
 
 > **Nota:** A API de Consulta CPF usa um host separado (`naturalperson.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
 
+#### 🧮 Cálculo de Impostos (`nfe.taxCalculation`)
+
+Calcular todos os tributos aplicáveis (ICMS, ICMS-ST, PIS, COFINS, IPI, II) para operações com produtos usando o Motor de Cálculo de Tributos:
+
+```typescript
+// Calcular impostos de uma operação de venda
+const resultado = await nfe.taxCalculation.calculate('tenant-id', {
+  operationType: 'Outgoing',
+  issuer: { state: 'SP', taxRegime: 'RealProfit' },
+  recipient: { state: 'RJ' },
+  items: [{
+    id: 'item-1',
+    operationCode: 121,
+    origin: 'National',
+    ncm: '61091000',
+    quantity: 10,
+    unitAmount: 100.00
+  }]
+});
+
+for (const item of resultado.items ?? []) {
+  console.log(`Item ${item.id}: CFOP ${item.cfop}`);
+  console.log(`  ICMS: CST=${item.icms?.cst}, valor=${item.icms?.vICMS}`);
+  console.log(`  PIS: CST=${item.pis?.cst}, valor=${item.pis?.vPIS}`);
+  console.log(`  COFINS: CST=${item.cofins?.cst}, valor=${item.cofins?.vCOFINS}`);
+}
+```
+
+> **Nota:** A API de Cálculo de Impostos usa o host `api.nfse.io`. Configure `dataApiKey` para uma chave específica, ou o SDK usará `apiKey` como fallback.
+
+#### 📋 Códigos Auxiliares de Impostos (`nfe.taxCodes`)
+
+Consultar tabelas de referência necessárias para o cálculo de impostos:
+
+```typescript
+// Listar códigos de operação (natureza de operação)
+const codigos = await nfe.taxCodes.listOperationCodes({ pageIndex: 1, pageCount: 20 });
+for (const cod of codigos.items ?? []) {
+  console.log(`${cod.code} - ${cod.description}`);
+}
+
+// Listar finalidades de aquisição
+const finalidades = await nfe.taxCodes.listAcquisitionPurposes();
+
+// Listar perfis fiscais do emissor
+const perfisEmissor = await nfe.taxCodes.listIssuerTaxProfiles();
+
+// Listar perfis fiscais do destinatário
+const perfisDestinatario = await nfe.taxCodes.listRecipientTaxProfiles();
+```
+
+> **Nota:** Todas as listagens suportam paginação via `pageIndex` (1-based) e `pageCount` (padrão: 50).
+
 ---
 
 ### Opções de Configuração

@@ -1795,3 +1795,442 @@ export interface NaturalPersonStatusResponse {
   /** Timestamp of when the query was created (ISO 8601 date-time string) */
   createdOn?: string;
 }
+
+// ============================================================================
+// Tax Calculation Types (calculo-impostos-v1)
+// ============================================================================
+
+// --- Enums ---
+
+/**
+ * Type of tax operation (incoming vs outgoing).
+ *
+ * - `'Outgoing'` — Saída (sale, shipment)
+ * - `'Incoming'` — Entrada (purchase, receipt)
+ */
+export type TaxOperationType = 'Outgoing' | 'Incoming';
+
+/**
+ * Origin of the merchandise for ICMS purposes.
+ *
+ * Mirrors the SEFAZ origin codes (0-8).
+ */
+export type TaxOrigin =
+  | 'National'
+  | 'ForeignDirectImport'
+  | 'ForeignInternalMarket'
+  | 'NationalWith40To70Import'
+  | 'NationalPpb'
+  | 'NationalWithLess40Import'
+  | 'ForeignDirectImportWithoutNationalSimilar'
+  | 'ForeignInternalMarketWithoutNationalSimilar'
+  | 'NationalWithGreater70Import';
+
+/**
+ * Tax regime used in the Tax Calculation Engine.
+ *
+ * **Note:** This differs from the service-invoice {@link TaxRegime} which uses
+ * Portuguese-language values. This enum uses the PascalCase values from the
+ * calculo-impostos API.
+ */
+export type TaxCalcTaxRegime =
+  | 'NationalSimple'
+  | 'RealProfit'
+  | 'PresumedProfit'
+  | 'NationalSimpleSublimitExceeded'
+  | 'IndividualMicroEnterprise'
+  | 'Exempt';
+
+// --- Tax Component Interfaces ---
+
+/**
+ * ICMS tax component — covers ICMS, ICMS-ST, FCP, and related calculations.
+ *
+ * All numeric fields are represented as strings matching the API's format.
+ */
+export interface TaxIcms {
+  /** Origem da mercadoria */
+  orig?: string;
+  /** Tributação do ICMS (CST) */
+  cst?: string;
+  /** Código de Situação da Operação – Simples Nacional (CSOSN) */
+  csosn?: string;
+  /** Modalidade de determinação da BC do ICMS */
+  modBC?: string;
+  /** Valor da BC do ICMS */
+  vBC?: string;
+  /** Percentual da Redução de BC */
+  pRedBC?: string;
+  /** Código do benefício fiscal relacionado a redução de base */
+  cBenefRBC?: string;
+  /** Alíquota do imposto */
+  pICMS?: string;
+  /** Valor do ICMS */
+  vICMS?: string;
+  /** Valor do ICMS da Operação */
+  vICMSOp?: string;
+  /** Modalidade de determinação da BC do ICMS ST */
+  modBCST?: string;
+  /** Valor da BC do ICMS ST */
+  vBCST?: string;
+  /** Percentual da Redução de BC do ICMS ST */
+  pRedBCST?: string;
+  /** Alíquota do imposto do ICMS ST */
+  pICMSST?: string;
+  /** Valor do ICMS ST */
+  vICMSST?: string;
+  /** Percentual da margem de valor Adicionado do ICMS ST */
+  pMVAST?: string;
+  /** Alíquota suportada pelo Consumidor Final */
+  pST?: string;
+  /** Valor da BC do ICMS ST retido */
+  vBCSTRet?: string;
+  /** Valor do ICMS ST retido */
+  vICMSSTRet?: string;
+  /** Valor da Base de Cálculo do FCP */
+  vBCFCP?: string;
+  /** Percentual do ICMS relativo ao Fundo de Combate à Pobreza (FCP) */
+  pFCP?: string;
+  /** Valor do Fundo de Combate à Pobreza (FCP) */
+  vFCP?: string;
+  /** Valor da Base de Cálculo do FCP retido por Substituição Tributária */
+  vBCFCPST?: string;
+  /** Percentual do FCP retido por Substituição Tributária */
+  pFCPST?: string;
+  /** Valor do FCP retido por Substituição Tributária */
+  vFCPST?: string;
+  /** Valor da Base de Cálculo do FCP retido anteriormente */
+  vBCFCPSTRet?: string;
+  /** Percentual do FCP retido anteriormente por Substituição Tributária */
+  pFCPSTRet?: string;
+  /** Valor do FCP retido por Substituição Tributária (retained) */
+  vFCPSTRet?: string;
+  /** Valor da base de cálculo efetiva */
+  vBCEfet?: string;
+  /** Percentual de redução da base de cálculo efetiva */
+  pRedBCEfet?: string;
+  /** Alíquota do ICMS efetiva */
+  pICMSEfet?: string;
+  /** Valor do ICMS efetivo */
+  vICMSEfet?: string;
+  /** Percentual do diferimento */
+  pDif?: string;
+  /** Valor do ICMS diferido */
+  vICMSDif?: string;
+  /** Valor do ICMS próprio do Substituto */
+  vICMSSubstituto?: string;
+  /** Alíquota aplicável de cálculo do crédito (Simples Nacional) */
+  pCredSN?: string;
+  /** Valor crédito do ICMS (Simples Nacional, LC 123 art. 23) */
+  vCredICMSSN?: string;
+  /** Percentual do diferimento do FCP */
+  pFCPDif?: string;
+  /** Valor do FCP diferido */
+  vFCPDif?: string;
+  /** Valor efetivo do FCP */
+  vFCPEfet?: string;
+  /** Valor do ICMS desonerado */
+  vICMSDeson?: string;
+  /** Motivo da desoneração do ICMS */
+  motDesICMS?: string;
+  /** Valor do ICMS-ST desonerado */
+  vICMSSTDeson?: string;
+  /** Motivo da desoneração do ICMS-ST */
+  motDesICMSST?: string;
+  /** Indica se o valor do ICMS desonerado deduz do valor do item */
+  indDeduzDeson?: string;
+}
+
+/**
+ * ICMS interestadual (DIFAL / UF Destination) tax component.
+ */
+export interface TaxIcmsUfDest {
+  /** Valor da BC do ICMS na UF de destino */
+  vBCUFDest?: string;
+  /** Valor da BC FCP na UF de destino */
+  vBCFCPUFDest?: string;
+  /** Percentual do FCP na UF de destino */
+  pFCPUFDest?: string;
+  /** Alíquota interna da UF de destino */
+  pICMSUFDest?: string;
+  /** Alíquota interestadual das UF envolvidas */
+  pICMSInter?: string;
+  /** Percentual provisório de partilha do ICMS Interestadual */
+  pICMSInterPart?: string;
+  /** Valor do FCP na UF de destino */
+  vFCPUFDest?: string;
+  /** Valor do ICMS Interestadual para a UF de destino */
+  vICMSUFDest?: string;
+  /** Valor do ICMS Interestadual para a UF do remetente */
+  vICMSUFRemet?: string;
+}
+
+/**
+ * PIS tax component.
+ */
+export interface TaxPis {
+  /** Código de Situação Tributária do PIS */
+  cst?: string;
+  /** Valor da Base de Cálculo do PIS */
+  vBC?: string;
+  /** Alíquota do PIS (em percentual) */
+  pPIS?: string;
+  /** Valor do PIS */
+  vPIS?: string;
+  /** Quantidade Vendida */
+  qBCProd?: string;
+  /** Alíquota do PIS (em reais) */
+  vAliqProd?: string;
+}
+
+/**
+ * COFINS tax component.
+ */
+export interface TaxCofins {
+  /** Código de Situação Tributária da COFINS */
+  cst?: string;
+  /** Valor da Base de Cálculo do COFINS */
+  vBC?: string;
+  /** Alíquota do COFINS (em percentual) */
+  pCOFINS?: string;
+  /** Valor do COFINS */
+  vCOFINS?: string;
+  /** Quantidade Vendida */
+  qBCProd?: string;
+  /** Alíquota do COFINS (em reais) */
+  vAliqProd?: string;
+}
+
+/**
+ * IPI tax component.
+ */
+export interface TaxIpi {
+  /** Código de Enquadramento Legal do IPI */
+  cEnq?: string;
+  /** Código da situação tributária do IPI */
+  cst?: string;
+  /** Valor da BC do IPI */
+  vBC?: string;
+  /** Alíquota do IPI */
+  pIPI?: string;
+  /** Quantidade total na unidade padrão para tributação */
+  qUnid?: string;
+  /** Valor por Unidade Tributável */
+  vUnid?: string;
+  /** Valor do IPI */
+  vIPI?: string;
+}
+
+/**
+ * Import Tax (II) component.
+ */
+export interface TaxIi {
+  /** Valor BC do Imposto de Importação */
+  vBC?: string;
+  /** Valor despesas aduaneiras */
+  vDespAdu?: string;
+  /** Valor Imposto de Importação */
+  vII?: string;
+  /** Valor Imposto sobre Operações Financeiras */
+  vIOF?: string;
+  /** Valor dos encargos cambiais */
+  vEncCamb?: string;
+  /** Alíquota do Simples Nacional aplicável */
+  pCredSN?: string;
+  /** Valor crédito do ICMS (Simples Nacional) */
+  vCredICMSSN?: string;
+  /** Ativação do cálculo do custo de aquisição (0=Inativo, 1=Ativo) */
+  infCustoAquis?: string;
+}
+
+// --- Request Interfaces ---
+
+/**
+ * Issuer data for the tax calculation request.
+ */
+export interface CalculateRequestIssuer {
+  /** Tax regime of the issuer */
+  taxRegime: TaxCalcTaxRegime;
+  /** Default tax profile for the issuer */
+  taxProfile?: string;
+  /** State of the issuer */
+  state: BrazilianState;
+}
+
+/**
+ * Recipient data for the tax calculation request.
+ */
+export interface CalculateRequestRecipient {
+  /** Tax regime of the recipient (optional) */
+  taxRegime?: TaxCalcTaxRegime;
+  /** Default tax profile for the recipient */
+  taxProfile?: string;
+  /** State of the recipient */
+  state: BrazilianState;
+}
+
+/**
+ * A single item (product) in the tax calculation request.
+ */
+export interface CalculateItemRequest {
+  /** Unique item identifier */
+  id: string;
+  /** Internal code for operation nature determination (1–9999) */
+  operationCode: number;
+  /** Acquisition purpose code */
+  acquisitionPurpose?: string;
+  /** Issuer tax profile for this specific item */
+  issuerTaxProfile?: string;
+  /** Recipient tax profile for this specific item */
+  recipientTaxProfile?: string;
+  /** Product SKU */
+  sku?: string;
+  /** NCM code (Nomenclatura Comum do Mercosul, up to 8 digits) */
+  ncm?: string;
+  /** CEST code (Código Especificador da Substituição Tributária, 7 digits) */
+  cest?: string;
+  /** Fiscal benefit code */
+  benefit?: string;
+  /** EX TIPI code (1–3 chars) */
+  exTipi?: string;
+  /** Origin of the merchandise */
+  origin: TaxOrigin;
+  /** Global Trade Item Number */
+  gtin?: string;
+  /** Taxable quantity */
+  quantity: number;
+  /** Taxable unit amount */
+  unitAmount: number;
+  /** Freight amount */
+  freightAmount?: number;
+  /** Insurance amount */
+  insuranceAmount?: number;
+  /** Discount amount */
+  discountAmount?: number;
+  /** Other accessory expenses */
+  othersAmount?: number;
+  /** ICMS input overrides (for import tax scenarios) */
+  icms?: TaxIcms;
+  /** Import tax input overrides */
+  ii?: TaxIi;
+}
+
+/**
+ * Tax calculation request payload.
+ *
+ * Submit to `POST /tax-rules/{tenantId}/engine/calculate` to compute all
+ * applicable Brazilian taxes (ICMS, ICMS-ST, PIS, COFINS, IPI, II) for
+ * the given operation context and product items.
+ *
+ * @example
+ * ```typescript
+ * const request: CalculateRequest = {
+ *   operationType: 'Outgoing',
+ *   issuer: { state: 'SP', taxRegime: 'RealProfit' },
+ *   recipient: { state: 'RJ' },
+ *   items: [{
+ *     id: '1',
+ *     operationCode: 121,
+ *     origin: 'National',
+ *     quantity: 10,
+ *     unitAmount: 100.00,
+ *     ncm: '61091000'
+ *   }]
+ * };
+ * ```
+ */
+export interface CalculateRequest {
+  /** Product collection identifier */
+  collectionId?: string;
+  /** Issuer (seller/shipper) fiscal data */
+  issuer: CalculateRequestIssuer;
+  /** Recipient (buyer/receiver) fiscal data */
+  recipient: CalculateRequestRecipient;
+  /** Type of operation */
+  operationType: TaxOperationType;
+  /** List of products/items to calculate taxes for */
+  items: CalculateItemRequest[];
+  /** Whether this is a product registration request (vs invoice issuance) */
+  isProductRegistration?: boolean;
+}
+
+// --- Response Interfaces ---
+
+/**
+ * A single item in the tax calculation response with full tax breakdown.
+ */
+export interface CalculateItemResponse {
+  /** Item identifier (matches the request item id) */
+  id?: string;
+  /** CFOP — Código Fiscal de Operações e Prestações */
+  cfop?: number;
+  /** CEST code */
+  cest?: string;
+  /** Fiscal benefit code */
+  benefit?: string;
+  /** ICMS tax breakdown */
+  icms?: TaxIcms;
+  /** ICMS interestadual (DIFAL / UF destination) breakdown */
+  icmsUfDest?: TaxIcmsUfDest;
+  /** PIS tax breakdown */
+  pis?: TaxPis;
+  /** COFINS tax breakdown */
+  cofins?: TaxCofins;
+  /** IPI tax breakdown */
+  ipi?: TaxIpi;
+  /** Import tax (II) breakdown */
+  ii?: TaxIi;
+  /** Additional product information */
+  additionalInformation?: string;
+  /** Timestamp of the last rule modification (ISO 8601) */
+  lastModified?: string;
+  /** Registered product ID */
+  productId?: string;
+}
+
+/**
+ * Tax calculation response containing per-item tax breakdowns.
+ */
+export interface CalculateResponse {
+  /** Calculated items with full tax data */
+  items?: CalculateItemResponse[];
+}
+
+// --- Tax Codes Types ---
+
+/**
+ * A single tax code entry (operation code, acquisition purpose, or tax profile).
+ */
+export interface TaxCode {
+  /** The code identifier */
+  code?: string;
+  /** Human-readable description */
+  description?: string;
+}
+
+/**
+ * Paginated response for tax code listings.
+ */
+export interface TaxCodePaginatedResponse {
+  /** List of tax code entries */
+  items?: TaxCode[];
+  /** Current page number (1-based) */
+  currentPage?: number;
+  /** Total number of pages */
+  totalPages?: number;
+  /** Total count of entries */
+  totalCount?: number;
+}
+
+/**
+ * Options for listing tax codes (pagination).
+ *
+ * Uses the API's native pagination model (`pageIndex`/`pageCount`),
+ * which differs from the OData-style `$skip`/`$top` used by other resources.
+ */
+export interface TaxCodeListOptions {
+  /** Page index (1-based, default: 1) */
+  pageIndex?: number;
+  /** Number of items per page (default: 50) */
+  pageCount?: number;
+}
