@@ -1758,3 +1758,40 @@ export interface LegalEntityStateTaxForInvoiceInfo {
   /** State tax registrations for invoice evaluation (extended status) */
   stateTaxes?: LegalEntityStateTaxForInvoice[];
 }
+
+// ============================================================================
+// Natural Person Lookup Types (consulta-cpf)
+// ============================================================================
+
+/**
+ * Known cadastral status values for CPF (situação cadastral na Receita Federal).
+ * The union includes a `(string & {})` fallback to allow unknown future values
+ * while still providing autocomplete for known statuses.
+ */
+export type NaturalPersonStatus =
+  | 'Regular'
+  | 'Suspensa'
+  | 'Cancelada'
+  | 'Titular Falecido'
+  | 'Pendente de Regularização'
+  | 'Nula'
+  | (string & {});
+
+/**
+ * Response from the CPF cadastral status lookup endpoint.
+ *
+ * Returned by `GET /v1/naturalperson/status/{federalTaxNumber}/{birthDate}`
+ * on `naturalperson.api.nfe.io`.
+ */
+export interface NaturalPersonStatusResponse {
+  /** Full name of the person */
+  name?: string;
+  /** CPF number (digits only) */
+  federalTaxNumber: string;
+  /** Date of birth (ISO 8601 date-time string) */
+  birthOn?: string;
+  /** Cadastral status at Receita Federal */
+  status?: NaturalPersonStatus;
+  /** Timestamp of when the query was created (ISO 8601 date-time string) */
+  createdOn?: string;
+}

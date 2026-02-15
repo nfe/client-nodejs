@@ -16,3 +16,4 @@ export { InboundProductInvoicesResource, createInboundProductInvoicesResource } 
 export { ProductInvoiceQueryResource, createProductInvoiceQueryResource, NFE_QUERY_API_BASE_URL } from './product-invoice-query.js';
 export { ConsumerInvoiceQueryResource, createConsumerInvoiceQueryResource } from './consumer-invoice-query.js';
 export { LegalEntityLookupResource, createLegalEntityLookupResource, LEGAL_ENTITY_API_BASE_URL } from './legal-entity-lookup.js';
+export { NaturalPersonLookupResource, createNaturalPersonLookupResource, NATURAL_PERSON_API_BASE_URL } from './natural-person-lookup.js';

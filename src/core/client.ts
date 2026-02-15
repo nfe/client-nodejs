@@ -32,9 +32,11 @@ import {
   ProductInvoiceQueryResource,
   ConsumerInvoiceQueryResource,
   LegalEntityLookupResource,
+  NaturalPersonLookupResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL,
-  LEGAL_ENTITY_API_BASE_URL
+  LEGAL_ENTITY_API_BASE_URL,
+  NATURAL_PERSON_API_BASE_URL
 } from './resources/index.js';
 
 // ============================================================================
@@ -46,6 +48,9 @@ export const CTE_API_BASE_URL = 'https://api.nfse.io';
 
 /** Base URL for Legal Entity API (CNPJ Lookup) */
 export { LEGAL_ENTITY_API_BASE_URL } from './resources/index.js';
+
+/** Base URL for Natural Person API (CPF Lookup) */
+export { NATURAL_PERSON_API_BASE_URL } from './resources/index.js';
 
 // ============================================================================
 // Main NFE.io Client
@@ -139,6 +144,9 @@ export class NfeClient {
   /** @internal HTTP client for Legal Entity API requests (created lazily) */
   private _legalEntityHttp: HttpClient | undefined;
 
+  /** @internal HTTP client for Natural Person API requests (created lazily) */
+  private _naturalPersonHttp: HttpClient | undefined;
+
   /** @internal Normalized client configuration */
   private readonly config: RequiredNfeConfig;
 
@@ -154,6 +162,7 @@ export class NfeClient {
   private _productInvoiceQuery: ProductInvoiceQueryResource | undefined;
   private _consumerInvoiceQuery: ConsumerInvoiceQueryResource | undefined;
   private _legalEntityLookup: LegalEntityLookupResource | undefined;
+  private _naturalPersonLookup: NaturalPersonLookupResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -523,6 +532,34 @@ export class NfeClient {
   }
 
   /**
+   * Natural Person Lookup API resource (CPF)
+   *
+   * @description
+   * Provides a read-only operation for querying CPF cadastral status (situação cadastral)
+   * at the Brazilian Federal Revenue Service (Receita Federal).
+   *
+   * **Note:** This resource uses a different API host (naturalperson.api.nfe.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link NaturalPersonLookupResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // CPF cadastral status lookup
+   * const result = await nfe.naturalPersonLookup.getStatus('123.456.789-01', '1990-01-15');
+   * console.log(result.name);    // 'JOÃO DA SILVA'
+   * console.log(result.status);  // 'Regular'
+   * ```
+   */
+  get naturalPersonLookup(): NaturalPersonLookupResource {
+    if (!this._naturalPersonLookup) {
+      this._naturalPersonLookup = new NaturalPersonLookupResource(this.getNaturalPersonHttpClient());
+    }
+    return this._naturalPersonLookup;
+  }
+
+  /**
    * Create a new NFE.io API client
    *
    * @param config - Client configuration options
@@ -718,6 +755,29 @@ export class NfeClient {
       this._legalEntityHttp = new HttpClient(httpConfig);
     }
     return this._legalEntityHttp;
+  }
+
+  /**
+   * Get or create the Natural Person API HTTP client (naturalperson.api.nfe.io)
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getNaturalPersonHttpClient(): HttpClient {
+    if (!this._naturalPersonHttp) {
+      const apiKey = this.resolveDataApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        NATURAL_PERSON_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._naturalPersonHttp = new HttpClient(httpConfig);
+    }
+    return this._naturalPersonHttp;
   }
 
   // --------------------------------------------------------------------------

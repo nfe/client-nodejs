@@ -617,6 +617,23 @@ console.log('IE recomendada:', melhorIE?.taxNumber);
 
 > **Nota:** A API de Consulta CNPJ usa um host separado (`legalentity.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
 
+#### 👤 Consulta CPF / Pessoa Física (`nfe.naturalPersonLookup`)
+
+Consultar a situação cadastral de CPF (pessoa física) na Receita Federal:
+
+```typescript
+// Consulta com CPF e data de nascimento
+const result = await nfe.naturalPersonLookup.getStatus('123.456.789-01', '1990-01-15');
+console.log('Nome:', result.name);      // 'JOÃO DA SILVA'
+console.log('Status:', result.status);  // 'Regular'
+
+// Também aceita Date object
+const result = await nfe.naturalPersonLookup.getStatus('12345678901', new Date(1990, 0, 15));
+console.log('Situação Cadastral:', result.status);
+```
+
+> **Nota:** A API de Consulta CPF usa um host separado (`naturalperson.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
 ---
 
 ### Opções de Configuração

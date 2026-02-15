@@ -20,6 +20,7 @@ Complete API reference for the NFE.io Node.js SDK v3.
   - [Product Invoice Query (Consulta NF-e)](#product-invoice-query-consulta-nf-e)
   - [Consumer Invoice Query (Consulta CFe-SAT)](#consumer-invoice-query-consulta-cfe-sat)
   - [Legal Entity Lookup (Consulta CNPJ)](#legal-entity-lookup-consulta-cnpj)
+  - [Natural Person Lookup (Consulta CPF)](#natural-person-lookup-consulta-cpf)
 - [Types](#types)
 - [Error Handling](#error-handling)
 - [Advanced Usage](#advanced-usage)
@@ -2232,6 +2233,67 @@ interface LegalEntityStateTaxForInvoice {
     | 'Unknown' | 'UnknownTemp' | 'UnknownNotConfirmed';
   taxNumber?: string;
   // ... same structure as LegalEntityStateTax with extended status
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+
+---
+
+### Natural Person Lookup (Consulta CPF)
+
+**Resource:** `nfe.naturalPersonLookup`
+**API Host:** `naturalperson.api.nfe.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+Lookup CPF cadastral status (situação cadastral) at the Brazilian Federal Revenue Service (Receita Federal).
+
+#### `getStatus(federalTaxNumber: string, birthDate: string | Date): Promise<NaturalPersonStatusResponse>`
+
+Query the cadastral status of a CPF, returning the person's name, CPF, birth date, status, and query timestamp.
+
+```typescript
+// With string date
+const result = await nfe.naturalPersonLookup.getStatus('123.456.789-01', '1990-01-15');
+console.log(result.name);    // 'JOÃO DA SILVA'
+console.log(result.status);  // 'Regular'
+
+// With Date object
+const result = await nfe.naturalPersonLookup.getStatus('12345678901', new Date(1990, 0, 15));
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `federalTaxNumber` | `string` | Yes | CPF number, with or without punctuation (e.g., `"12345678901"` or `"123.456.789-01"`) |
+| `birthDate` | `string \| Date` | Yes | Date of birth in `YYYY-MM-DD` format or a `Date` object |
+
+**Returns:** `NaturalPersonStatusResponse` — CPF cadastral status data.
+
+**Throws:**
+- `ValidationError` if CPF format is invalid (not 11 digits) or birth date format is invalid
+- `NotFoundError` if CPF is not found or birth date does not match (HTTP 404)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### Types
+
+```typescript
+type NaturalPersonStatus =
+  | 'Regular'
+  | 'Suspensa'
+  | 'Cancelada'
+  | 'Titular Falecido'
+  | 'Pendente de Regularização'
+  | 'Nula'
+  | (string & {});
+
+interface NaturalPersonStatusResponse {
+  name?: string;
+  federalTaxNumber: string;
+  birthOn?: string;
+  status?: NaturalPersonStatus;
+  createdOn?: string;
 }
 ```
 

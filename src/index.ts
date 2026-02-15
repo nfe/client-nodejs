@@ -47,7 +47,7 @@
  * @see {@link NfeClient} - Main client class for NFE.io API
  * @see {@link createNfeClient} - Factory function for creating client instances
  */
-export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS, CTE_API_BASE_URL, LEGAL_ENTITY_API_BASE_URL } from './core/client.js';
+export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS, CTE_API_BASE_URL, LEGAL_ENTITY_API_BASE_URL, NATURAL_PERSON_API_BASE_URL } from './core/client.js';
 
 /**
  * TypeScript type definitions for NFE.io API entities and configurations
@@ -195,6 +195,10 @@ export type {
   LegalEntityBasicInfo,
   LegalEntityStateTaxInfo,
   LegalEntityStateTaxForInvoiceInfo,
+
+  // Natural Person Lookup types (consulta-cpf)
+  NaturalPersonStatus,
+  NaturalPersonStatusResponse,
 
   // Common types
   EntityType,
