@@ -1,7 +1,7 @@
 # ============================================================================
 # NFE.io SDK v3 - Git Ignore Configuration
 # ============================================================================
-
+client-python/
 # ----------------------------------------------------------------------------
 # Dependencies
 # ----------------------------------------------------------------------------
@@ -193,15 +193,3 @@ release/
 
 test-auth.js
 debug-auth.mjs
-4_OpenAPI Validation.txt
-1_Build.txt
-2_Test (Node 22.x).txt
-2_Test (Node 18.x).txt
-4_Test (Node 20.x).txt
-5_Test (Node 22.x).txt
-1_Test (Node 18.x).txt
-3_Test (Node 20.x).txt
-4_Build.txt
-5_OpenAPI Validation.txt
-3_Build.txt
-2_Test (Node 20.x).txt
