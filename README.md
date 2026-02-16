@@ -426,7 +426,7 @@ const eventoXml = await nfe.transportationInvoices.downloadEventXml(
 - Empresa deve estar cadastrada com certificado digital A1 válido
 - Webhook deve estar configurado para receber notificações de CT-e
 
-#### 📦 NF-e de Entrada - Distribuição (`nfe.inboundProductInvoices`)
+#### 📥 NF-e de Entrada - Distribuição (`nfe.inboundProductInvoices`)
 
 Consultar NF-e (Nota Fiscal Eletrônica de Produto) recebidas via Distribuição NF-e:
 
@@ -517,7 +517,7 @@ await nfe.inboundProductInvoices.reprocessWebhook('empresa-id', '35240...');
 | `210220` | Confirmação da Operação |
 | `210240` | Operação não Realizada |
 
-#### � NF-e de Produto - Emissão (`nfe.productInvoices`)
+#### 📦 NF-e de Produto - Emissão (`nfe.productInvoices`)
 
 Ciclo completo de gestão de NF-e (Nota Fiscal Eletrônica de Produto) — emissão, listagem, consulta, cancelamento, carta de correção (CC-e), inutilização e download de arquivos (PDF/XML):
 
@@ -589,7 +589,7 @@ await nfe.stateTaxes.delete('empresa-id', 'state-tax-id');
 
 > **Nota:** Usa o host `api.nfse.io`. Configure `dataApiKey` para chave separada, ou o SDK usará `apiKey` como fallback.
 
-#### �🔍 Consulta de NF-e por Chave de Acesso (`nfe.productInvoiceQuery`)
+#### 🔍 Consulta de NF-e por Chave de Acesso (`nfe.productInvoiceQuery`)
 
 Consultar NF-e (Nota Fiscal Eletrônica de Produto) diretamente na SEFAZ por chave de acesso. Recurso somente leitura sem necessidade de escopo de empresa:
 
