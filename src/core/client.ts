@@ -35,6 +35,8 @@ import {
   NaturalPersonLookupResource,
   TaxCalculationResource,
   TaxCodesResource,
+  ProductInvoicesResource,
+  StateTaxesResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL,
   LEGAL_ENTITY_API_BASE_URL,
@@ -167,6 +169,8 @@ export class NfeClient {
   private _naturalPersonLookup: NaturalPersonLookupResource | undefined;
   private _taxCalculation: TaxCalculationResource | undefined;
   private _taxCodes: TaxCodesResource | undefined;
+  private _productInvoices: ProductInvoicesResource | undefined;
+  private _stateTaxes: StateTaxesResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -625,6 +629,59 @@ export class NfeClient {
       this._taxCodes = new TaxCodesResource(this.getCteHttpClient());
     }
     return this._taxCodes;
+  }
+
+  /**
+   * Product Invoices (NF-e) API resource
+   *
+   * @description
+   * Provides full lifecycle management for NF-e (Nota Fiscal Eletrônica de Produto)
+   * product invoices — issue, list, retrieve, cancel, send correction letters (CC-e),
+   * disable invoice numbers, and download files (PDF/XML).
+   *
+   * **Note:** This resource uses the api.nfse.io host.
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link ProductInvoicesResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * const result = await nfe.productInvoices.create('company-id', invoiceData);
+   * const invoices = await nfe.productInvoices.list('company-id', { environment: 'Production' });
+   * ```
+   */
+  get productInvoices(): ProductInvoicesResource {
+    if (!this._productInvoices) {
+      this._productInvoices = new ProductInvoicesResource(this.getCteHttpClient());
+    }
+    return this._productInvoices;
+  }
+
+  /**
+   * State Taxes (Inscrições Estaduais) API resource
+   *
+   * @description
+   * Provides CRUD operations for company state tax registrations required for
+   * NF-e product invoice issuance — list, create, retrieve, update, and delete.
+   *
+   * **Note:** This resource uses the api.nfse.io host.
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link StateTaxesResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * const taxes = await nfe.stateTaxes.list('company-id');
+   * const tax = await nfe.stateTaxes.create('company-id', { taxNumber: '123', serie: 1, number: 1 });
+   * ```
+   */
+  get stateTaxes(): StateTaxesResource {
+    if (!this._stateTaxes) {
+      this._stateTaxes = new StateTaxesResource(this.getCteHttpClient());
+    }
+    return this._stateTaxes;
   }
 
   /**

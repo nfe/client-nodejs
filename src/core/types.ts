@@ -2234,3 +2234,1075 @@ export interface TaxCodeListOptions {
   /** Number of items per page (default: 50) */
   pageCount?: number;
 }
+
+// ============================================================================
+// Product Invoice (NF-e Issuance) Types — nf-produto-v2
+// ============================================================================
+
+// Enum types (string literal unions)
+// ----------------------------------------------------------------------------
+
+/** Environment type for NF-e product invoice operations */
+export type NfeEnvironmentType = 'None' | 'Production' | 'Test';
+
+/** Status of a product invoice (NF-e) in the issuance lifecycle */
+export type NfeInvoiceStatus =
+  | 'None'
+  | 'Created'
+  | 'Processing'
+  | 'Issued'
+  | 'IssuedContingency'
+  | 'Cancelled'
+  | 'Disabled'
+  | 'IssueDenied'
+  | 'Error';
+
+/** Brazilian state code (UF) */
+export type NfeStateCode =
+  | 'NA' | 'RO' | 'AC' | 'AM' | 'RR' | 'PA' | 'AP' | 'TO'
+  | 'MA' | 'PI' | 'CE' | 'RN' | 'PB' | 'PE' | 'AL' | 'SE' | 'BA'
+  | 'MG' | 'ES' | 'RJ' | 'SP' | 'PR' | 'SC' | 'RS'
+  | 'MS' | 'MT' | 'GO' | 'DF' | 'EX';
+
+/** Operation type (incoming/outgoing) for NF-e */
+export type NfeOperationType = 'Outgoing' | 'Incoming';
+
+/** Purpose of the NF-e invoice */
+export type NfePurposeType = 'None' | 'Normal' | 'Complement' | 'Adjustment' | 'Devolution';
+
+/** Payment method for NF-e */
+export type NfePaymentMethod =
+  | 'Cash' | 'Cheque' | 'CreditCard' | 'DebitCard'
+  | 'StoreCredict' | 'FoodVouchers' | 'MealVouchers' | 'GiftVouchers'
+  | 'FuelVouchers' | 'BankBill' | 'BankDeposit' | 'InstantPayment'
+  | 'WireTransfer' | 'Cashback' | 'WithoutPayment' | 'Others';
+
+/** Shipping modality for NF-e transport */
+export type NfeShippingModality =
+  | 'ByIssuer' | 'ByReceiver' | 'ByThirdParties'
+  | 'OwnBySender' | 'OwnByBuyer' | 'Free';
+
+/** Consumer presence indicator for NF-e */
+export type NfeConsumerPresenceType =
+  | 'None' | 'Presence' | 'Internet' | 'Telephone'
+  | 'Delivery' | 'OthersNonPresenceOperation';
+
+/** DANFE print format */
+export type NfePrintType =
+  | 'None' | 'NFeNormalPortrait' | 'NFeNormalLandscape'
+  | 'NFeSimplified' | 'DANFE_NFC_E' | 'DANFE_NFC_E_MSG_ELETRONICA';
+
+/** Person type */
+export type NfePersonType = 'Undefined' | 'NaturalPerson' | 'LegalEntity' | 'Company' | 'Customer';
+
+/** Destination of the operation */
+export type NfeDestination =
+  | 'None' | 'Internal_Operation' | 'Interstate_Operation' | 'International_Operation';
+
+/** Consumer type indicator */
+export type NfeConsumerType = 'FinalConsumer' | 'Normal';
+
+/** Payment type (cash or term) */
+export type NfePaymentType = 'InCash' | 'Term';
+
+/** Receiver state tax indicator */
+export type NfeReceiverStateTaxIndicator = 'None' | 'TaxPayer' | 'Exempt' | 'NonTaxPayer';
+
+/** Card flag/brand for payment */
+export type NfeFlagCard =
+  | 'None' | 'Visa' | 'Mastercard' | 'AmericanExpress' | 'Sorocred'
+  | 'DinersClub' | 'Elo' | 'Hipercard' | 'Aura' | 'Cabal' | 'Alelo'
+  | 'BanesCard' | 'CalCard' | 'Credz' | 'Discover' | 'GoodCard'
+  | 'GreenCard' | 'Hiper' | 'JCB' | 'Mais' | 'MaxVan' | 'Policard'
+  | 'RedeCompras' | 'Sodexo' | 'ValeCard' | 'Verocheque' | 'VR'
+  | 'Ticket' | 'Other';
+
+/** Integration payment type */
+export type NfeIntegrationPaymentType = 'Integrated' | 'NotIntegrated';
+
+/** Intermediation type */
+export type NfeIntermediationType = 'None' | 'ByOwn' | 'ImportOnBehalf' | 'ByOrder';
+
+/** Tax regime */
+export type NfeTaxRegime =
+  | 'None' | 'LucroReal' | 'LucroPresumido' | 'SimplesNacional'
+  | 'SimplesNacionalExcessoSublimite' | 'MicroempreendedorIndividual' | 'Isento';
+
+/** Special tax regime */
+export type NfeSpecialTaxRegime =
+  | 'Nenhum' | 'MicroempresaMunicipal' | 'Estimativa'
+  | 'SociedadeDeProfissionais' | 'Cooperativa' | 'MicroempreendedorIndividual'
+  | 'MicroempresarioEmpresaPequenoPorte' | 'Automatico';
+
+/** State tax processing authorizer */
+export type NfeStateTaxProcessingAuthorizer = 'Normal' | 'EPEC';
+
+/** Flow status for file operations */
+export type NfeFlowStatus = string;
+
+// Request/Response types — Product Invoices
+// ----------------------------------------------------------------------------
+
+/** Address in NF-e context */
+export interface NfeAddress {
+  /** Street name */
+  street?: string;
+  /** Street number */
+  number?: string;
+  /** Additional info (complement) */
+  district?: string;
+  /** City */
+  city?: NfeCity;
+  /** State code */
+  state?: NfeStateCode;
+  /** Postal code (CEP) */
+  postalCode?: string;
+  /** Country code */
+  countryCode?: string;
+  /** Country name */
+  country?: string;
+  /** Additional info */
+  additionalInformation?: string;
+  [key: string]: unknown;
+}
+
+/** City reference */
+export interface NfeCity {
+  /** IBGE city code */
+  code?: string;
+  /** City name */
+  name?: string;
+}
+
+/** Buyer/recipient information for NF-e */
+export interface NfeProductInvoiceBuyer {
+  /** Buyer name */
+  name?: string;
+  /** CNPJ or CPF (numeric) */
+  federalTaxNumber?: number;
+  /** Email */
+  email?: string;
+  /** Buyer address */
+  address?: NfeAddress;
+  /** Person type */
+  type?: NfePersonType;
+  /** State tax number (IE) */
+  stateTaxNumber?: string;
+  /** State tax indicator */
+  stateTaxNumberIndicator?: NfeReceiverStateTaxIndicator;
+  /** Trade name */
+  tradeName?: string;
+  /** ISUF (SUFRAMA registration) */
+  isuf?: string;
+  [key: string]: unknown;
+}
+
+/** Card payment details */
+export interface NfeCardResource {
+  /** Card flag/brand */
+  flagCard?: NfeFlagCard;
+  /** Integration type */
+  integrationType?: NfeIntegrationPaymentType;
+  /** Authorization number */
+  authorizationNumber?: string;
+  /** Card number */
+  cardNumber?: string;
+  [key: string]: unknown;
+}
+
+/** Payment detail entry */
+export interface NfePaymentDetail {
+  /** Payment method */
+  method?: NfePaymentMethod;
+  /** Payment method description */
+  methodDescription?: string;
+  /** Payment type (cash/term) */
+  paymentType?: NfePaymentType;
+  /** Payment amount */
+  amount?: number;
+  /** Card information */
+  card?: NfeCardResource;
+  /** Payment date */
+  paymentDate?: string;
+  /** CNPJ transacional do pagamento */
+  federalTaxNumberPag?: string;
+  /** UF do CNPJ do pagamento */
+  statePag?: string;
+  [key: string]: unknown;
+}
+
+/** Payment group with details and change */
+export interface NfePaymentResource {
+  /** Payment details */
+  paymentDetail?: NfePaymentDetail[];
+  /** Change amount (troco) */
+  payBack?: number;
+}
+
+/** Billing information (cobrança) */
+export interface NfeBillingResource {
+  /** Invoice reference */
+  invoice?: NfeBillingInvoice;
+  /** Duplicates (parcelas) */
+  duplicates?: NfeDuplicateResource[];
+}
+
+/** Billing invoice reference */
+export interface NfeBillingInvoice {
+  /** Invoice number */
+  number?: string;
+  /** Original amount */
+  originalAmount?: number;
+  /** Discount amount */
+  discountAmount?: number;
+  /** Net amount */
+  netAmount?: number;
+  [key: string]: unknown;
+}
+
+/** Billing duplicate (parcela) */
+export interface NfeDuplicateResource {
+  /** Duplicate number */
+  number?: string;
+  /** Expiration date */
+  expirationOn?: string;
+  /** Amount */
+  amount?: number;
+}
+
+/** ICMS tax information for an item */
+export interface NfeIcmsTaxResource {
+  /** Origin of goods */
+  origin?: string;
+  /** CST (Código de Situação Tributária) */
+  cst?: string;
+  /** CSOSN (Código de Situação da Operação – Simples Nacional) */
+  csosn?: string;
+  /** Tax base amount */
+  baseTax?: number;
+  /** Tax rate (%) */
+  rate?: number;
+  /** Tax amount */
+  amount?: number;
+  /** Modality of ICMS base calculation */
+  modality?: number;
+  /** ICMS ST base amount */
+  baseTaxST?: number;
+  /** ICMS ST rate */
+  rateST?: number;
+  /** ICMS ST amount */
+  amountST?: number;
+  [key: string]: unknown;
+}
+
+/** IPI tax information */
+export interface NfeIpiTaxResource {
+  /** CST */
+  cst?: string;
+  /** Tax base */
+  baseTax?: number;
+  /** Rate */
+  rate?: number;
+  /** Amount */
+  amount?: number;
+  /** IPI enquadramento code */
+  ipiCode?: string;
+  [key: string]: unknown;
+}
+
+/** PIS tax information */
+export interface NfePisTaxResource {
+  /** CST */
+  cst?: string;
+  /** Tax base */
+  baseTax?: number;
+  /** Rate */
+  rate?: number;
+  /** Amount */
+  amount?: number;
+  /** Product quantity base */
+  baseTaxProductQuantity?: number;
+  /** Product rate (in reais) */
+  productRate?: number;
+}
+
+/** COFINS tax information */
+export interface NfeCofinsTaxResource {
+  /** CST */
+  cst?: string;
+  /** Tax base */
+  baseTax?: number;
+  /** Rate */
+  rate?: number;
+  /** Amount */
+  amount?: number;
+  /** Product quantity base */
+  baseTaxProductQuantity?: number;
+  /** Product rate (in reais) */
+  productRate?: number;
+}
+
+/** II (Import tax) information */
+export interface NfeIiTaxResource {
+  /** Tax base */
+  baseTax?: number;
+  /** Custom expenses */
+  customExpenses?: number;
+  /** IOF amount */
+  iofAmount?: number;
+  /** II amount */
+  amount?: number;
+}
+
+/** ICMS UF Destination tax (partilha) */
+export interface NfeIcmsUfDestinationTaxResource {
+  /** Base tax amount */
+  baseTax?: number;
+  /** FCP rate */
+  fcpRate?: number;
+  /** Rate */
+  rate?: number;
+  /** Interestadual rate */
+  interestadualRate?: number;
+  /** Provisorio rate */
+  provisorioRate?: number;
+  /** FCP amount */
+  fcpAmount?: number;
+  /** Destination amount */
+  destinationAmount?: number;
+  /** Origin amount */
+  originAmount?: number;
+  [key: string]: unknown;
+}
+
+/** Tax information for an invoice item */
+export interface NfeInvoiceItemTax {
+  /** Total approximate tax value */
+  totalTax?: number;
+  /** ICMS tax */
+  icms?: NfeIcmsTaxResource;
+  /** IPI tax */
+  ipi?: NfeIpiTaxResource;
+  /** II (import) tax */
+  ii?: NfeIiTaxResource;
+  /** PIS tax */
+  pis?: NfePisTaxResource;
+  /** COFINS tax */
+  cofins?: NfeCofinsTaxResource;
+  /** ICMS UF destination */
+  icmsDestination?: NfeIcmsUfDestinationTaxResource;
+}
+
+/** Tax determination resource for automatic tax calculation */
+export interface NfeTaxDeterminationResource {
+  /** Operation code for tax determination */
+  operationCode?: number;
+  /** Issuer tax profile */
+  issuerTaxProfile?: string;
+  /** Buyer tax profile */
+  buyerTaxProfile?: string;
+  /** Origin */
+  origin?: string;
+  /** Acquisition purpose */
+  acquisitionPurpose?: string;
+}
+
+/** Invoice item (product/service detail) */
+export interface NfeInvoiceItemResource {
+  /** Product/service code */
+  code?: string;
+  /** GTIN barcode */
+  codeGTIN?: string;
+  /** Product/service description */
+  description?: string;
+  /** NCM code */
+  ncm?: string;
+  /** NVE codes */
+  nve?: string[];
+  /** EXTIPI code */
+  extipi?: string;
+  /** CFOP code */
+  cfop?: number;
+  /** Commercial unit */
+  unit?: string;
+  /** Commercial quantity */
+  quantity?: number;
+  /** Unit amount */
+  unitAmount?: number;
+  /** Total amount */
+  totalAmount?: number;
+  /** Tax GTIN */
+  codeTaxGTIN?: string;
+  /** Tax unit */
+  unitTax?: string;
+  /** Tax quantity */
+  quantityTax?: number;
+  /** Tax unit amount */
+  taxUnitAmount?: number;
+  /** Freight amount */
+  freightAmount?: number;
+  /** Insurance amount */
+  insuranceAmount?: number;
+  /** Discount amount */
+  discountAmount?: number;
+  /** Other expenses */
+  othersAmount?: number;
+  /** Indicates if value enters total */
+  totalIndicator?: boolean;
+  /** CEST code */
+  cest?: string;
+  /** Tax details */
+  tax?: NfeInvoiceItemTax;
+  /** Additional product information */
+  additionalInformation?: string;
+  /** Purchase order number */
+  numberOrderBuy?: string;
+  /** Purchase order item number */
+  itemNumberOrderBuy?: number;
+  /** FCI number */
+  importControlSheetNumber?: string;
+  /** Fuel details */
+  fuelDetail?: Record<string, unknown>;
+  /** Benefit code */
+  benefit?: string;
+  /** Import declarations */
+  importDeclarations?: Record<string, unknown>[];
+  /** Export details */
+  exportDetails?: Record<string, unknown>[];
+  /** Tax determination */
+  taxDetermination?: NfeTaxDeterminationResource;
+  [key: string]: unknown;
+}
+
+/** Transport information for NF-e */
+export interface NfeTransportInformation {
+  /** Shipping modality */
+  shippingModality?: NfeShippingModality;
+  /** Transport group (carrier info) */
+  transportGroup?: NfeTransportGroupResource;
+  /** Volumes */
+  volumes?: NfeVolumeResource[];
+  [key: string]: unknown;
+}
+
+/** Transport group/carrier resource */
+export interface NfeTransportGroupResource {
+  /** Carrier name */
+  name?: string;
+  /** CNPJ or CPF */
+  federalTaxNumber?: string;
+  /** State tax number (IE) */
+  stateTaxNumber?: string;
+  /** Address (full) */
+  address?: string;
+  /** City name */
+  city?: string;
+  /** State code */
+  state?: string;
+  /** Vehicle plate */
+  vehiclePlate?: string;
+  /** Vehicle UF */
+  vehicleUf?: string;
+  /** Vehicle RNTC */
+  vehicleRntc?: string;
+  [key: string]: unknown;
+}
+
+/** Volume resource for transport */
+export interface NfeVolumeResource {
+  /** Quantity */
+  quantity?: number;
+  /** Species */
+  species?: string;
+  /** Brand */
+  brand?: string;
+  /** Numbering */
+  numbering?: string;
+  /** Net weight */
+  netWeight?: number;
+  /** Gross weight */
+  grossWeight?: number;
+  /** Seal numbers */
+  seals?: string[];
+  [key: string]: unknown;
+}
+
+/** Additional information for the invoice */
+export interface NfeAdditionalInformation {
+  /** Additional info for tax authority (infAdFisco) */
+  taxAdministration?: string;
+  /** Complementary info for taxpayer (infCpl) */
+  taxpayer?: string;
+  /** Referenced processes */
+  referencedProcess?: Record<string, unknown>[];
+  [key: string]: unknown;
+}
+
+/** Export hint and details */
+export interface NfeExportResource {
+  /** State that generated the invoice */
+  exportState?: NfeStateCode;
+  /** Export location municipio */
+  exportLocation?: string;
+  /** Export hint details */
+  hint?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** Issuer from request (issuer overrides) */
+export interface NfeIssuerFromRequest {
+  /** IE do Substituto Tributário (IEST) */
+  stStateTaxNumber?: string;
+}
+
+/** Transaction intermediate resource */
+export interface NfeIntermediateResource {
+  /** CNPJ of intermediary */
+  federalTaxNumber?: number;
+  /** Identifier at intermediary */
+  identifier?: string;
+}
+
+/** Delivery information */
+export interface NfeDeliveryInformation {
+  /** Account ID */
+  accountId?: string;
+  /** Entity ID */
+  id?: string;
+  /** Name */
+  name?: string;
+  /** CNPJ or CPF */
+  federalTaxNumber?: number;
+  /** Email */
+  email?: string;
+  /** Address */
+  address?: NfeAddress;
+  /** Person type */
+  type?: NfePersonType;
+  /** State tax number */
+  stateTaxNumber?: string;
+  [key: string]: unknown;
+}
+
+/** Withdrawal information */
+export interface NfeWithdrawalInformation {
+  /** Account ID */
+  accountId?: string;
+  /** Entity ID */
+  id?: string;
+  /** Name */
+  name?: string;
+  /** CNPJ or CPF */
+  federalTaxNumber?: number;
+  /** Email */
+  email?: string;
+  /** Address */
+  address?: NfeAddress;
+  /** Person type */
+  type?: NfePersonType;
+  /** State tax number */
+  stateTaxNumber?: string;
+  [key: string]: unknown;
+}
+
+/** Totals (request — partial totals sent on issue) */
+export interface NfeTotals {
+  /** ICMS total */
+  icms?: Record<string, unknown>;
+  /** ISSQN total */
+  issqn?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** Total resource (response — full totals from API) */
+export interface NfeTotalResource {
+  /** ICMS total */
+  icms?: Record<string, unknown>;
+  /** ISSQN total */
+  issqn?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** Authorization details */
+export interface NfeAuthorizationResource {
+  /** Protocol number */
+  protocol?: string;
+  /** Authorization date */
+  sentOn?: string;
+  /** Authorization status */
+  status?: string;
+  /** Access key (44 digits) */
+  accessKey?: string;
+  /** Reason */
+  reason?: string;
+  [key: string]: unknown;
+}
+
+/** Contingency details */
+export interface NfeContingencyDetails {
+  /** Authorizer used */
+  authorizer?: NfeStateTaxProcessingAuthorizer;
+  /** Start time */
+  startedOn?: string;
+  /** Reason for contingency */
+  reason?: string;
+}
+
+/** Activity/event resource */
+export interface NfeActivityResource {
+  /** Event type */
+  type?: string;
+  /** Event type description */
+  typeDescription?: string;
+  /** Sequence number */
+  sequence?: number;
+  /** Event creation date */
+  createdOn?: string;
+  /** Event data */
+  data?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** Events base resource */
+export interface NfeInvoiceEventsBase {
+  /** List of events */
+  events?: NfeActivityResource[];
+  /** Whether more events exist */
+  hasMore?: boolean;
+}
+
+/**
+ * Data for issuing a product invoice (NF-e).
+ * Corresponds to `ProductInvoiceQueueIssueResource` in the OpenAPI spec.
+ */
+export interface NfeProductInvoiceIssueData {
+  /** Invoice ID (optional, auto-generated) */
+  id?: string;
+  /** Invoice serie number */
+  serie?: number;
+  /** Invoice number */
+  number?: number;
+  /** Operation date/time (UTC ISO 8601) */
+  operationOn?: string;
+  /** Operation nature description (natOp) */
+  operationNature?: string;
+  /** Operation type */
+  operationType?: NfeOperationType;
+  /** Destination */
+  destination?: NfeDestination;
+  /** DANFE print type */
+  printType?: NfePrintType;
+  /** Purpose type */
+  purposeType?: NfePurposeType;
+  /** Consumer type */
+  consumerType?: NfeConsumerType;
+  /** Consumer presence type */
+  presenceType?: NfeConsumerPresenceType;
+  /** Contingency date/time */
+  contingencyOn?: string;
+  /** Contingency justification */
+  contingencyJustification?: string;
+  /** Buyer information */
+  buyer?: NfeProductInvoiceBuyer;
+  /** Transport information */
+  transport?: NfeTransportInformation;
+  /** Additional information */
+  additionalInformation?: NfeAdditionalInformation;
+  /** Export information */
+  export?: NfeExportResource;
+  /** Invoice items (products/services) */
+  items?: NfeInvoiceItemResource[];
+  /** Billing information */
+  billing?: NfeBillingResource;
+  /** Issuer overrides */
+  issuer?: NfeIssuerFromRequest;
+  /** Transaction intermediate */
+  transactionIntermediate?: NfeIntermediateResource;
+  /** Delivery information */
+  delivery?: NfeDeliveryInformation;
+  /** Withdrawal information */
+  withdrawal?: NfeWithdrawalInformation;
+  /** Payment groups */
+  payment?: NfePaymentResource[];
+  /** Totals */
+  totals?: NfeTotals;
+  [key: string]: unknown;
+}
+
+/** Issuer resource (in responses) */
+export interface NfeIssuerResource {
+  /** Account ID */
+  accountId?: string;
+  /** Issuer entity ID */
+  id?: string;
+  /** Name or company name */
+  name?: string;
+  /** CNPJ or CPF */
+  federalTaxNumber?: number;
+  /** Email */
+  email?: string;
+  /** Address */
+  address?: NfeAddress;
+  /** Person type */
+  type?: NfePersonType;
+  /** Trade name */
+  tradeName?: string;
+  /** Opening date */
+  openningDate?: string;
+  /** Tax regime */
+  taxRegime?: NfeTaxRegime;
+  /** Special tax regime */
+  specialTaxRegime?: NfeSpecialTaxRegime;
+  /** Regional tax number (IE) */
+  regionalTaxNumber?: number;
+  /** Municipal tax number (IM) */
+  municipalTaxNumber?: string;
+  /** State tax number for ST */
+  stStateTaxNumber?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Full product invoice (NF-e) response.
+ * Corresponds to `InvoiceResource` in the OpenAPI spec.
+ */
+export interface NfeProductInvoice {
+  /** Invoice ID */
+  id?: string;
+  /** Serie number */
+  serie?: number;
+  /** Invoice number */
+  number?: number;
+  /** Invoice status */
+  status?: NfeInvoiceStatus;
+  /** Authorization details */
+  authorization?: NfeAuthorizationResource;
+  /** Contingency details */
+  contingencyDetails?: NfeContingencyDetails;
+  /** Operation nature */
+  operationNature?: string;
+  /** Creation date */
+  createdOn?: string;
+  /** Modification date */
+  modifiedOn?: string;
+  /** Operation date */
+  operationOn?: string;
+  /** Operation type */
+  operationType?: NfeOperationType;
+  /** Environment type */
+  environmentType?: NfeEnvironmentType;
+  /** Purpose type */
+  purposeType?: NfePurposeType;
+  /** Issuer */
+  issuer?: NfeIssuerResource;
+  /** Buyer */
+  buyer?: NfeProductInvoiceBuyer;
+  /** Totals */
+  totals?: NfeTotalResource;
+  /** Transport information */
+  transport?: NfeTransportInformation;
+  /** Additional information */
+  additionalInformation?: NfeAdditionalInformation;
+  /** Export information */
+  export?: NfeExportResource;
+  /** Billing */
+  billing?: NfeBillingResource;
+  /** Payment groups */
+  payment?: NfePaymentResource[];
+  /** Transaction intermediate */
+  transactionIntermediate?: NfeIntermediateResource;
+  /** Delivery information */
+  delivery?: NfeDeliveryInformation;
+  /** Withdrawal information */
+  withdrawal?: NfeWithdrawalInformation;
+  /** Last events */
+  lastEvents?: NfeInvoiceEventsBase;
+  [key: string]: unknown;
+}
+
+/** Product invoice without events (used in list responses) */
+export interface NfeProductInvoiceWithoutEvents {
+  /** Invoice ID */
+  id?: string;
+  /** Serie number */
+  serie?: number;
+  /** Invoice number */
+  number?: number;
+  /** Invoice status */
+  status?: NfeInvoiceStatus;
+  /** Authorization details */
+  authorization?: NfeAuthorizationResource;
+  /** Contingency details */
+  contingencyDetails?: NfeContingencyDetails;
+  /** Operation nature */
+  operationNature?: string;
+  /** Creation date */
+  createdOn?: string;
+  /** Modification date */
+  modifiedOn?: string;
+  /** Operation date */
+  operationOn?: string;
+  /** Operation type */
+  operationType?: NfeOperationType;
+  /** Environment type */
+  environmentType?: NfeEnvironmentType;
+  /** Purpose type */
+  purposeType?: NfePurposeType;
+  /** Issuer */
+  issuer?: NfeIssuerResource;
+  /** Buyer */
+  buyer?: NfeProductInvoiceBuyer;
+  /** Totals */
+  totals?: NfeTotalResource;
+  /** Transport information */
+  transport?: NfeTransportInformation;
+  /** Additional information */
+  additionalInformation?: NfeAdditionalInformation;
+  /** Export information */
+  export?: NfeExportResource;
+  /** Billing */
+  billing?: NfeBillingResource;
+  /** Payment groups */
+  payment?: NfePaymentResource[];
+  /** Transaction intermediate */
+  transactionIntermediate?: NfeIntermediateResource;
+  /** Delivery information */
+  delivery?: NfeDeliveryInformation;
+  /** Withdrawal information */
+  withdrawal?: NfeWithdrawalInformation;
+  [key: string]: unknown;
+}
+
+/** Options for listing product invoices (cursor-based pagination) */
+export interface NfeProductInvoiceListOptions {
+  /** Environment (required) */
+  environment: NfeEnvironmentType;
+  /** Cursor: start after this ID */
+  startingAfter?: string;
+  /** Cursor: end before this ID */
+  endingBefore?: string;
+  /** Number of results per page (default: 10) */
+  limit?: number;
+  /** ElasticSearch query string */
+  q?: string;
+}
+
+/** Paginated list of product invoices */
+export interface NfeProductInvoiceListResponse {
+  /** List of invoices (without events) */
+  productInvoices?: NfeProductInvoiceWithoutEvents[];
+  /** Whether more results exist */
+  hasMore?: boolean;
+}
+
+/** Paginated list of invoice items */
+export interface NfeInvoiceItemsResponse {
+  /** Account ID */
+  accountId?: string;
+  /** Company ID */
+  companyId?: string;
+  /** Invoice ID */
+  id?: string;
+  /** Invoice items */
+  items?: NfeInvoiceItemResource[];
+  /** Whether more items exist */
+  hasMore?: boolean;
+}
+
+/** Paginated list of invoice events */
+export interface NfeProductInvoiceEventsResponse {
+  /** Invoice ID */
+  id?: string;
+  /** Account ID */
+  accountId?: string;
+  /** Company ID */
+  companyId?: string;
+  /** List of events */
+  events?: NfeActivityResource[];
+  /** Whether more events exist */
+  hasMore?: boolean;
+}
+
+/** Options for listing items/events (cursor pagination) */
+export interface NfeProductInvoiceSubListOptions {
+  /** Number of results per page (default: 10) */
+  limit?: number;
+  /** Cursor: start after (default: 0) */
+  startingAfter?: number | string;
+}
+
+/** File resource (PDF/XML download response) */
+export interface NfeFileResource {
+  /** Absolute URI to the file */
+  uri?: string;
+}
+
+/** Request cancellation response */
+export interface NfeRequestCancellationResource {
+  /** Account ID */
+  accountId?: string;
+  /** Company ID */
+  companyId?: string;
+  /** Product invoice ID */
+  productInvoiceId?: string;
+  /** Reason for cancellation */
+  reason?: string;
+}
+
+/** Disablement request data */
+export interface NfeDisablementData {
+  /** Environment */
+  environment: NfeEnvironmentType;
+  /** Serie number */
+  serie: number;
+  /** State code */
+  state: NfeStateCode;
+  /** Beginning invoice number */
+  beginNumber: number;
+  /** Last invoice number (same as beginNumber for a single number) */
+  lastNumber: number;
+  /** Reason for disablement */
+  reason?: string;
+}
+
+/** Disablement response */
+export interface NfeDisablementResource {
+  /** Environment */
+  environment?: NfeEnvironmentType;
+  /** Serie */
+  serie?: number;
+  /** State code */
+  state?: NfeStateCode;
+  /** Beginning number */
+  beginNumber?: number;
+  /** Last number */
+  lastNumber?: number;
+  /** Reason */
+  reason?: string;
+}
+
+// ============================================================================
+// State Tax (Inscrição Estadual) Types — nf-produto-v2
+// ============================================================================
+
+/** State tax type (emission type) */
+export type NfeStateTaxType = 'default' | 'nFe' | 'nFCe';
+
+/** State tax environment type */
+export type NfeStateTaxEnvironmentType = 'none' | 'production' | 'test';
+
+/** State tax status */
+export type NfeStateTaxStatus = 'inactive' | 'none' | 'active';
+
+/** State tax state code (lowercase as in API) */
+export type NfeStateTaxStateCode =
+  | 'rO' | 'aC' | 'aM' | 'rR' | 'pA' | 'aP' | 'tO'
+  | 'mA' | 'pI' | 'cE' | 'rN' | 'pB' | 'pE' | 'aL' | 'sE' | 'bA'
+  | 'mG' | 'eS' | 'rJ' | 'sP' | 'pR' | 'sC' | 'rS'
+  | 'mS' | 'mT' | 'gO' | 'dF' | 'eX' | 'nA';
+
+/** State tax special tax regime (lowercase as in API) */
+export type NfeStateTaxSpecialTaxRegime =
+  | 'automatico' | 'nenhum' | 'microempresaMunicipal' | 'estimativa'
+  | 'sociedadeDeProfissionais' | 'cooperativa' | 'microempreendedorIndividual'
+  | 'microempresarioEmpresaPequenoPorte';
+
+/** Security credential for NFCe */
+export interface NfeSecurityCredential {
+  /** Credential ID */
+  id?: number;
+  /** Security code */
+  code?: string;
+}
+
+/** Full state tax record (response) */
+export interface NfeStateTax {
+  /** State tax ID */
+  id?: string;
+  /** Company ID */
+  companyId?: string;
+  /** Account ID */
+  accountId?: string;
+  /** State code */
+  code?: NfeStateTaxStateCode;
+  /** Environment type */
+  environmentType?: NfeStateTaxEnvironmentType;
+  /** State tax number (IE) */
+  taxNumber?: string;
+  /** Serie for emission */
+  serie?: number;
+  /** Number for emission */
+  number?: number;
+  /** Status */
+  status?: NfeStateTaxStatus;
+  /** Special tax regime */
+  specialTaxRegime?: NfeStateTaxSpecialTaxRegime;
+  /** Security credential (for NFCe) */
+  securityCredential?: NfeSecurityCredential;
+  /** Emission type */
+  type?: NfeStateTaxType;
+  /** All series for this state tax */
+  series?: number[];
+  /** Batch ID */
+  batchId?: number;
+  /** Creation date */
+  createdOn?: string;
+  /** Modification date */
+  modifiedOn?: string;
+}
+
+/** Data for creating a state tax registration */
+export interface NfeStateTaxCreateData {
+  /** State tax number (IE) — required */
+  taxNumber: string;
+  /** Serie for emission — required */
+  serie: number;
+  /** Number for emission — required */
+  number: number;
+  /** State code */
+  code?: NfeStateTaxStateCode;
+  /** Environment type */
+  environmentType?: NfeStateTaxEnvironmentType;
+  /** Special tax regime */
+  specialTaxRegime?: NfeStateTaxSpecialTaxRegime;
+  /** Security credential (for NFCe) */
+  securityCredential?: NfeSecurityCredential;
+  /** Emission type */
+  type?: NfeStateTaxType;
+}
+
+/** Data for updating a state tax registration */
+export interface NfeStateTaxUpdateData {
+  /** State tax number (IE) */
+  taxNumber?: string;
+  /** Serie for emission */
+  serie?: number;
+  /** Number for emission */
+  number?: number;
+  /** State code */
+  code?: NfeStateTaxStateCode;
+  /** Environment type */
+  environmentType?: NfeStateTaxEnvironmentType;
+  /** Special tax regime */
+  specialTaxRegime?: NfeStateTaxSpecialTaxRegime;
+  /** Security credential (for NFCe) */
+  securityCredential?: NfeSecurityCredential;
+  /** Emission type */
+  type?: NfeStateTaxType;
+}
+
+/** Paginated list of state tax registrations */
+export interface NfeStateTaxListResponse {
+  /** List of state taxes */
+  stateTaxes?: NfeStateTax[];
+}
+
+/** Options for listing state taxes (cursor pagination) */
+export interface NfeStateTaxListOptions {
+  /** Cursor: start after this ID */
+  startingAfter?: string;
+  /** Cursor: end before this ID */
+  endingBefore?: string;
+  /** Number of results per page (default: 10) */
+  limit?: number;
+}

@@ -517,7 +517,79 @@ await nfe.inboundProductInvoices.reprocessWebhook('empresa-id', '35240...');
 | `210220` | Confirmação da Operação |
 | `210240` | Operação não Realizada |
 
-#### 🔍 Consulta de NF-e por Chave de Acesso (`nfe.productInvoiceQuery`)
+#### � NF-e de Produto - Emissão (`nfe.productInvoices`)
+
+Ciclo completo de gestão de NF-e (Nota Fiscal Eletrônica de Produto) — emissão, listagem, consulta, cancelamento, carta de correção (CC-e), inutilização e download de arquivos (PDF/XML):
+
+```typescript
+// Emitir NF-e (assíncrono — retorna 202)
+const result = await nfe.productInvoices.create('empresa-id', {
+  operationNature: 'Venda de mercadoria',
+  operationType: 'Outgoing',
+  buyer: { name: 'Empresa LTDA', federalTaxNumber: 12345678000190 },
+  items: [{ code: 'PROD-001', description: 'Produto X', quantity: 1, unitAmount: 100 }],
+  payment: [{ paymentDetail: [{ method: 'Cash', amount: 100 }] }],
+});
+
+// Listar NF-e (environment é obrigatório)
+const invoices = await nfe.productInvoices.list('empresa-id', {
+  environment: 'Production',
+  limit: 10,
+});
+
+// Consultar NF-e por ID
+const invoice = await nfe.productInvoices.retrieve('empresa-id', 'invoice-id');
+
+// Cancelar NF-e (assíncrono)
+await nfe.productInvoices.cancel('empresa-id', 'invoice-id', 'Motivo do cancelamento');
+
+// Download de PDF e XML
+const pdf = await nfe.productInvoices.downloadPdf('empresa-id', 'invoice-id');
+const xml = await nfe.productInvoices.downloadXml('empresa-id', 'invoice-id');
+
+// Carta de correção (CC-e) — razão de 15 a 1.000 caracteres
+await nfe.productInvoices.sendCorrectionLetter('empresa-id', 'invoice-id',
+  'Correcao do endereco do destinatario conforme novo cadastro');
+
+// Inutilizar faixa de numeração
+await nfe.productInvoices.disableRange('empresa-id', {
+  environment: 'Production',
+  serie: 1,
+  state: 'SP',
+  beginNumber: 100,
+  lastNumber: 110,
+});
+```
+
+> **Nota:** Operações de emissão, cancelamento, CC-e e inutilização são assíncronas — retornam 202/204. Conclusão é notificada via webhooks.
+
+#### 🏛️ Inscrições Estaduais (`nfe.stateTaxes`)
+
+CRUD de inscrições estaduais (IE) — configuração necessária para emissão de NF-e de produto:
+
+```typescript
+// Listar inscrições estaduais
+const taxes = await nfe.stateTaxes.list('empresa-id');
+
+// Criar inscrição estadual
+const tax = await nfe.stateTaxes.create('empresa-id', {
+  taxNumber: '123456789',
+  serie: 1,
+  number: 1,
+  code: 'sP',
+  environmentType: 'production',
+  type: 'nFe',
+});
+
+// Consultar, atualizar e excluir
+const retrieved = await nfe.stateTaxes.retrieve('empresa-id', 'state-tax-id');
+await nfe.stateTaxes.update('empresa-id', 'state-tax-id', { serie: 2 });
+await nfe.stateTaxes.delete('empresa-id', 'state-tax-id');
+```
+
+> **Nota:** Usa o host `api.nfse.io`. Configure `dataApiKey` para chave separada, ou o SDK usará `apiKey` como fallback.
+
+#### �🔍 Consulta de NF-e por Chave de Acesso (`nfe.productInvoiceQuery`)
 
 Consultar NF-e (Nota Fiscal Eletrônica de Produto) diretamente na SEFAZ por chave de acesso. Recurso somente leitura sem necessidade de escopo de empresa:
 

@@ -23,6 +23,8 @@ Complete API reference for the NFE.io Node.js SDK v3.
   - [Natural Person Lookup (Consulta CPF)](#natural-person-lookup-consulta-cpf)
   - [Tax Calculation (Cálculo de Impostos)](#tax-calculation-cálculo-de-impostos)
   - [Tax Codes (Códigos Auxiliares)](#tax-codes-códigos-auxiliares)
+  - [Product Invoices (NF-e Emissão)](#product-invoices-nf-e-emissão)
+  - [State Taxes (Inscrições Estaduais)](#state-taxes-inscrições-estaduais)
 - [Types](#types)
 - [Error Handling](#error-handling)
 - [Advanced Usage](#advanced-usage)
@@ -2444,6 +2446,261 @@ interface TaxCodePaginatedResponse {
 interface TaxCodeListOptions {
   pageIndex?: number;
   pageCount?: number;
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+
+---
+
+### Product Invoices (NF-e Emissão)
+
+**Resource:** `nfe.productInvoices`
+**API Host:** `api.nfse.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+Full lifecycle management for NF-e (Nota Fiscal Eletrônica de Produto) product invoices — issue, list, retrieve, cancel, send correction letters (CC-e), disable invoice numbers, and download files (PDF/XML).
+
+> **Important:** Issue, cancel, correction letter, and disablement operations are asynchronous — they return 202/204 indicating the request was enqueued. Completion is notified via webhooks.
+
+#### `create(companyId, data): Promise<NfeProductInvoiceIssueData>`
+
+Issue a product invoice (NF-e) by posting it to the processing queue.
+
+```typescript
+const result = await nfe.productInvoices.create('company-id', {
+  operationNature: 'Venda de mercadoria',
+  operationType: 'Outgoing',
+  buyer: { name: 'Empresa LTDA', federalTaxNumber: 12345678000190 },
+  items: [{ code: 'PROD-001', description: 'Produto X', quantity: 1, unitAmount: 100 }],
+  payment: [{ paymentDetail: [{ method: 'Cash', amount: 100 }] }],
+});
+```
+
+#### `createWithStateTax(companyId, stateTaxId, data): Promise<NfeProductInvoiceIssueData>`
+
+Issue an NF-e specifying a particular state tax registration (Inscrição Estadual).
+
+```typescript
+const result = await nfe.productInvoices.createWithStateTax('company-id', 'state-tax-id', invoiceData);
+```
+
+#### `list(companyId, options): Promise<NfeProductInvoiceListResponse>`
+
+List product invoices with cursor-based pagination. The `environment` option is **required**.
+
+```typescript
+const invoices = await nfe.productInvoices.list('company-id', {
+  environment: 'Production',   // Required: 'Production' or 'Test'
+  limit: 10,                   // Optional (default: 10)
+  startingAfter: 'cursor-id',  // Optional: cursor-based pagination
+  q: "buyer.name:'EMPRESA'",   // Optional: ElasticSearch query
+});
+for (const inv of invoices.productInvoices ?? []) {
+  console.log(inv.id, inv.status);
+}
+```
+
+#### `retrieve(companyId, invoiceId): Promise<NfeProductInvoice>`
+
+Retrieve full details of a single NF-e invoice.
+
+```typescript
+const invoice = await nfe.productInvoices.retrieve('company-id', 'invoice-id');
+console.log(invoice.status, invoice.authorization?.accessKey);
+```
+
+#### `cancel(companyId, invoiceId, reason?): Promise<NfeRequestCancellationResource>`
+
+Cancel a product invoice (asynchronous — enqueues for cancellation).
+
+```typescript
+const result = await nfe.productInvoices.cancel('company-id', 'invoice-id', 'Erro de digitação');
+```
+
+#### `listItems(companyId, invoiceId, options?): Promise<NfeInvoiceItemsResponse>`
+
+List items (products/services) for a specific invoice.
+
+```typescript
+const items = await nfe.productInvoices.listItems('company-id', 'invoice-id', { limit: 20 });
+```
+
+#### `listEvents(companyId, invoiceId, options?): Promise<NfeProductInvoiceEventsResponse>`
+
+List fiscal events for a specific invoice.
+
+```typescript
+const events = await nfe.productInvoices.listEvents('company-id', 'invoice-id');
+```
+
+#### `downloadPdf(companyId, invoiceId, force?): Promise<NfeFileResource>`
+
+Get the URL for the DANFE PDF file.
+
+```typescript
+const pdf = await nfe.productInvoices.downloadPdf('company-id', 'invoice-id');
+console.log('PDF URL:', pdf.uri);
+
+// Force regeneration
+const pdfForced = await nfe.productInvoices.downloadPdf('company-id', 'invoice-id', true);
+```
+
+#### `downloadXml(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the authorized NF-e XML file.
+
+```typescript
+const xml = await nfe.productInvoices.downloadXml('company-id', 'invoice-id');
+console.log('XML URL:', xml.uri);
+```
+
+#### `downloadRejectionXml(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the NF-e rejection XML (uses `/xml-rejection` canonical path).
+
+#### `downloadEpecXml(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the contingency authorization (EPEC) XML.
+
+#### `sendCorrectionLetter(companyId, invoiceId, reason): Promise<NfeRequestCancellationResource>`
+
+Send a correction letter (Carta de Correção — CC-e). The reason must be 15–1,000 characters.
+
+```typescript
+const result = await nfe.productInvoices.sendCorrectionLetter(
+  'company-id',
+  'invoice-id',
+  'Correcao do endereco do destinatario conforme novo cadastro'
+);
+```
+
+#### `downloadCorrectionLetterPdf(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the CC-e DANFE PDF.
+
+#### `downloadCorrectionLetterXml(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the CC-e XML.
+
+#### `disable(companyId, invoiceId, reason?): Promise<NfeRequestCancellationResource>`
+
+Disable (inutilizar) a specific product invoice by ID.
+
+```typescript
+await nfe.productInvoices.disable('company-id', 'invoice-id', 'Numeração inutilizada');
+```
+
+#### `disableRange(companyId, data): Promise<NfeDisablementResource>`
+
+Disable a range of invoice numbers.
+
+```typescript
+const result = await nfe.productInvoices.disableRange('company-id', {
+  environment: 'Production',
+  serie: 1,
+  state: 'SP',
+  beginNumber: 100,
+  lastNumber: 110,
+  reason: 'Faixa de numeração inutilizada',
+});
+```
+
+**Parameters common to sub-list methods (`listItems`, `listEvents`):**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `options.limit` | `number` | No | Items per page (default: 10) |
+| `options.startingAfter` | `number` | No | Cursor for pagination |
+
+---
+
+### State Taxes (Inscrições Estaduais)
+
+**Resource:** `nfe.stateTaxes`
+**API Host:** `api.nfse.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+CRUD operations for company state tax registrations (Inscrições Estaduais). State taxes define the series, numbering, environment, and state code configuration required for NF-e issuance.
+
+#### `list(companyId, options?): Promise<NfeStateTaxListResponse>`
+
+List all state tax registrations for a company.
+
+```typescript
+const result = await nfe.stateTaxes.list('company-id');
+for (const tax of result.stateTaxes ?? []) {
+  console.log(tax.id, tax.taxNumber, tax.code, tax.serie, tax.status);
+}
+```
+
+#### `create(companyId, data): Promise<NfeStateTax>`
+
+Create a new state tax registration. Body is automatically wrapped as `{ stateTax: data }`.
+
+```typescript
+const tax = await nfe.stateTaxes.create('company-id', {
+  taxNumber: '123456789',
+  serie: 1,
+  number: 1,
+  code: 'sP',
+  environmentType: 'production',
+  type: 'nFe',
+});
+console.log('Created:', tax.id);
+```
+
+#### `retrieve(companyId, stateTaxId): Promise<NfeStateTax>`
+
+Retrieve a specific state tax registration by ID.
+
+```typescript
+const tax = await nfe.stateTaxes.retrieve('company-id', 'state-tax-id');
+```
+
+#### `update(companyId, stateTaxId, data): Promise<NfeStateTax>`
+
+Update an existing state tax registration. Body is automatically wrapped as `{ stateTax: data }`.
+
+```typescript
+const updated = await nfe.stateTaxes.update('company-id', 'state-tax-id', {
+  serie: 2,
+  environmentType: 'test',
+});
+```
+
+#### `delete(companyId, stateTaxId): Promise<void>`
+
+Delete a state tax registration.
+
+```typescript
+await nfe.stateTaxes.delete('company-id', 'state-tax-id');
+```
+
+#### Types
+
+```typescript
+type NfeStateTaxType = 'default' | 'nFe' | 'nFCe';
+type NfeStateTaxEnvironmentType = 'none' | 'production' | 'test';
+type NfeStateTaxStatus = 'inactive' | 'none' | 'active';
+
+interface NfeStateTax {
+  id?: string;
+  companyId?: string;
+  accountId?: string;
+  code?: NfeStateTaxStateCode;
+  environmentType?: NfeStateTaxEnvironmentType;
+  taxNumber?: string;
+  serie?: number;
+  number?: number;
+  status?: NfeStateTaxStatus;
+  specialTaxRegime?: string;
+  securityCredential?: NfeStateTaxSecurityCredential;
+  type?: NfeStateTaxType;
+  series?: NfeStateTaxSeries[];
+  batchId?: string;
+  createdOn?: string;
+  modifiedOn?: string;
 }
 ```
 

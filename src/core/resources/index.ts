@@ -19,3 +19,5 @@ export { LegalEntityLookupResource, createLegalEntityLookupResource, LEGAL_ENTIT
 export { NaturalPersonLookupResource, createNaturalPersonLookupResource, NATURAL_PERSON_API_BASE_URL } from './natural-person-lookup.js';
 export { TaxCalculationResource, createTaxCalculationResource } from './tax-calculation.js';
 export { TaxCodesResource, createTaxCodesResource } from './tax-codes.js';
+export { ProductInvoicesResource } from './product-invoices.js';
+export { StateTaxesResource } from './state-taxes.js';
