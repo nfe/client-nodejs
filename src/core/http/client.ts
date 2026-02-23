@@ -64,6 +64,16 @@ export class HttpClient {
     return this.request<T>('DELETE', url);
   }
 
+  /**
+   * GET request expecting a binary buffer response (e.g., PDF, XML downloads).
+   *
+   * Sends an Accept header for the given content type and returns the response body as a Buffer.
+   */
+  async getBuffer(path: string, accept: string = 'application/octet-stream'): Promise<HttpResponse<Buffer>> {
+    const url = this.buildUrl(path);
+    return this.request<Buffer>('GET', url, undefined, { 'Accept': accept });
+  }
+
   // --------------------------------------------------------------------------
   // Core Request Method with Retry Logic
   // --------------------------------------------------------------------------

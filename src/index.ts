@@ -47,7 +47,7 @@
  * @see {@link NfeClient} - Main client class for NFE.io API
  * @see {@link createNfeClient} - Factory function for creating client instances
  */
-export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS } from './core/client.js';
+export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS, CTE_API_BASE_URL, LEGAL_ENTITY_API_BASE_URL, NATURAL_PERSON_API_BASE_URL } from './core/client.js';
 
 /**
  * TypeScript type definitions for NFE.io API entities and configurations
@@ -80,6 +80,227 @@ export type {
   AddressCity,
   AddressLookupResponse,
   AddressSearchOptions,
+
+  // CT-e (Transportation Invoice) types
+  TransportationInvoiceInboundSettings,
+  TransportationInvoiceMetadata,
+  EnableTransportationInvoiceOptions,
+  TransportationInvoiceEntityStatus,
+  TransportationInvoiceMetadataType,
+
+  // Inbound NF-e Distribution types
+  InboundInvoiceMetadata,
+  InboundProductInvoiceMetadata,
+  InboundSettings,
+  EnableInboundOptions,
+  ManifestEventType,
+  InboundCompany,
+  InboundIssuer,
+  InboundBuyer,
+  InboundTransportation,
+  InboundLinks,
+  InboundProductInvoice,
+  AutomaticManifesting,
+
+  // Product Invoice Query types (consulta-nf)
+  ProductInvoiceStatus,
+  ProductInvoicePaymentType,
+  ProductInvoiceOperationType,
+  ProductInvoiceDestination,
+  ProductInvoicePrintType,
+  ProductInvoiceIssueType,
+  ProductInvoiceEnvironmentType,
+  ProductInvoicePurposeType,
+  ProductInvoiceConsumerType,
+  ProductInvoicePresenceType,
+  ProductInvoiceProcessType,
+  ProductInvoiceTaxRegimeCode,
+  ProductInvoicePersonType,
+  ProductInvoicePaymentMethod,
+  ProductInvoiceCardFlag,
+  ProductInvoiceIntegrationPaymentType,
+  ProductInvoiceCity,
+  ProductInvoiceAddress,
+  ProductInvoiceIssuer,
+  ProductInvoiceBuyer,
+  ProductInvoiceIcmsTotals,
+  ProductInvoiceIssqnTotals,
+  ProductInvoiceTotals,
+  ProductInvoiceItemIcms,
+  ProductInvoiceItemTax,
+  ProductInvoiceItem,
+  ProductInvoiceTransport,
+  ProductInvoicePayment,
+  ProductInvoiceProtocol,
+  ProductInvoiceAdditionalInfo,
+  ProductInvoiceBilling,
+  ProductInvoiceDetails,
+  ProductInvoiceEvent,
+  ProductInvoiceEventsResponse,
+
+  // Consumer Invoice Query types (CFe-SAT / consulta-nf-consumidor)
+  CouponStatus,
+  CouponPersonType,
+  CouponTaxRegime,
+  CouponPaymentMethod,
+  CouponIssqnTaxIncentive,
+  CouponCity,
+  CouponAddress,
+  CouponIssuer,
+  CouponBuyer,
+  CouponIcmsTotal,
+  CouponIssqnTotal,
+  CouponTotal,
+  CouponTaxBase,
+  CouponIcmsTax,
+  CouponPisTax,
+  CouponCofinsTax,
+  CouponIssqnTax,
+  CouponItemTax,
+  CouponFiscoField,
+  CouponReferencedDocument,
+  CouponItem,
+  CouponPaymentDetail,
+  CouponPayment,
+  CouponDelivery,
+  CouponAdditionalInformation,
+  TaxCoupon,
+
+  // Legal Entity Lookup types (consulta-cnpj)
+  BrazilianState,
+  LegalEntityBasicInfoOptions,
+  LegalEntityBasicInfoResponse,
+  LegalEntityStateTaxResponse,
+  LegalEntityStateTaxForInvoiceResponse,
+  LegalEntitySize,
+  LegalEntityStatus,
+  LegalEntityUnit,
+  LegalEntityTaxRegime,
+  LegalEntityNatureCode,
+  LegalEntityStateTaxStatus,
+  LegalEntityStateTaxForInvoiceStatus,
+  LegalEntityFiscalDocumentStatus,
+  LegalEntityActivityType,
+  LegalEntityPhoneSource,
+  LegalEntityCity,
+  LegalEntityAddress,
+  LegalEntityPhone,
+  LegalEntityEconomicActivity,
+  LegalEntityNature,
+  LegalEntityQualification,
+  LegalEntityPartner,
+  LegalEntityFiscalDocumentInfo,
+  LegalEntityStateTax,
+  LegalEntityStateTaxForInvoice,
+  LegalEntityBasicInfo,
+  LegalEntityStateTaxInfo,
+  LegalEntityStateTaxForInvoiceInfo,
+
+  // Natural Person Lookup types (consulta-cpf)
+  NaturalPersonStatus,
+  NaturalPersonStatusResponse,
+
+  // Tax Calculation types (calculo-impostos)
+  TaxOperationType,
+  TaxOrigin,
+  TaxCalcTaxRegime,
+  TaxIcms,
+  TaxIcmsUfDest,
+  TaxPis,
+  TaxCofins,
+  TaxIpi,
+  TaxIi,
+  CalculateRequestIssuer,
+  CalculateRequestRecipient,
+  CalculateItemRequest,
+  CalculateRequest,
+  CalculateItemResponse,
+  CalculateResponse,
+  TaxCode,
+  TaxCodePaginatedResponse,
+  TaxCodeListOptions,
+
+  // NF-e Product Invoice types (nf-produto-v2)
+  NfeEnvironmentType,
+  NfeInvoiceStatus,
+  NfeStateCode,
+  NfeOperationType,
+  NfePurposeType,
+  NfePaymentMethod,
+  NfeShippingModality,
+  NfeConsumerPresenceType,
+  NfePrintType,
+  NfePersonType,
+  NfeDestination,
+  NfeConsumerType,
+  NfePaymentType,
+  NfeReceiverStateTaxIndicator,
+  NfeFlagCard,
+  NfeIntegrationPaymentType,
+  NfeIntermediationType,
+  NfeTaxRegime,
+  NfeSpecialTaxRegime,
+  NfeStateTaxProcessingAuthorizer,
+  NfeFlowStatus,
+  NfeAddress,
+  NfeCity,
+  NfeProductInvoiceBuyer,
+  NfeCardResource,
+  NfePaymentDetail,
+  NfePaymentResource,
+  NfeBillingResource,
+  NfeBillingInvoice,
+  NfeDuplicateResource,
+  NfeIcmsTaxResource,
+  NfeIpiTaxResource,
+  NfePisTaxResource,
+  NfeCofinsTaxResource,
+  NfeIiTaxResource,
+  NfeIcmsUfDestinationTaxResource,
+  NfeInvoiceItemTax,
+  NfeTaxDeterminationResource,
+  NfeInvoiceItemResource,
+  NfeTransportInformation,
+  NfeTransportGroupResource,
+  NfeVolumeResource,
+  NfeAdditionalInformation,
+  NfeExportResource,
+  NfeIssuerFromRequest,
+  NfeIntermediateResource,
+  NfeDeliveryInformation,
+  NfeWithdrawalInformation,
+  NfeTotals,
+  NfeTotalResource,
+  NfeAuthorizationResource,
+  NfeContingencyDetails,
+  NfeActivityResource,
+  NfeInvoiceEventsBase,
+  NfeProductInvoiceIssueData,
+  NfeIssuerResource,
+  NfeProductInvoice,
+  NfeProductInvoiceWithoutEvents,
+  NfeProductInvoiceListOptions,
+  NfeProductInvoiceListResponse,
+  NfeInvoiceItemsResponse,
+  NfeProductInvoiceEventsResponse,
+  NfeProductInvoiceSubListOptions,
+  NfeFileResource,
+  NfeRequestCancellationResource,
+  NfeDisablementData,
+  NfeDisablementResource,
+
+  // State Tax (Inscrição Estadual) types
+  NfeStateTaxType,
+  NfeStateTaxEnvironmentType,
+  NfeStateTaxStatus,
+  NfeStateTaxStateCode,
+  NfeStateTaxSpecialTaxRegime,
+  NfeStateTax,
+  NfeStateTaxCreateData,
+  NfeStateTaxUpdateData,
+  NfeStateTaxListResponse,
+  NfeStateTaxListOptions,
+  NfeSecurityCredential,
 
   // Common types
   EntityType,
@@ -174,6 +395,31 @@ export {
  * ```
  */
 export { CertificateValidator } from './core/utils/certificate-validator.js';
+
+// ============================================================================
+// Resource Classes (for advanced usage)
+// ============================================================================
+
+/**
+ * Transportation Invoices (CT-e) Resource
+ *
+ * @see {@link TransportationInvoicesResource} - CT-e operations via Distribuição DFe
+ *
+ * @example
+ * ```typescript
+ * import { TransportationInvoicesResource } from '@nfe-io/sdk';
+ *
+ * // For advanced usage when extending the SDK
+ * class CustomCteResource extends TransportationInvoicesResource {
+ *   // Add custom methods
+ * }
+ * ```
+ */
+export { TransportationInvoicesResource } from './core/resources/transportation-invoices.js';
+export { TaxCalculationResource, createTaxCalculationResource } from './core/resources/tax-calculation.js';
+export { TaxCodesResource, createTaxCodesResource } from './core/resources/tax-codes.js';
+export { ProductInvoicesResource } from './core/resources/product-invoices.js';
+export { StateTaxesResource } from './core/resources/state-taxes.js';
 
 // ============================================================================
 // Default Export (maintains v2 compatibility)

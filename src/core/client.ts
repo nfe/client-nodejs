@@ -27,8 +27,34 @@ import {
   NaturalPeopleResource,
   WebhooksResource,
   AddressesResource,
-  ADDRESS_API_BASE_URL
+  TransportationInvoicesResource,
+  InboundProductInvoicesResource,
+  ProductInvoiceQueryResource,
+  ConsumerInvoiceQueryResource,
+  LegalEntityLookupResource,
+  NaturalPersonLookupResource,
+  TaxCalculationResource,
+  TaxCodesResource,
+  ProductInvoicesResource,
+  StateTaxesResource,
+  ADDRESS_API_BASE_URL,
+  NFE_QUERY_API_BASE_URL,
+  LEGAL_ENTITY_API_BASE_URL,
+  NATURAL_PERSON_API_BASE_URL
 } from './resources/index.js';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Base URL for CT-e API (Transportation Invoices) */
+export const CTE_API_BASE_URL = 'https://api.nfse.io';
+
+/** Base URL for Legal Entity API (CNPJ Lookup) */
+export { LEGAL_ENTITY_API_BASE_URL } from './resources/index.js';
+
+/** Base URL for Natural Person API (CPF Lookup) */
+export { NATURAL_PERSON_API_BASE_URL } from './resources/index.js';
 
 // ============================================================================
 // Main NFE.io Client
@@ -113,6 +139,18 @@ export class NfeClient {
   /** @internal HTTP client for address API requests (created lazily) */
   private _addressHttp: HttpClient | undefined;
 
+  /** @internal HTTP client for CT-e API requests (created lazily) */
+  private _cteHttp: HttpClient | undefined;
+
+  /** @internal HTTP client for NF-e query API requests (created lazily) */
+  private _nfeQueryHttp: HttpClient | undefined;
+
+  /** @internal HTTP client for Legal Entity API requests (created lazily) */
+  private _legalEntityHttp: HttpClient | undefined;
+
+  /** @internal HTTP client for Natural Person API requests (created lazily) */
+  private _naturalPersonHttp: HttpClient | undefined;
+
   /** @internal Normalized client configuration */
   private readonly config: RequiredNfeConfig;
 
@@ -123,6 +161,16 @@ export class NfeClient {
   private _naturalPeople: NaturalPeopleResource | undefined;
   private _webhooks: WebhooksResource | undefined;
   private _addresses: AddressesResource | undefined;
+  private _transportationInvoices: TransportationInvoicesResource | undefined;
+  private _inboundProductInvoices: InboundProductInvoicesResource | undefined;
+  private _productInvoiceQuery: ProductInvoiceQueryResource | undefined;
+  private _consumerInvoiceQuery: ConsumerInvoiceQueryResource | undefined;
+  private _legalEntityLookup: LegalEntityLookupResource | undefined;
+  private _naturalPersonLookup: NaturalPersonLookupResource | undefined;
+  private _taxCalculation: TaxCalculationResource | undefined;
+  private _taxCodes: TaxCodesResource | undefined;
+  private _productInvoices: ProductInvoicesResource | undefined;
+  private _stateTaxes: StateTaxesResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -273,10 +321,10 @@ export class NfeClient {
    * - Search by generic term
    *
    * **Note:** This resource uses a different API host (address.api.nfe.io).
-   * Configure `addressApiKey` for a separate key, or it will fallback to `apiKey`.
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
    *
    * @see {@link AddressesResource}
-   * @throws {ConfigurationError} If no API key is configured (addressApiKey or apiKey)
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
    *
    * @example
    * ```typescript
@@ -289,6 +337,351 @@ export class NfeClient {
       this._addresses = new AddressesResource(this.getAddressHttpClient());
     }
     return this._addresses;
+  }
+
+  /**
+   * Transportation Invoices (CT-e) API resource
+   *
+   * @description
+   * Provides operations for managing CT-e (Conhecimento de Transporte Eletrônico)
+   * documents via SEFAZ Distribuição DFe:
+   * - Enable/disable automatic CT-e search
+   * - Retrieve CT-e metadata and XML
+   * - Retrieve CT-e event metadata and XML
+   *
+   * **Prerequisites:**
+   * - Company must have a valid A1 digital certificate
+   * - Webhook must be configured to receive CT-e notifications
+   *
+   * **Note:** This resource uses a different API host (api.nfse.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link TransportationInvoicesResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // Enable automatic CT-e search
+   * await nfe.transportationInvoices.enable('company-id');
+   *
+   * // Retrieve CT-e metadata
+   * const cte = await nfe.transportationInvoices.retrieve(
+   *   'company-id',
+   *   '35240112345678000190570010000001231234567890'
+   * );
+   * ```
+   */
+  get transportationInvoices(): TransportationInvoicesResource {
+    if (!this._transportationInvoices) {
+      this._transportationInvoices = new TransportationInvoicesResource(this.getCteHttpClient());
+    }
+    return this._transportationInvoices;
+  }
+
+  /**
+   * Inbound Product Invoices (NF-e Distribution) API resource
+   *
+   * @description
+   * Provides operations for querying NF-e documents received by a company
+   * via SEFAZ Distribuição DFe:
+   * - Enable/disable automatic NF-e distribution fetch
+   * - Retrieve inbound NF-e metadata by access key
+   * - Download NF-e documents in XML, PDF, and JSON formats
+   * - Send recipient manifest (Manifestação do Destinatário)
+   * - Reprocess webhooks
+   *
+   * **Prerequisites:**
+   * - Company must have a valid A1 digital certificate
+   * - Webhook must be configured to receive NF-e notifications
+   *
+   * **Note:** This resource uses a different API host (api.nfse.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link InboundProductInvoicesResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // Enable automatic NF-e fetch
+   * await nfe.inboundProductInvoices.enableAutoFetch('company-id', {
+   *   startFromNsu: '999999',
+   *   environmentSEFAZ: 'Production',
+   *   webhookVersion: '2'
+   * });
+   *
+   * // Get NF-e details
+   * const doc = await nfe.inboundProductInvoices.getProductInvoiceDetails(
+   *   'company-id',
+   *   '35240112345678000190550010000001231234567890'
+   * );
+   * ```
+   */
+  get inboundProductInvoices(): InboundProductInvoicesResource {
+    if (!this._inboundProductInvoices) {
+      this._inboundProductInvoices = new InboundProductInvoicesResource(this.getCteHttpClient());
+    }
+    return this._inboundProductInvoices;
+  }
+
+  /**
+   * Product Invoice Query (NF-e) API resource
+   *
+   * @description
+   * Provides read-only operations for querying product invoices (NF-e) directly
+   * on SEFAZ by access key — no company scope required:
+   * - Retrieve full invoice details (issuer, buyer, items, totals, transport, payment)
+   * - Download DANFE PDF
+   * - Download raw NF-e XML
+   * - List fiscal events (cancellations, corrections, manifestations)
+   *
+   * **Note:** This resource uses a different API host (nfe.api.nfe.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link ProductInvoiceQueryResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // Retrieve invoice details
+   * const invoice = await nfe.productInvoiceQuery.retrieve(
+   *   '35240112345678000190550010000001231234567890'
+   * );
+   * console.log(invoice.currentStatus); // 'authorized'
+   * console.log(invoice.issuer?.name);
+   *
+   * // Download PDF
+   * const pdf = await nfe.productInvoiceQuery.downloadPdf(
+   *   '35240112345678000190550010000001231234567890'
+   * );
+   * fs.writeFileSync('danfe.pdf', pdf);
+   *
+   * // List fiscal events
+   * const events = await nfe.productInvoiceQuery.listEvents(
+   *   '35240112345678000190550010000001231234567890'
+   * );
+   * ```
+   */
+  get productInvoiceQuery(): ProductInvoiceQueryResource {
+    if (!this._productInvoiceQuery) {
+      this._productInvoiceQuery = new ProductInvoiceQueryResource(this.getNfeQueryHttpClient());
+    }
+    return this._productInvoiceQuery;
+  }
+
+  /**
+   * Consumer Invoice Query API resource (CFe-SAT)
+   *
+   * @description
+   * Provides read-only operations for querying CFe-SAT (Cupom Fiscal Eletrônico)
+   * consumer invoices by access key. No company scope required.
+   *
+   * - Retrieve full coupon details (issuer, buyer, items, totals, payment)
+   * - Download original CFe XML
+   *
+   * Uses data API key authentication on `nfe.api.nfe.io`.
+   *
+   * @see {@link ConsumerInvoiceQueryResource}
+   * @throws {ConfigurationError} If API key is not configured
+   *
+   * @example
+   * ```typescript
+   * // Retrieve coupon details
+   * const coupon = await nfe.consumerInvoiceQuery.retrieve(
+   *   '35240112345678000190590000000012341234567890'
+   * );
+   * console.log(coupon.currentStatus); // 'Authorized'
+   * console.log(coupon.issuer?.name);
+   *
+   * // Download CFe XML
+   * const xml = await nfe.consumerInvoiceQuery.downloadXml(
+   *   '35240112345678000190590000000012341234567890'
+   * );
+   * fs.writeFileSync('cfe.xml', xml);
+   * ```
+   */
+  get consumerInvoiceQuery(): ConsumerInvoiceQueryResource {
+    if (!this._consumerInvoiceQuery) {
+      this._consumerInvoiceQuery = new ConsumerInvoiceQueryResource(this.getNfeQueryHttpClient());
+    }
+    return this._consumerInvoiceQuery;
+  }
+
+  /**
+   * Legal Entity Lookup API resource (CNPJ)
+   *
+   * @description
+   * Provides read-only operations for querying Brazilian company (CNPJ) data:
+   * - Basic company info (Receita Federal registry data)
+   * - State tax registration (Inscrição Estadual) lookup
+   * - State tax evaluation for invoice issuance
+   * - Suggested optimal IE for invoice issuance
+   *
+   * **Note:** This resource uses a different API host (legalentity.api.nfe.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link LegalEntityLookupResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // Basic CNPJ lookup
+   * const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+   * console.log(result.legalEntity?.name);
+   *
+   * // State tax registration
+   * const stateTax = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+   * ```
+   */
+  get legalEntityLookup(): LegalEntityLookupResource {
+    if (!this._legalEntityLookup) {
+      this._legalEntityLookup = new LegalEntityLookupResource(this.getLegalEntityHttpClient());
+    }
+    return this._legalEntityLookup;
+  }
+
+  /**
+   * Natural Person Lookup API resource (CPF)
+   *
+   * @description
+   * Provides a read-only operation for querying CPF cadastral status (situação cadastral)
+   * at the Brazilian Federal Revenue Service (Receita Federal).
+   *
+   * **Note:** This resource uses a different API host (naturalperson.api.nfe.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link NaturalPersonLookupResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * // CPF cadastral status lookup
+   * const result = await nfe.naturalPersonLookup.getStatus('123.456.789-01', '1990-01-15');
+   * console.log(result.name);    // 'JOÃO DA SILVA'
+   * console.log(result.status);  // 'Regular'
+   * ```
+   */
+  get naturalPersonLookup(): NaturalPersonLookupResource {
+    if (!this._naturalPersonLookup) {
+      this._naturalPersonLookup = new NaturalPersonLookupResource(this.getNaturalPersonHttpClient());
+    }
+    return this._naturalPersonLookup;
+  }
+
+  /**
+   * Tax Calculation Engine API resource
+   *
+   * @description
+   * Provides access to the Motor de Cálculo de Tributos (Tax Calculation Engine)
+   * for computing all applicable Brazilian taxes (ICMS, ICMS-ST, PIS, COFINS,
+   * IPI, II) on product operations.
+   *
+   * **Note:** This resource uses a different API host (api.nfse.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link TaxCalculationResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * const result = await nfe.taxCalculation.calculate('tenant-id', {
+   *   operationType: 'Outgoing',
+   *   issuer: { state: 'SP', taxRegime: 'RealProfit' },
+   *   recipient: { state: 'RJ' },
+   *   items: [{
+   *     id: '1', operationCode: 121, origin: 'National',
+   *     quantity: 10, unitAmount: 100.00, ncm: '61091000'
+   *   }]
+   * });
+   * ```
+   */
+  get taxCalculation(): TaxCalculationResource {
+    if (!this._taxCalculation) {
+      this._taxCalculation = new TaxCalculationResource(this.getCteHttpClient());
+    }
+    return this._taxCalculation;
+  }
+
+  /**
+   * Tax Codes API resource (auxiliary reference tables)
+   *
+   * @description
+   * Provides paginated listings of auxiliary tax code reference tables
+   * needed as inputs for the Tax Calculation Engine: operation codes,
+   * acquisition purposes, issuer tax profiles, and recipient tax profiles.
+   *
+   * **Note:** This resource uses a different API host (api.nfse.io).
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link TaxCodesResource}
+   * @see {@link TaxCalculationResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * const codes = await nfe.taxCodes.listOperationCodes({ pageIndex: 1, pageCount: 20 });
+   * for (const code of codes.items ?? []) {
+   *   console.log(`${code.code} - ${code.description}`);
+   * }
+   * ```
+   */
+  get taxCodes(): TaxCodesResource {
+    if (!this._taxCodes) {
+      this._taxCodes = new TaxCodesResource(this.getCteHttpClient());
+    }
+    return this._taxCodes;
+  }
+
+  /**
+   * Product Invoices (NF-e) API resource
+   *
+   * @description
+   * Provides full lifecycle management for NF-e (Nota Fiscal Eletrônica de Produto)
+   * product invoices — issue, list, retrieve, cancel, send correction letters (CC-e),
+   * disable invoice numbers, and download files (PDF/XML).
+   *
+   * **Note:** This resource uses the api.nfse.io host.
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link ProductInvoicesResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * const result = await nfe.productInvoices.create('company-id', invoiceData);
+   * const invoices = await nfe.productInvoices.list('company-id', { environment: 'Production' });
+   * ```
+   */
+  get productInvoices(): ProductInvoicesResource {
+    if (!this._productInvoices) {
+      this._productInvoices = new ProductInvoicesResource(this.getCteHttpClient());
+    }
+    return this._productInvoices;
+  }
+
+  /**
+   * State Taxes (Inscrições Estaduais) API resource
+   *
+   * @description
+   * Provides CRUD operations for company state tax registrations required for
+   * NF-e product invoice issuance — list, create, retrieve, update, and delete.
+   *
+   * **Note:** This resource uses the api.nfse.io host.
+   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   *
+   * @see {@link StateTaxesResource}
+   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   *
+   * @example
+   * ```typescript
+   * const taxes = await nfe.stateTaxes.list('company-id');
+   * const tax = await nfe.stateTaxes.create('company-id', { taxNumber: '123', serie: 1, number: 1 });
+   * ```
+   */
+  get stateTaxes(): StateTaxesResource {
+    if (!this._stateTaxes) {
+      this._stateTaxes = new StateTaxesResource(this.getCteHttpClient());
+    }
+    return this._stateTaxes;
   }
 
   /**
@@ -328,11 +721,11 @@ export class NfeClient {
    * });
    * ```
    *
-   * @example With only address API key
+   * @example With only data API key
    * ```typescript
-   * // Only use address lookup, no main API access
+   * // Only use data services (address lookup, CT-e), no main API access
    * const nfe = new NfeClient({
-   *   addressApiKey: 'address-api-key'
+   *   dataApiKey: 'data-api-key'
    * });
    * await nfe.addresses.lookupByPostalCode('01310-100');
    * ```
@@ -380,10 +773,10 @@ export class NfeClient {
    */
   private getAddressHttpClient(): HttpClient {
     if (!this._addressHttp) {
-      const apiKey = this.resolveAddressApiKey();
+      const apiKey = this.resolveDataApiKey();
       if (!apiKey) {
         throw new ConfigurationError(
-          'API key required for Addresses. Set "addressApiKey" or "apiKey" in config, or NFE_ADDRESS_API_KEY/NFE_API_KEY environment variable.'
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
         );
       }
       const httpConfig = buildHttpConfig(
@@ -408,16 +801,108 @@ export class NfeClient {
   }
 
   /**
-   * Resolve the Address API key using fallback chain
-   * Order: addressApiKey → apiKey → NFE_ADDRESS_API_KEY → NFE_API_KEY
+   * Resolve the data API key using fallback chain
+   * Order: dataApiKey → apiKey → NFE_DATA_API_KEY → NFE_API_KEY
    */
-  private resolveAddressApiKey(): string | undefined {
+  private resolveDataApiKey(): string | undefined {
     return (
-      this.config.addressApiKey ||
+      this.config.dataApiKey ||
       this.config.apiKey ||
-      this.getEnvironmentVariable('NFE_ADDRESS_API_KEY') ||
+      this.getEnvironmentVariable('NFE_DATA_API_KEY') ||
       this.getEnvironmentVariable('NFE_API_KEY')
     );
+  }
+
+  /**
+   * Get or create the CT-e API HTTP client
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getCteHttpClient(): HttpClient {
+    if (!this._cteHttp) {
+      const apiKey = this.resolveDataApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        CTE_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._cteHttp = new HttpClient(httpConfig);
+    }
+    return this._cteHttp;
+  }
+
+  /**
+   * Get or create the NF-e Query API HTTP client (nfe.api.nfe.io)
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getNfeQueryHttpClient(): HttpClient {
+    if (!this._nfeQueryHttp) {
+      const apiKey = this.resolveDataApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        NFE_QUERY_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._nfeQueryHttp = new HttpClient(httpConfig);
+    }
+    return this._nfeQueryHttp;
+  }
+
+  /**
+   * Get or create the Legal Entity API HTTP client (legalentity.api.nfe.io)
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getLegalEntityHttpClient(): HttpClient {
+    if (!this._legalEntityHttp) {
+      const apiKey = this.resolveDataApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        LEGAL_ENTITY_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._legalEntityHttp = new HttpClient(httpConfig);
+    }
+    return this._legalEntityHttp;
+  }
+
+  /**
+   * Get or create the Natural Person API HTTP client (naturalperson.api.nfe.io)
+   * @throws {ConfigurationError} If no API key is configured
+   */
+  private getNaturalPersonHttpClient(): HttpClient {
+    if (!this._naturalPersonHttp) {
+      const apiKey = this.resolveDataApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        NATURAL_PERSON_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._naturalPersonHttp = new HttpClient(httpConfig);
+    }
+    return this._naturalPersonHttp;
   }
 
   // --------------------------------------------------------------------------
@@ -427,7 +912,7 @@ export class NfeClient {
   private validateAndNormalizeConfig(config: NfeConfig): RequiredNfeConfig {
     // API keys are now optional - validated lazily when resources are accessed
     const apiKey = config.apiKey?.trim() || undefined;
-    const addressApiKey = config.addressApiKey?.trim() || undefined;
+    const dataApiKey = config.dataApiKey?.trim() || undefined;
 
     // Normalize environment
     const environment = config.environment || 'production';
@@ -446,7 +931,7 @@ export class NfeClient {
 
     const normalizedConfig: RequiredNfeConfig = {
       apiKey,
-      addressApiKey,
+      dataApiKey,
       environment,
       baseUrl: config.baseUrl || this.getDefaultBaseUrl(),
       timeout: config.timeout || 30000,
@@ -543,8 +1028,8 @@ export class NfeClient {
     if (normalizedConfig.apiKey === undefined && this.config.apiKey !== undefined && newConfig.apiKey === undefined) {
       normalizedConfig.apiKey = this.config.apiKey;
     }
-    if (normalizedConfig.addressApiKey === undefined && this.config.addressApiKey !== undefined && newConfig.addressApiKey === undefined) {
-      normalizedConfig.addressApiKey = this.config.addressApiKey;
+    if (normalizedConfig.dataApiKey === undefined && this.config.dataApiKey !== undefined && newConfig.dataApiKey === undefined) {
+      normalizedConfig.dataApiKey = this.config.dataApiKey;
     }
 
     // Update internal config
@@ -553,12 +1038,14 @@ export class NfeClient {
     // Clear cached HTTP clients and resources so they're recreated with new config
     this._http = undefined;
     this._addressHttp = undefined;
+    this._cteHttp = undefined;
     this._serviceInvoices = undefined;
     this._companies = undefined;
     this._legalPeople = undefined;
     this._naturalPeople = undefined;
     this._webhooks = undefined;
     this._addresses = undefined;
+    this._transportationInvoices = undefined;
   }
 
   /**

@@ -5,6 +5,205 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.1.0] - 2026-02-22
+
+### 🎉 Expansão Massiva de Recursos - 10 Novos Recursos Implementados
+
+Esta release representa uma expansão significativa do SDK, transformando-o de uma solução focada em NFS-e para uma plataforma completa de gestão de documentos fiscais eletrônicos brasileiros.
+
+### ✨ Novos Recursos
+
+#### 🚚 CT-e - Conhecimento de Transporte Eletrônico (`transportationInvoices`)
+
+- **Consulta via Distribuição DFe**: Acesso a CT-e recebidos automaticamente
+- **Habilitação/Desabilitação**: Ativar ou desativar busca automática de CT-e para empresas
+- **Configuração de NSU**: Iniciar busca a partir de NSU específico ou data
+- **Download de XML**: Baixar XML do CT-e e eventos associados
+- **Consulta por Chave**: Buscar CT-e específico por chave de acesso (44 dígitos)
+- **Eventos**: Consultar e baixar XML de eventos do CT-e
+
+**Exemplos:** `examples/transportation-invoices.js`
+
+#### 📥 NF-e de Entrada - Distribuição (`inboundProductInvoices`)
+
+- **Consulta de NF-e Recebidas**: Acesso a NF-e via Distribuição DFe
+- **Manifestação Automática**: Configurar manifestação automática (Ciência, Confirmação, etc.)
+- **Múltiplos Ambientes**: Suporte a Produção e Homologação SEFAZ
+- **Download de XML Completo**: Baixar XML completo da NF-e
+- **Consulta Detalhada**: Buscar por chave de acesso com informações completas
+- **Gestão de Configuração**: Ativar/desativar busca automática por empresa
+
+**Exemplos:** `examples/inbound-product-invoices.js`
+
+#### 📋 Consulta NF-e por Chave (`productInvoiceQuery`)
+
+- **Busca Detalhada**: Consultar NF-e emitida por chave de acesso (44 dígitos)
+- **Informações Completas**: Emitente, destinatário, itens, impostos, transporte, pagamento
+- **Eventos Associados**: Consultar cancelamento, carta de correção, etc.
+- **Validação**: Verificar situação da NF-e na SEFAZ
+
+**Exemplos:** `examples/product-invoice-query.js`
+
+#### 🧾 Consulta CFe-SAT - Cupom Fiscal Eletrônico (`consumerInvoiceQuery`)
+
+- **Consulta por Chave**: Buscar cupom fiscal SAT por chave de acesso
+- **Informações de Venda**: Emitente, comprador, itens, pagamento
+- **Impostos Detalhados**: ICMS, PIS/PASEP, COFINS, ISSQN por item
+- **Validação de Status**: Verificar status do cupom fiscal
+
+**Exemplos:** `examples/consumer-invoice-query.js`
+
+#### 🏢 Consulta CNPJ - Legal Entity Lookup (`legalEntityLookup`)
+
+- **Informações Básicas**: Razão social, nome fantasia, regime tributário, porte, status
+- **Inscrições Estaduais por Estado**: Consultar IE específica de qualquer estado
+- **IE para Nota Fiscal**: Obter IE válida para emissão de NF-e/NFS-e
+- **Dados Cadastrais Completos**: Endereço, telefone, atividades econômicas, sócios
+- **Validação de CNPJ**: Verificar se CNPJ está ativo e regular
+
+**Exemplos:** `examples/cnpj-lookup.js`
+
+#### 👤 Consulta CPF - Natural Person Lookup (`naturalPersonLookup`)
+
+- **Validação de CPF**: Verificar situação cadastral na Receita Federal
+- **Status Detalhado**: Regular, Pendente de Regularização, Cancelado, Suspenso, etc.
+- **Integração com Cadastro**: Validar CPF antes de criar pessoa física
+
+**Exemplos:** `examples/cpf-lookup.js`
+
+#### 📊 NF-e de Produto - Emissão (`productInvoices`)
+
+- **Criação de NF-e**: Emitir Nota Fiscal Eletrônica de Produto
+- **Cancelamento**: Cancelar NF-e com justificativa
+- **Carta de Correção**: Enviar eventos de correção
+- **Download de Documentos**: Baixar PDF e XML da NF-e
+- **Consulta de Status**: Verificar situação da NF-e
+- **Gestão de Eventos**: Consultar todos os eventos associados
+
+**Exemplos:** `examples/product-invoices.js`
+
+#### 🧮 Cálculo de Impostos (`taxCalculation`)
+
+- **Cálculo Automático**: ICMS, IPI, PIS, COFINS, Imposto de Importação
+- **Múltiplos Itens**: Calcular impostos para vários produtos em uma requisição
+- **Regimes Tributários**: Suporte a Simples Nacional, Lucro Real, Lucro Presumido
+- **Origem e Destino**: Cálculo considerando estados de origem e destino
+- **Detalhamento por Item**: Impostos calculados individualmente para cada item
+
+**Exemplos:** `examples/tax-calculation.js`
+
+#### 📖 Códigos Auxiliares de Tributação (`taxCodes`)
+
+- **Lista de CFOP**: Códigos Fiscais de Operações e Prestações
+- **Lista de NCM**: Nomenclatura Comum do Mercosul
+- **Origens de Mercadoria**: Códigos de origem (0-8)
+- **Exportação para CSV**: Exportar listas completas
+
+**API:** Métodos `listCfop()`, `listNcm()`, `listOrigins()`
+
+#### 🗺️ Inscrições Estaduais por Estado (`stateTaxes`)
+
+- **Lista por Estado**: Obter todas as IE de uma empresa em um estado específico
+- **Busca por CNPJ e Estado**: Consultar IE específica
+- **Validação**: Verificar IE ativas e válidas
+
+**Exemplos:** `examples/state-taxes.js`
+
+### 🔧 Melhorias
+
+#### Configuração Unificada
+- **Novo parâmetro `dataApiKey`**: Unifica `addressApiKey` e `cteApiKey` em uma única chave
+- **Múltiplos Hosts de API**: Suporte a 4 hosts diferentes (api.nfe.io, api.nfse.io, address.api.nfe.io, nfe.api.nfe.io)
+- **Fallback Automático**: `dataApiKey` faz fallback para `apiKey` se não especificado
+
+#### HTTP Client
+- **Multi-API Support**: HTTP clients especializados para cada API externa
+- **Lazy Loading**: Clientes HTTP criados apenas quando necessários
+- **Configuração Flexível**: Base URLs configuráveis por tipo de API
+
+#### TypeScript
+- **227+ Novos Tipos**: Tipos completos para todos os 10 novos recursos
+- **Enums Abrangentes**: Estados brasileiros, status de documentos, métodos de pagamento, regimes tributários
+- **Exportações Públicas**: Todos os tipos disponíveis para consumo externo
+
+### 📝 Documentação
+
+- **README.md**: Adicionadas seções completas para todos os 10 novos recursos (+411 linhas)
+- **API.md**: Documentação detalhada de cada método novo (+1,212 linhas)
+- **Exemplos Práticos**: 9 novos arquivos de exemplo com casos de uso reais
+- **JSDoc Completo**: Documentação inline em todos os métodos públicos
+
+### 🧪 Testes
+
+- **11 Novos Arquivos de Teste**: Cobertura completa dos novos recursos (+3,882 linhas)
+- **Testes Unitários**: Validação de parâmetros, tratamento de erros, mocks de API
+- **Integração Multi-API**: Testes para diferentes hosts e configurações
+- **Validação de Tipos**: Testes de TypeScript para garantir type-safety
+
+### 🐛 Correções
+
+- **CI/CD**: Adicionados triggers para branches `bugfix/*` e `chore/*`
+- **.gitignore**: Corrigida entrada do diretório `client-python`
+- **.gitignore**: Removidos arquivos de teste obsoletos
+- **OpenAPI Specs**: Renomeado `cpf-api.yaml` para `consulta-cpf.yaml` para consistência
+- **Generated Files**: Atualizados timestamps de regeneração dos tipos OpenAPI
+- **Documentação**: Corrigidos headers de seção para NF-e de Produto e NF-e de Entrada
+
+### ⚠️ Mudanças de Configuração (Deprecação)
+
+#### Parâmetros Deprecados (Ainda Funcionam com Fallback)
+- `addressApiKey` → use `dataApiKey`
+- `cteApiKey` → use `dataApiKey`
+
+**Nota:** Os parâmetros antigos ainda funcionam, mas é recomendado migrar para `dataApiKey` para unificar a configuração.
+
+#### Exemplo de Migração
+```typescript
+// ❌ Antes (ainda funciona, mas deprecado)
+const nfe = new NfeClient({
+  apiKey: 'sua-chave-principal',
+  addressApiKey: 'chave-consultas',
+  cteApiKey: 'chave-consultas'
+});
+
+// ✅ Agora (recomendado)
+const nfe = new NfeClient({
+  apiKey: 'sua-chave-principal',
+  dataApiKey: 'chave-consultas'  // Unificado
+});
+```
+
+### 📊 Estatísticas da Release
+
+- **Arquivos Modificados**: 58 arquivos
+- **Linhas Adicionadas**: +14,176
+- **Linhas Removidas**: -102
+- **Crescimento de Recursos**: 5 → 15 (+200%)
+- **Novos Tipos Exportados**: +227 tipos
+- **Commits**: 17 commits
+- **Período de Desenvolvimento**: 16/02/2026 - 22/02/2026
+
+### 🚀 Recursos Totais Disponíveis
+
+1. ✅ **Service Invoices** - NFS-e (Notas Fiscais de Serviço)
+2. ✅ **Companies** - Gestão de Empresas
+3. ✅ **Legal People** - Pessoas Jurídicas (Tomadores/Prestadores)
+4. ✅ **Natural People** - Pessoas Físicas
+5. ✅ **Webhooks** - Notificações de Eventos
+6. ✅ **Addresses** - Consulta de CEP
+7. ✅ **Transportation Invoices** - CT-e (Transporte) 🆕
+8. ✅ **Inbound Product Invoices** - NF-e de Entrada 🆕
+9. ✅ **Product Invoice Query** - Consulta NF-e 🆕
+10. ✅ **Consumer Invoice Query** - Consulta CFe-SAT 🆕
+11. ✅ **Legal Entity Lookup** - Consulta CNPJ 🆕
+12. ✅ **Natural Person Lookup** - Consulta CPF 🆕
+13. ✅ **Product Invoices** - NF-e de Produto 🆕
+14. ✅ **Tax Calculation** - Cálculo de Impostos 🆕
+15. ✅ **Tax Codes** - Códigos Auxiliares 🆕
+16. ✅ **State Taxes** - Inscrições Estaduais 🆕
+
+---
+
 ## [3.0.2] - 2026-01-19
 
 ### 🐛 Correções

@@ -165,6 +165,18 @@ Demonstra todos os recursos disponíveis no SDK.
 ### **jsdoc-intellisense-demo.ts** - IntelliSense Demo
 Demonstra autocompletar e tipos do editor.
 
+### **tax-calculation.js** - Cálculo de Impostos 🧮
+Demonstra o Motor de Cálculo de Tributos para operações com produtos:
+- ✅ Listar códigos de operação e perfis fiscais disponíveis
+- ✅ Enviar requisição de cálculo de impostos
+- ✅ Inspecionar detalhamento por item (ICMS, PIS, COFINS, IPI, II)
+
+```bash
+node examples/tax-calculation.js
+```
+
+**Requer**: `NFE_TENANT_ID` no `.env.test` com o ID da subscription/conta.
+
 ---
 
 ## 📖 Ordem Recomendada de Execução

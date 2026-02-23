@@ -360,18 +360,417 @@ const filtrado = await nfe.addresses.search({
 });
 ```
 
-> **Nota:** A API de Endereços usa um host separado (`address.api.nfe.io`). Você pode configurar uma chave API específica com `addressApiKey`, ou o SDK usará `apiKey` como fallback.
+> **Nota:** A API de Endereços usa um host separado (`address.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
+#### 🚚 Notas de Transporte - CT-e (`nfe.transportationInvoices`)
+
+Consultar CT-e (Conhecimento de Transporte Eletrônico) via Distribuição DFe:
+
+```typescript
+// Ativar busca automática de CT-e para uma empresa
+const settings = await nfe.transportationInvoices.enable('empresa-id');
+console.log('Status:', settings.status);
+console.log('Iniciando do NSU:', settings.startFromNsu);
+
+// Ativar a partir de um NSU específico
+const settings = await nfe.transportationInvoices.enable('empresa-id', {
+  startFromNsu: 12345
+});
+
+// Ativar a partir de uma data específica
+const settings = await nfe.transportationInvoices.enable('empresa-id', {
+  startFromDate: '2024-01-01T00:00:00Z'
+});
+
+// Verificar configurações atuais
+const config = await nfe.transportationInvoices.getSettings('empresa-id');
+console.log('Busca ativa:', config.status);
+
+// Desativar busca automática
+await nfe.transportationInvoices.disable('empresa-id');
+
+// Consultar CT-e por chave de acesso (44 dígitos)
+const cte = await nfe.transportationInvoices.retrieve(
+  'empresa-id',
+  '35240112345678000190570010000001231234567890'
+);
+console.log('Remetente:', cte.nameSender);
+console.log('Valor:', cte.totalInvoiceAmount);
+console.log('Emissão:', cte.issuedOn);
+
+// Baixar XML do CT-e
+const xml = await nfe.transportationInvoices.downloadXml(
+  'empresa-id',
+  '35240112345678000190570010000001231234567890'
+);
+fs.writeFileSync('cte.xml', xml);
+
+// Consultar evento do CT-e
+const evento = await nfe.transportationInvoices.getEvent(
+  'empresa-id',
+  '35240112345678000190570010000001231234567890',
+  'chave-evento'
+);
+
+// Baixar XML do evento
+const eventoXml = await nfe.transportationInvoices.downloadEventXml(
+  'empresa-id',
+  '35240112345678000190570010000001231234567890',
+  'chave-evento'
+);
+```
+
+> **Nota:** A API de CT-e usa um host separado (`api.nfse.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
+**Pré-requisitos:**
+- Empresa deve estar cadastrada com certificado digital A1 válido
+- Webhook deve estar configurado para receber notificações de CT-e
+
+#### 📥 NF-e de Entrada - Distribuição (`nfe.inboundProductInvoices`)
+
+Consultar NF-e (Nota Fiscal Eletrônica de Produto) recebidas via Distribuição NF-e:
+
+```typescript
+// Ativar busca automática de NF-e para uma empresa
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('empresa-id', {
+  environmentSEFAZ: 'Production',
+  webhookVersion: '2',
+});
+console.log('Status:', settings.status);
+
+// Ativar a partir de um NSU específico
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('empresa-id', {
+  startFromNsu: '999999',
+  environmentSEFAZ: 'Production',
+});
+
+// Verificar configurações atuais
+const config = await nfe.inboundProductInvoices.getSettings('empresa-id');
+console.log('Busca ativa:', config.status);
+
+// Desativar busca automática
+await nfe.inboundProductInvoices.disableAutoFetch('empresa-id');
+
+// Consultar NF-e por chave de acesso - formato webhook v2 (recomendado)
+const nfe_doc = await nfe.inboundProductInvoices.getProductInvoiceDetails(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890'
+);
+console.log('Emissor:', nfe_doc.issuer?.name);
+console.log('Valor:', nfe_doc.totalInvoiceAmount);
+
+// Baixar XML da NF-e
+const xml = await nfe.inboundProductInvoices.getXml(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('nfe.xml', xml);
+
+// Baixar PDF (DANFE)
+const pdf = await nfe.inboundProductInvoices.getPdf(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890'
+);
+
+// Enviar manifestação (Ciência da Operação por padrão)
+await nfe.inboundProductInvoices.manifest(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890'
+);
+
+// Manifestar com evento específico
+await nfe.inboundProductInvoices.manifest(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890',
+  210220 // Confirmação da Operação
+);
+
+// Consultar evento da NF-e
+const evento = await nfe.inboundProductInvoices.getEventDetails(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890',
+  'chave-evento'
+);
+
+// Baixar XML do evento
+const eventoXml = await nfe.inboundProductInvoices.getEventXml(
+  'empresa-id',
+  '35240112345678000190550010000001231234567890',
+  'chave-evento'
+);
+
+// Reprocessar webhook
+await nfe.inboundProductInvoices.reprocessWebhook('empresa-id', '35240...');
+```
+
+> **Nota:** A API de NF-e Distribuição usa um host separado (`api.nfse.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
+**Pré-requisitos:**
+- Empresa deve estar cadastrada com certificado digital A1 válido
+- Webhook deve estar configurado para receber notificações de NF-e
+
+**Tipos de Manifestação:**
+
+| Código | Evento |
+|--------|--------|
+| `210210` | Ciência da Operação (padrão) |
+| `210220` | Confirmação da Operação |
+| `210240` | Operação não Realizada |
+
+#### 📦 NF-e de Produto - Emissão (`nfe.productInvoices`)
+
+Ciclo completo de gestão de NF-e (Nota Fiscal Eletrônica de Produto) — emissão, listagem, consulta, cancelamento, carta de correção (CC-e), inutilização e download de arquivos (PDF/XML):
+
+```typescript
+// Emitir NF-e (assíncrono — retorna 202)
+const result = await nfe.productInvoices.create('empresa-id', {
+  operationNature: 'Venda de mercadoria',
+  operationType: 'Outgoing',
+  buyer: { name: 'Empresa LTDA', federalTaxNumber: 12345678000190 },
+  items: [{ code: 'PROD-001', description: 'Produto X', quantity: 1, unitAmount: 100 }],
+  payment: [{ paymentDetail: [{ method: 'Cash', amount: 100 }] }],
+});
+
+// Listar NF-e (environment é obrigatório)
+const invoices = await nfe.productInvoices.list('empresa-id', {
+  environment: 'Production',
+  limit: 10,
+});
+
+// Consultar NF-e por ID
+const invoice = await nfe.productInvoices.retrieve('empresa-id', 'invoice-id');
+
+// Cancelar NF-e (assíncrono)
+await nfe.productInvoices.cancel('empresa-id', 'invoice-id', 'Motivo do cancelamento');
+
+// Download de PDF e XML
+const pdf = await nfe.productInvoices.downloadPdf('empresa-id', 'invoice-id');
+const xml = await nfe.productInvoices.downloadXml('empresa-id', 'invoice-id');
+
+// Carta de correção (CC-e) — razão de 15 a 1.000 caracteres
+await nfe.productInvoices.sendCorrectionLetter('empresa-id', 'invoice-id',
+  'Correcao do endereco do destinatario conforme novo cadastro');
+
+// Inutilizar faixa de numeração
+await nfe.productInvoices.disableRange('empresa-id', {
+  environment: 'Production',
+  serie: 1,
+  state: 'SP',
+  beginNumber: 100,
+  lastNumber: 110,
+});
+```
+
+> **Nota:** Operações de emissão, cancelamento, CC-e e inutilização são assíncronas — retornam 202/204. Conclusão é notificada via webhooks.
+
+#### 🏛️ Inscrições Estaduais (`nfe.stateTaxes`)
+
+CRUD de inscrições estaduais (IE) — configuração necessária para emissão de NF-e de produto:
+
+```typescript
+// Listar inscrições estaduais
+const taxes = await nfe.stateTaxes.list('empresa-id');
+
+// Criar inscrição estadual
+const tax = await nfe.stateTaxes.create('empresa-id', {
+  taxNumber: '123456789',
+  serie: 1,
+  number: 1,
+  code: 'sP',
+  environmentType: 'production',
+  type: 'nFe',
+});
+
+// Consultar, atualizar e excluir
+const retrieved = await nfe.stateTaxes.retrieve('empresa-id', 'state-tax-id');
+await nfe.stateTaxes.update('empresa-id', 'state-tax-id', { serie: 2 });
+await nfe.stateTaxes.delete('empresa-id', 'state-tax-id');
+```
+
+> **Nota:** Usa o host `api.nfse.io`. Configure `dataApiKey` para chave separada, ou o SDK usará `apiKey` como fallback.
+
+#### 🔍 Consulta de NF-e por Chave de Acesso (`nfe.productInvoiceQuery`)
+
+Consultar NF-e (Nota Fiscal Eletrônica de Produto) diretamente na SEFAZ por chave de acesso. Recurso somente leitura sem necessidade de escopo de empresa:
+
+```typescript
+// Consultar dados completos da NF-e
+const invoice = await nfe.productInvoiceQuery.retrieve(
+  '35240112345678000190550010000001231234567890'
+);
+console.log('Status:', invoice.currentStatus);
+console.log('Emissor:', invoice.issuer?.name);
+console.log('Valor:', invoice.totals?.icms?.invoiceAmount);
+
+// Baixar DANFE (PDF)
+const pdf = await nfe.productInvoiceQuery.downloadPdf(
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('danfe.pdf', pdf);
+
+// Baixar XML da NF-e
+const xml = await nfe.productInvoiceQuery.downloadXml(
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('nfe.xml', xml);
+
+// Listar eventos fiscais (cancelamentos, correções, manifestações)
+const result = await nfe.productInvoiceQuery.listEvents(
+  '35240112345678000190550010000001231234567890'
+);
+for (const event of result.events ?? []) {
+  console.log(event.description, event.authorizedOn);
+}
+```
+
+> **Nota:** A API de Consulta NF-e usa um host separado (`nfe.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
+#### 🧾 Consulta de Cupom Fiscal Eletrônico - CFe-SAT (`nfe.consumerInvoiceQuery`)
+
+Consultar CFe-SAT (Cupom Fiscal Eletrônico) por chave de acesso. Recurso somente leitura sem necessidade de escopo de empresa:
+
+```typescript
+// Consultar dados completos do cupom fiscal
+const coupon = await nfe.consumerInvoiceQuery.retrieve(
+  '35240112345678000190590000000012341234567890'
+);
+console.log('Status:', coupon.currentStatus);   // 'Authorized'
+console.log('Emissor:', coupon.issuer?.name);
+console.log('Valor:', coupon.totals?.couponAmount);
+
+// Baixar XML do CFe
+const xml = await nfe.consumerInvoiceQuery.downloadXml(
+  '35240112345678000190590000000012341234567890'
+);
+fs.writeFileSync('cfe.xml', xml);
+```
+
+> **Nota:** A API de Consulta CFe-SAT usa o mesmo host (`nfe.api.nfe.io`) e chave de API que a consulta de NF-e.
+
+#### 🏢 Consulta CNPJ / Pessoa Jurídica (`nfe.legalEntityLookup`)
+
+Consultar dados cadastrais de empresas brasileiras (CNPJ) na Receita Federal e nas SEFAZs estaduais:
+
+```typescript
+// Consulta básica por CNPJ (aceita com ou sem pontuação)
+const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+console.log('Razão Social:', result.legalEntity?.name);
+console.log('Nome Fantasia:', result.legalEntity?.tradeName);
+console.log('Status:', result.legalEntity?.status);        // 'Active'
+console.log('Porte:', result.legalEntity?.size);            // 'ME', 'EPP', etc.
+console.log('Cidade:', result.legalEntity?.address?.city?.name);
+
+// Consulta com opções
+const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
+  updateAddress: false,    // Não atualizar endereço via Correios
+  updateCityCode: true,    // Atualizar código IBGE da cidade
+});
+
+// Consultar Inscrição Estadual (IE) por estado
+const ieSP = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+for (const tax of ieSP.legalEntity?.stateTaxes ?? []) {
+  console.log(`IE: ${tax.taxNumber} - Status: ${tax.status}`);
+  console.log(`  NFe: ${tax.nfe?.status}, CTe: ${tax.cte?.status}`);
+}
+
+// Avaliar IE para emissão de nota fiscal
+const invoice = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '12345678000190');
+for (const tax of invoice.legalEntity?.stateTaxes ?? []) {
+  if (tax.status === 'Abled') {
+    console.log(`Pode emitir com IE: ${tax.taxNumber}`);
+  }
+}
+
+// Obter melhor IE sugerida para emissão
+const sugestao = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '12345678000190');
+const melhorIE = sugestao.legalEntity?.stateTaxes?.[0];
+console.log('IE recomendada:', melhorIE?.taxNumber);
+```
+
+> **Nota:** A API de Consulta CNPJ usa um host separado (`legalentity.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
+#### 👤 Consulta CPF / Pessoa Física (`nfe.naturalPersonLookup`)
+
+Consultar a situação cadastral de CPF (pessoa física) na Receita Federal:
+
+```typescript
+// Consulta com CPF e data de nascimento
+const result = await nfe.naturalPersonLookup.getStatus('123.456.789-01', '1990-01-15');
+console.log('Nome:', result.name);      // 'JOÃO DA SILVA'
+console.log('Status:', result.status);  // 'Regular'
+
+// Também aceita Date object
+const result = await nfe.naturalPersonLookup.getStatus('12345678901', new Date(1990, 0, 15));
+console.log('Situação Cadastral:', result.status);
+```
+
+> **Nota:** A API de Consulta CPF usa um host separado (`naturalperson.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+
+#### 🧮 Cálculo de Impostos (`nfe.taxCalculation`)
+
+Calcular todos os tributos aplicáveis (ICMS, ICMS-ST, PIS, COFINS, IPI, II) para operações com produtos usando o Motor de Cálculo de Tributos:
+
+```typescript
+// Calcular impostos de uma operação de venda
+const resultado = await nfe.taxCalculation.calculate('tenant-id', {
+  operationType: 'Outgoing',
+  issuer: { state: 'SP', taxRegime: 'RealProfit' },
+  recipient: { state: 'RJ' },
+  items: [{
+    id: 'item-1',
+    operationCode: 121,
+    origin: 'National',
+    ncm: '61091000',
+    quantity: 10,
+    unitAmount: 100.00
+  }]
+});
+
+for (const item of resultado.items ?? []) {
+  console.log(`Item ${item.id}: CFOP ${item.cfop}`);
+  console.log(`  ICMS: CST=${item.icms?.cst}, valor=${item.icms?.vICMS}`);
+  console.log(`  PIS: CST=${item.pis?.cst}, valor=${item.pis?.vPIS}`);
+  console.log(`  COFINS: CST=${item.cofins?.cst}, valor=${item.cofins?.vCOFINS}`);
+}
+```
+
+> **Nota:** A API de Cálculo de Impostos usa o host `api.nfse.io`. Configure `dataApiKey` para uma chave específica, ou o SDK usará `apiKey` como fallback.
+
+#### 📋 Códigos Auxiliares de Impostos (`nfe.taxCodes`)
+
+Consultar tabelas de referência necessárias para o cálculo de impostos:
+
+```typescript
+// Listar códigos de operação (natureza de operação)
+const codigos = await nfe.taxCodes.listOperationCodes({ pageIndex: 1, pageCount: 20 });
+for (const cod of codigos.items ?? []) {
+  console.log(`${cod.code} - ${cod.description}`);
+}
+
+// Listar finalidades de aquisição
+const finalidades = await nfe.taxCodes.listAcquisitionPurposes();
+
+// Listar perfis fiscais do emissor
+const perfisEmissor = await nfe.taxCodes.listIssuerTaxProfiles();
+
+// Listar perfis fiscais do destinatário
+const perfisDestinatario = await nfe.taxCodes.listRecipientTaxProfiles();
+```
+
+> **Nota:** Todas as listagens suportam paginação via `pageIndex` (1-based) e `pageCount` (padrão: 50).
+
+---
 
 ### Opções de Configuração
 
 ```typescript
 const nfe = new NfeClient({
-  // Chave API principal do NFE.io (opcional se usar apenas Addresses com addressApiKey)
+  // Chave API principal do NFE.io (operações com documentos fiscais)
   apiKey: 'sua-chave-api',
   
-  // Opcional: Chave API específica para consulta de endereços
+  // Opcional: Chave API para serviços de consulta (Endereços, CT-e, CNPJ, CPF)
   // Se não fornecida, usa apiKey como fallback
-  addressApiKey: 'sua-chave-address-api',
+  dataApiKey: 'sua-chave-data-api',
   
   // Opcional: Ambiente (padrão: 'production')
   environment: 'production', // ou 'sandbox'
@@ -399,12 +798,12 @@ O SDK suporta as seguintes variáveis de ambiente:
 | Variável | Descrição |
 |----------|-----------|
 | `NFE_API_KEY` | Chave API principal (fallback para `apiKey`) |
-| `NFE_ADDRESS_API_KEY` | Chave API para endereços (fallback para `addressApiKey`) |
+| `NFE_DATA_API_KEY` | Chave API para serviços de consulta (fallback para `dataApiKey`) |
 
 ```bash
 # Configurar via ambiente
 export NFE_API_KEY="sua-chave-api"
-export NFE_ADDRESS_API_KEY="sua-chave-address"
+export NFE_DATA_API_KEY="sua-chave-data"
 
 # Usar SDK sem passar chaves no código
 const nfe = new NfeClient({});

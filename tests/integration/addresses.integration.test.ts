@@ -5,7 +5,7 @@
  * Skip these tests in CI/CD unless API key is available.
  *
  * To run these tests:
- *   1. Set NFE_ADDRESS_API_KEY or NFE_API_KEY environment variable
+ *   1. Set NFE_DATA_API_KEY or NFE_API_KEY environment variable
  *   2. Run: npm run test:integration
  */
 
@@ -24,8 +24,8 @@ describe.skipIf(!shouldRun)('AddressesResource Integration', () => {
   beforeAll(() => {
     client = new NfeClient({
       apiKey: process.env.NFE_API_KEY,
-      addressApiKey:
-        process.env.NFE_ADDRESS_API_KEY ||
+      dataApiKey:
+        process.env.NFE_DATA_API_KEY ||
         process.env.INTEGRATION_TEST_API_KEY,
       environment: 'production',
     });
@@ -124,21 +124,21 @@ describe.skipIf(!shouldRun)('AddressesResource Integration', () => {
  * Tests for multi-API key configuration in integration
  */
 describe.skipIf(!shouldRun)('Multi-API Key Integration', () => {
-  it('should create client with only addressApiKey', () => {
+  it('should create client with only dataApiKey', () => {
     const client = new NfeClient({
-      addressApiKey: process.env.NFE_ADDRESS_API_KEY || process.env.NFE_API_KEY,
+      dataApiKey: process.env.NFE_DATA_API_KEY || process.env.NFE_API_KEY,
     });
 
     // Should be able to access addresses
     expect(() => client.addresses).not.toThrow();
   });
 
-  it('should make address API call with separate addressApiKey', async () => {
+  it('should make address API call with separate dataApiKey', async () => {
     const client = new NfeClient({
-      addressApiKey: process.env.NFE_ADDRESS_API_KEY || process.env.NFE_API_KEY,
+      dataApiKey: process.env.NFE_DATA_API_KEY || process.env.NFE_API_KEY,
     });
 
-    // This should work because we have addressApiKey
+    // This should work because we have dataApiKey
     const result = await client.addresses.lookupByPostalCode('01310100');
     expect(result).toBeDefined();
   });

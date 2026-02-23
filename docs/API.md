@@ -15,6 +15,16 @@ Complete API reference for the NFE.io Node.js SDK v3.
   - [Legal People](#legal-people)
   - [Natural People](#natural-people)
   - [Webhooks](#webhooks)
+  - [Transportation Invoices (CT-e)](#transportation-invoices-ct-e)
+  - [Inbound Product Invoices (NF-e Distribuição)](#inbound-product-invoices-nf-e-distribuição)
+  - [Product Invoice Query (Consulta NF-e)](#product-invoice-query-consulta-nf-e)
+  - [Consumer Invoice Query (Consulta CFe-SAT)](#consumer-invoice-query-consulta-cfe-sat)
+  - [Legal Entity Lookup (Consulta CNPJ)](#legal-entity-lookup-consulta-cnpj)
+  - [Natural Person Lookup (Consulta CPF)](#natural-person-lookup-consulta-cpf)
+  - [Tax Calculation (Cálculo de Impostos)](#tax-calculation-cálculo-de-impostos)
+  - [Tax Codes (Códigos Auxiliares)](#tax-codes-códigos-auxiliares)
+  - [Product Invoices (NF-e Emissão)](#product-invoices-nf-e-emissão)
+  - [State Taxes (Inscrições Estaduais)](#state-taxes-inscrições-estaduais)
 - [Types](#types)
 - [Error Handling](#error-handling)
 - [Advanced Usage](#advanced-usage)
@@ -1504,6 +1514,1200 @@ const events = await nfe.webhooks.getAvailableEvents();
 // ['invoice.issued', 'invoice.cancelled', ...]
 ```
 
+---
+
+### Transportation Invoices (CT-e)
+
+**Resource:** `nfe.transportationInvoices`
+
+Manage CT-e (Conhecimento de Transporte Eletrônico) documents via SEFAZ Distribuição DFe.
+
+> **Note:** This resource uses a separate API host (`api.nfse.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+**Prerequisites:**
+- Company must be registered with a valid A1 digital certificate
+- Webhook must be configured to receive CT-e notifications
+
+#### `enable(companyId: string, options?: EnableTransportationInvoiceOptions): Promise<TransportationInvoiceInboundSettings>`
+
+Enable automatic CT-e search for a company.
+
+```typescript
+// Enable with default settings
+const settings = await nfe.transportationInvoices.enable('company-id');
+
+// Enable starting from a specific NSU
+const settings = await nfe.transportationInvoices.enable('company-id', {
+  startFromNsu: 12345
+});
+
+// Enable starting from a specific date
+const settings = await nfe.transportationInvoices.enable('company-id', {
+  startFromDate: '2024-01-01T00:00:00Z'
+});
+```
+
+**Options:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `startFromNsu` | `number` | Start searching from this NSU number |
+| `startFromDate` | `string` | Start searching from this date (ISO 8601) |
+
+#### `disable(companyId: string): Promise<TransportationInvoiceInboundSettings>`
+
+Disable automatic CT-e search for a company.
+
+```typescript
+const settings = await nfe.transportationInvoices.disable('company-id');
+console.log('Status:', settings.status); // 'Disabled'
+```
+
+#### `getSettings(companyId: string): Promise<TransportationInvoiceInboundSettings>`
+
+Get current automatic CT-e search settings.
+
+```typescript
+const settings = await nfe.transportationInvoices.getSettings('company-id');
+console.log('Status:', settings.status);
+console.log('Start NSU:', settings.startFromNsu);
+console.log('Created:', settings.createdOn);
+```
+
+**Response:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `string` | Current status ('Active', 'Disabled', etc.) |
+| `startFromNsu` | `number` | Starting NSU number |
+| `startFromDate` | `string` | Starting date (if configured) |
+| `createdOn` | `string` | Creation timestamp |
+| `modifiedOn` | `string` | Last modification timestamp |
+
+#### `retrieve(companyId: string, accessKey: string): Promise<TransportationInvoiceMetadata>`
+
+Retrieve CT-e metadata by its 44-digit access key.
+
+```typescript
+const cte = await nfe.transportationInvoices.retrieve(
+  'company-id',
+  '35240112345678000190570010000001231234567890'
+);
+console.log('Sender:', cte.nameSender);
+console.log('CNPJ:', cte.federalTaxNumberSender);
+console.log('Amount:', cte.totalInvoiceAmount);
+console.log('Issued:', cte.issuedOn);
+```
+
+**Response:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `accessKey` | `string` | 44-digit access key |
+| `type` | `string` | Document type |
+| `status` | `string` | Document status |
+| `nameSender` | `string` | Sender company name |
+| `federalTaxNumberSender` | `string` | Sender CNPJ |
+| `totalInvoiceAmount` | `number` | Total invoice amount |
+| `issuedOn` | `string` | Issue date |
+| `receivedOn` | `string` | Receipt date |
+
+#### `downloadXml(companyId: string, accessKey: string): Promise<string>`
+
+Download CT-e XML content.
+
+```typescript
+const xml = await nfe.transportationInvoices.downloadXml(
+  'company-id',
+  '35240112345678000190570010000001231234567890'
+);
+fs.writeFileSync('cte.xml', xml);
+```
+
+#### `getEvent(companyId: string, accessKey: string, eventKey: string): Promise<TransportationInvoiceMetadata>`
+
+Retrieve CT-e event metadata.
+
+```typescript
+const event = await nfe.transportationInvoices.getEvent(
+  'company-id',
+  '35240112345678000190570010000001231234567890',
+  'event-key-123'
+);
+console.log('Event type:', event.type);
+console.log('Event status:', event.status);
+```
+
+#### `downloadEventXml(companyId: string, accessKey: string, eventKey: string): Promise<string>`
+
+Download CT-e event XML content.
+
+```typescript
+const eventXml = await nfe.transportationInvoices.downloadEventXml(
+  'company-id',
+  '35240112345678000190570010000001231234567890',
+  'event-key-123'
+);
+fs.writeFileSync('cte-event.xml', eventXml);
+```
+
+---
+
+### Inbound Product Invoices (NF-e Distribuição)
+
+**Resource:** `nfe.inboundProductInvoices`
+
+Query NF-e (Nota Fiscal Eletrônica de Produto) documents received via SEFAZ Distribuição NF-e.
+
+> **Note:** This resource uses a separate API host (`api.nfse.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+**Prerequisites:**
+- Company must be registered with a valid A1 digital certificate
+- Webhook must be configured to receive NF-e notifications
+
+#### `enableAutoFetch(companyId: string, options: EnableInboundOptions): Promise<InboundSettings>`
+
+Enable automatic NF-e inbound fetching for a company.
+
+```typescript
+// Enable with production environment and webhook v2
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('company-id', {
+  environmentSEFAZ: 'Production',
+  webhookVersion: '2',
+});
+
+// Enable starting from a specific NSU
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('company-id', {
+  startFromNsu: '999999',
+  environmentSEFAZ: 'Production',
+});
+
+// Enable with automatic manifesting
+const settings = await nfe.inboundProductInvoices.enableAutoFetch('company-id', {
+  environmentSEFAZ: 'Production',
+  automaticManifesting: { minutesToWaitAwarenessOperation: '30' },
+});
+```
+
+**Options:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `startFromNsu` | `string` | Start searching from this NSU number |
+| `startFromDate` | `string` | Start searching from this date (ISO 8601) |
+| `environmentSEFAZ` | `string \| null` | SEFAZ environment ('Production', etc.) |
+| `automaticManifesting` | `AutomaticManifesting` | Auto-manifest configuration |
+| `webhookVersion` | `string` | Webhook version ('1' or '2') |
+
+#### `disableAutoFetch(companyId: string): Promise<InboundSettings>`
+
+Disable automatic NF-e inbound fetching for a company.
+
+```typescript
+const settings = await nfe.inboundProductInvoices.disableAutoFetch('company-id');
+console.log('Status:', settings.status); // 'Inactive'
+```
+
+#### `getSettings(companyId: string): Promise<InboundSettings>`
+
+Get current automatic NF-e inbound settings.
+
+```typescript
+const settings = await nfe.inboundProductInvoices.getSettings('company-id');
+console.log('Status:', settings.status);
+console.log('Environment:', settings.environmentSEFAZ);
+console.log('Webhook version:', settings.webhookVersion);
+console.log('Start NSU:', settings.startFromNsu);
+```
+
+**Response (`InboundSettings`):**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `string` | Current status ('Active', 'Inactive', etc.) |
+| `startFromNsu` | `string` | Starting NSU number |
+| `startFromDate` | `string` | Starting date (if configured) |
+| `environmentSEFAZ` | `string \| null` | SEFAZ environment |
+| `automaticManifesting` | `AutomaticManifesting` | Auto-manifest configuration |
+| `webhookVersion` | `string` | Webhook version |
+| `companyId` | `string` | Company ID |
+| `createdOn` | `string` | Creation timestamp |
+| `modifiedOn` | `string` | Last modification timestamp |
+
+#### `getDetails(companyId: string, accessKey: string): Promise<InboundInvoiceMetadata>`
+
+Retrieve NF-e metadata by 44-digit access key (webhook v1 format).
+
+```typescript
+const nfeDoc = await nfe.inboundProductInvoices.getDetails(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+console.log('Issuer:', nfeDoc.issuer?.name);
+console.log('Amount:', nfeDoc.totalInvoiceAmount);
+console.log('Issued:', nfeDoc.issuedOn);
+```
+
+#### `getProductInvoiceDetails(companyId: string, accessKey: string): Promise<InboundProductInvoiceMetadata>`
+
+Retrieve NF-e metadata by 44-digit access key (webhook v2 format, recommended).
+
+```typescript
+const nfeDoc = await nfe.inboundProductInvoices.getProductInvoiceDetails(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+console.log('Issuer:', nfeDoc.issuer?.name);
+console.log('Amount:', nfeDoc.totalInvoiceAmount);
+console.log('Product invoices:', nfeDoc.productInvoices?.length);
+```
+
+**Response (`InboundInvoiceMetadata` / `InboundProductInvoiceMetadata`):**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | Document ID |
+| `accessKey` | `string` | 44-digit access key |
+| `nsu` | `string` | NSU number |
+| `nfeNumber` | `string` | NF-e number |
+| `issuer` | `InboundIssuer` | Issuer information |
+| `buyer` | `InboundBuyer` | Buyer information |
+| `totalInvoiceAmount` | `string` | Total amount |
+| `issuedOn` | `string` | Issue date |
+| `description` | `string` | Description |
+| `links` | `InboundLinks` | XML/PDF download links |
+| `productInvoices` | `InboundProductInvoice[]` | Product invoices (v2 only) |
+
+#### `getEventDetails(companyId: string, accessKey: string, eventKey: string): Promise<InboundInvoiceMetadata>`
+
+Retrieve NF-e event metadata (webhook v1 format).
+
+```typescript
+const event = await nfe.inboundProductInvoices.getEventDetails(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  'event-key-123'
+);
+```
+
+#### `getProductInvoiceEventDetails(companyId: string, accessKey: string, eventKey: string): Promise<InboundProductInvoiceMetadata>`
+
+Retrieve NF-e event metadata (webhook v2 format).
+
+```typescript
+const event = await nfe.inboundProductInvoices.getProductInvoiceEventDetails(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  'event-key-123'
+);
+```
+
+#### `getXml(companyId: string, accessKey: string): Promise<string>`
+
+Download NF-e XML content.
+
+```typescript
+const xml = await nfe.inboundProductInvoices.getXml(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('nfe.xml', xml);
+```
+
+#### `getEventXml(companyId: string, accessKey: string, eventKey: string): Promise<string>`
+
+Download NF-e event XML content.
+
+```typescript
+const eventXml = await nfe.inboundProductInvoices.getEventXml(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  'event-key-123'
+);
+fs.writeFileSync('nfe-event.xml', eventXml);
+```
+
+#### `getPdf(companyId: string, accessKey: string): Promise<string>`
+
+Download NF-e PDF (DANFE).
+
+```typescript
+const pdf = await nfe.inboundProductInvoices.getPdf(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+```
+
+#### `getJson(companyId: string, accessKey: string): Promise<InboundInvoiceMetadata>`
+
+Get NF-e data in JSON format.
+
+```typescript
+const json = await nfe.inboundProductInvoices.getJson(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+```
+
+#### `manifest(companyId: string, accessKey: string, tpEvent?: ManifestEventType): Promise<string>`
+
+Send a manifest event for an NF-e. Defaults to `210210` (Ciência da Operação).
+
+```typescript
+// Ciência da Operação (default)
+await nfe.inboundProductInvoices.manifest(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+
+// Confirmação da Operação
+await nfe.inboundProductInvoices.manifest(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  210220
+);
+
+// Operação não Realizada
+await nfe.inboundProductInvoices.manifest(
+  'company-id',
+  '35240112345678000190550010000001231234567890',
+  210240
+);
+```
+
+**Manifest Event Types:**
+
+| Code | Event |
+|------|-------|
+| `210210` | Ciência da Operação (awareness, default) |
+| `210220` | Confirmação da Operação (confirmation) |
+| `210240` | Operação não Realizada (operation not performed) |
+
+#### `reprocessWebhook(companyId: string, accessKeyOrNsu: string): Promise<InboundProductInvoiceMetadata>`
+
+Reprocess a webhook notification by access key or NSU.
+
+```typescript
+// By access key
+await nfe.inboundProductInvoices.reprocessWebhook(
+  'company-id',
+  '35240112345678000190550010000001231234567890'
+);
+
+// By NSU
+await nfe.inboundProductInvoices.reprocessWebhook(
+  'company-id',
+  '12345'
+);
+```
+
+---
+
+### Product Invoice Query (Consulta NF-e)
+
+**Resource:** `nfe.productInvoiceQuery`
+
+Query NF-e (Nota Fiscal Eletrônica) product invoices directly on SEFAZ by access key. This is a read-only resource that does not require company scope.
+
+> **Note:** This resource uses a separate API host (`nfe.api.nfe.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+#### `retrieve(accessKey: string): Promise<ProductInvoiceDetails>`
+
+Retrieve full product invoice details from SEFAZ by access key.
+
+```typescript
+const invoice = await nfe.productInvoiceQuery.retrieve(
+  '35240112345678000190550010000001231234567890'
+);
+console.log(invoice.currentStatus); // 'authorized'
+console.log(invoice.issuer?.name);
+console.log(invoice.totals?.icms?.invoiceAmount);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key (Chave de Acesso) |
+
+**Returns:** `ProductInvoiceDetails` — Full invoice details including issuer, buyer, items, totals, transport, and payment.
+
+**Throws:**
+- `ValidationError` if access key format is invalid
+- `NotFoundError` if no invoice matches the access key (HTTP 404)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `downloadPdf(accessKey: string): Promise<Buffer>`
+
+Download the DANFE PDF for a product invoice.
+
+```typescript
+const pdfBuffer = await nfe.productInvoiceQuery.downloadPdf(
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('danfe.pdf', pdfBuffer);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key |
+
+**Returns:** `Buffer` containing the PDF binary content.
+
+#### `downloadXml(accessKey: string): Promise<Buffer>`
+
+Download the raw NF-e XML for a product invoice.
+
+```typescript
+const xmlBuffer = await nfe.productInvoiceQuery.downloadXml(
+  '35240112345678000190550010000001231234567890'
+);
+fs.writeFileSync('nfe.xml', xmlBuffer);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key |
+
+**Returns:** `Buffer` containing the XML binary content.
+
+#### `listEvents(accessKey: string): Promise<ProductInvoiceEventsResponse>`
+
+List fiscal events (cancellations, corrections, manifestations) for a product invoice.
+
+```typescript
+const result = await nfe.productInvoiceQuery.listEvents(
+  '35240112345678000190550010000001231234567890'
+);
+for (const event of result.events ?? []) {
+  console.log(event.description, event.authorizedOn);
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key |
+
+**Returns:** `ProductInvoiceEventsResponse` with an array of fiscal events and query timestamp.
+
+---
+
+### Consumer Invoice Query (Consulta CFe-SAT)
+
+**Resource:** `nfe.consumerInvoiceQuery`
+
+Query CFe-SAT (Cupom Fiscal Eletrônico) consumer invoices by access key. This is a read-only resource that does not require company scope.
+
+> **Note:** This resource uses a separate API host (`nfe.api.nfe.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+#### `retrieve(accessKey: string): Promise<TaxCoupon>`
+
+Retrieve full CFe-SAT coupon details by access key.
+
+```typescript
+const coupon = await nfe.consumerInvoiceQuery.retrieve(
+  '35240112345678000190590000000012341234567890'
+);
+console.log(coupon.currentStatus); // 'Authorized'
+console.log(coupon.issuer?.name);
+console.log(coupon.totals?.couponAmount);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key (Chave de Acesso) |
+
+**Returns:** `TaxCoupon` — Full coupon details including issuer, buyer, items, totals, and payment.
+
+**Throws:**
+- `ValidationError` if access key format is invalid
+- `NotFoundError` if no coupon matches the access key (HTTP 404)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `downloadXml(accessKey: string): Promise<Buffer>`
+
+Download the raw CFe XML for a consumer invoice.
+
+```typescript
+const xmlBuffer = await nfe.consumerInvoiceQuery.downloadXml(
+  '35240112345678000190590000000012341234567890'
+);
+fs.writeFileSync('cfe.xml', xmlBuffer);
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `accessKey` | `string` | Yes | 44-digit numeric access key |
+
+**Returns:** `Buffer` containing the XML binary content.
+
+---
+
+### Legal Entity Lookup (Consulta CNPJ)
+
+**Resource:** `nfe.legalEntityLookup`
+
+Query Brazilian company (CNPJ) data from Receita Federal and state tax registries (SEFAZ). This is a read-only resource that does not require company scope.
+
+> **Note:** This resource uses a separate API host (`legalentity.api.nfe.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+
+#### `getBasicInfo(federalTaxNumber: string, options?: LegalEntityBasicInfoOptions): Promise<LegalEntityBasicInfoResponse>`
+
+Lookup basic company information by CNPJ from Receita Federal. Returns legal name, trade name, address, phone numbers, economic activities (CNAE), legal nature, partners, and registration status.
+
+```typescript
+const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+console.log(result.legalEntity?.name);       // 'EMPRESA LTDA'
+console.log(result.legalEntity?.status);      // 'Active'
+console.log(result.legalEntity?.address?.city?.name);
+
+// With options
+const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
+  updateAddress: false,
+  updateCityCode: true,
+});
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation (e.g., `"12345678000190"` or `"12.345.678/0001-90"`) |
+| `options` | `LegalEntityBasicInfoOptions` | No | Lookup options |
+
+**Options:**
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `updateAddress` | `boolean` | `true` | Update address from postal service data |
+| `updateCityCode` | `boolean` | `false` | Update only the city IBGE code when `updateAddress` is `false` |
+
+**Returns:** `LegalEntityBasicInfoResponse` — Company basic information including address, phones, activities, partners.
+
+**Throws:**
+- `ValidationError` if CNPJ format is invalid (not 14 digits after stripping punctuation)
+- `NotFoundError` if no company found for the given CNPJ (HTTP 404)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `getStateTaxInfo(state: string, federalTaxNumber: string): Promise<LegalEntityStateTaxResponse>`
+
+Lookup state tax registration (Inscrição Estadual) by CNPJ and state. Returns tax regime, legal nature, and state tax registration details including fiscal document indicators (NFe, NFSe, CTe, NFCe).
+
+```typescript
+const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+console.log(result.legalEntity?.taxRegime);  // 'SimplesNacional'
+
+for (const tax of result.legalEntity?.stateTaxes ?? []) {
+  console.log(`IE: ${tax.taxNumber} — Status: ${tax.status}`);
+  console.log(`  NFe: ${tax.nfe?.status}, NFSe: ${tax.nfse?.status}`);
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `state` | `string` | Yes | Brazilian state code (e.g., `"SP"`, `"RJ"`, `"MG"`). Case-insensitive. |
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation |
+
+**Returns:** `LegalEntityStateTaxResponse` — State tax registration information.
+
+**Throws:**
+- `ValidationError` if state code is invalid or CNPJ format is invalid
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `getStateTaxForInvoice(state: string, federalTaxNumber: string): Promise<LegalEntityStateTaxForInvoiceResponse>`
+
+Evaluate state tax registration for invoice issuance. Returns extended status information (including `UnabledTemp`, `UnabledNotConfirmed`) useful for determining whether product invoices (NF-e) can be issued.
+
+```typescript
+const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '12345678000190');
+for (const tax of result.legalEntity?.stateTaxes ?? []) {
+  if (tax.status === 'Abled') {
+    console.log(`Can issue invoices with IE: ${tax.taxNumber}`);
+  }
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `state` | `string` | Yes | Brazilian state code. Case-insensitive. |
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation |
+
+**Returns:** `LegalEntityStateTaxForInvoiceResponse` — State tax data with extended status for invoice evaluation.
+
+**Throws:**
+- `ValidationError` if state code is invalid or CNPJ format is invalid
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### `getSuggestedStateTaxForInvoice(state: string, federalTaxNumber: string): Promise<LegalEntityStateTaxForInvoiceResponse>`
+
+Get the best (suggested) state tax registration for invoice issuance. When multiple registrations are enabled in a state, NFE.io applies evaluation criteria to recommend the optimal IE.
+
+```typescript
+const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '12345678000190');
+const bestIE = result.legalEntity?.stateTaxes?.[0];
+if (bestIE) {
+  console.log(`Recommended IE: ${bestIE.taxNumber} (${bestIE.status})`);
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `state` | `string` | Yes | Brazilian state code. Case-insensitive. |
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation |
+
+**Returns:** `LegalEntityStateTaxForInvoiceResponse` — Suggested state tax data prioritized by NFE.io criteria.
+
+**Throws:**
+- `ValidationError` if state code is invalid or CNPJ format is invalid
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### Types
+
+```typescript
+type BrazilianState =
+  | 'AC' | 'AL' | 'AM' | 'AP' | 'BA' | 'CE' | 'DF' | 'ES' | 'GO'
+  | 'MA' | 'MG' | 'MS' | 'MT' | 'PA' | 'PB' | 'PE' | 'PI' | 'PR'
+  | 'RJ' | 'RN' | 'RO' | 'RR' | 'RS' | 'SC' | 'SE' | 'SP' | 'TO'
+  | 'EX' | 'NA';
+
+interface LegalEntityBasicInfoOptions {
+  updateAddress?: boolean;
+  updateCityCode?: boolean;
+}
+
+interface LegalEntityBasicInfoResponse {
+  legalEntity?: LegalEntityBasicInfo;
+}
+
+interface LegalEntityBasicInfo {
+  tradeName?: string;
+  name?: string;
+  federalTaxNumber?: number;
+  size?: 'Unknown' | 'ME' | 'EPP' | 'DEMAIS';
+  openedOn?: string;
+  address?: LegalEntityAddress;
+  phones?: LegalEntityPhone[];
+  status?: 'Unknown' | 'Active' | 'Suspended' | 'Cancelled' | 'Unabled' | 'Null';
+  email?: string;
+  shareCapital?: number;
+  economicActivities?: LegalEntityEconomicActivity[];
+  legalNature?: LegalEntityNature;
+  partners?: LegalEntityPartner[];
+  unit?: 'Headoffice' | 'Subsidiary';
+  // ... and more fields
+}
+
+interface LegalEntityStateTaxResponse {
+  legalEntity?: LegalEntityStateTaxInfo;
+}
+
+interface LegalEntityStateTaxForInvoiceResponse {
+  legalEntity?: LegalEntityStateTaxForInvoiceInfo;
+}
+
+interface LegalEntityStateTax {
+  status?: 'Abled' | 'Unabled' | 'Cancelled' | 'Unknown';
+  taxNumber?: string;
+  code?: BrazilianState;
+  nfe?: LegalEntityFiscalDocumentInfo;
+  nfse?: LegalEntityFiscalDocumentInfo;
+  cte?: LegalEntityFiscalDocumentInfo;
+  nfce?: LegalEntityFiscalDocumentInfo;
+  // ... and more fields
+}
+
+interface LegalEntityStateTaxForInvoice {
+  status?: 'Abled' | 'Unabled' | 'Cancelled' | 'UnabledTemp' | 'UnabledNotConfirmed'
+    | 'Unknown' | 'UnknownTemp' | 'UnknownNotConfirmed';
+  taxNumber?: string;
+  // ... same structure as LegalEntityStateTax with extended status
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+
+---
+
+### Natural Person Lookup (Consulta CPF)
+
+**Resource:** `nfe.naturalPersonLookup`
+**API Host:** `naturalperson.api.nfe.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+Lookup CPF cadastral status (situação cadastral) at the Brazilian Federal Revenue Service (Receita Federal).
+
+#### `getStatus(federalTaxNumber: string, birthDate: string | Date): Promise<NaturalPersonStatusResponse>`
+
+Query the cadastral status of a CPF, returning the person's name, CPF, birth date, status, and query timestamp.
+
+```typescript
+// With string date
+const result = await nfe.naturalPersonLookup.getStatus('123.456.789-01', '1990-01-15');
+console.log(result.name);    // 'JOÃO DA SILVA'
+console.log(result.status);  // 'Regular'
+
+// With Date object
+const result = await nfe.naturalPersonLookup.getStatus('12345678901', new Date(1990, 0, 15));
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `federalTaxNumber` | `string` | Yes | CPF number, with or without punctuation (e.g., `"12345678901"` or `"123.456.789-01"`) |
+| `birthDate` | `string \| Date` | Yes | Date of birth in `YYYY-MM-DD` format or a `Date` object |
+
+**Returns:** `NaturalPersonStatusResponse` — CPF cadastral status data.
+
+**Throws:**
+- `ValidationError` if CPF format is invalid (not 11 digits) or birth date format is invalid
+- `NotFoundError` if CPF is not found or birth date does not match (HTTP 404)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+
+#### Types
+
+```typescript
+type NaturalPersonStatus =
+  | 'Regular'
+  | 'Suspensa'
+  | 'Cancelada'
+  | 'Titular Falecido'
+  | 'Pendente de Regularização'
+  | 'Nula'
+  | (string & {});
+
+interface NaturalPersonStatusResponse {
+  name?: string;
+  federalTaxNumber: string;
+  birthOn?: string;
+  status?: NaturalPersonStatus;
+  createdOn?: string;
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+
+---
+
+### Tax Calculation (Cálculo de Impostos)
+
+**Resource:** `nfe.taxCalculation`
+**API Host:** `api.nfse.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+Compute all applicable Brazilian taxes (ICMS, ICMS-ST, PIS, COFINS, IPI, II) for product operations using the Tax Calculation Engine (Motor de Cálculo de Tributos).
+
+#### `calculate(tenantId: string, request: CalculateRequest): Promise<CalculateResponse>`
+
+Submit an operation with issuer, recipient, operation type, and product items to compute per-item tax breakdowns.
+
+```typescript
+const result = await nfe.taxCalculation.calculate('tenant-id', {
+  operationType: 'Outgoing',
+  issuer: { state: 'SP', taxRegime: 'RealProfit' },
+  recipient: { state: 'RJ' },
+  items: [{
+    id: 'item-1',
+    operationCode: 121,
+    origin: 'National',
+    ncm: '61091000',
+    quantity: 10,
+    unitAmount: 100.00
+  }]
+});
+
+for (const item of result.items ?? []) {
+  console.log(`Item ${item.id}: CFOP ${item.cfop}`);
+  console.log(`  ICMS CST: ${item.icms?.cst}, value: ${item.icms?.vICMS}`);
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tenantId` | `string` | Yes | Subscription/account ID that scopes the tax rules |
+| `request` | `CalculateRequest` | Yes | Tax calculation request payload |
+
+**Returns:** `CalculateResponse` — Per-item tax breakdowns including CFOP, ICMS, PIS, COFINS, IPI, II.
+
+**Throws:**
+- `ValidationError` if `tenantId` is empty
+- `ValidationError` if required fields are missing (issuer, recipient, operationType, items)
+- `AuthenticationError` if API key is invalid (HTTP 401)
+- `BadRequestError` if the API rejects the payload (HTTP 400)
+
+#### Types
+
+```typescript
+type TaxOperationType = 'Outgoing' | 'Incoming';
+
+type TaxOrigin =
+  | 'National' | 'ForeignDirectImport' | 'ForeignInternalMarket'
+  | 'NationalWith40To70Import' | 'NationalPpb' | 'NationalWithLess40Import'
+  | 'ForeignDirectImportWithoutNationalSimilar'
+  | 'ForeignInternalMarketWithoutNationalSimilar'
+  | 'NationalWithGreater70Import';
+
+type TaxCalcTaxRegime =
+  | 'NationalSimple' | 'RealProfit' | 'PresumedProfit'
+  | 'NationalSimpleSublimitExceeded' | 'IndividualMicroEnterprise' | 'Exempt';
+
+interface CalculateRequest {
+  collectionId?: string;
+  issuer: CalculateRequestIssuer;       // required: state, taxRegime
+  recipient: CalculateRequestRecipient; // required: state
+  operationType: TaxOperationType;
+  items: CalculateItemRequest[];        // required: id, operationCode, origin, quantity, unitAmount
+  isProductRegistration?: boolean;
+}
+
+interface CalculateResponse {
+  items?: CalculateItemResponse[];  // per-item: cfop, icms, pis, cofins, ipi, ii, icmsUfDest
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions including all tax component interfaces (TaxIcms, TaxPis, TaxCofins, TaxIpi, TaxIi, TaxIcmsUfDest).
+
+---
+
+### Tax Codes (Códigos Auxiliares)
+
+**Resource:** `nfe.taxCodes`
+**API Host:** `api.nfse.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+Paginated listings of auxiliary tax code reference tables needed as inputs for the Tax Calculation Engine.
+
+#### `listOperationCodes(options?: TaxCodeListOptions): Promise<TaxCodePaginatedResponse>`
+
+List operation codes (natureza de operação) — e.g., 121 = "Venda de mercadoria".
+
+```typescript
+const result = await nfe.taxCodes.listOperationCodes({ pageIndex: 1, pageCount: 20 });
+console.log(`Total: ${result.totalCount}, Page ${result.currentPage} of ${result.totalPages}`);
+for (const code of result.items ?? []) {
+  console.log(`${code.code} - ${code.description}`);
+}
+```
+
+#### `listAcquisitionPurposes(options?: TaxCodeListOptions): Promise<TaxCodePaginatedResponse>`
+
+List acquisition purposes (finalidade de aquisição).
+
+#### `listIssuerTaxProfiles(options?: TaxCodeListOptions): Promise<TaxCodePaginatedResponse>`
+
+List issuer tax profiles (perfil fiscal do emissor).
+
+#### `listRecipientTaxProfiles(options?: TaxCodeListOptions): Promise<TaxCodePaginatedResponse>`
+
+List recipient tax profiles (perfil fiscal do destinatário).
+
+**All methods accept:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `options.pageIndex` | `number` | No | Page index, 1-based (default: 1) |
+| `options.pageCount` | `number` | No | Items per page (default: 50) |
+
+**Returns:** `TaxCodePaginatedResponse` — Paginated list of tax codes.
+
+#### Types
+
+```typescript
+interface TaxCode {
+  code?: string;
+  description?: string;
+}
+
+interface TaxCodePaginatedResponse {
+  items?: TaxCode[];
+  currentPage?: number;
+  totalPages?: number;
+  totalCount?: number;
+}
+
+interface TaxCodeListOptions {
+  pageIndex?: number;
+  pageCount?: number;
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+
+---
+
+### Product Invoices (NF-e Emissão)
+
+**Resource:** `nfe.productInvoices`
+**API Host:** `api.nfse.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+Full lifecycle management for NF-e (Nota Fiscal Eletrônica de Produto) product invoices — issue, list, retrieve, cancel, send correction letters (CC-e), disable invoice numbers, and download files (PDF/XML).
+
+> **Important:** Issue, cancel, correction letter, and disablement operations are asynchronous — they return 202/204 indicating the request was enqueued. Completion is notified via webhooks.
+
+#### `create(companyId, data): Promise<NfeProductInvoiceIssueData>`
+
+Issue a product invoice (NF-e) by posting it to the processing queue.
+
+```typescript
+const result = await nfe.productInvoices.create('company-id', {
+  operationNature: 'Venda de mercadoria',
+  operationType: 'Outgoing',
+  buyer: { name: 'Empresa LTDA', federalTaxNumber: 12345678000190 },
+  items: [{ code: 'PROD-001', description: 'Produto X', quantity: 1, unitAmount: 100 }],
+  payment: [{ paymentDetail: [{ method: 'Cash', amount: 100 }] }],
+});
+```
+
+#### `createWithStateTax(companyId, stateTaxId, data): Promise<NfeProductInvoiceIssueData>`
+
+Issue an NF-e specifying a particular state tax registration (Inscrição Estadual).
+
+```typescript
+const result = await nfe.productInvoices.createWithStateTax('company-id', 'state-tax-id', invoiceData);
+```
+
+#### `list(companyId, options): Promise<NfeProductInvoiceListResponse>`
+
+List product invoices with cursor-based pagination. The `environment` option is **required**.
+
+```typescript
+const invoices = await nfe.productInvoices.list('company-id', {
+  environment: 'Production',   // Required: 'Production' or 'Test'
+  limit: 10,                   // Optional (default: 10)
+  startingAfter: 'cursor-id',  // Optional: cursor-based pagination
+  q: "buyer.name:'EMPRESA'",   // Optional: ElasticSearch query
+});
+for (const inv of invoices.productInvoices ?? []) {
+  console.log(inv.id, inv.status);
+}
+```
+
+#### `retrieve(companyId, invoiceId): Promise<NfeProductInvoice>`
+
+Retrieve full details of a single NF-e invoice.
+
+```typescript
+const invoice = await nfe.productInvoices.retrieve('company-id', 'invoice-id');
+console.log(invoice.status, invoice.authorization?.accessKey);
+```
+
+#### `cancel(companyId, invoiceId, reason?): Promise<NfeRequestCancellationResource>`
+
+Cancel a product invoice (asynchronous — enqueues for cancellation).
+
+```typescript
+const result = await nfe.productInvoices.cancel('company-id', 'invoice-id', 'Erro de digitação');
+```
+
+#### `listItems(companyId, invoiceId, options?): Promise<NfeInvoiceItemsResponse>`
+
+List items (products/services) for a specific invoice.
+
+```typescript
+const items = await nfe.productInvoices.listItems('company-id', 'invoice-id', { limit: 20 });
+```
+
+#### `listEvents(companyId, invoiceId, options?): Promise<NfeProductInvoiceEventsResponse>`
+
+List fiscal events for a specific invoice.
+
+```typescript
+const events = await nfe.productInvoices.listEvents('company-id', 'invoice-id');
+```
+
+#### `downloadPdf(companyId, invoiceId, force?): Promise<NfeFileResource>`
+
+Get the URL for the DANFE PDF file.
+
+```typescript
+const pdf = await nfe.productInvoices.downloadPdf('company-id', 'invoice-id');
+console.log('PDF URL:', pdf.uri);
+
+// Force regeneration
+const pdfForced = await nfe.productInvoices.downloadPdf('company-id', 'invoice-id', true);
+```
+
+#### `downloadXml(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the authorized NF-e XML file.
+
+```typescript
+const xml = await nfe.productInvoices.downloadXml('company-id', 'invoice-id');
+console.log('XML URL:', xml.uri);
+```
+
+#### `downloadRejectionXml(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the NF-e rejection XML (uses `/xml-rejection` canonical path).
+
+#### `downloadEpecXml(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the contingency authorization (EPEC) XML.
+
+#### `sendCorrectionLetter(companyId, invoiceId, reason): Promise<NfeRequestCancellationResource>`
+
+Send a correction letter (Carta de Correção — CC-e). The reason must be 15–1,000 characters.
+
+```typescript
+const result = await nfe.productInvoices.sendCorrectionLetter(
+  'company-id',
+  'invoice-id',
+  'Correcao do endereco do destinatario conforme novo cadastro'
+);
+```
+
+#### `downloadCorrectionLetterPdf(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the CC-e DANFE PDF.
+
+#### `downloadCorrectionLetterXml(companyId, invoiceId): Promise<NfeFileResource>`
+
+Get the URL for the CC-e XML.
+
+#### `disable(companyId, invoiceId, reason?): Promise<NfeRequestCancellationResource>`
+
+Disable (inutilizar) a specific product invoice by ID.
+
+```typescript
+await nfe.productInvoices.disable('company-id', 'invoice-id', 'Numeração inutilizada');
+```
+
+#### `disableRange(companyId, data): Promise<NfeDisablementResource>`
+
+Disable a range of invoice numbers.
+
+```typescript
+const result = await nfe.productInvoices.disableRange('company-id', {
+  environment: 'Production',
+  serie: 1,
+  state: 'SP',
+  beginNumber: 100,
+  lastNumber: 110,
+  reason: 'Faixa de numeração inutilizada',
+});
+```
+
+**Parameters common to sub-list methods (`listItems`, `listEvents`):**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `options.limit` | `number` | No | Items per page (default: 10) |
+| `options.startingAfter` | `number` | No | Cursor for pagination |
+
+---
+
+### State Taxes (Inscrições Estaduais)
+
+**Resource:** `nfe.stateTaxes`
+**API Host:** `api.nfse.io`
+**Authentication:** Uses `dataApiKey` (falls back to `apiKey`)
+
+CRUD operations for company state tax registrations (Inscrições Estaduais). State taxes define the series, numbering, environment, and state code configuration required for NF-e issuance.
+
+#### `list(companyId, options?): Promise<NfeStateTaxListResponse>`
+
+List all state tax registrations for a company.
+
+```typescript
+const result = await nfe.stateTaxes.list('company-id');
+for (const tax of result.stateTaxes ?? []) {
+  console.log(tax.id, tax.taxNumber, tax.code, tax.serie, tax.status);
+}
+```
+
+#### `create(companyId, data): Promise<NfeStateTax>`
+
+Create a new state tax registration. Body is automatically wrapped as `{ stateTax: data }`.
+
+```typescript
+const tax = await nfe.stateTaxes.create('company-id', {
+  taxNumber: '123456789',
+  serie: 1,
+  number: 1,
+  code: 'sP',
+  environmentType: 'production',
+  type: 'nFe',
+});
+console.log('Created:', tax.id);
+```
+
+#### `retrieve(companyId, stateTaxId): Promise<NfeStateTax>`
+
+Retrieve a specific state tax registration by ID.
+
+```typescript
+const tax = await nfe.stateTaxes.retrieve('company-id', 'state-tax-id');
+```
+
+#### `update(companyId, stateTaxId, data): Promise<NfeStateTax>`
+
+Update an existing state tax registration. Body is automatically wrapped as `{ stateTax: data }`.
+
+```typescript
+const updated = await nfe.stateTaxes.update('company-id', 'state-tax-id', {
+  serie: 2,
+  environmentType: 'test',
+});
+```
+
+#### `delete(companyId, stateTaxId): Promise<void>`
+
+Delete a state tax registration.
+
+```typescript
+await nfe.stateTaxes.delete('company-id', 'state-tax-id');
+```
+
+#### Types
+
+```typescript
+type NfeStateTaxType = 'default' | 'nFe' | 'nFCe';
+type NfeStateTaxEnvironmentType = 'none' | 'production' | 'test';
+type NfeStateTaxStatus = 'inactive' | 'none' | 'active';
+
+interface NfeStateTax {
+  id?: string;
+  companyId?: string;
+  accountId?: string;
+  code?: NfeStateTaxStateCode;
+  environmentType?: NfeStateTaxEnvironmentType;
+  taxNumber?: string;
+  serie?: number;
+  number?: number;
+  status?: NfeStateTaxStatus;
+  specialTaxRegime?: string;
+  securityCredential?: NfeStateTaxSecurityCredential;
+  type?: NfeStateTaxType;
+  series?: NfeStateTaxSeries[];
+  batchId?: string;
+  createdOn?: string;
+  modifiedOn?: string;
+}
+```
+
+> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+
+---
+
 ## Types
 
 ### Core Types
@@ -1511,6 +2715,7 @@ const events = await nfe.webhooks.getAvailableEvents();
 ```typescript
 interface NfeConfig {
   apiKey?: string;
+  dataApiKey?: string;     // API key for data/query services (Addresses, CT-e, CNPJ, CPF)
   environment?: 'production' | 'development';
   baseUrl?: string;
   timeout?: number;
@@ -1781,7 +2986,12 @@ import type {
   NaturalPerson,
   Webhook,
   ListResponse,
-  PaginationOptions
+  PaginationOptions,
+  InboundInvoiceMetadata,
+  InboundProductInvoiceMetadata,
+  InboundSettings,
+  EnableInboundOptions,
+  ManifestEventType
 } from 'nfe-io';
 
 const config: NfeConfig = {

@@ -3,6 +3,7 @@ info:
   title: Cálculo de Impostos
   description: "# Introdução\r\n\r\nSeja bem-vindo a documentação da API de Cálculo de Impostos!\r\nNossa API foi criada utilizando o padrão REST que possibilita a integração de seu sistema ao nosso, sendo assim você também pode extender ou recriar as funcionalidades existentes na nossa plataforma, tudo isso consumindo a API que está documentada abaixo.\r\n\r\n# Como usar a API?\r\nLogo a seguir você encontrará todos os recursos e métodos suportados pela API, sendo que essa página possibilita que você teste os recursos e métodos diretamente através dela.\r\n\r\n# Autenticação\r\nVocê precisa de uma chave de API (API Key) para identificar a conta que está realizando solicitações para a API.\r\nPara isso você deve colocar sua chave de API no campo que se encontra no topo desta página para que os métodos funcionem corretamente.\r\nNo seu código de integração temos suporte para autenticação de diversas formas sendo eles:\r\nHTTP Header (Authorization ou X-NFEIO-APIKEY) ou HTTP Query String (api_key) nos dois modos passando o valor da sua chave de api (API Key)."
   version: v1
+host: https://api.nfse.io
 paths:
   /tax-codes/operation-code:
     get:

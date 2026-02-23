@@ -116,6 +116,38 @@ describe('NfeClient', () => {
       expect(client.webhooks.update).toBeInstanceOf(Function);
       expect(client.webhooks.delete).toBeInstanceOf(Function);
     });
+
+    it('should have productInvoiceQuery resource', () => {
+      expect(client.productInvoiceQuery).toBeDefined();
+      expect(client.productInvoiceQuery.retrieve).toBeInstanceOf(Function);
+      expect(client.productInvoiceQuery.downloadPdf).toBeInstanceOf(Function);
+      expect(client.productInvoiceQuery.downloadXml).toBeInstanceOf(Function);
+      expect(client.productInvoiceQuery.listEvents).toBeInstanceOf(Function);
+    });
+
+    it('should return same productInvoiceQuery instance on repeated access (lazy init)', () => {
+      const first = client.productInvoiceQuery;
+      const second = client.productInvoiceQuery;
+      expect(first).toBe(second);
+    });
+  });
+
+  describe('productInvoiceQuery without api key', () => {
+    it('should throw ConfigurationError when no API key is available', () => {
+      // Clear env vars to ensure no fallback
+      const savedApiKey = process.env.NFE_API_KEY;
+      const savedDataKey = process.env.NFE_DATA_API_KEY;
+      delete process.env.NFE_API_KEY;
+      delete process.env.NFE_DATA_API_KEY;
+
+      try {
+        const noKeyClient = new NfeClient({ apiKey: '' as any, environment: 'development' });
+        expect(() => noKeyClient.productInvoiceQuery).toThrow(ConfigurationError);
+      } finally {
+        process.env.NFE_API_KEY = savedApiKey;
+        if (savedDataKey) process.env.NFE_DATA_API_KEY = savedDataKey;
+      }
+    });
   });
 
   describe('configuration validation', () => {
