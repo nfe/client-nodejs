@@ -40,7 +40,8 @@
     "dist",
     "README.md",
     "CHANGELOG.md",
-    "MIGRATION.md"
+    "MIGRATION.md",
+    "skills"
   ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -88,5 +89,14 @@
     "vitest": "^1.0.0",
     "yaml": "^2.3.4",
     "dotenv": "~17.2.3"
+  },
+  "agents": {
+    "skills": [
+      {
+        "name": "nfe-io-sdk",
+        "path": "./skills/nfe-io-sdk",
+        "description": "A Node.js SDK for interacting with the NFE.io API, providing functionalities to manage electronic invoices (NF-e) and service invoices (NFS-e) in Brazil."
+      }
+    ]
   }
 }
