@@ -75,7 +75,7 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
     servicesAmount: 100.00,
   });
 
-  it.skipIf(skipIfNoApiKey())('should create a service invoice (sync)', async () => {
+  it.skipIf(skipIfNoApiKey())('should create a service invoice (sync)', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const invoiceData = createTestInvoiceData();
 
     logTestInfo('Creating service invoice', invoiceData);
@@ -104,9 +104,9 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
       }
       logTestInfo('Invoice created asynchronously', { status: result.flowStatus });
     }
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should poll invoice until complete (if async)', async () => {
+  it.skipIf(skipIfNoApiKey())('should poll invoice until complete (if async)', { timeout: 90000 }, async () => {
     const invoiceData = createTestInvoiceData();
 
     logTestInfo('Creating service invoice with polling');
@@ -132,9 +132,9 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
       createdInvoiceIds.push(result.id);
       logTestInfo('Invoice created synchronously, no polling needed', { id: result.id });
     }
-  }, { timeout: 90000 }); // Longer timeout for polling
+  }); // Longer timeout for polling
 
-  it.skipIf(skipIfNoApiKey())('should use createAndWait helper', async () => {
+  it.skipIf(skipIfNoApiKey())('should use createAndWait helper', { timeout: 90000 }, async () => {
     const invoiceData = createTestInvoiceData();
 
     logTestInfo('Using createAndWait helper');
@@ -149,9 +149,9 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
 
     createdInvoiceIds.push(invoice.id);
     logTestInfo('Invoice created and waited', { id: invoice.id, number: invoice.number });
-  }, { timeout: 90000 });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should retrieve invoice by id', async () => {
+  it.skipIf(skipIfNoApiKey())('should retrieve invoice by id', { timeout: 90000 }, async () => {
     // Create invoice first
     const invoiceData = createTestInvoiceData();
     const created = await client.serviceInvoices.createAndWait(testCompanyId, invoiceData, {
@@ -166,9 +166,9 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
     expect(retrieved).toBeDefined();
     expect(retrieved.id).toBe(created.id);
     expect(retrieved.number).toBe(created.number);
-  }, { timeout: 90000 });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should list service invoices', async () => {
+  it.skipIf(skipIfNoApiKey())('should list service invoices', { timeout: 90000 }, async () => {
     // Create invoice first
     const invoiceData = createTestInvoiceData();
     const created = await client.serviceInvoices.createAndWait(testCompanyId, invoiceData, {
@@ -187,9 +187,9 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
     // Should include our created invoice
     const found = invoices.find(inv => inv.id === created.id);
     expect(found).toBeDefined();
-  }, { timeout: 90000 });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should cancel service invoice', async () => {
+  it.skipIf(skipIfNoApiKey())('should cancel service invoice', { timeout: 90000 }, async () => {
     // Create invoice first
     const invoiceData = createTestInvoiceData();
     const created = await client.serviceInvoices.createAndWait(testCompanyId, invoiceData, {
@@ -210,9 +210,9 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
     if (index > -1) {
       createdInvoiceIds.splice(index, 1);
     }
-  }, { timeout: 90000 });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should send invoice email', async () => {
+  it.skipIf(skipIfNoApiKey())('should send invoice email', { timeout: 90000 }, async () => {
     // Create invoice first
     const invoiceData = createTestInvoiceData();
     const created = await client.serviceInvoices.createAndWait(testCompanyId, invoiceData, {
@@ -228,9 +228,9 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
 
     // Email sent successfully (no error thrown)
     logTestInfo('Invoice email sent');
-  }, { timeout: 90000 });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should download invoice PDF', async () => {
+  it.skipIf(skipIfNoApiKey())('should download invoice PDF', { timeout: 90000 }, async () => {
     // Create invoice first
     const invoiceData = createTestInvoiceData();
     const created = await client.serviceInvoices.createAndWait(testCompanyId, invoiceData, {
@@ -249,9 +249,9 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
     // PDF should start with %PDF
     expect(pdfBuffer.toString('utf8', 0, 4)).toBe('%PDF');
     logTestInfo('PDF downloaded', { size: pdfBuffer.length });
-  }, { timeout: 90000 });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should download invoice XML', async () => {
+  it.skipIf(skipIfNoApiKey())('should download invoice XML', { timeout: 90000 }, async () => {
     // Create invoice first
     const invoiceData = createTestInvoiceData();
     const created = await client.serviceInvoices.createAndWait(testCompanyId, invoiceData, {
@@ -270,9 +270,9 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
     // XML should start with <?xml
     expect(xmlBuffer.toString('utf8', 0, 5)).toBe('<?xml');
     logTestInfo('XML downloaded', { size: xmlBuffer.length });
-  }, { timeout: 90000 });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should handle validation errors', async () => {
+  it.skipIf(skipIfNoApiKey())('should handle validation errors', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const invalidData = {
       // Missing required fields
       description: 'Invalid invoice',
@@ -282,18 +282,18 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
     await expect(
       client.serviceInvoices.create(testCompanyId, invalidData)
     ).rejects.toThrow();
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should handle 404 for non-existent invoice', async () => {
+  it.skipIf(skipIfNoApiKey())('should handle 404 for non-existent invoice', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const fakeId = 'non-existent-invoice-' + Date.now();
 
     logTestInfo('Testing 404 error', { id: fakeId });
     await expect(
       client.serviceInvoices.retrieve(testCompanyId, fakeId)
     ).rejects.toThrow();
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it.skipIf(skipIfNoApiKey())('should handle polling timeout', async () => {
+  it.skipIf(skipIfNoApiKey())('should handle polling timeout', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const invoiceData = createTestInvoiceData();
     const result = await client.serviceInvoices.create(testCompanyId, invoiceData);
 
@@ -314,5 +314,5 @@ describe.skipIf(!hasApiKey)('ServiceInvoices Integration Tests', () => {
         createdInvoiceIds.push(match[1]);
       }
     }
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 });

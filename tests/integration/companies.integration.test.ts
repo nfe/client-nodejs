@@ -34,7 +34,7 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     createdCompanyIds.length = 0;
   });
 
-  it('should create a company', async () => {
+  it('should create a company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const companyData = {
       ...TEST_COMPANY_DATA,
       name: `Test Company ${Date.now()}`,
@@ -50,9 +50,9 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
 
     createdCompanyIds.push(company.id);
     logTestInfo('Company created', { id: company.id });
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should retrieve a company by id', async () => {
+  it('should retrieve a company by id', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create company first
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -68,9 +68,9 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     expect(retrieved).toBeDefined();
     expect(retrieved.id).toBe(created.id);
     expect(retrieved.name).toBe(companyData.name);
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should list companies', async () => {
+  it('should list companies', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create at least one company
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -92,9 +92,9 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     // Just verify we got a valid response with companies
     const hasCompanies = response.data.length > 0;
     expect(hasCompanies).toBe(true);
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should update a company', async () => {
+  it('should update a company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create company first
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -113,9 +113,9 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     expect(updated).toBeDefined();
     expect(updated.id).toBe(created.id);
     expect(updated.name).toBe(updatedName);
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should delete a company', async () => {
+  it('should delete a company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create company first
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -136,18 +136,18 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     if (index > -1) {
       createdCompanyIds.splice(index, 1);
     }
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should handle 404 for non-existent company', async () => {
+  it('should handle 404 for non-existent company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const fakeId = 'non-existent-id-' + Date.now();
 
     logTestInfo('Testing 404 error', { id: fakeId });
     await expect(
       client.companies.retrieve(fakeId)
     ).rejects.toThrow();
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should validate required fields on create', async () => {
+  it('should validate required fields on create', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const invalidData = {
       // Missing required fields
       name: 'Invalid Company',
@@ -157,9 +157,9 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     await expect(
       client.companies.create(invalidData)
     ).rejects.toThrow();
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should allow duplicate federalTaxNumber', async () => {
+  it('should allow duplicate federalTaxNumber', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create first company
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -181,7 +181,7 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     // Both should exist with different IDs
     expect(duplicate.id).not.toBe(created.id);
     expect(duplicate.federalTaxNumber).toBe(created.federalTaxNumber);
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
   // Note: Certificate upload test commented out as it requires valid PFX file
   // and test environment might not support it

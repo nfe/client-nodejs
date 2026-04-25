@@ -16,7 +16,9 @@
 import { readdir, writeFile, mkdir, readFile } from 'fs/promises';
 import { join, basename, resolve } from 'path';
 import { existsSync } from 'fs';
-import openapiTS from 'openapi-typescript';
+import { pathToFileURL } from 'url';
+import openapiTS, { astToString } from 'openapi-typescript';
+import { createConfig } from '@redocly/openapi-core';
 
 // ============================================================================
 // Configuration
@@ -153,12 +155,23 @@ async function generateTypesForSpec(spec: SpecConfig): Promise<boolean> {
       return false;
     }
 
-    // Generate types using openapi-typescript
-    const output = await openapiTS(spec.inputPath, {
-      // Options for type generation
-      exportType: true,
-      immutableTypes: true,
+    // Generate types using openapi-typescript (v7+ returns AST)
+    // Disable Redocly validation rules that openapi-typescript v6 tolerated
+    // (some legacy NFE.io specs have duplicate operationIds and other minor issues)
+    const redoclyConfig = await createConfig({
+      rules: {
+        'operation-operationId-unique': 'off',
+        'operation-operationId': 'off',
+        'no-identical-paths': 'off',
+        'no-ambiguous-paths': 'off',
+        'struct': 'off',
+      },
     });
+    const ast = await openapiTS(pathToFileURL(spec.inputPath), {
+      immutable: true,
+      redocly: redoclyConfig,
+    });
+    const output = astToString(ast);
 
     // Wrap output with metadata banner
     const wrappedOutput = wrapWithMetadata(output, spec);

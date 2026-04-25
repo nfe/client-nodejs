@@ -29,7 +29,7 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
     });
   });
 
-  it('should handle 401 authentication error', async () => {
+  it('should handle 401 authentication error', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create client with invalid API key
     const invalidClient = new NfeClient({
       apiKey: 'invalid-api-key-12345',
@@ -50,9 +50,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
       }
       logTestInfo('Authentication error caught as expected');
     }
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should handle 404 not found error', async () => {
+  it('should handle 404 not found error', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const fakeCompanyId = 'non-existent-company-' + Date.now();
 
     logTestInfo('Testing 404 not found error', { id: fakeCompanyId });
@@ -67,9 +67,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
       }
       logTestInfo('Not found error caught as expected');
     }
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should handle 400 validation error', async () => {
+  it('should handle 400 validation error', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const invalidData = {
       name: 'Invalid Company',
       // Missing required fields
@@ -87,9 +87,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
       }
       logTestInfo('Validation error caught as expected');
     }
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should handle network timeout', async () => {
+  it('should handle network timeout', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create client with very short timeout
     const timeoutClient = new NfeClient({
       apiKey: INTEGRATION_TEST_CONFIG.apiKey,
@@ -113,9 +113,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
       ).toBe(true);
       logTestInfo('Timeout error caught as expected');
     }
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should retry on transient errors', async () => {
+  it('should retry on transient errors', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // This test verifies that retry logic works
     // We can't easily trigger transient errors from client side,
     // but we can verify the retry configuration is respected
@@ -139,9 +139,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
     expect(Array.isArray(companies)).toBe(true);
 
     logTestInfo('Retry configuration test passed');
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should respect rate limiting (if enforced)', async () => {
+  it('should respect rate limiting (if enforced)', { timeout: INTEGRATION_TEST_CONFIG.timeout * 2 }, async () => {
     // Make multiple rapid requests to potentially trigger rate limiting
     // Note: Test environment might not enforce rate limits strictly
 
@@ -169,9 +169,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
 
     // Test passes regardless - we're just checking behavior
     expect(results.length).toBe(10);
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout * 2 });
+  });
 
-  it('should handle malformed response gracefully', async () => {
+  it('should handle malformed response gracefully', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Test with invalid endpoint that might return unexpected format
     const fakeEndpoint = '/v1/invalid-endpoint-test-' + Date.now();
 
@@ -190,9 +190,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
         type: error instanceof NfeError ? 'NfeError' : 'Error',
       });
     }
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should preserve error details from API', async () => {
+  it('should preserve error details from API', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const invalidData = {
       name: 'Test',
       // Missing federalTaxNumber
@@ -220,9 +220,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
         });
       }
     }
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should handle concurrent requests correctly', async () => {
+  it('should handle concurrent requests correctly', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Test that concurrent requests don't interfere with each other
     logTestInfo('Testing concurrent requests');
 
@@ -241,9 +241,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
     });
 
     logTestInfo('Concurrent requests handled correctly');
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 
-  it('should handle empty response lists', async () => {
+  it('should handle empty response lists', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Test listing resources that might be empty
     // This depends on account state, but should handle gracefully
 
@@ -257,5 +257,5 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
     expect(companies.length).toBeGreaterThanOrEqual(0);
 
     logTestInfo('Empty response handled correctly', { count: companies.length });
-  }, { timeout: INTEGRATION_TEST_CONFIG.timeout });
+  });
 });
