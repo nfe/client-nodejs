@@ -159,7 +159,9 @@ describe('CompaniesResource', () => {
       };
 
       // Mock global FormData constructor
-      global.FormData = vi.fn(() => mockFormData) as any;
+      global.FormData = vi.fn(function () {
+        return mockFormData;
+      }) as any;
     });
 
     it('should upload certificate with buffer and password', async () => {

@@ -5,6 +5,59 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.2.0] - 2026-04-25
+
+### 🔒 Correções de Segurança
+
+Atualização de dependências de desenvolvimento para resolver vulnerabilidades reportadas pelo `npm audit`. **Nenhuma alteração no comportamento em runtime** — todas as vulnerabilidades estavam em ferramentas de build/teste, não distribuídas no pacote publicado.
+
+- **Resolvidas 14 vulnerabilidades** (7 high, 7 moderate) em devDependencies:
+  - `undici` (alto): GHSA-g9mf-h72j-4rw9, GHSA-2mjp-6q6p-2qxm, GHSA-vrm6-8vpv-qv8q, GHSA-v9p9-hfj2-hcw8, GHSA-4992-7rv2-5pvq (via `openapi-typescript`)
+  - `minimatch` (alto): GHSA-3ppc-4f35-3m26, GHSA-7r86-cg39-jmmj, GHSA-23c5-xmqv-rm74 (via `@typescript-eslint`)
+  - `esbuild` (moderado): GHSA-67mh-4wv8-2f99 (via `vitest`)
+- **Resultado**: `npm audit` agora reporta **0 vulnerabilidades**
+
+### 🔧 Atualizações de Dependências (devDependencies)
+
+- `@typescript-eslint/eslint-plugin`: `^6.21.0` → `^8.59.0`
+- `@typescript-eslint/parser`: `^6.21.0` → `^8.59.0`
+- `vitest`: `^1.6.1` → `^3.2.4`
+- `@vitest/coverage-v8`: `^1.6.1` → `^3.2.4`
+- `@vitest/ui`: `^1.6.1` → `^3.2.4`
+- `openapi-typescript`: `^6.7.0` → `^7.13.0`
+
+> **Nota**: Vitest foi atualizado para 3.2.4 (não 4.x) para manter compatibilidade com Node 18 — vitest 4 depende do `rolldown`, que requer Node 20+. O esbuild patcheado já está disponível na linha 3.x via Vite.
+
+### 🛠️ Pipeline de Geração de Tipos
+
+Adaptação do script `scripts/generate-types.ts` para a nova API do `openapi-typescript` v7:
+
+- Migração para nova assinatura: `openapiTS()` agora retorna AST e usa `astToString()` para conversão
+- Input convertido para `URL` via `pathToFileURL` (exigência do v7)
+- Opção `immutableTypes` renomeada para `immutable`; opção `exportType` removida (agora é padrão)
+- Adicionada configuração Redocly (`createConfig`) para tolerar specs legados que falhariam na validação estrita do v7
+
+### 🧪 Testes
+
+Ajustes em testes (nenhum teste foi adicionado/removido):
+
+- 30 chamadas em testes de integração migradas da assinatura `it(name, fn, opts)` para a nova `it(name, opts, fn)` (compatível com vitest 3.x e futura migração para 4.x)
+- Mock de `FormData` em `tests/unit/companies.test.ts` ajustado para usar `function` ao invés de arrow function (boa prática de mock de construtor)
+- **606 testes passando**, 47 skipped (mesma cobertura de antes), validados em Node 18, 20 e 22
+
+### 📝 Spec OpenAPI
+
+- **`openapi/spec/nf-servico-v1.yaml`**: `operationId` do endpoint `GET /v1/companies/{company_id}/serviceinvoices/external/{id}` renomeado de `ServiceInvoices_idGet` para `ServiceInvoices_externalIdGet`. Resolve duplicata real no spec — `openapi-typescript` v6 silenciosamente fundia as duas operações distintas em uma só. Esta mudança é apenas em metadata de geração de código, **não afeta o comportamento da API**.
+
+### ⚠️ Possível Impacto em Tipos Gerados
+
+Usuários que referenciam tipos gerados internos (ex.: `operations["ServiceInvoices_idGet"]` em `src/generated/`) podem precisar de pequenos ajustes:
+
+- Para o endpoint `/serviceinvoices/external/{id}`: usar `operations["ServiceInvoices_externalIdGet"]` (anteriormente fundido com `ServiceInvoices_idGet`)
+- A maioria dos consumidores que usa apenas `NfeClient` e seus métodos públicos **não é afetada**
+
+---
+
 ## [3.1.0] - 2026-02-22
 
 ### 🎉 Expansão Massiva de Recursos - 10 Novos Recursos Implementados

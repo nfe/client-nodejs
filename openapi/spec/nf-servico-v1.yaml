@@ -4063,7 +4063,7 @@ paths:
         - ServiceInvoices
       summary: Obter os detalhes de uma Nota Fiscal de Serviço (NFSE) através do ID externo (externalId)
       description: Você precisará do API Key da Empresa
-      operationId: ServiceInvoices_idGet
+      operationId: ServiceInvoices_externalIdGet
       parameters:
         - name: company_id
           in: path
