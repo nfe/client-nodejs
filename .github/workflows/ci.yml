@@ -127,6 +127,9 @@ jobs:
   openapi-validation:
     name: OpenAPI Validation
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
