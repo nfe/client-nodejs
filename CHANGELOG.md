@@ -21,10 +21,12 @@ Atualização de dependências de desenvolvimento para resolver vulnerabilidades
 
 - `@typescript-eslint/eslint-plugin`: `^6.21.0` → `^8.59.0`
 - `@typescript-eslint/parser`: `^6.21.0` → `^8.59.0`
-- `vitest`: `^1.6.1` → `^4.1.5`
-- `@vitest/coverage-v8`: `^1.6.1` → `^4.1.5`
-- `@vitest/ui`: `^1.6.1` → `^4.1.5`
+- `vitest`: `^1.6.1` → `^3.2.4`
+- `@vitest/coverage-v8`: `^1.6.1` → `^3.2.4`
+- `@vitest/ui`: `^1.6.1` → `^3.2.4`
 - `openapi-typescript`: `^6.7.0` → `^7.13.0`
+
+> **Nota**: Vitest foi atualizado para 3.2.4 (não 4.x) para manter compatibilidade com Node 18 — vitest 4 depende do `rolldown`, que requer Node 20+. O esbuild patcheado já está disponível na linha 3.x via Vite.
 
 ### 🛠️ Pipeline de Geração de Tipos
 
@@ -37,11 +39,11 @@ Adaptação do script `scripts/generate-types.ts` para a nova API do `openapi-ty
 
 ### 🧪 Testes
 
-Ajustes necessários para compatibilidade com vitest 4 (nenhum teste foi adicionado/removido):
+Ajustes em testes (nenhum teste foi adicionado/removido):
 
-- 30 chamadas em testes de integração migradas da assinatura `it(name, fn, opts)` para `it(name, opts, fn)` (assinatura antiga removida no vitest 4)
-- Mock de `FormData` em `tests/unit/companies.test.ts` ajustado para usar `function` ao invés de arrow function (vitest 4 não permite arrow function como construtor)
-- **606 testes passando**, 47 skipped (mesma cobertura de antes)
+- 30 chamadas em testes de integração migradas da assinatura `it(name, fn, opts)` para a nova `it(name, opts, fn)` (compatível com vitest 3.x e futura migração para 4.x)
+- Mock de `FormData` em `tests/unit/companies.test.ts` ajustado para usar `function` ao invés de arrow function (boa prática de mock de construtor)
+- **606 testes passando**, 47 skipped (mesma cobertura de antes), validados em Node 18, 20 e 22
 
 ### 📝 Spec OpenAPI
 
