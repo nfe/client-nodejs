@@ -153,24 +153,24 @@ const webhook = await nfe.webhooks.create('company-id', {
 });
     `);
 
-    console.log('\nExemplo de validação de assinatura:');
+    console.log('\nExemplo de validação de assinatura (HMAC-SHA1 sobre o body cru):');
     console.log(`
-// No seu endpoint de webhook:
-app.post('/webhook/nfe', async (req, res) => {
-  const signature = req.headers['x-nfe-signature'];
-  const payload = JSON.stringify(req.body);
-
-  const isValid = nfe.webhooks.validateSignature(
-    payload,
-    signature,
-    'sua-chave-secreta'
+// IMPORTANTE: use express.raw() para receber os bytes exatos que a NFE.io assinou.
+// JSON.stringify(req.body) NÃO funciona — a ordem das propriedades pode diferir.
+app.post('/webhook/nfe', express.raw({ type: '*/*' }), (req, res) => {
+  const ok = nfe.webhooks.validateSignature(
+    req.body,                                    // Buffer com os bytes exatos
+    req.headers['x-hub-signature'],              // header correto (não 'x-nfe-signature')
+    process.env.NFE_WEBHOOK_SECRET ?? ''
   );
 
-  if (!isValid) {
-    return res.status(401).send('Invalid signature');
+  if (!ok) {
+    return res.status(401).end();
   }
 
+  const event = JSON.parse(req.body.toString('utf8'));
   // Processar evento...
+  res.status(204).end();
 });
     `);
 

@@ -278,12 +278,16 @@ const webhook = await nfe.webhooks.create(companyId, {
   active: true,
 });
 
-// Validate incoming webhook signature (in your handler)
+// Validate incoming webhook signature (in your handler).
+// IMPORTANT: pass req.body as a Buffer (use express.raw()) — NOT JSON.stringify(req.body).
+// NFE.io signs the raw body bytes; re-serializing JSON will produce different bytes.
 const isValid = nfe.webhooks.validateSignature(
-  rawBody,           // Request body as string
-  signature,         // X-Hub-Signature header value
-  webhook.secret!,   // Secret from webhook creation
+  req.body,                                // Buffer with exact bytes (preferred)
+  req.headers['x-hub-signature'],          // X-Hub-Signature header (sha1=<UPPER hex>)
+  webhook.secret!,                         // Secret from webhook creation
 );
+// Algorithm: HMAC-SHA1 (not SHA-256). Comparison is case-insensitive.
+// Useful delivery headers: x-hook-id (idempotency key), x-hook-attempts (retry counter).
 ```
 
 Available events: `invoice.created`, `invoice.issued`, `invoice.cancelled`, `invoice.failed`.

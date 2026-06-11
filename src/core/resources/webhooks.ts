@@ -3,6 +3,8 @@
  * Manages webhook subscriptions for event notifications
  */
 
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
 import type { HttpClient } from '../http/client.js';
 import type { Webhook, WebhookEvent, ListResponse, ResourceId } from '../types.js';
 
@@ -130,62 +132,78 @@ export class WebhooksResource {
   }
 
   /**
-   * Validate webhook signature
-   * 
-   * Verifies that a webhook request came from NFE.io by validating its signature.
-   * This should be used to ensure webhook security.
-   * 
-   * @param payload - Raw webhook payload (as string)
-   * @param signature - Signature from X-NFE-Signature header
-   * @param secret - Your webhook secret
-   * @returns True if signature is valid
-   * 
+   * Validate a webhook signature sent by NFE.io.
+   *
+   * NFE.io signs every webhook delivery with `HMAC-SHA1(secret, raw_body_bytes)`,
+   * encoded as hex (uppercase in the wire format, but compared case-insensitively),
+   * and prefixed with `sha1=`. The signed value is delivered in the
+   * `X-Hub-Signature` HTTP header.
+   *
+   * @param payload - The raw request body. Pass a `Buffer` whenever possible to
+   *                  preserve byte-exact content. Strings are encoded as UTF-8.
+   *                  Re-serializing JSON (e.g. `JSON.stringify(req.body)`) does
+   *                  NOT work because property order and whitespace will differ
+   *                  from the bytes NFE.io signed.
+   * @param signature - The full value of the `X-Hub-Signature` header, including
+   *                    the `sha1=` prefix. Accepts `string` or `string[]` (the
+   *                    shape Node's `IncomingMessage` exposes for repeated
+   *                    headers); `undefined`/`null` are treated as invalid.
+   * @param secret - The webhook secret configured when the webhook was created.
+   * @returns `true` only when the signature matches; `false` for any mismatch,
+   *          malformed input, missing input, or wrong algorithm prefix. This
+   *          method never throws.
+   *
    * @example
    * ```typescript
-   * // In your webhook endpoint:
-   * app.post('/webhook/nfe', async (req, res) => {
-   *   const signature = req.headers['x-nfe-signature'];
-   *   const payload = JSON.stringify(req.body);
-   *   
-   *   const isValid = nfe.webhooks.validateSignature(
-   *     payload,
-   *     signature,
-   *     'sua-chave-secreta'
-   *   );
-   *   
-   *   if (!isValid) {
-   *     return res.status(401).send('Invalid signature');
+   * import express from 'express';
+   *
+   * // IMPORTANT: capture the raw body BEFORE any JSON parser so that
+   * // validateSignature sees the exact bytes NFE.io signed.
+   * app.post(
+   *   '/webhook/nfe',
+   *   express.raw({ type: '*\/*' }),
+   *   (req, res) => {
+   *     const ok = nfe.webhooks.validateSignature(
+   *       req.body,                              // Buffer with exact bytes
+   *       req.headers['x-hub-signature'],        // correct header
+   *       process.env.NFE_WEBHOOK_SECRET ?? ''
+   *     );
+   *     if (!ok) return res.status(401).end();
+   *
+   *     const event = JSON.parse(req.body.toString('utf8'));
+   *     // process event...
+   *     res.status(204).end();
    *   }
-   *   
-   *   // Process webhook...
-   * });
+   * );
    * ```
    */
   validateSignature(
-    payload: string,
-    signature: string,
+    payload: Buffer | string,
+    signature: string | string[] | undefined,
     secret: string
   ): boolean {
-    try {
-      // Import crypto dynamically to avoid issues in non-Node environments
-      const crypto = (globalThis as any).require?.('crypto');
-      if (!crypto) {
-        throw new Error('crypto module not available');
-      }
+    if (!secret || signature == null) return false;
 
-      const hmac = crypto.createHmac('sha256', secret);
-      hmac.update(payload);
-      const expectedSignature = hmac.digest('hex');
+    const sigStr = Array.isArray(signature) ? signature[0] : signature;
+    if (typeof sigStr !== 'string' || sigStr.length === 0) return false;
 
-      // Use timing-safe comparison to prevent timing attacks
-      return crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(expectedSignature)
-      );
-    } catch (error) {
-      console.error('Error validating webhook signature:', error);
-      return false;
-    }
+    const PREFIX = 'sha1=';
+    if (sigStr.length <= PREFIX.length) return false;
+    if (sigStr.slice(0, PREFIX.length).toLowerCase() !== PREFIX) return false;
+
+    // HMAC-SHA1 hex is always 40 chars. Validate shape before decoding so we
+    // never feed garbage into Buffer.from(hex) (which silently returns shorter
+    // buffers on invalid input).
+    const received = sigStr.slice(PREFIX.length).toLowerCase();
+    if (!/^[a-f0-9]{40}$/.test(received)) return false;
+
+    const body = Buffer.isBuffer(payload) ? payload : Buffer.from(payload, 'utf8');
+    const expected = createHmac('sha1', secret).update(body).digest('hex');
+
+    // Both decode to exactly 20 bytes (guaranteed: received passed the
+    // /^[a-f0-9]{40}$/ check above; expected is HMAC-SHA1 hex). That's why
+    // timingSafeEqual is safe to call here without a length pre-check.
+    return timingSafeEqual(Buffer.from(received, 'hex'), Buffer.from(expected, 'hex'));
   }
 
   /**

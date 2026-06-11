@@ -1,0 +1,38 @@
+{
+  "_description": "Captured from live api.nfse.io PUT /v2/webhooks/{id}/pings against the sandbox account. Each fixture is a real NFE.io webhook delivery: body is the exact UTF-8 bytes that NFE.io computed the signature over; header_value is the X-Hub-Signature header verbatim. Regenerate with /tmp/capture-fixtures.js if NFE.io changes scheme.",
+  "_capturedAt": "see _capturedAtNote",
+  "_capturedAtNote": "captured during /opsx:apply session",
+  "_algorithm": "HMAC-SHA1(secret, utf8_bytes_of_body) → hex (UPPERCASE) → \"sha1=\" + hex",
+  "fixtures": [
+    {
+      "label": "product_invoice",
+      "description": "Live ping captured 2026-06-11 01:21:17 from 40.78.80.242",
+      "secret": "probe-secret-32chars-minimum-length-1",
+      "body": "{\"action\":\"ping\",\"webHook\":{\"Id\":\"9dd4c3e9df4043adb11df22dcd9d8ce1\",\"Uri\":\"https://webhook.site/002aedc9-653d-49f9-8a81-9cc88dd741cb\",\"Secret\":\"probe-secret-32chars-minimum-length-1\",\"ContentType\":\"json\",\"InsecureSsl\":false,\"Status\":\"active\",\"Filters\":[\"product_invoice.issued_successfully\"],\"CreatedOn\":\"2026-06-11T01:21:16.6890073+00:00\",\"ModifiedOn\":\"2026-06-11T01:21:16.6890199+00:00\"}}",
+      "header_value": "sha1=22E979F2F1281DADB4F883975D951732DE5D396A",
+      "content_md5": "LG+mWL29pINbll/ddF3y3Q==",
+      "x_hook_id": "4efa03baf6014b788e591da82efbaba8",
+      "user_agent": "HookShoot/2.0"
+    },
+    {
+      "label": "service_invoice",
+      "description": "Live ping captured 2026-06-11 01:21:24 from 40.78.80.242",
+      "secret": "probe-secret-32chars-minimum-length-1",
+      "body": "{\"action\":\"ping\",\"webHook\":{\"Id\":\"ad1010b0f66441419454e5e283cce64b\",\"Uri\":\"https://webhook.site/002aedc9-653d-49f9-8a81-9cc88dd741cb\",\"Secret\":\"probe-secret-32chars-minimum-length-1\",\"ContentType\":\"json\",\"InsecureSsl\":false,\"Status\":\"active\",\"Filters\":[\"service_invoice.issued_successfully\"],\"CreatedOn\":\"2026-06-11T01:21:22.9932699+00:00\",\"ModifiedOn\":\"2026-06-11T01:21:22.9932884+00:00\"}}",
+      "header_value": "sha1=E7EA893E16D32963590D3BE3682D0DEAE69DBFE0",
+      "content_md5": "3pAHWedkmOwsA0fWm+oCmw==",
+      "x_hook_id": "01efa9ea29204563a9e230c47bd601ed",
+      "user_agent": "HookShoot/2.0"
+    },
+    {
+      "label": "mixed_filters",
+      "description": "Live ping captured 2026-06-11 01:21:31 from 40.78.80.242",
+      "secret": "probe-secret-32chars-minimum-length-1",
+      "body": "{\"action\":\"ping\",\"webHook\":{\"Id\":\"838e219848084fbf8946d3d9053eb20b\",\"Uri\":\"https://webhook.site/002aedc9-653d-49f9-8a81-9cc88dd741cb\",\"Secret\":\"probe-secret-32chars-minimum-length-1\",\"ContentType\":\"json\",\"InsecureSsl\":false,\"Status\":\"active\",\"Filters\":[\"product_invoice.issued_successfully\",\"service_invoice.issued_successfully\",\"consumer_invoice.issued_successfully\"],\"CreatedOn\":\"2026-06-11T01:21:29.528298+00:00\",\"ModifiedOn\":\"2026-06-11T01:21:29.5283077+00:00\"}}",
+      "header_value": "sha1=7C0CA49581E5C2E5DF76588CF99CB38BC133E931",
+      "content_md5": "2VsMq8ZMIgPqi+HyyYWDFA==",
+      "x_hook_id": "623403cb4b3a4dd28055574ade84e9b0",
+      "user_agent": "HookShoot/2.0"
+    }
+  ]
+}
