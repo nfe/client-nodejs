@@ -1473,28 +1473,34 @@ Delete a webhook.
 await nfe.webhooks.delete('webhook-id');
 ```
 
-#### `validateSignature(payload: string, signature: string, secret: string): boolean`
+#### `validateSignature(payload: Buffer | string, signature: string | string[] | undefined, secret: string): boolean`
 
-Validate webhook signature (HMAC SHA-256).
+Validate the signature on a webhook delivery from NFE.io.
+
+NFE.io signs every webhook with **`HMAC-SHA1(secret, raw_body_bytes)`**, encoded as hex (uppercase on the wire, compared case-insensitively) and prefixed with **`sha1=`**. The signed value is delivered in the **`X-Hub-Signature`** HTTP header. The method returns `false` (never throws) for any mismatch or malformed input.
+
+> ⚠ **Use raw body bytes.** Re-serializing JSON (`JSON.stringify(req.body)`) does NOT work — property order and whitespace will differ from what NFE.io signed. Use `express.raw()` (or equivalent) so you receive the exact bytes:
 
 ```typescript
-// In your webhook endpoint
-app.post('/webhook', (req, res) => {
-  const signature = req.headers['x-nfe-signature'];
-  const payload = JSON.stringify(req.body);
-  
-  const isValid = nfe.webhooks.validateSignature(
-    payload,
-    signature,
-    'your-webhook-secret'
-  );
-  
-  if (!isValid) {
-    return res.status(401).send('Invalid signature');
+import express from 'express';
+
+// Capture the raw body BEFORE any JSON parser
+app.post(
+  '/webhook',
+  express.raw({ type: '*/*' }),
+  (req, res) => {
+    const ok = nfe.webhooks.validateSignature(
+      req.body,                              // Buffer with exact bytes
+      req.headers['x-hub-signature'],        // correct header (not "x-nfe-signature")
+      process.env.NFE_WEBHOOK_SECRET ?? ''
+    );
+    if (!ok) return res.status(401).end();
+
+    const event = JSON.parse(req.body.toString('utf8'));
+    // process event...
+    res.status(204).end();
   }
-  
-  // Process webhook...
-});
+);
 ```
 
 #### `test(webhookId: string): Promise<void>`

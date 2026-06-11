@@ -308,28 +308,38 @@ type WebhookEvent =
 | `retrieve` | `(companyId, webhookId): Promise<Webhook>` |
 | `update` | `(companyId, webhookId, data): Promise<Webhook>` |
 | `delete` | `(companyId, webhookId): Promise<void>` |
-| `validateSignature` | `(payload, signature, secret): boolean` |
+| `validateSignature` | `(payload: Buffer \| string, signature: string \| string[] \| undefined, secret): boolean` |
 | `test` | `(companyId, webhookId): Promise<{ success: boolean }>` |
 | `getAvailableEvents` | `(): WebhookEvent[]` |
 
 ### Webhook Signature Validation
 
-In your webhook handler, validate the `X-Hub-Signature` header:
+NFE.io signs every webhook delivery with `HMAC-SHA1(secret, raw_body_bytes)`, encoded as
+**uppercase hex** with a `sha1=` prefix, and delivers it in the **`X-Hub-Signature`** header.
 
 ```typescript
-app.post('/webhooks/nfe', (req, res) => {
-  const signature = req.headers['x-hub-signature'] as string;
-  const rawBody = req.body; // raw string, not parsed JSON
-  
-  const isValid = nfe.webhooks.validateSignature(rawBody, signature, webhookSecret);
-  if (!isValid) {
-    return res.status(401).send('Invalid signature');
-  }
-  
-  const event = JSON.parse(rawBody);
+import express from 'express';
+
+// IMPORTANT: use express.raw() so req.body is a Buffer with the EXACT bytes
+// NFE.io signed. JSON.stringify(req.body) will NOT match — property order and
+// whitespace differ from what was signed.
+app.post('/webhooks/nfe', express.raw({ type: '*/*' }), (req, res) => {
+  const ok = nfe.webhooks.validateSignature(
+    req.body,                              // Buffer with exact bytes
+    req.headers['x-hub-signature'],        // header value (string | string[] | undefined)
+    process.env.NFE_WEBHOOK_SECRET ?? '',
+  );
+  if (!ok) return res.status(401).end();
+
+  const event = JSON.parse(req.body.toString('utf8'));
   // Handle event...
-  res.status(200).send('OK');
+  res.status(204).end();
 });
 ```
 
-Uses HMAC-SHA1 for signature verification.
+**Notes:**
+- Algorithm: HMAC-SHA1 (not SHA-256). The wire format is `sha1=<40 hex chars>`.
+- Case: NFE.io sends hex in UPPERCASE; `validateSignature` compares case-insensitively.
+- Useful headers also delivered: `X-Hook-Id` (UUID per delivery — ideal for idempotency),
+  `X-Hook-Attempts` (retry counter, starts at 0), `Content-MD5` (base64 MD5 of body).
+- `validateSignature` never throws; it returns `false` for any malformed input.

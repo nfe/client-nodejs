@@ -140,8 +140,8 @@ async function configurarWebhooks() {
       timestamp: new Date().toISOString()
     };
 
-    // Assinatura que viria no header X-NFE-Signature
-    const exampleSignature = 'sha256=abc123def456...';
+    // Assinatura que vem no header X-Hub-Signature (HMAC-SHA1 hex em maiúsculo, com prefixo "sha1=")
+    const exampleSignature = 'sha1=BCD17C02B9E3B40A18E745E7E04247E4AD2DD935';
 
     // Seu segredo compartilhado (defina no painel NFE.io)
     const webhookSecret = 'seu-segredo-webhook';
@@ -149,25 +149,23 @@ async function configurarWebhooks() {
     console.log('\n📝 Exemplo de payload recebido:');
     console.log(JSON.stringify(examplePayload, null, 2));
 
-    console.log('\n🔐 Validação de assinatura:');
+    console.log('\n🔐 Validação de assinatura (HMAC-SHA1 sobre os bytes crus do body):');
     console.log('```javascript');
-    console.log('// No seu servidor Express, por exemplo:');
-    console.log('app.post("/api/webhooks/nfe", (req, res) => {');
-    console.log('  const signature = req.headers["x-nfe-signature"];');
-    console.log('  const payload = req.body;');
-    console.log('  ');
-    console.log('  // Validar assinatura');
-    console.log('  const isValid = nfe.webhooks.validateSignature(');
-    console.log('    payload,');
-    console.log('    signature,');
+    console.log('// IMPORTANTE: use express.raw() para receber Buffer com os bytes exatos');
+    console.log('// JSON.stringify(req.body) NÃO funciona — a ordem das propriedades pode diferir.');
+    console.log('app.post("/api/webhooks/nfe", express.raw({ type: "*/*" }), (req, res) => {');
+    console.log('  const ok = nfe.webhooks.validateSignature(');
+    console.log('    req.body,                                  // Buffer cru');
+    console.log('    req.headers["x-hub-signature"],            // header correto');
     console.log(`    "${webhookSecret}"`);
     console.log('  );');
     console.log('  ');
-    console.log('  if (!isValid) {');
+    console.log('  if (!ok) {');
     console.log('    return res.status(401).json({ error: "Assinatura inválida" });');
     console.log('  }');
     console.log('  ');
-    console.log('  // Processar evento');
+    console.log('  // Só faça parse DEPOIS de validar');
+    console.log('  const payload = JSON.parse(req.body.toString("utf8"));');
     console.log('  const { event, data } = payload;');
     console.log('  ');
     console.log('  switch (event) {');

@@ -5,6 +5,28 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.2.1] - 2026-06-11
+
+### 🔒 Correção crítica de segurança — Validação de assinatura de webhook
+
+`WebhooksResource.validateSignature()` foi reescrita para corresponder ao esquema real usado pela NFE.io em produção. **Todas as versões anteriores rejeitavam silenciosamente qualquer assinatura legítima** — verificado por sondagem ao vivo contra `api.nfse.io`.
+
+**O que estava errado:**
+- Documentação e exemplos referenciavam `X-NFE-Signature` — o header correto é **`X-Hub-Signature`**.
+- O método computava **HMAC-SHA256** — a NFE.io usa **HMAC-SHA1**.
+- O hex era comparado case-sensitive — a NFE.io envia em MAIÚSCULAS.
+- O prefixo `sha1=` enviado no header não era removido antes da comparação.
+- O `require('crypto')` em runtime falhava (não funciona em ESM nem CJS de módulo), fazendo o método retornar `false` para tudo.
+
+**O que mudou na API:**
+- `validateSignature(payload, signature, secret)` agora aceita `payload` como `Buffer | string` (era só `string`) e `signature` como `string | string[] | undefined` (era só `string`).
+- A comparação é case-insensitive sobre o hex, com tratamento explícito do prefixo `sha1=`.
+- O método **nunca lança exceção** — todo erro/entrada malformada retorna `false`.
+
+**Migração:** use `express.raw()` (ou equivalente) para passar `req.body` como `Buffer` direto. `JSON.stringify(req.body)` NÃO funciona porque a ordem das propriedades e os espaços diferem dos bytes que a NFE.io assinou. Exemplo completo no [docs/API.md](docs/API.md#webhooks) e em `examples/real-world-webhooks.js`.
+
+**Cabeçalhos úteis** que a NFE.io também envia (agora documentados): `X-Hook-Id` (UUID por entrega, ideal para idempotência), `X-Hook-Attempts` (contador de retries), `Content-MD5` (MD5 base64 do body).
+
 ## [3.2.0] - 2026-04-25
 
 ### 🔒 Correções de Segurança
