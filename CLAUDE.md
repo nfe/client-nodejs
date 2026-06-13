@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Official NFE.io SDK for Node.js -- TypeScript native client for Brazilian electronic fiscal document APIs (NFS-e, NF-e, CT-e, CF-e). Version 3.x is a complete rewrite from the legacy v2 JavaScript/callback codebase that still lives in `lib/`.
+Official NFE.io SDK for Node.js -- TypeScript native client for Brazilian electronic fiscal document APIs (NFS-e, NF-e, CT-e, CF-e). Version 3.x is a complete rewrite from the legacy v2 JavaScript/callback codebase (v2 lives in git history and is published as `nfe-io@2.x` on npm).
 
 ## Build & Development Commands
 
@@ -32,12 +32,7 @@ Coverage thresholds: 80% for branches, functions, lines, and statements. Test se
 
 ## Architecture
 
-### Dual Codebase (v2 + v3)
-
-- **v3 (active)**: `src/` -- TypeScript, async/await, Fetch API, zero runtime dependencies
-- **v2 (legacy)**: `lib/` -- JavaScript, `when` promises, `BaseResource.extend()` pattern
-
-### v3 Source Structure
+### Source Structure
 
 - `src/index.ts` -- Barrel export for all public API (`NfeClient`, types, errors)
 - `src/core/client.ts` -- Main `NfeClient` class with lazy-initialized resource getters and polling utilities

@@ -1050,12 +1050,9 @@ Veja [tests/integration/README.md](./tests/integration/README.md) para documenta
 
 ### Geração de Tipos OpenAPI
 
-O SDK gera tipos TypeScript automaticamente a partir de especificações OpenAPI:
+O SDK gera tipos TypeScript automaticamente a partir de especificações OpenAPI. As specs são mantidas manualmente em `openapi/spec/`:
 
 ```bash
-# Baixar specs mais recentes da API (se disponível)
-npm run download:spec
-
 # Validar todas as specs OpenAPI
 npm run validate:spec
 

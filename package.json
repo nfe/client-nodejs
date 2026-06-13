@@ -45,7 +45,6 @@
   ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "download:spec": "tsx scripts/download-openapi.ts",
     "generate": "tsx scripts/generate-types.ts",
     "generate:watch": "tsx watch scripts/generate-types.ts",
     "validate:spec": "tsx scripts/validate-spec.ts",
