@@ -5,6 +5,35 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [4.0.0] - 2026-06-12
+
+### ⚠️ BREAKING CHANGE — Node.js >= 22
+
+O único requisito novo é **Node.js >= 22** (Node 18 e 20 atingiram fim de vida em abr/2025 e abr/2026). **Não há nenhuma mudança de API** — todo código escrito para a v3 funciona sem alterações. Quem ainda precisa de Node 18/20 deve permanecer no `nfe-io@^3.2`. Veja [MIGRATION.md](MIGRATION.md#v3--v4).
+
+### 🔒 Correções de Segurança
+
+Zeradas todas as vulnerabilidades reportadas pelo Dependabot e pelo Code Scanning (CodeQL). Nenhuma afetava o pacote publicado (zero dependências de runtime) — todas estavam em ferramentas de build/teste e CI. Rastreamento completo em [#31](https://github.com/nfe/client-nodejs/issues/31).
+
+- **vitest** (crítica, GHSA-5xrq-8626-4rwp): leitura/execução arbitrária de arquivos com o servidor do Vitest UI ativo — resolvida pelo upgrade para vitest 4
+- **esbuild** (baixa, GHSA-g7r4-m6w7-qqqr): leitura arbitrária de arquivos no dev server em Windows — eliminada da árvore pela migração tsup → tsdown; o esbuild residual (via tsx) já usa a versão corrigida 0.28.1
+- **CodeQL** (7 alertas, via [#32](https://github.com/nfe/client-nodejs/pull/32)): permissions mínimas do `GITHUB_TOKEN` no CI, remoção do script morto `scripts/download-openapi.ts` e remoção do código legado v2 (`lib/`)
+- **Resultado**: `npm audit` reporta **0 vulnerabilidades** e security tab zerada
+
+### 🔧 Modernização do Toolchain (sem impacto na API)
+
+- **Build**: tsup → **tsdown** (Rolldown/Rust) — mesmo output dual ESM/CJS + declarações de tipos, target `node22`
+- **Testes**: vitest 3.2.4 → **4.1.8** (+ `@vitest/ui`, `@vitest/coverage-v8`)
+- **CI**: matriz de testes Node 22/24 (antes 18/20/22); actions atualizadas para majors compatíveis com Node 24 (`checkout@v6`, `setup-node@v6`, `upload-artifact@v7`, `github-script@v9`, `codecov@v7`) — runners do GitHub passam a executar actions em Node 24 a partir de 16/06/2026
+- **Tipos**: `@types/node` ^20 → ^22
+- **vitest.config.ts**: corrigida opção inexistente `testMatch` → `include`; thresholds de coverage no formato achatado do vitest
+
+### 📦 Skill embarcada
+
+- Skill renomeada de `nfeio-sdk` para **`nfeio-node-sdk`** — fixa a convenção cross-SDK (`<org>-<linguagem>-sdk`) antes da publicação no [skills.sh](https://skills.sh)
+- Corrigido o path do bloco `agents.skills` no `package.json`, que apontava para diretório inexistente (`./skills/nfe-io-sdk`)
+- Requisito documentado na skill atualizado para Node.js 22+
+
 ## [3.2.1] - 2026-06-11
 
 ### 🔒 Correção crítica de segurança — Validação de assinatura de webhook
