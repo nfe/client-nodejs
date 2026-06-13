@@ -1,19 +1,21 @@
-# NFE.io SDK para Node.js (v3)
+# NFE.io SDK para Node.js (v4)
 
 [![npm version](https://img.shields.io/npm/v/nfe-io.svg)](https://www.npmjs.com/package/nfe-io)
 [![Node.js Version](https://img.shields.io/node/v/nfe-io.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![skills.sh](https://skills.sh/b/nfe/client-nodejs)](https://skills.sh/nfe/client-nodejs)
 
 **SDK Oficial NFE.io para Node.js 22+** - SDK TypeScript moderno para emissão de notas fiscais de serviço eletrônicas (NFS-e).
 
-> ✨ **Versão 3.0** - Reescrita completa com TypeScript, zero dependências em runtime e API moderna async/await.
+> ✨ **Versão 4** - TypeScript nativo, zero dependências em runtime e API moderna async/await.
 
 ## 📋 Índice
 
 - [Recursos](#-recursos)
 - [Instalação](#-instalação)
 - [Início Rápido](#-início-rápido)
+- [Skill para Agentes de IA](#-skill-para-agentes-de-ia)
 - [Documentação](#-documentação)
 - [Migração da v2](#-migração-da-v2)
 - [Exemplos](#-exemplos)
@@ -24,7 +26,7 @@
 ## ✨ Recursos
 
 - 🎯 **TypeScript Moderno** - Segurança de tipos completa com TypeScript 5.3+
-- 🚀 **Zero Dependências** - Usa API fetch nativa do Node.js (Node 18+)
+- 🚀 **Zero Dependências** - Usa API fetch nativa do Node.js (Node 22+)
 - ⚡ **Async/Await** - API limpa baseada em promises
 - 🔄 **Retry Automático** - Lógica de retry com exponential backoff integrada
 - 📦 **ESM & CommonJS** - Funciona com ambos os sistemas de módulos
@@ -35,7 +37,7 @@
 ## 📦 Instalação
 
 **Requisitos:**
-- Node.js >= 18.0.0
+- Node.js >= 22.0.0
 - TypeScript >= 5.0 (se usar TypeScript)
 
 ```bash
@@ -143,6 +145,16 @@ const nfe = new NfeClient({
 
 // Mesma API que ESM
 ```
+
+## 🤖 Skill para Agentes de IA
+
+Este repositório embarca uma skill que ensina agentes de código (Claude Code, Cursor, etc.) a usar o SDK corretamente. Instale com:
+
+```bash
+npx skills add nfe/client-nodejs
+```
+
+Descubra no diretório: [![skills.sh](https://skills.sh/b/nfe/client-nodejs)](https://skills.sh/nfe/client-nodejs)
 
 ## 📚 Documentação
 

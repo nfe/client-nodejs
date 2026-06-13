@@ -194,25 +194,36 @@ All error objects have: `message`, `type`, `code`/`status`/`statusCode`, `detail
 
 ## Core Pattern: Pagination
 
-The SDK uses **two different pagination styles**:
+The SDK uses **two different pagination styles**, and the response shape varies by resource:
 
 **Offset-based** (service invoices, companies, people, webhooks):
 ```typescript
+// Service invoices return { serviceInvoices, totalResults, totalPages, page }
 const page = await nfe.serviceInvoices.list(companyId, {
   pageIndex: 0,    // 0-based page number
   pageCount: 50,   // Items per page
 });
-// page.data: ServiceInvoiceData[]
-// page.totalCount: number
+page.serviceInvoices; // ServiceInvoiceData[]
+page.totalResults;    // number
+page.totalPages;      // number
+
+// Companies, people and webhooks return the generic ListResponse<T>
+const companies = await nfe.companies.list({ pageIndex: 0, pageCount: 50 });
+companies.data;       // Company[]
+companies.totalCount; // number | undefined
+companies.page;       // { pageIndex, pageCount }
 ```
 
 **Cursor-based** (product invoices, state taxes):
 ```typescript
+// Returns { productInvoices, hasMore }
 const page = await nfe.productInvoices.list(companyId, {
   environment: 'Production',   // REQUIRED for product invoices
   limit: 25,
   startingAfter: 'last-invoice-id',  // Cursor for next page
 });
+page.productInvoices; // NfeProductInvoiceWithoutEvents[]
+page.hasMore;         // boolean
 ```
 
 **Auto-pagination helpers** (companies only):
