@@ -1,6 +1,6 @@
 {
   "name": "nfe-io",
-  "version": "v3.2.1",
+  "version": "v4.0.0",
   "description": "Official NFE.io SDK for Node.js - TypeScript native with zero runtime dependencies",
   "keywords": [
     "nfe",
@@ -22,17 +22,23 @@
   "bugs": "https://github.com/nfe/client-nodejs/issues",
   "homepage": "https://nfe.io",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -48,7 +54,7 @@
     "generate": "tsx scripts/generate-types.ts",
     "generate:watch": "tsx watch scripts/generate-types.ts",
     "validate:spec": "tsx scripts/validate-spec.ts",
-    "build": "npm run generate && npm run clean && npm run typecheck && tsup",
+    "build": "npm run generate && npm run clean && npm run typecheck && tsdown",
     "prebuild": "npm run validate:spec",
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit",
@@ -69,11 +75,11 @@
     "release": "npm run build && npm test -- --run && npm publish"
   },
   "devDependencies": {
-    "@types/node": "^20.10.0",
+    "@types/node": "^22.19.21",
     "@typescript-eslint/eslint-plugin": "^8.59.0",
     "@typescript-eslint/parser": "^8.59.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
+    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/ui": "^4.1.8",
     "dotenv": "~17.2.3",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
@@ -81,18 +87,18 @@
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.2.0",
     "rimraf": "^5.0.10",
-    "tsup": "^8.5.0",
-    "tsx": "^4.7.0",
+    "tsdown": "^0.22.2",
+    "tsx": "^4.22.4",
     "typedoc": "^0.25.13",
     "typescript": "^5.3.0",
-    "vitest": "^3.2.4",
+    "vitest": "^4.1.8",
     "yaml": "^2.3.4"
   },
   "agents": {
     "skills": [
       {
-        "name": "nfe-io-sdk",
-        "path": "./skills/nfe-io-sdk",
+        "name": "nfeio-node-sdk",
+        "path": "./skills/nfeio-node-sdk",
         "description": "A Node.js SDK for interacting with the NFE.io API, providing functionalities to manage electronic invoices (NF-e) and service invoices (NFS-e) in Brazil."
       }
     ]

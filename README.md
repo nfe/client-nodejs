@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**SDK Oficial NFE.io para Node.js 18+** - SDK TypeScript moderno para emissão de notas fiscais de serviço eletrônicas (NFS-e).
+**SDK Oficial NFE.io para Node.js 22+** - SDK TypeScript moderno para emissão de notas fiscais de serviço eletrônicas (NFS-e).
 
 > ✨ **Versão 3.0** - Reescrita completa com TypeScript, zero dependências em runtime e API moderna async/await.
 
@@ -1071,7 +1071,7 @@ O processo de build valida automaticamente as specs e gera tipos antes da compil
 
 ```bash
 npm run build
-# → Executa: validate:spec → generate → typecheck → tsup
+# → Executa: validate:spec → generate → typecheck → tsdown
 ```
 
 **Nota**: Arquivos gerados não devem ser editados manualmente. Edite as specs OpenAPI e regenere.

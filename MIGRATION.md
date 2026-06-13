@@ -1,3 +1,22 @@
+# Guia de Migração
+
+## v3 → v4
+
+A v4.0.0 **não contém mudanças de API** — todo código escrito para a v3 funciona sem alterações.
+
+O único requisito novo é **Node.js >= 22** (Node 18 e 20 atingiram fim de vida):
+
+```bash
+node --version  # deve ser >= 22
+npm install nfe-io@^4
+```
+
+Se você ainda precisa de Node 18/20, permaneça no `nfe-io@^3.2`.
+
+Internamente, a v4 moderniza o toolchain de build (tsup → tsdown/Rolldown, vitest 4) e corrige alertas de segurança em dependências de desenvolvimento — nada disso afeta o código consumidor.
+
+---
+
 # Guia de Migração: v2 → v3
 
 Este guia ajuda você a migrar do SDK NFE.io v2.x para v3.0.

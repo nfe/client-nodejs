@@ -11,7 +11,7 @@ Official NFE.io SDK for Node.js -- TypeScript native client for Brazilian electr
 ```bash
 npm run validate:spec    # Validate OpenAPI YAML specs
 npm run generate         # Generate TypeScript types from OpenAPI specs into src/generated/
-npm run build            # Full pipeline: validate:spec -> generate -> clean -> typecheck -> tsup
+npm run build            # Full pipeline: validate:spec -> generate -> clean -> typecheck -> tsdown
 npm run typecheck        # TypeScript strict check (tsc --noEmit)
 npm run lint             # ESLint with auto-fix
 npm run format           # Prettier formatting
@@ -56,7 +56,7 @@ Specs live in `openapi/spec/*.yaml`. The generation script (`scripts/generate-ty
 
 ### Module Output
 
-Dual format via tsup: ESM (`dist/index.js`) + CommonJS (`dist/index.cjs`) + type declarations (`dist/index.d.ts`). Target: Node.js 18+.
+Dual format via tsdown (Rolldown): ESM (`dist/index.js`) + CommonJS (`dist/index.cjs`) + type declarations (`dist/index.d.ts`). Target: Node.js 22+.
 
 ## Code Style
 

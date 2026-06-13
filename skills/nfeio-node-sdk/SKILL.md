@@ -1,5 +1,5 @@
 ---
-name: nfeio-sdk
+name: nfeio-node-sdk
 description: "NFE.io Node.js SDK integration expert (package: nfe-io). MUST trigger when: code imports 'nfe-io' or references NfeClient; user mentions NFE.io, NFS-e, NF-e, CT-e, CF-e, CFe-SAT, nota fiscal, nota fiscal eletronica, Brazilian invoice, fiscal document, electronic invoice Brazil, CNPJ lookup, CPF lookup, service invoice, product invoice, transportation invoice, consumer invoice, tax calculation Brazilian taxes, SEFAZ, NFE API, emissao de nota, consulta CNPJ, consulta CPF, consulta CEP; user works with Brazilian electronic fiscal documents, tax documents, or Brazilian tax compliance; any file contains 'nfe-io' in package.json or import statements; user mentions polling for invoice status, invoice async processing, or certificate management for Brazilian fiscal documents. Covers all 16 SDK resources, async invoice processing with polling, discriminated union responses, error hierarchy, certificate management, webhook signature validation, address lookup (CEP), legal entity and natural person lookups, tax calculation engine, and pagination patterns. Use this skill even if the user doesn't explicitly name the SDK -- if they're building anything related to Brazilian fiscal document automation in Node.js/TypeScript, this skill applies."
 ---
 
@@ -23,7 +23,7 @@ import nfeFactory from 'nfe-io';
 const nfe = nfeFactory({ apiKey: 'your-key' });
 ```
 
-Requirements: Node.js 18+ (uses native `fetch`). Zero runtime dependencies.
+Requirements: Node.js 22+ (uses native `fetch`). Zero runtime dependencies.
 
 ## Quick Start
 
