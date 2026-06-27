@@ -7,6 +7,11 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não publicado]
 
+### ✨ Adicionado — Webhooks de conta
+
+- `WebhooksResource` ganhou operações **de conta** (`/v2/webhooks`, sem `companyId`): `listAccountWebhooks`, `createAccountWebhook`, `retrieveAccountWebhook`, `updateAccountWebhook`, `deleteAccountWebhook`, `pingAccountWebhook`, e `deleteAllAccountWebhooks` (método distinto e marcado como destrutivo). Os métodos company-scoped existentes seguem inalterados.
+- **`fetchEventTypes()`**: lista de tipos de evento **ao vivo** (`GET /v2/webhooks/eventTypes`), com retorno em união aberta. `getAvailableEvents()` (lista hardcoded) foi marcado `@deprecated`.
+
 ### ✨ Adicionado — Empresas (contribuintes-v2) e tipagem de domínio
 
 - Spec **`contribuintes-v2`** (Empresas, OpenAPI 3.x) adotada na geração — destrava tipos reais de empresa/certificado/endereço.
