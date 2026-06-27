@@ -5,7 +5,7 @@
  * Types are namespaced by spec to avoid conflicts.
  *
  * @generated
- * Last updated: 2026-06-27T03:43:02.647Z
+ * Last updated: 2026-06-27T04:57:30.389Z
  */
 
 // ============================================================================
@@ -19,6 +19,8 @@ export * as NfConsumidor from './nf-consumidor-v2.js';
 export * as NfProduto from './nf-produto-v2.js';
 export * as NfServico from './nf-servico-v1.js';
 export * as Nfeio from './nfeio.js';
+export * as ProductInvoiceRtc from './product-invoice-rtc-v1.js';
+export * as ServiceInvoiceRtc from './service-invoice-rtc-v1.js';
 
 // ============================================================================
 // Convenience Type Aliases

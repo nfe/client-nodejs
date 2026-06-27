@@ -317,6 +317,10 @@ export type {
   // Utility types
   ResourceId,
   ApiErrorResponse,
+
+  // RTC (Reforma Tributária do Consumo) emission request types
+  NFSeRtcRequest,
+  ProductInvoiceRtcRequest,
 } from './core/types.js';
 
 /**
@@ -420,6 +424,8 @@ export { TaxCalculationResource, createTaxCalculationResource } from './core/res
 export { TaxCodesResource, createTaxCodesResource } from './core/resources/tax-codes.js';
 export { ProductInvoicesResource } from './core/resources/product-invoices.js';
 export { StateTaxesResource } from './core/resources/state-taxes.js';
+export { ServiceInvoicesRtcResource } from './core/resources/service-invoices-rtc.js';
+export { ProductInvoicesRtcResource } from './core/resources/product-invoices-rtc.js';
 
 // ============================================================================
 // Default Export (maintains v2 compatibility)

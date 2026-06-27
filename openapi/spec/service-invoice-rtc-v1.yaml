@@ -1,0 +1,1727 @@
+openapi: 3.0.1
+info:
+  title: API de Emissão de Nota Fiscal de Serviços Eletrônica (NFS-e) - RTC
+  version: v3
+  description: |
+    ### Introdução
+    API para envio de dados de RPS/DPS para emissão de NFS-e, alinhada com o padrão nacional e complementada com campos específicos do Web Service da Prefeitura de São Paulo (NF-e/NFS-e).
+
+    ### Adequação de Leiaute
+
+    Nesta adequação de leiaute, foram considerados os leiautes do **Ambiente Nacional**, **São Paulo e ABRASF**.
+
+    > **Atenção**
+    > _Sujeito a alterações mediante notas técnicas e processos de homologação._
+servers:
+  - url: https://api.nfe.io
+    description: Para realizar testes no ambiente de homologação da prefeitura, é necessário entrar em contato com o suporte para que a empresa seja parametrizada com os dados necessários.
+tags:
+  - name: Nota Fiscal de Serviço (RTC)
+    description: Operações relacionadas à Nota Fiscal Eletrônica de Serviço
+
+paths:
+  /v1/companies/:company_id/serviceinvoices:
+    post:
+      tags:
+        - Nota Fiscal de Serviço (RTC)
+      summary: Envio de dados para emissão de NFS-e (RPS/DPS)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NFSeRequest'
+            examples:
+              MinimumExample:
+                summary: Exemplo Mínimo (Apenas campos obrigatórios + IBSCBS obrigatórios)
+                value:
+                  borrower:
+                    name: CONSUMIDOR MINIMO LTDA
+                    federalTaxNumber: 191
+                  cityServiceCode: '4444'
+                  federalServiceCode: '01.01'
+                  description: "Serviço de Consultoria e Assessoria (Exemplo Mínimo V4)."
+                  servicesAmount: 1000.00
+                  nbsCode: '101010100'
+                  ibsCbs:
+                    operationIndicator: '1005011'
+                    classCode: '000001'
+              IntermediateExample:
+                summary: Exemplo Intermediário (Raiz do IBSCBS + subgrupos ibs e cbs)
+                value:
+                  borrower:
+                    name: CONSUMIDOR INTERMEDIARIO S.A.
+                    federalTaxNumber: 201
+                    address:
+                      country: BRA
+                      postalCode: "01001-001"
+                      street: AVENIDA PRINCIPAL
+                      number: '500'
+                      district: BROOKLIN
+                      city:
+                        code: '3550308'
+                      state: SP
+                  externalId: NFSE-INT-V4-0002
+                  cityServiceCode: '4444'
+                  federalServiceCode: '01.02'
+                  description: "Assessoria tributária para reforma de 2026 (Exemplo Intermediário V4)."
+                  servicesAmount: 5000.00
+                  issuedOn: '2026-01-20T11:30:00-03:00'
+                  taxationType: OutsideCity
+                  location:
+                    country: BRA
+                    postalCode: "13000-000"
+                    street: RUA FORA DA CIDADE
+                    number: '120'
+                    district: INTERIOR
+                    city:
+                      code: '3509502'
+                    state: SP
+                  nbsCode: '102020200'
+                  recipient:
+                    name: RECIPIENTE INTERMEDIARIO LTDA.
+                    federalTaxNumber: 301
+                    address:
+                      country: BRA
+                      postalCode: "01000-000"
+                      city:
+                        code: '3550308'
+                      state: SP
+                  ibsCbs:
+                    purpose: regular # Este campo tem um default 'regular', então não é estritamente necessário no envio.
+                    isDonation: false
+                    personalUse: false
+                    destinationIndicator: SameAsBuyer
+                    operationIndicator: '1005011'
+                    situationCode: '000' # Este campo é opcional e pode ser derivado do classCode.
+                    classCode: '000001'
+                    basis: 5000.00
+                    reimbursedResuppliedAmount: 0.00
+                    ibs:
+                      totalAmount: 100.00
+                      state:
+                        rate: 0.04
+                        effectiveRate: 0.03
+                        amount: 50.00
+                      municipal:
+                        rate: 0.04
+                        effectiveRate: 0.03
+                        amount: 50.00
+                    cbs:
+                      rate: 0.08
+                      effectiveRate: 0.07
+                      amount: 350.00
+              CompleteExample:
+                summary: Exemplo Completo e Exaustivo (100% dos campos)
+                value:
+                  borrower:
+                    type: LegalEntity # O valor já estava correto.
+                    name: TOMADOR COMPLETO GLOBAL LTDA (EXAUSTIVO)
+                    federalTaxNumber: 12345678000199
+                    municipalTaxNumber: '999999999999'
+                    stateTaxNumber: '111222333444'
+                    caepf: '12345678901234'
+                    taxRegime: LucroReal
+                    phoneNumber: '5511988887777'
+                    email: tomador.exausto@exemplo.com
+                    noTaxIdReason: NotRequired
+                    address:
+                      country: USA
+                      postalCode: "10001-000"
+                      street: 1st AVENUE
+                      number: '10'
+                      additionalInformation: SUITE 50 FLOOR 10
+                      district: MANHATTAN
+                      city:
+                        name: NEW YORK
+                        code: '9999999'
+                      state: NY
+                  externalId: NFSE-EXAUSTIVO-V4-0004
+                  cityServiceCode: '4444'
+                  federalServiceCode: '17.01'
+                  cnaeCode: '6201501'
+                  nbsCode: '117010000'
+                  ncmCode: '85044021'
+                  description: 'Desenvolvimento e licenciamento de software customizado, conforme contrato. Inclui valores de multa, juros, deduções, benefícios, suspensão, etc. (Exemplo Exaustivo V4)'
+                  servicesAmount: 25000.00
+                  paidAmount: 26000.00
+                  rpsSerialNumber: A0002
+                  issuedOn: '2026-01-25T09:15:30-03:00'
+                  accrualOn: '2026-01-01'
+                  rpsNumber: 87654321
+                  taxationType: Immune
+                  issRate: 0.00
+                  issTaxAmount: 0.00
+                  deductionsAmount: 1500.00
+                  discountUnconditionedAmount: 200.00
+                  discountConditionedAmount: 100.00
+                  irAmountWithheld: 250.00
+                  pisRate: 0.0065
+                  pisCofinsBaseTax: 25000.00
+                  pisAmountWithheld: 162.50
+                  cofinsRate: 0.04
+                  cofinsAmountWithheld: 1000.00
+                  csllAmountWithheld: 250.00
+                  inssAmountWithheld: 2750.00
+                  issAmountWithheld: 0.00
+                  ipiRate: 0.05
+                  ipiAmount: 1250.00
+                  othersAmountWithheld: 50.00
+                  additionalInformation: 'Informações adicionais exaustivas para o fisco, incluindo detalhes do contrato XYZ.'
+                  isEarlyInstallmentPayment: true
+                  location:
+                    country: BRA
+                    postalCode: "90000-000"
+                    street: RUA DA PRESTACAO EXAUSTIVA
+                    number: '999'
+                    additionalInformation: 'Bloco Z, Apto 101'
+                    district: FLORESTA NOVA
+                    city:
+                      code: '4314902'
+                      name: PORTO ALEGRE
+                    state: RS
+                  activityEvent:
+                    name: EVENTO CULTURAL COMPLETO
+                    beginOn: '2026-02-10T08:00:00-03:00'
+                    endOn: '2026-02-12T22:00:00-03:00'
+                    Code: EVT-COMPLEX
+                    address:
+                      country: BRA
+                      postalCode: "90000-010"
+                      street: ARENA DO EVENTO
+                      number: SN
+                      district: ARENA DISTRICT
+                      city:
+                        code: '4314902'
+                      state: RS
+                  approximateTax:
+                    source: IBPT
+                    version: '24.1.A'
+                    totalRate: 0.15
+                    totalAmount: 3750.00
+                  referenceSubstitution:
+                    id: '99998888777766665555444433332222111100009999'
+                    reason: RejectionBuyerOrIntermediary
+                  lease:
+                    category: RightOfWay
+                    objectType: cables
+                    totalLength: 2500.75
+                  construction:
+                    propertyFiscalRegistration: '9876543210-FISCAL-OBRA'
+                    workId:
+                      scheme: bra.cei
+                      value: CEI-OBRA-EXAUSTIVA
+                    cibCode: 'CIB-9876543210'
+                    siteAddress:
+                      country: BRA
+                      postalCode: "01000-001"
+                      street: RUA DA OBRA COMPLETA
+                      number: '1000'
+                      district: CENTRO NOVO
+                      city:
+                        code: '3550308'
+                      state: SP
+                  realEstate:
+                    propertyFiscalRegistration: 'SQL-IMOVEL-98765'
+                    cibCode: 'CIB-IMOVEL-54321'
+                    siteAddress:
+                      country: BRA
+                      postalCode: "04571-010"
+                      street: RUA DO IMOVEL EXEMPLO
+                      number: '200'
+                      district: BROOKLIN
+                      city:
+                        code: '3550308'
+                      state: SP
+                  foreignTrade:
+                    serviceMode: ConsumptionAbroad
+                    relationShip: affiliate
+                    currency: 220
+                    serviceAmountInCurrency: 20000.00
+                    supportMechanismProvider: ProexFinancing
+                    supportMechanismReceiver: Zpe
+                    temporaryGoods: no
+                    importDeclaration: DI-123456-2026
+                    exportRegistration: 'RE-EXP-COMPLETO-123'
+                    mdicDelivery: true
+                  additionalInformationGroup:
+                    responsibilityDocumentIdentifier: DOC-RESP-001
+                    referencedDocument: REF-DOC-002
+                    order: 'PEDIDO-COMPRA-456'
+                    items:
+                    - item: 'Item A - Detalhe 1'
+                    - item: 'Item B - Detalhe 2'
+                    otherInformation: Outras informações complementares.
+                  intermediary:
+                    type: LegalEntity
+                    name: INTERMEDIARIO COMPLETO S/A
+                    federalTaxNumber: 87654321000100
+                    municipalTaxNumber: '111111111111'
+                    stateTaxNumber: '999888777666'
+                    taxRegime: SimplesNacional
+                    phoneNumber: '5521977776666'
+                    email: interm.completo@teste.com
+                    address:
+                      country: BRA
+                      postalCode: "20000-000"
+                      street: AV INTERMEDIACAO COMPLETA
+                      number: '123'
+                      district: CENTRO RIO
+                      city:
+                        code: '3304557'
+                      state: RJ
+                  recipient:
+                    name: DESTINATARIO DETALHADO COMPLETO LTDA
+                    federalTaxNumber: 100100100100
+                    email: dest@detalhe.completo.com
+                    address:
+                      country: BRA
+                      postalCode: "01000-000"
+                      street: RUA DESTINO FINAL
+                      number: '10'
+                      district: CENTRO
+                      city:
+                        code: '3550308'
+                      state: SP
+                  deduction:
+                    documents:
+                    - nfseKey: '11111222223333344444555556666677777888889999900000'
+                      deductionType: Subcontracting
+                      issueDate: '2026-01-10'
+                      deductibleTotal: 1000.00
+                      usedAmount: 1000.00
+                      supplier:
+                        type: LegalEntity
+                        name: SUBEMPREITEIRO EXEMPLO LTDA
+                        federalTaxNumber: 10101010000110
+                        address:
+                          country: BRA
+                          postalCode: "01234-000"
+                          street: RUA DO SUBEMPREITEIRO
+                          number: '10'
+                          district: VILA INDUSTRIAL
+                          city:
+                            code: '3550308'
+                          state: SP
+                  benefit:
+                    id: '35503080100002'
+                    amount: 300.00
+                  suspension:
+                    reason: Administrative
+                    processNumber: ADM-SUSP-2026-XYZ
+                  immunityType: BooksPressPaper
+                  retentionType: WithheldByIntermediary
+                  approximateTotals:
+                    federal:
+                      rate: 0.12
+                      amount: 3000.00
+                    state:
+                      rate: 0.03
+                      amount: 750.00
+                    municipal:
+                      rate: 0.00
+                      amount: 0.00                    
+                    rate: 0.15
+                    amount: 3750.00
+                  ibsCbs:
+                    purpose: regular
+                    isDonation: false
+                    personalUse: true
+                    leasedMovableAssets:
+                      - ncmCode: '84713012'
+                        description: 'Notebook para locação'
+                        quantity: 5
+                      - ncmCode: '84716052'
+                        description: 'Monitor para locação'                        
+                        quantity: 10
+                    destinationIndicator: DifferentFromBuyer
+                    relatedDocs:
+                      items:
+                      - 'NFSE11112222333344445555666677778888999900001111'
+                      - 'NFSE11112222333344445555666677778888999900002222'                    
+                    operationIndicator: '4'
+                    operationType: SupplyForPastPay
+                    situationCode: '200' # Este campo é opcional e pode ser derivado do classCode.
+                    classCode: '200045'
+                    basis: 25000.00
+                    reimbursedResuppliedAmount: 150.00
+                    ibscbsDeductionReductionAmount: 250.00
+                    realEstate:
+                      propertyFiscalRegistration: 'SQL-IMOVEL-98765'
+                      cibCode: 'CIB-IMOVEL-54321'
+                      siteAddress:
+                        country: BRA
+                        postalCode: "04571-010"
+                        street: RUA DO IMOVEL EXEMPLO
+                        number: '200'
+                        district: BROOKLIN
+                        city:
+                          code: '3550308'
+                        state: SP
+                    ibs:
+                      totalAmount: 500.00
+                      state:
+                        rate: 0.05
+                        rateReduction: 0.1
+                        effectiveRate: 0.045
+                        deferment:
+                          rate: 0.5
+                          amount: 125.00
+                        returnedAmount: 25.00
+                        amount: 250.00
+                      municipal:
+                        rate: 0.05
+                        rateReduction: 0
+                        effectiveRate: 0.05
+                        deferment:
+                          rate: 0
+                          amount: 0
+                        returnedAmount: 0
+                        amount: 250.00
+                    cbs:
+                      rate: 0.08
+                      rateReduction: 0.05
+                      effectiveRate: 0.076
+                      deferment:
+                        rate: 0.2
+                        amount: 400.00
+                      returnedAmount: 50.00
+                      amount: 2000.00
+                    regularTaxation:
+                      situationCode: '550'
+                      classCode: '550016'
+                      ibs:
+                        totalAmount: 550.00
+                        state:
+                          effectiveRate: 0.05
+                          amount: 275.00
+                        municipal:
+                          effectiveRate: 0.05
+                          amount: 275.00
+                      cbs:
+                        effectiveRate: 0.085
+                        amount: 2125.00
+                    presumedCredits:
+                      ibs:
+                        code: '01'
+                        rate: 0.01
+                        amount: 250.00
+                        conditionalAmount: 50.00
+                      cbs:
+                        code: '02'
+                        rate: 0.005
+                        amount: 125.00
+                        conditionalAmount: 25.00
+                    governmentPurchase:
+                      entityType: state
+                      ibs:
+                        totalAmount: 450.00
+                        state:
+                          rate: 0.04
+                          amount: 225.00
+                        municipal:
+                          rate: 0.04
+                          amount: 225.00
+                      cbs:
+                        rate: 0.07
+                        amount: 1750.00
+                    creditTransfer:
+                      ibsAmount: 100.00
+                      cbsAmount: 50.00
+                    thirdPartyReimbursements:
+                      documents:
+                      - otherNationalDfe:
+                          dfeKey: DFE-NACIONAL-CHAVE-EXEMPLO-12345678901234567890
+                          dfeTypeText: Outro Documento Fiscal Eletronico Nacional
+                          dfeType: '9'
+                        supplier:
+                          name: FORNECEDOR DFE NACIONAL LTDA
+                          federalTaxNumber: 30303030000130
+                        issueDate: '2026-01-05'
+                        accrualOn: '2026-01-05'
+                        reimbursementType: RealEstateBrokerPassThrough
+                        amount: 150.00
+                  serviceAmountDetails:
+                    initialChargedAmount: 25000.00
+                    finalChargedAmount: 26000.00
+                    fineAmount: 250.00
+                    interestAmount: 750.00
+      responses:
+        '200':
+          description: Processamento do RPS/DPS iniciado com sucesso
+        '400':
+          description: Dados inválidos na requisição
+  /v1/companies/:company_id/serviceinvoices/:id/cancellation-xml:
+    get:
+      tags:
+        - Nota Fiscal de Serviço (RTC)
+      summary: Download do XML do evento de cancelamento da NFS-e (Ambiente Nacional)
+      description: |
+        Retorna o XML do **evento de cancelamento** (`e110001`) de uma NFS-e emitida no **Ambiente Nacional (ADN)**.
+
+        > **Atenção**
+        > Disponível **apenas** para notas do Ambiente Nacional. Provedores de layout municipal/ABRASF não possuem evento de cancelamento próprio e retornam `404`.
+
+        Quando existem o XML enviado (request do `e110001`) e o XML do evento autorizado (retorno do ADN — `procEventoNFSe`), o **retorno autorizado é priorizado**. O XML só está disponível para notas com status `Cancelled`.
+      parameters:
+        - name: company_id
+          in: path
+          description: ID da empresa
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID da Nota Fiscal de Serviço (NFS-e)
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: XML do evento de cancelamento retornado com sucesso
+          content:
+            application/xml:
+              schema:
+                type: string
+        '404':
+          description: Não há XML de evento de cancelamento para esta nota (provedor legado, ambiente não Nacional ou nota ainda não cancelada)
+
+components:
+  schemas:
+    NFSeRequest:
+      type: object
+      title: Nota Fiscal de Serviço (NFSe) Schema
+      required:
+        - cityServiceCode
+        - description
+        - servicesAmount
+        - nbsCode
+      properties:
+        externalId:
+          type: string
+          description: Identificação única do cliente
+        cityServiceCode:
+          type: string
+          description: Código do serviço no municipio
+        federalServiceCode:
+          type: string
+          description: Código federal do servico (Item da lista de serviço LC 116) (CodigoServico, tpCodigoServico)
+          maxLength: 5
+        description:
+          type: string
+          description: Descrição dos serviços (Discriminacao, tpDiscriminacao)
+          maxLength: 2000
+        servicesAmount:
+          type: number
+          description: Valor do serviços (ValorServicos - V1.0 SP) - Valor total dos serviços (tpValor)
+        nbsCode:
+          type: string
+          description: Código do NBS no municipio (somente quando necessario na cidade) (NBS, tpCodigoNBS)
+          maxLength: 9
+        cnaeCode:
+          type: string
+          description: Código CNAE (somente quando necessario na cidade)
+        ncmCode:
+          type: string
+          description: Código NCM (Nomenclatura Comum do Mercosul) (NCM, tpCodigoNCM)
+          maxLength: 8
+        paidAmount:
+          type: number
+          description: Valor dos Serviços pago (Valor Total Recebido, tpValor)
+        issuedOn:
+          type: string
+          format: date-time
+          description: |
+            Data da emissão no formato YYYY-MM-DDTHH:MM:SS.SSSSSS-03:00 (dhEmi, DataEmissaoNFe).
+            **Automático**: Se não for informado, o sistema utilizará a data e hora atuais no momento do processamento.
+        accrualOn:
+          type: string
+          format: date
+          description: |
+            Data da competência da prestação do serviço no formato AAAA-MM-DD (Competencia).
+            **Automático**: Se não for informado, o sistema utilizará a data do campo `issuedOn`.
+        rpsSerialNumber:
+          type: string
+          description: |
+            Número de Série da RPS (SerieRPS, serie, tpSerieRPS).
+            **Prioridade**: Se informado, o valor enviado será utilizado.
+            **Automático**: Se não for informado, o sistema utilizará o valor definido no cadastro da empresa.
+          maxLength: 5
+        rpsNumber:
+          type: number
+          description: |
+            Número da RPS (NumeroRPS, nDPS, tpNumero).
+            **Prioridade**: Se informado, o valor enviado será utilizado.
+            **Automático**: Se não for informado, o sistema utilizará o próximo número da sequência automática.
+        taxationType:
+          type: string
+          description: |
+            **Tipo de Tributação (taxationType)**
+
+            O campo `taxationType` define o regime de tributação do **ISSQN (Imposto Sobre Serviços de Qualquer Natureza)**. Ele é um campo legado, mantido para compatibilidade com os layouts municipais existentes, como o da Prefeitura de São Paulo, e continua sendo fundamental para o cálculo do ISS durante o período de transição da Reforma Tributária.
+
+            **Finalidade Principal (Contexto do ISSQN):**
+
+            Este campo indica ao sistema como o ISSQN deve ser tratado na operação. Com base no valor selecionado (ex: `WithinCity`, `OutsideCity`, `Immune`), o sistema determina se o ISSQN é devido, se a tributação ocorrerá dentro ou fora do município, ou se a operação é isenta ou imune a este imposto específico.
+
+            **Relação com a Reforma Tributária (IBS/CBS):**
+
+            É crucial entender que o `taxationType` **não se aplica aos novos tributos (IBS e CBS)**. Para a apuração do IBS e da CBS, as regras de tributação e o local de incidência são definidos exclusivamente pelos campos dentro do grupo `IbsCbs`, como o `operationIndicator` e o `classCode`.
+
+            **Em resumo:**
+            *   **`taxationType`**: Governa o comportamento do **ISSQN**.
+            *   **`ibsCbs`**: Governa o comportamento do **IBS e da CBS**.
+
+            Durante o período de transição, ambos os sistemas de tributação coexistirão, tornando o preenchimento correto de todos esses campos essencial para a conformidade fiscal da nota.
+
+            ---
+
+            Tipo da tributação (TributacaoRPS, tpTributacaoNFe).
+            Valores possíveis:
+            - `None`: Nenhuma
+            - `WithinCity`: Tributação no município
+            - `OutsideCity`: Tributação fora do município
+            - `Export`: Exportação
+            - `Free`: Isenta
+            - `Immune`: Imune
+            - `SuspendedCourtDecision`: Exigibilidade suspensa por decisão judicial
+            - `SuspendedAdministrativeProcedure`: Exigibilidade suspensa por procedimento administrativo
+            - `OutsideCityFree`: Isenta e fora do município
+            - `OutsideCityImmune`: Imune e fora do município
+            - `OutsideCitySuspended`: Suspensa e fora do município
+            - `OutsideCitySuspendedAdministrativeProcedure`: Suspensa por processo administrativo e fora do município
+            - `ObjectiveImune`: Imunidade Objetiva
+          enum: [None, WithinCity, OutsideCity, Export, Free, Immune, SuspendedCourtDecision, SuspendedAdministrativeProcedure, OutsideCityFree, OutsideCityImmune, OutsideCitySuspended, OutsideCitySuspendedAdministrativeProcedure, ObjectiveImune]
+          default: WithinCity
+        issRate:
+          type: number
+          description: |
+            Alíquota do ISS (pAliq, tpAliquota).
+            **Automático**: Se não for informado, o sistema utilizará o valor definido no cadastro do código de serviço.
+        issTaxAmount:
+          type: number
+          description: |
+            Valor do ISS (ValorISS, tpValor).
+            **Automático**: Se não for informado, o sistema realizará o cálculo automático.
+        deductionsAmount:
+          type: number
+          description: |
+            **Deduções: Simples vs. Estruturado (`deductionsAmount` vs. `deduction`)**
+
+            O layout oferece duas formas de registrar deduções da base de cálculo do ISSQN, visando flexibilidade e conformidade com os diferentes padrões (municipal legado vs. nacional).
+
+            *   **`deductionsAmount` (Valor Simples):**
+                Um campo numérico para informar o **valor total consolidado** das deduções. É uma abordagem direta, compatível com layouts mais antigos que não exigem o detalhamento dos documentos que comprovam a dedução.
+
+            *   **`deduction` (Grupo Estruturado):**
+                Um objeto complexo que permite justificar cada dedução com base em documentos fiscais, alinhando-se ao **padrão da NFS-e Nacional**. Ele detalha a origem de cada valor (chave do documento, tipo, valor, fornecedor).
+
+            **Relação e Recomendação:**
+            A coexistência dos campos oferece compatibilidade. `deductionsAmount` é uma opção simplificada, enquanto o grupo `deduction` é a forma mais completa e recomendada para garantir rastreabilidade e conformidade fiscal com o padrão nacional. O sistema de emissão priorizará os dados detalhados do grupo `deduction`, se fornecidos.
+
+            **Recomendação de Uso:**
+            *   Use `deductionsAmount` para integrações simples ou quando não há detalhamento dos documentos.
+            *   Use o grupo `deduction` sempre que a informação detalhada dos documentos estiver disponível para garantir a máxima conformidade.
+
+            ---
+
+            Valor de deduções (vDR, tpValor).
+        discountUnconditionedAmount:
+          type: number
+          description: Valor do desconto incondicionado (vDescIncond, tpValor).
+        discountConditionedAmount:
+          type: number
+          description: Valor do desconto condicionado (vDescCond, tpValor).
+        irAmountWithheld:
+          type: number
+          description: |
+            Valor retido do Imposto de Renda (IR) (vRetIRRF, tpValor).
+            **Automático**: Se não for informado, o sistema realizará o cálculo automático.
+        cstPisCofins:
+          type: string
+          description: |
+            Código de Situação Tributária do PIS/COFINS (CST).
+            Valores:
+            - `00`: Nenhum
+            - `01`: Operação Tributável com Alíquota Básica
+            - `02`: Operação Tributável com Alíquota Diferenciada
+            - `03`: Operação Tributável com Alíquota por Unidade de Medida de Produto
+            - `04`: Operação Tributável monofásica - Revenda a Alíquota Zero
+            - `05`: Operação Tributável por Substituição Tributária
+            - `06`: Operação Tributável a Alíquota Zero
+            - `07`: Operação Tributável da Contribuição
+            - `08`: Operação sem Incidência da Contribuição
+            - `09`: Operação com Suspensão da Contribuição
+          enum: ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09"]
+        pisCofinsBaseTax:
+          type: number
+          description: Base de cálculo para o Pis e Cofins (vBCPisCofins, tpValor).
+        pisRate:
+          type: number
+          description: |
+            Alíquota do PIS (pAliqPis).
+            **Automático**: Se não for informado, o sistema utilizará o valor definido no cadastro do código de serviço.
+        pisAmount:
+          type: number
+          description: Valor do PIS (vPis, tpValor). Campo utilizado para informar o valor do PIS, porém sem retenção.
+        pisAmountWithheld:
+          type: number
+          description: |
+            Valor retido do PIS (vPis, tpValor).
+            **Automático**: Se não for informado, o sistema realizará o cálculo automático.
+        cofinsRate:
+          type: number
+          description: |
+            Alíquota do COFINS (pAliqCofins).
+            **Automático**: Se não for informado, o sistema utilizará o valor definido no cadastro do código de serviço.
+        cofinsAmount:
+          type: number
+          description: Valor do COFINS (vCofins, tpValor). Campo utilizado para informar o valor do COFINS, porém sem retenção.
+        cofinsAmountWithheld:
+          type: number
+          description: |
+            Valor retido do COFINS (vCofins, tpValor).
+            **Automático**: Se não for informado, o sistema realizará o cálculo automático.
+        csllAmount:
+          type: number
+          description: Valor do CSLL (vCSLL, tpValor). Campo utilizado para informar o valor do CSLL, porém sem retenção.
+        csllRate:
+          type: number
+          description: Alíquota do CSLL (pAliqCSLL).
+        csllAmountWithheld:
+          type: number
+          description: |
+            Valor retido do CSLL (vRetCSLL, tpValor).
+            **Automático**: Se não for informado, o sistema realizará o cálculo automático.
+        inssAmountWithheld:
+          type: number
+          description: |
+            Valor retido do INSS (vRetCP, tpValor).
+            **Automático**: Se não for informado, o sistema realizará o cálculo automático.
+        issAmountWithheld:
+          type: number
+          description: |
+            Valor retido do ISS (vISSQN).
+            **Automático**: Se não for informado, o sistema realizará o cálculo automático quando houver retenção de ISS.
+        ipiRate:
+          type: number
+          description: |
+            SP - Alíquota IPI (pAliqIPI, tpAliquota).
+            **Automático**: Se não for informado, o sistema utilizará o valor definido no cadastro do código de serviço.
+        ipiAmount:
+          type: number
+          description: |
+            SP - Valor IPI (vIPI, tpValor).
+            **Automático**: Se não for informado, o sistema realizará o cálculo automático.
+        othersAmountWithheld:
+          type: number
+          description: Valor de outras retenções (vOutrasRet, tpValor).
+        additionalInformation:
+          type: string
+          description: |
+            **Informações Adicionais: Simples vs. Estruturado (`additionalInformation` vs. `additionalInformationGroup`)**
+
+            O layout oferece duas formas de enviar informações complementares, visando flexibilidade e completude.
+
+            *   **`additionalInformation` (Texto Simples):**
+                Um campo de `string` para adicionar qualquer observação em formato de texto livre. É ideal para anotações rápidas e genéricas.
+
+            *   **`additionalInformationGroup` (Objeto Estruturado):**
+                Um objeto que organiza dados complementares em campos específicos, como `responsibilityDocumentIdentifier` (ART/RRT), `registrationWork` (Matrícula de Obra), `order` (Pedido), etc. É a forma mais completa e padronizada de enviar esses dados.
+
+            **Comportamento e Relação:**
+            Para facilitar a integração, o campo `additionalInformation` funciona como um atalho. Se você preencher apenas este campo, seu conteúdo será automaticamente copiado para `additionalInformationGroup.otherInformation`. Isso garante que todas as informações adicionais fiquem consolidadas na estrutura mais completa, mantendo a consistência interna dos dados.
+
+            **Recomendação:**
+            *   Para observações simples, use `additionalInformation`.
+            *   Para dados específicos como ART, Matrícula de Obra, etc., use os campos dedicados dentro de `additionalInformationGroup`.
+        additionalInformationGroup:
+          type: object
+          description: |
+            **Informações Adicionais: Simples vs. Estruturado (`additionalInformation` vs. `additionalInformationGroup`)**
+
+            O layout oferece duas formas de enviar informações complementares, visando flexibilidade e completude.
+
+            *   **`additionalInformation` (Texto Simples):**
+                Um campo de `string` para adicionar qualquer observação em formato de texto livre. É ideal para anotações rápidas e genéricas.
+
+            *   **`additionalInformationGroup` (Objeto Estruturado):**
+                Um objeto que organiza dados complementares em campos específicos, como `responsibilityDocumentIdentifier` (ART/RRT), `registrationWork` (Matrícula de Obra), `order` (Pedido), etc. É a forma mais completa e padronizada de enviar esses dados.
+
+            **Comportamento e Relação:**
+            Para facilitar a integração, o campo `additionalInformation` funciona como um atalho. Se você preencher apenas este campo, seu conteúdo será automaticamente copiado para `additionalInformationGroup.otherInformation`. Isso garante que todas as informações adicionais fiquem consolidadas na estrutura mais completa, mantendo a consistência interna dos dados.
+
+            **Recomendação:**
+            *   Para observações simples, use `additionalInformation`.
+            *   Para dados específicos como ART, Matrícula de Obra, etc., use os campos dedicados dentro de `additionalInformationGroup`.
+          properties:
+            responsibilityDocumentIdentifier:
+              type: string
+              description: "Identificador do documento de responsabilidade técnica (ART, RRT, etc.) (idDocTec)."
+            referencedDocument:
+              type: string
+              description: "Documento de referência relacionado ao serviço prestado (docRef)."
+            order:
+              type: string
+              description: "Número do pedido/ordem de compra/ordem de serviço (xPed)."
+            items:
+              type: array
+              description: "Grupo de itens do pedido/ordem de compra/ordem de serviço (gItemPed)."
+              items:
+                type: object
+                properties:
+                  item: {type: string, description: "Item do pedido/ordem de compra/ordem de serviço (xItemPed)."}
+            otherInformation:
+              type: string
+              description: "Outras informações complementares (xInfComp)."
+        isEarlyInstallmentPayment:
+          type: boolean
+          description: "Indica se é uma nota fiscal de pagamento parcelado antecipado, realizado antes do fornecimento do serviço. (PagamentoParceladoAntecipado, tpNaoSim)"
+        immunityType:
+          type: string
+          description: |
+            **Tipo de Imunidade (immunityType)**
+
+            O campo `immunityType` é condicional e deve ser utilizado **exclusivamente quando o campo `taxationType` for definido como `Immune`**.
+
+            Sua finalidade é especificar a base legal que fundamenta a imunidade tributária do **ISSQN (Imposto Sobre Serviços de Qualquer Natureza)** para a operação. Cada valor disponível no campo corresponde a uma alínea específica do Artigo 150, Inciso VI, da Constituição Federal, que trata das limitações ao poder de tributar.
+
+            **Relação com a Reforma Tributária (IBS/CBS):**
+
+            É fundamental destacar que este campo se refere **apenas à imunidade do ISSQN**. As regras de imunidade para os novos tributos (IBS e CBS) são tratadas de forma separada, dentro do grupo `ibsCbs`, através de códigos específicos no campo `classCode` (ex: códigos iniciados com `41xxxx`).
+
+            **Em resumo:**
+            A correta especificação do `immunityType` é essencial para validar a justificativa legal da não incidência do ISSQN na nota fiscal, garantindo a conformidade perante as autoridades fiscais municipais durante o período de transição.
+
+            ---
+
+            Tipo de imunidade (tpImunidade) — usar apenas quando taxationMode = 'immunity'.
+            Valores possíveis:
+            - `unspecified`: Imunidade (tipo não informado na nota de origem)
+            - `PublicEntitiesMutual`: Patrimônio, renda ou serviços, uns dos outros (CF88, Art 150, VI, a)
+            - `Temples`: Templos de qualquer culto (CF88, Art 150, VI, b)
+            - `PartiesUnionsEducationSocialNonprofit`: Patrimônio, renda ou serviços dos partidos políticos, inclusive suas fundações, das entidades sindicais dos trabalhadores, das instituições de educação e de assistência social, sem fins lucrativos (CF88, Art 150, VI, c)
+            - `BooksPressPaper`: Livros, jornais, periódicos e o papel destinado a sua impressão (CF88, Art 150, VI, d)
+            - `BrazilianMusicPhonograms`: Fonogramas e videofonogramas musicais produzidos no Brasil (CF88, Art 150, VI, e)
+          enum: [Unspecified, PublicEntitiesMutual, Temples, PartiesUnionsEducationSocialNonprofit, BooksPressPaper, BrazilianMusicPhonograms]
+        retentionType:
+          type: string
+          description: |
+            **Tipo de Retenção do ISSQN (retentionType)**
+
+            O campo `retentionType` determina quem é o responsável pelo recolhimento do **ISSQN (Imposto Sobre Serviços de Qualquer Natureza)**. Ele é um dos campos mais importantes para a correta apuração do ISSQN, pois define a transferência da responsabilidade de pagamento do imposto do prestador para outra parte na operação.
+
+            **Finalidade e Opções:**
+
+            *   **`notWithheld` (Não Retido):** Esta é a situação padrão. O **prestador** do serviço é o responsável por calcular e recolher o ISSQN devido.
+            *   **`withheldByBuyer` (Retido pelo Tomador):** A responsabilidade pelo recolhimento do ISSQN é transferida para o **tomador** (cliente/comprador) do serviço. O valor do ISSQN é descontado do total a ser pago ao prestador, e o tomador fica encarregado de repassá-lo ao município.
+            *   **`withheldByIntermediary` (Retido pelo Intermediário):** Em operações que contam com um intermediário (como marketplaces ou agências), a responsabilidade pelo recolhimento do ISSQN é transferida para este **intermediário**.
+
+            **Comportamento Automático vs. Manual:**
+
+            Conforme a descrição do campo, ele possui uma lógica de prioridade:
+            1.  **Manual:** Se um valor for explicitamente enviado na requisição, ele será utilizado.
+            2.  **Automático:** Se o campo não for enviado (nulo), o sistema aplicará as regras de cálculo automáticas (baseadas na legislação, local da prestação e cadastro dos envolvidos) para definir se a retenção é aplicável e quem é o responsável.
+
+            **Relação com a Reforma Tributária (IBS/CBS):**
+
+            Assim como outros campos legados, o `retentionType` aplica-se **exclusivamente ao ISSQN**. As regras de retenção e recolhimento para os novos tributos (IBS e CBS) serão definidas por legislação complementar específica e tratadas em outros campos do layout.
+
+            ---
+
+            Tipo de retenção do ISSQN (tpRetISSQN).
+            Valores possíveis:
+            - `NotWithheld`: Não Retido
+            - `WithheldByBuyer`: Retido pelo Tomador
+            - `WithheldByIntermediary`: Retido pelo Intermediário
+
+            Define o tipo de retenção. Prioridade: Se um valor for enviado na integração, ele será utilizado. Automático: Se o campo não for enviado (nulo), o sistema aplicará a regra de cálculo automática para definir a retenção.
+          enum: [NotWithheld, WithheldByBuyer, WithheldByIntermediary]
+          default: NotWithheld
+        borrower:
+          $ref: '#/components/schemas/partyDefinition'
+          description: |
+            Tomador dos serviços.
+
+            **Opcional**: o grupo `borrower` pode ser omitido. Quando informado, aplicam-se validações condicionais aos seus campos:
+            - `name`: se informado, no máximo 115 caracteres;
+            - `federalTaxNumber`: se informado (diferente de zero), deve ser um CNPJ/CPF válido e coerente com o `type` (`NaturalPerson` → CPF; `LegalEntity` → CNPJ). Para tomador no exterior (`address.country` ≠ `BRA`), não é validado;
+            - `phoneNumber`: se informado, entre 7 e 20 dígitos;
+            - `address`: opcional, mas se um endereço **brasileiro** for parcialmente preenchido, passam a ser obrigatórios `postalCode`, `street`, `city.code` (código IBGE de 7 dígitos), `city.name` e `state` (UF de 2 letras), que devem ser consistentes entre si.
+        intermediary:
+          $ref: '#/components/schemas/partyDefinition'
+          description: |
+            Grupo de informações relativas ao intermediário do serviço (interm).
+
+            **Opcional**: pode ser omitido; envie apenas quando houver intermediário na operação (por exemplo, quando a retenção dos tributos é feita pelo intermediário, `issWithheldIndicator = WithheldByIntermediary`). Quando informado, segue a mesma estrutura do `borrower` (ex.: `type`, `federalTaxNumber`, `name`).
+        recipient:
+          $ref: '#/components/schemas/partyDefinition'
+          description: |
+            Representa o **Destinatário Final do Serviço**, quando ele é diferente do tomador. Utiliza a estrutura `partyDefinition`.
+            
+            **IMPORTANTE**: Quando este objeto for preenchido, é obrigatório informar o valor `DifferentFromBuyer` na propriedade `destinationIndicator` dentro do grupo `ibsCbs`.
+        location:
+          $ref: '#/components/schemas/addressDefinition'
+          description: Local da Prestação do Serviço (cLocPrestacao, cPaisPrestacao)          
+        activityEvent:
+          $ref: '#/components/schemas/activityEvent'
+        ReferenceSubstitution:
+          $ref: '#/components/schemas/ReferenceSubstitution'
+        lease:
+          $ref: '#/components/schemas/lease'
+        construction:
+          $ref: '#/components/schemas/construction'
+        realEstate:
+          $ref: '#/components/schemas/realEstate'
+          description: "Grupo de informações de operações relacionadas a bens imóveis, exceto obras. (imovel)"
+        foreignTrade:
+          $ref: '#/components/schemas/foreignTrade'
+        deduction:
+          $ref: '#/components/schemas/deduction'
+        benefit:
+          $ref: '#/components/schemas/benefit'
+        suspension:
+          $ref: '#/components/schemas/suspension'
+        serviceAmountDetails:
+          $ref: '#/components/schemas/serviceAmountDefinitions'
+          description: "Detalhes dos valores do serviço, incluindo encargos. (RetornoComplementarIBSCBS)"
+        ibsCbs:
+          $ref: '#/components/schemas/ibsCbs'
+        approximateTax: # A descrição foi movida para dentro do schema referenciado para melhor organização.
+          $ref: '#/components/schemas/approximateTax'
+        approximateTotals:
+          $ref: '#/components/schemas/approximateTotals'
+
+    # =========================================================================
+    # Definições de Sub-Esquemas
+    # =========================================================================
+
+    addressDefinition:
+      type: object
+      description: Definição de endereço reutilizável, alinhada com as estruturas nacionais e complementada para endereços no exterior (tpEnderecoExterior, tpEstadoProvinciaRegiao).
+      properties:
+        country: {type: string, default: BRA, description: "Sigla do País (padrão ISO 3166-1). Exemplo: BRA, USD, ARG (country do partyDefinition, cPais da NFS-e NAC).", minLength: 3, maxLength: 3}
+        postalCode: {type: string, description: "CEP (Exemplo: 99999-999) ou Código de Endereçamento Postal no exterior (cEndPost).", minLength: 9, maxLength: 9}
+        street: {type: string, description: "Logradouro (xLgr, tpLogradouro)"}
+        number: {type: string, description: "Número (Exemplo: 185 ou S/N) (nro, tpNumeroEndereco)"}
+        additionalInformation: {type: string, description: "Complemento (Exemplo: BLC A; APT 10) (xCpl, tpComplementoEndereco)"}
+        district: {type: string, description: "Bairro (xBairro, tpBairro)"}
+        city:
+          type: object
+          description: Cidade
+          properties:
+            code: {type: string, description: "Código do IBGE (cMun, tpCidade)", minLength: 7, maxLength: 7}
+            name: {type: string, description: "Nome da Cidade (tpNomeCidade) - Usado para endereços no exterior."}
+        state: {type: string, description: "Estado/UF (tpUF) ou Estado, Província, Região no exterior (xEstProvReg, tpEstadoProvinciaRegiao)", minLength: 2, maxLength: 60}
+
+    partyDefinition:
+      type: object
+      description: Definição reutilizável para um participante (Tomador, Intermediário, Fornecedor). Baseado em partyDefinition da NFSe Nacional, com campos alinhados aos tipos de São Paulo (tpInformacoesPessoa, gpCPFCNPJNIF).
+      properties:        
+        type:
+          type: string
+          description: |
+            Tipo do participante.
+            Valores possíveis:
+            - `Undefined`: Não definido
+            - `NaturalPerson`: Pessoa Física
+            - `LegalEntity`: Pessoa Jurídica
+          enum: [Undefined, NaturalPerson, LegalEntity]
+        name: {type: string, description: "Nome / Razão Social (xNome, tpRazaoSocial), obrigatório quando aplicável (tpRazaoSocialObrigatorio)", maxLength: 115}
+        federalTaxNumber: {type: number, description: "CNPJ, CPF ou NIF (Número de Identificação Fiscal) (tpCNPJ, tpCPF, tpNIF)"}
+        municipalTaxNumber: {type: string, description: "Inscrição Municipal (tpInscricaoMunicipal, tamanho 8 ou 12 na v2.0 SP)", maxLength: 12}
+        stateTaxNumber: {type: string, description: "Inscrição Estadual (Opcional, não se aplica a todos) (tpInscricaoEstadual)", maxLength: 19}
+        taxRegime:
+          type: string
+          description: |
+            Tipo do Regime Tributário.
+            Valores possíveis:
+            - `Isento`: Isento
+            - `MicroempreendedorIndividual`: Microempreendedor Individual (MEI)
+            - `SimplesNacional`: Simples Nacional
+            - `LucroPresumido`: Lucro Presumido
+            - `LucroReal`: Lucro Real
+          enum: [Isento, MicroempreendedorIndividual, SimplesNacional, LucroPresumido, LucroReal]
+        caepf:
+          type: string
+          description: "Número do Cadastro de Atividade Econômica da Pessoa Física (CAEPF)."
+          maxLength: 14
+        phoneNumber: {type: string, description: "Telefone", minLength: 7, maxLength: 20}
+        email: {type: string, description: "Endereço eletrônico (email, tpEmail)"}
+        noTaxIdReason:
+          type: string
+          description: |
+            Justificativa para ausência de NIF (tpNaoNIF, 0 - Não informado na nota de origem, 1 - Dispensado do NIF, 2 - Não exigência do NIF, além dos padrões nacionais).
+            Valores possíveis:
+            - `NotInformedOriginal`: Não informado na nota de origem
+            - `Exempted`: Dispensado do NIF
+            - `NotRequired`: Não exigência do NIF
+          enum: [NotInformedOriginal, Exempted, NotRequired]
+          maxLength: 500
+        address: {$ref: '#/components/schemas/addressDefinition'}
+
+    serviceAmountDefinitions:
+      type: object
+      description: "Detalhes dos valores do serviço, incluindo encargos. (tpRetornoComplementarIBSCBS)"
+      properties:
+        initialChargedAmount: {type: number, description: "Valor Inicial Cobrado (ValorInicialCobrado) - Valor dos serviços antes de tributos, multa e juros. (Versão 2.0 SP)"}
+        finalChargedAmount: {type: number, description: "Valor Final Cobrado (ValorFinalCobrado) - Valor total cobrado pela prestação do serviço, incluindo todos os tributos. (Versão 2.0 SP)"}
+        fineAmount: {type: number, description: "Valor da Multa (ValorMulta) (Versão 2.0 SP)"}
+        interestAmount: {type: number, description: "Valor dos Juros (ValorJuros) (Versão 2.0 SP)"}
+
+    activityEvent:
+      type: object
+      description: Detalhes da atividade do evento (atvEvento, tpAtividadeEvento)
+      properties:
+        name: {type: string, description: "Nome do evento (xNomeEvt, tpXNomeEvt)"}
+        beginOn: {type: string, format: date-time, description: "Data de início do evento no formato YYYY-MM-DDTHH:MM:SS.SSSSSS-03:00 (dtiniEvt)"}
+        endOn: {type: string, format: date-time, description: "Data do fim do evento no formato YYYY-MM-DDTHH:MM:SS.SSSSSS-03:00 (dtFimEvt)"}
+        Code: {type: string, description: "Código da atividade do evento"}
+        address: {$ref: '#/components/schemas/addressDefinition', description: "Endereço do evento (end, tpEnderecoSimplesIBSCBS)"}
+
+    approximateTax:
+      type: object
+      description: |
+        Totais aproximados dos tributos (Lei 12.741/2012). (totTrib)  -  Define os totais aproximados de tributos. **Prioridade**: Se informado, o valor enviado será utilizado, ignorando o cálculo automático. **Automático**: Caso o campo não seja enviado (nulo), os valores serão calculados automaticamente pelo sistema.
+
+        **Estrutura Simplificada vs. Detalhada (`approximateTax` vs. `approximateTotals`)**
+
+        Ambos os campos, `approximateTax` e `approximateTotals`, servem para atender à Lei 12.741/2012 ("Lei De Olho no Imposto"), que exige a informação da carga tributária aproximada na nota fiscal. A principal diferença entre eles está na **granularidade** da informação.
+
+        *   **`approximateTax` (Estrutura Simplificada):**
+            Permite informar a carga tributária de forma consolidada, através de um percentual (`totalRate`) ou valor monetário (`totalAmount`) totais. É ideal para sistemas que não possuem a decomposição dos tributos por esfera governamental.
+
+        *   **`approximateTotals` (Estrutura Detalhada):**
+            Permite um detalhamento completo, separando os valores por esfera: `federal`, `state` e `municipal`. É a escolha ideal quando o sistema possui essa informação decomposta, oferecendo maior transparência.
+
+        **Flexibilidade e Comportamento Automático:**
+        A coexistência dos dois campos oferece **flexibilidade**. O `approximateTax` simplifica a integração para sistemas com dados consolidados, enquanto o `approximateTotals` atende a sistemas que desejam fornecer o detalhamento completo. O sistema de emissão priorizará a informação mais detalhada, se disponível.
+
+        **Importante:** Se nenhum dos grupos (`approximateTax` ou `approximateTotals`) for preenchido, o sistema realizará o cálculo automático e preencherá o grupo `approximateTax`.
+      properties:
+        source: {type: string, description: "Fonte de informação da carga tributária (tpFonteCargaTributaria)"}
+        version: {type: string}
+        totalRate: {type: number, description: "Valor percentual da carga tributária (tpPercentualCargaTributaria)"}
+        totalAmount: {type: number, description: "Valor da carga tributária total em R$ (ValorCargaTributaria, tpValor)"}
+
+    ReferenceSubstitution:
+      type: object
+      description: Grupo de informações relativas à NFS-e a ser substituída
+      additionalProperties: false
+      properties:
+        id: {type: string, pattern: '^[0-9]{44}$', description: "Identificador da NFS-e a ser substituída (chSubstda)."}
+        reason:
+          type: string
+          description: |
+            Motivo da substituição (equivale ao cMotivo).
+            Valores possíveis:
+            - `SnOut`: Desenquadramento de NFS-e do Simples Nacional
+            - `SnIn`: Enquadramento de NFS-e no Simples Nacional
+            - `ImmunityAddRetro`: Inclusão Retroativa de Imunidade/Isenção para NFS-e
+            - `ImmunityRemoveRetro`: Exclusão Retroativa de Imunidade/Isenção para NFS-e
+            - `RejectionBuyerOrIntermediary`: Rejeição de NFS-e pelo tomador ou pelo intermediário se responsável pelo recolhimento do tributo
+            - `Other`: Outros
+          enum: [SnOut, SnIn, ImmunityAddRetro, ImmunityRemoveRetro, RejectionBuyerOrIntermediary, Other]
+        reasonText: {type: string, maxLength: 500, description: "Descrição quando reason = 'other' (equivale ao xMotivo)."}
+
+    lease:
+      type: object
+      description: Grupo de informações relativas a atividades de Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de ferrovia, rodovia, postes, cabos, dutos e condutos de qualquer natureza.
+      additionalProperties: false
+      properties:        
+        category:
+          type: string
+          description: |
+            Categoria do serviço (categ).
+            Valores possíveis:
+            - `Lease`: Locação
+            - `Sublease`: Sublocação
+            - `Leasehold`: Arrendamento
+            - `RightOfWay`: Direito de passagem
+            - `UsePermission`: Permissão de uso
+          enum: [Lease, Sublease, Leasehold, RightOfWay, UsePermission]
+        objectType:
+          type: string
+          description: |
+            Objeto da locação/sublocação/arrendamento/etc. (objeto).
+            Valores possíveis:
+            - `Railway`: Ferrovia
+            - `Road`: Rodovia
+            - `Poles`: Postes
+            - `Cables`: Cabos
+            - `Pipelines`: Dutos
+            - `Conduits`: Condutos
+          enum: [Railway, Road, Poles, Cables, Pipelines, Conduits]
+        totalLength: {type: number, description: "Comprimento total de ferrovia/rodovia/cabos/dutos/condutos (extensao)."}
+        polesCount: {type: integer, minimum: 0, description: "Número total de postes (nPostes)."}
+
+    construction:
+      type: object
+      description: Grupo de informações relativas à obras de construção civil e congêneres. Apenas uma das opções (workId, cibCode ou siteAddress) deve ser preenchida. (obra)
+      additionalProperties: false
+      properties:
+        propertyFiscalRegistration: {type: string, maxLength: 60, description: "Inscrição imobiliária fiscal (inscImobFisc), exemplos: SQL ou INCRA. (tpinsclmobFisc)"}
+        workId:
+          type: object
+          additionalProperties: false
+          description: Identificação da obra (CNO/CEI) — cObra.
+          properties:
+            scheme:
+              type: string
+              description: |
+                Tipo de cadastro da obra (CNO/CEI). (tpCObra) - Cadastro Nacional de Obras, ou do Cadastro Específico do INSS.
+                Valores possíveis:
+                - `bra.cno`: Cadastro Nacional de Obras
+                - `bra.cei`: Cadastro Específico do INSS
+              enum: ["bra.cno", "bra.cei"]
+            value: {type: string, maxLength: 30, description: "Número da obra no cadastro selecionado. (tpCObra, tpNumero)"}
+        cibCode: {type: string, maxLength: 30, description: "Código do Cadastro Imobiliário Brasileiro (cCIB). (tpCCIB)"}
+        siteAddress: {$ref: '#/components/schemas/addressDefinition', description: "Endereço da obra (nacional ou exterior). (siteAddress)"}
+        encapsulationNumber:
+          type: string
+          minLength: 1
+          maxLength: 12
+          pattern: '^[0-9]{1,12}$'
+          description: |
+            Número do encapsulamento da obra (NumeroEncapsulamento). String numérica com 1 a 12 dígitos.
+            Atualmente utilizado apenas pelo serializador do município de São Paulo (Paulistana): quando informado, é emitido como o elemento XML `<NumeroEncapsulamento>` nos blocos `<tpRPS>` e `<tpNFe>`, imediatamente antes de `<ValorTotalRecebido>`. Zeros à esquerda são preservados. (tpNumero: 1-12 dígitos)
+          example: "123456"
+      oneOf:
+        - required: [workId]
+        - required: [cibCode]
+        - required: [siteAddress]
+
+    realEstate:
+      type: object
+      description: Grupo de informações de operações relacionadas a bens imóveis, exceto obras. Apenas uma das opções (cibCode ou siteAddress) deve ser preenchida. (imovel)
+      additionalProperties: false
+      properties:
+        propertyFiscalRegistration: {type: string, maxLength: 60, description: "Inscrição imobiliária fiscal (inscImobFisc), exemplos: SQL ou INCRA. (tpinsclmobFisc)"}
+        cibCode: {type: string, maxLength: 30, description: "Código do Cadastro Imobiliário Brasileiro (cCIB). (tpCCIB)"}
+        siteAddress: {$ref: '#/components/schemas/addressDefinition', description: "Endereço do imóvel (nacional ou exterior). (siteAddress)"}
+      oneOf:
+        - required: [cibCode]
+        - required: [siteAddress]
+
+    foreignTrade:
+      type: object
+      description: Grupo de informações sobre transações entre residentes ou domiciliados no Brasil com residentes ou domiciliados no exterior
+      additionalProperties: false
+      properties:
+        serviceMode:
+          type: string
+          description: |
+            Modo de prestação (mdPrestacao).
+            Valores possíveis:
+            - `Unknown`: Desconhecido (tipo não informado na nota de origem)
+            - `CrossBorder`: Transfronteiriço
+            - `ConsumptionInBrazil`: Consumo no Brasil
+            - `TemporaryPersonnel`: Movimento Temporário de Pessoas Físicas
+            - `ConsumptionAbroad`: Consumo no Exterior
+          enum: [Unknown, CrossBorder, ConsumptionInBrazil, TemporaryPersonnel, ConsumptionAbroad]
+          default: unknown
+        relationShip:
+          type: string
+          description: |
+            Vínculo entre as partes (vincPrest).
+            Valores possíveis:
+            - `NoLink`: Sem vínculo com o Tomador/Prestador
+            - `Controlled`: Controlada
+            - `Controller`: Controladora
+            - `Affiliate`: Coligada
+            - `HeadOffice`: Matriz
+            - `Branch`: Filial ou sucursal
+            - `OtherLink`: Outro vínculo
+          enum: [NoLink, Controlled, Controller, Affiliate, HeadOffice, Branch, OtherLink]
+          default: NoLink
+        currency: {type: string, pattern: '^[0-9]+$', description: "Moeda da transação (tabela de moedas do Banco Central do Brasil) — tpMoeda."}
+        serviceAmountInCurrency: {type: number, description: "Valor do serviço na moeda informada em currency — vServMoeda."}
+        supportMechanismProvider:
+          type: string
+          description: |
+            Mecanismo de apoio/fomento utilizado pelo prestador (mecAFComexP).
+            Valores possíveis:
+            - `Unknown`: Desconhecido
+            - `None`: Nenhum
+            - `Acc`: ACC - Adiantamento sobre Contrato de Câmbio
+            - `Ace`: ACE – Adiantamento sobre Cambiais Entregues
+            - `BndesEximPostShipServices`: BNDES-Exim Pós-Embarque – Serviços
+            - `BndesEximPreShipServices`: BNDES-Exim Pré-Embarque - Serviços
+            - `Fge`: FGE - Fundo de Garantia à Exportação
+            - `ProexEqualization`: PROEX - EQUALIZAÇÃO
+            - `ProexFinancing`: PROEX - Financiamento
+          enum: [Unknown, None, Acc, Ace, BndesEximPostShipServices, BndesEximPreShipServices, Fge, ProexEqualization, ProexFinancing]
+          default: unknown
+        supportMechanismReceiver:
+          type: string
+          description: |
+            Mecanismo de apoio/fomento utilizado pelo tomador (mecAFComexT).
+            Valores possíveis:
+            - `Unknown`: Desconhecido
+            - `None`: Nenhum
+            - `PublicAdminAndInternationalRep`: Adm. Pública e Repr. Internacional
+            - `LeasesMachineryShipsAircraft`: Alugueis e Arrend. Mercantil de maquinas, equip., embarc. e aeronaves
+            - `AircraftLeaseAirTransportPublic`: Arrendamento Mercantil de aeronave para empresa de transporte aéreo público
+            - `ExportAgentsCommission`: Comissão a agentes externos na exportação
+            - `StorageHandlingTransportAbroad`: Despesas de armazenagem, mov. e transporte de carga no exterior
+            - `FifaEventsSubsidiary`: Eventos FIFA (subsidiária)
+            - `FifaEvents`: Eventos FIFA
+            - `FreightsVesselAircraftRentalsOthers`: Fretes, arrendamentos de embarcações ou aeronaves e outros
+            - `AeronauticalMaterial`: Material Aeronáutico
+            - `PromotionGoodsAbroad`: Promoção de Bens no Exterior
+            - `PromotionBrazilianTourism`: Promoção de Dest. Turísticos Brasileiros
+            - `PromotionBrazilAbroad`: Promoção do Brasil no Exterior
+            - `PromotionServicesAbroad`: Promoção Serviços no Exterior
+            - `Recine`: RECINE
+            - `Recopa`: RECOPA
+            - `TrademarksPatentsCultivars`: Registro e Manutenção de marcas, patentes e cultivares
+            - `Reicomp`: REICOMP
+            - `Reidi`: REIDI
+            - `Repenec`: REPENEC
+            - `Repes`: REPES
+            - `Retaero`: RETAERO
+            - `Retid`: RETID
+            - `RoyaltiesTechnicalAssistance`: Royalties, Assistência Técnica, Científica e Assemelhados
+            - `ConformityAssessmentWto`: Serviços de avaliação da conformidade vinculados aos Acordos da OMC
+            - `Zpe`: ZPE
+          enum: [Unknown, None, PublicAdminAndInternationalRep, LeasesMachineryShipsAircraft, AircraftLeaseAirTransportPublic, ExportAgentsCommission, StorageHandlingTransportAbroad, FifaEventsSubsidiary, FifaEvents, FreightsVesselAircraftRentalsOthers, AeronauticalMaterial, PromotionGoodsAbroad, PromotionBrazilianTourism, PromotionBrazilAbroad, PromotionServicesAbroad, Recine, Recopa, TrademarksPatentsCultivars, Reicomp, Reidi, Repenec, Repes, Retaero, Retid, RoyaltiesTechnicalAssistance, ConformityAssessmentWto, Zpe]
+          default: unknown
+        temporaryGoods:
+          type: string
+          description: |
+            Vínculo à movimentação temporária de bens (movTempBens).
+            Valores possíveis:
+            - `Unknown`: Desconhecido
+            - `No`: Não
+            - `LinkedImportDeclaration`: Vinculada - Declaração de Importação
+            - `LinkedExportDeclaration`: Vinculada - Declaração de Exportação
+          enum: [Unknown, No, LinkedImportDeclaration, LinkedExportDeclaration]
+        importDeclaration: {type: string, maxLength: 60, description: "Número da Declaração de Importação (DI/DSI/DA/DRI-E) averbado — nDI."}
+        exportRegistration: {type: string, maxLength: 60, description: "Número do Registro de Exportação (RE) averbado — nRE."}
+        mdicDelivery: {type: boolean, description: "Indicador de envio da NFS-e ao MDIC (mdic)."}
+
+    deduction:
+      type: object
+      description: |
+        Grupo de informações relativas ao valores para dedução/redução do valor da base de cálculo (vDedRed). Dedução/Redução aplicada SOMENTE à base de cálculo do ISSQN.
+
+        **Deduções: Simples vs. Estruturado (`deductionsAmount` vs. `deduction`)**
+
+        O layout oferece duas formas de registrar deduções da base de cálculo do ISSQN, visando flexibilidade e conformidade com os diferentes padrões (municipal legado vs. nacional).
+
+        *   **`deductionsAmount` (Valor Simples):**
+            Um campo numérico para informar o **valor total consolidado** das deduções. É uma abordagem direta, compatível com layouts mais antigos que não exigem o detalhamento dos documentos que comprovam a dedução.
+
+        *   **`deduction` (Grupo Estruturado):**
+            Um objeto complexo que permite justificar cada dedução com base em documentos fiscais, alinhando-se ao **padrão da NFS-e Nacional**. Ele detalha a origem de cada valor (chave do documento, tipo, valor, fornecedor).
+
+        **Relação e Recomendação:**
+        A coexistência dos campos oferece compatibilidade. `deductionsAmount` é uma opção simplificada, enquanto o grupo `deduction` é a forma mais completa e recomendada para garantir rastreabilidade e conformidade fiscal com o padrão nacional. O sistema de emissão priorizará os dados detalhados do grupo `deduction`, se fornecidos.
+
+        **Recomendação de Uso:**
+        *   Use `deductionsAmount` para integrações simples ou quando não há detalhamento dos documentos.
+        *   Use o grupo `deduction` sempre que a informação detalhada dos documentos estiver disponível para garantir a máxima conformidade.
+      oneOf:
+        - required: [rate]
+        - required: [amount]
+        - required: [documents]
+      properties:
+        rate: {type: number, description: "Percentual padrão de dedução/redução (pDR, %)."}
+        amount: {type: number, description: "Valor monetário padrão de dedução/redução (vDR, R$)."}
+        documents:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            $ref: '#/components/schemas/deductionDocument'
+
+    deductionDocument:
+      type: object
+      additionalProperties: false
+      description: |
+        Documento base que justifica um item de dedução/redução (docDedRed, TCDocDedRed).
+        Pelo menos **um** identificador deve ser preenchido — `nfseKey`, `nfeKey`,
+        `municipalNfse`, `fiscalDocumentNumber` ou `nonFiscalDocumentNumber`. Se mais
+        de um for enviado, o backend aplica a precedência nessa ordem. Quando
+        `deductionType = Other`, o campo `otherDeductionDescription` passa a ser obrigatório.
+      required: [deductionType, issueDate, deductibleTotal, usedAmount]
+      oneOf:
+        - properties:
+            deductionType:
+              type: string
+              enum: [Other]
+          required: [otherDeductionDescription]
+        - properties:
+            deductionType:
+              not:
+                enum: [Other]
+      anyOf:
+        - required: [nfseKey]
+        - required: [nfeKey]
+        - required: [municipalNfse]
+        - required: [fiscalDocumentNumber]
+        - required: [nonFiscalDocumentNumber]
+      properties:
+        nfseKey: {type: string, pattern: '^[0-9]{50}$', description: "Chave de acesso da NFS-e nacional, exatamente 50 dígitos (chNFSe, TSChaveNFSe)."}
+        nfeKey: {type: string, pattern: '^[0-9]{44}$', description: "Chave de acesso da NF-e (produto), exatamente 44 dígitos (chNFe)."}
+        municipalNfse:
+          type: object
+          additionalProperties: false
+          description: Referência a uma NFS-e municipal no padrão legado (NFSeMun).
+          required: [cityCode, number, verificationCode]
+          properties:
+            cityCode: {type: string, description: "Código IBGE do município emissor (cMunNFSeMun)."}
+            number: {type: string, maxLength: 15, description: "Número da NFS-e municipal (nNFSeMun)."}
+            verificationCode: {type: string, maxLength: 9, description: "Código de verificação (cVerifNFSeMun)."}
+        fiscalDocumentNumber: {type: string, maxLength: 255, description: "Identificador de outro documento fiscal não eletrônico (nDocFisc)."}
+        nonFiscalDocumentNumber: {type: string, maxLength: 255, description: "Identificador de documento não fiscal, ex: nota de débito interna (nDoc)."}
+        deductionType:
+          type: string
+          description: |
+            Tipo da dedução/redução (tpDedRed).
+            Valores aceitos (nome do enum — código numérico — descrição):
+            - `FoodAndBeverages` (1): Alimentação e bebidas/frigobar
+            - `Materials` (2): Materiais
+            - `ConsortiumPassThrough` (5): Repasse consorciado
+            - `HealthPlanPassThrough` (6): Repasse plano de saúde
+            - `Services` (7): Serviços
+            - `Subcontracting` (8): Subempreitada de mão de obra
+            - `Other` (99): Outras deduções — exige `otherDeductionDescription`
+          enum: [FoodAndBeverages, Materials, ConsortiumPassThrough, HealthPlanPassThrough, Services, Subcontracting, Other]
+        otherDeductionDescription: {type: string, maxLength: 150, description: "Obrigatório quando deductionType = 'Other' (xDescOutDed)."}
+        issueDate: {type: string, format: date, description: "Data de emissão do documento de origem (dtEmiDoc, AAAA-MM-DD)."}
+        deductibleTotal: {type: number, description: "Valor total dedutível/redutível no documento de origem (vDedutivelRedutivel)."}
+        usedAmount: {type: number, description: "Valor efetivamente utilizado como dedução nesta NFS-e (vDeducaoReducao). Deve ser ≤ deductibleTotal."}
+        supplier: {$ref: '#/components/schemas/partyDefinition', description: "Fornecedor do documento (fornec)."}
+
+    benefit:
+      type: object
+      description: Benefício Municipal aplicado à base de cálculo do ISSQN (BM).
+      additionalProperties: false
+      required: [id]
+      oneOf:
+        - required: [amount]
+        - required: [rate]
+      properties:
+        id: {type: string, pattern: '^\d{14}$', description: "Identificador do benefício (nBM: IBGE[7] + tipo[2] + seq[5])."}
+        amount: {type: number, description: "Redução da BC por valor (vRedBCBM, R$)."}
+        rate: {type: number, description: "Redução da BC por percentual (pRedBCBM, %)."}
+
+    suspension:
+      type: object
+      description: Suspensão da exigibilidade do ISSQN (exigSusp).
+      additionalProperties: false
+      required: [reason, processNumber]
+      properties:        
+        reason:
+          type: string
+          description: |
+            Motivo da suspensão (tpSusp).
+            Valores possíveis:
+            - `Judicial`: Exigibilidade Suspensa por Decisão Judicial
+            - `Administrative`: Exigibilidade Suspensa por Processo Administrativo
+          enum: [Judicial, Administrative]
+        processNumber: {type: string, maxLength: 30, description: "Número do processo (nProcesso)."}
+
+    approximateTotals:
+      type: object
+      additionalProperties: false
+      description: |
+        Totais aproximados dos tributos (Lei 12.741/2012). (totTrib)  -  Define os totais aproximados de tributos. **Prioridade**: Se informado, o valor enviado será utilizado, ignorando o cálculo automático. **Automático**: Caso o campo não seja enviado (nulo), os valores serão calculados automaticamente pelo sistema.
+
+        **Estrutura Simplificada vs. Detalhada (`approximateTax` vs. `approximateTotals`)**
+
+        Ambos os campos, `approximateTax` e `approximateTotals`, servem para atender à Lei 12.741/2012 ("Lei De Olho no Imposto"), que exige a informação da carga tributária aproximada na nota fiscal. A principal diferença entre eles está na **granularidade** da informação.
+
+        *   **`approximateTax` (Estrutura Simplificada):**
+            Permite informar a carga tributária de forma consolidada, através de um percentual (`totalRate`) ou valor monetário (`totalAmount`) totais. É ideal para sistemas que não possuem a decomposição dos tributos por esfera governamental.
+
+        *   **`approximateTotals` (Estrutura Detalhada):**
+            Permite um detalhamento completo, separando os valores por esfera: `federal`, `state` e `municipal`. É a escolha ideal quando o sistema possui essa informação decomposta, oferecendo maior transparência.
+
+        **Flexibilidade e Comportamento Automático:**
+        A coexistência dos dois campos oferece **flexibilidade**. O `approximateTax` simplifica a integração para sistemas com dados consolidados, enquanto o `approximateTotals` atende a sistemas mais robustos que desejam fornecer o detalhamento completo. O sistema de emissão priorizará a informação mais detalhada, se disponível.
+
+        **Importante:** Se nenhum dos grupos (`approximateTax` ou `approximateTotals`) for preenchido, o sistema realizará o cálculo automático e preencherá o grupo `approximateTax`.
+      properties:
+        federal:
+          type: object
+          additionalProperties: false
+          description: Tributos federais.
+          properties:
+            rate: {type: number, minimum: 0, description: "Valor percentual total aproximado dos tributos federais (%). (pTotTribFed)"}
+            amount: {type: number, minimum: 0, description: "Valor monetário total aproximado dos tributos federais (R$). (vTotTribFed)"}
+        state:
+          type: object
+          additionalProperties: false
+          description: Tributos estaduais.
+          properties:
+            rate: {type: number, minimum: 0, description: "Valor percentual total aproximado dos tributos estaduais (%). (vTotTribEst)"}
+            amount: {type: number, minimum: 0, description: "Valor monetário total aproximado dos tributos estaduais (R$). (vTotTribEst)"}
+        municipal:
+          type: object
+          additionalProperties: false
+          description: Tributos municipais.
+          properties:
+            rate: {type: number, minimum: 0, description: "Valor percentual total aproximado dos tributos municipais (%). (pTotTribMun)"}
+            amount: {type: number, minimum: 0, description: "Valor monetário total aproximado dos tributos municipais (R$). (vTotTribMun)"}
+        rate: {type: number, minimum: 0, description: "Valor percentual total aproximado dos tributos (%)."}
+        amount: {type: number, minimum: 0, description: "Valor monetário total aproximado dos tributos (R$)."}
+        
+    ibsCbs:
+      type: object
+      additionalProperties: false
+      description: Informações referentes ao IBS e à CBS por item (NFSe/infNFSe/DPS/infDPS/IBSCBS). (tpIBSCBS)
+      required: [classCode, operationIndicator]
+      properties:
+        purpose:
+          type: string
+          description: |
+            Finalidade da emissão da NFS-e (finNFe). (tpfinNFSe) - default: 'regular'.
+            Valores possíveis:
+            - `regular`: Regular
+          enum: [regular]
+          default: "regular"
+        destinationIndicator:
+          type: string
+          description: |
+            Relação entre destinatário e comprador/tomador indicado na NFS-e (indDest). (tpindDest) - default: 'sameAsBuyer'. Quando o valor for 'differentFromBuyer', o preenchimento do objeto 'recipient' se torna obrigatório.
+            Valores possíveis:
+            - `SameAsBuyer`: O destinatário é o mesmo que o comprador/tomador
+            - `DifferentFromBuyer`: O destinatário é diferente do comprador/tomador
+          enum: [SameAsBuyer, DifferentFromBuyer]
+          default: "SameAsBuyer"
+        basis: {type: number, description: "Base de cálculo antes de reduções para cálculo do tributo bruto (vBC)."}
+        reimbursedResuppliedAmount: {type: number, description: "Montante relativo a reembolso/repasse/ressarcimento não integrante da BC (vReembRepasse)."}
+        ibscbsDeductionReductionAmount:
+          type: number
+          description: "Valor monetário (R$) total relativo aos valores de dedução e redução da Base de Cálculo do IBS e da CBS referentes às operações de locação, cessão onerosa ou arrendamento de bens imóveis, e serviços médicos (vCalcDedRedIBSCBS)."
+        isDonation:
+          type: boolean
+          nullable: true
+          description: "Indica se a operação é uma doação (indDoacao). (tpNaoSim)"
+        personalUse:
+          type:
+            - boolean
+            - 'null'
+          description: "**Indicador de Uso ou Consumo Pessoal**\n\nIndica se a operação é para uso ou consumo pessoal do adquirente. Este campo é crucial para a aplicação de regras tributárias específicas, como a não geração de crédito de IBS/CBS para o tomador. (indFinal)"
+        operationIndicator:
+          type: string
+          description: |
+            **Indicador da Operação (operationIndicator / cIndOp)**
+
+            O campo `operationIndicator` (ou `cIndOp` nos schemas XSD) é um código obrigatório que define a natureza e a característica da operação de fornecimento do serviço ou bem, sendo um dos campos mais importantes introduzidos pela Reforma Tributária.
+
+            Sua principal finalidade é determinar o **local de incidência** (onde o imposto é devido) para os novos tributos, o IBS (Imposto sobre Bens e Serviços) e a CBS (Contribuição sobre Bens e Serviços). Diferente do modelo anterior, onde o local da prestação era muitas vezes suficiente, este código traz uma regra específica para cada tipo de operação.
+
+            **Como funciona?**
+
+            Com base no código informado, o sistema tributário nacional identifica se o imposto deve ser recolhido:
+            *   No município onde um imóvel está localizado (para serviços de construção ou sobre imóveis).
+            *   No endereço do estabelecimento do fornecedor.
+            *   No endereço do adquirente (comprador/tomador) do serviço.
+            *   No local onde um evento ocorre.
+            *   Entre outras regras específicas.
+
+            A escolha do código correto é, portanto, fundamental para garantir a conformidade fiscal e o recolhimento do IBS para o estado e município corretos. A seleção de um código inadequado pode levar a apurações de impostos incorretas.
+
+            **Exemplo prático:**
+            Para um serviço de reforma de um imóvel (`código 020201`), o imposto será devido no município onde o imóvel está localizado, independentemente de onde o prestador ou o tomador do serviço estejam estabelecidos. Já para um serviço de consultoria prestado à distância (`código 100301`), a regra geral aponta para o domicílio do adquirente.
+
+            A lista completa de valores pode ser consultada na Tabela de [operationIndicator](https://nfe.io/docs/documentacao/reforma-tributaria/conceitos-funcionais/documentacao-layout-nfse-rtc/#tabela-de-operationindicator) da documentação funcional.
+          minLength: 6
+          maxLength: 6
+          pattern: '^[0-9]{6}$'
+        operationType:
+          type: string
+          description: |
+            Tipo de Operação com Entes Governamentais ou outros serviços sobre bens imóveis (tpOper).
+            Valores possíveis:
+            - `SupplyFirstPayLater`: Fornecimento com pagamento posterior
+            - `PayForPastSupply`: Recebimento do pagamento com fornecimento já realizado
+            - `SupplyForPastPay`: Fornecimento com pagamento já realizado
+            - `PayFirstSupplyLater`: Recebimento do pagamento com fornecimento posterior
+            - `SupplyPayTogether`: Fornecimento e recebimento do pagamento concomitantes
+          enum:
+            - SupplyFirstPayLater
+            - PayForPastSupply
+            - SupplyForPastPay
+            - PayFirstSupplyLater
+            - SupplyPayTogether
+        situationCode:
+          type: string
+          description: |
+            Código de Situação Tributária do IBS/CBS. Opcional.
+            Quando não preenchido, o valor será obtido através dos 3 primeiros caracteres do valor informado no campo `classCode`.
+            A lista completa de valores pode ser consultada na Tabela de [situationCode](hhttps://nfe.io/docs/documentacao/reforma-tributaria/conceitos-funcionais/documentacao-layout-nfse-rtc/#tabela-de-situationcode) da documentação funcional.
+        classCode:
+          type: string
+          maxLength: 6
+          description: |
+            Código de Classificação Tributária do IBS/CBS. (cClassTrib, tpClassificacaoTributaria)
+            A lista completa de valores pode ser consultada na Tabela de [classCode](https://nfe.io/docs/documentacao/reforma-tributaria/conceitos-funcionais/documentacao-layout-nfse-rtc/#tabela-de-classcode) da documentação funcional.
+        relatedDocs:
+          type: object
+          description: "Grupo de NFS-e referenciadas (gRefNFSe)."
+          properties:
+            items:
+              type: array
+              description: "Chaves de NFS-e referenciadas (refNFSe)."
+              items:
+                type: string
+                maxLength: 50
+              maxItems: 99
+        leasedMovableAssets:
+          type: array
+          minItems: 0
+          maxItems: 99
+          description: "Grupo de informações relativas aos bens móveis objetos de locação (gLocBensMoveis). Grupo só é admitido quando se tratar de locação de bens móveis. cTribNac = 99.04.01."
+          items:
+            type: object
+            properties:
+              ncmCode:
+                type: string
+                maxLength: 8
+                description: "Código da Nomenclatura Comum do Mercosul (NCM) do bem móvel objeto da locação (cNCMBemMovel)."
+              description:
+                type: string
+                maxLength: 150
+                description: "Descrição do Bem Móvel objeto da locação (xNCMBemMovel)."
+              quantity:
+                type: integer
+                description: "Quantidade do Bem Móvel objeto da locação (qtdNCMBemMovel)."
+        ibs:
+          type: object
+          additionalProperties: false
+          description: Alíquotas e total do IBS por esfera subnacional.
+          required: [totalAmount, state, municipal]
+          properties:
+            totalAmount: {type: number, description: "Total do IBS (vIBSTot = vIBSUF + vIBSMun)."}
+            state:
+              type: object
+              additionalProperties: false
+              required: [rate, effectiveRate]
+              properties:
+                rate: {type: number, description: "Alíquota IBS (UF) (%) (pAliqIBSUF)."}
+                rateReduction: {type: number, description: "Redução de alíquota estadual (%).", default: 0}
+                effectiveRate: {type: number, description: "pAliqEfetUF = rate × (1 − rateReduction). Se rateReduction ausente, usar rate."}
+                deferment:
+                  type: object
+                  additionalProperties: false
+                  description: Deferimento do IBS na esfera estadual.
+                  properties:
+                    rate: {type: number, description: "Percentual de diferimento (pDif, %)."}
+                    amount: {type: number, multipleOf: 0.01, description: "Valor do diferimento (vDif)."}
+                returnedAmount: {type: number, multipleOf: 0.01, description: "Valor de imposto devolvido/devolução (vDevTrib) na esfera estadual."}
+                amount: {type: number, multipleOf: 0.01, description: "Valor do IBS da UF (vIBSUF)."}
+            municipal:
+              type: object
+              additionalProperties: false
+              required: [rate, effectiveRate]
+              properties:
+                rate: {type: number, description: "Alíquota IBS (Município) (%) (pAliqIBSMun)."}
+                rateReduction: {type: number, description: "Redução de alíquota municipal (%).", default: 0}
+                effectiveRate: {type: number, description: "pAliqEfetMun = rate × (1 − rateReduction). Se rateReduction ausente, usar rate."}
+                deferment:
+                  type: object
+                  additionalProperties: false
+                  description: Deferimento do IBS na esfera municipal.
+                  properties:
+                    rate: {type: number, description: "Percentual de diferimento (pDif, %)."}
+                    amount: {type: number, multipleOf: 0.01, description: "Valor do diferimento (vDif)."}
+                returnedAmount: {type: number, multipleOf: 0.01, description: "Valor de imposto devolvido/devolução (vDevTrib) na esfera municipal."}
+                amount: {type: number, multipleOf: 0.01, description: "Valor do IBS do Município (vIBSMun)."}
+        cbs:
+          type: object
+          additionalProperties: false
+          description: Alíquotas da CBS (esfera federal).
+          required: [rate, effectiveRate]
+          properties:
+            rate: {type: number, description: "Alíquota da CBS (%) (pAliqCBS)."}
+            rateReduction: {type: number, description: "Redução de alíquota da CBS (%).", default: 0}
+            effectiveRate: {type: number, description: "pAliqEfetCBS = rate × (1 − rateReduction). Se rateReduction ausente, usar rate."}
+            deferment:
+              type: object
+              additionalProperties: false
+              description: Deferimento da CBS.
+              properties:
+                rate: {type: number, description: "Percentual de diferimento (pDif, %)."}
+                amount: {type: number, multipleOf: 0.01, description: "Valor do diferimento (vDif)."}
+            returnedAmount: {type: number, multipleOf: 0.01, description: "Valor de imposto devolvido/devolução da CBS (vDevTrib)."}
+            amount: {type: number, multipleOf: 0.01, description: "Valor total da CBS (vCBS)."}
+        regularTaxation:
+          type: object
+          additionalProperties: false
+          description: Tributação regular hipotética caso condição resolutória/suspensiva não se aplique. (tpGTribRegular)
+          properties:
+            situationCode: {type: string, description: "CST regular (CSTReg), 3 dígitos."}
+            classCode: {type: string, description: "Classificação tributária regular (cClassTribReg), 6 dígitos."}
+            ibs:
+              type: object
+              additionalProperties: false
+              properties:
+                totalAmount: {type: number, description: "Total do IBS (vIBSTotReg)."}
+                state:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    effectiveRate: {type: number, description: "Alíquota efetiva IBS UF (pAliqEfetRegIBSUF)."}
+                    amount: {type: number, multipleOf: 0.01, description: "IBS UF regular (vTribRegIBSUF)."}
+                municipal:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    effectiveRate: {type: number, description: "Alíquota efetiva IBS Município (pAliqEfetRegIBSMun)."}
+                    amount: {type: number, multipleOf: 0.01, description: "IBS Município regular (vTribRegIBSMun)."}
+            cbs:
+              type: object
+              additionalProperties: false
+              properties:
+                effectiveRate: {type: number, description: "Alíquota efetiva CBS (pAliqEfetRegCBS)."}
+                amount: {type: number, multipleOf: 0.01, description: "CBS regular (vTribRegCBS)."}
+        presumedCredits:
+          type: object
+          additionalProperties: false
+          description: Créditos presumidos de IBS e CBS quando aplicáveis.
+          properties:
+            ibs:
+              type: object
+              additionalProperties: false
+              properties:
+                code: {type: string, pattern: '^\d{2}$', description: "Código do crédito presumido IBS (cCredPres)."}
+                rate: {type: number, description: "Percentual do crédito presumido IBS (pCredPres)."}
+                amount: {type: number, multipleOf: 0.01, description: "Valor do crédito presumido IBS (vCredPres)."}
+                conditionalAmount: {type: number, multipleOf: 0.01, description: "Valor do crédito presumido IBS sob condição suspensiva (vCredPresCondSus)."}
+            cbs:
+              type: object
+              additionalProperties: false
+              properties:
+                code: {type: string, pattern: '^\d{2}$', description: "Código do crédito presumido CBS (cCredPres)."}
+                rate: {type: number, description: "Percentual do crédito presumido CBS (pCredPres)."}
+                amount: {type: number, multipleOf: 0.01, description: "Valor do crédito presumido CBS (vCredPres)."}
+                conditionalAmount: {type: number, multipleOf: 0.01, description: "Valor do crédito presumido CBS sob condição suspensiva (vCredPresCondSus)."}
+        governmentPurchase:
+          type: object
+          additionalProperties: false
+          description: Composição do valor de IBS e CBS em compras governamentais.
+          properties:
+            entityType:
+              type: string
+              description: |
+                Tipo do ente da compra governamental (tpEnteGov).
+                Valores possíveis:
+                - `Union`: União
+                - `State`: Estado
+                - `FederalDistrict`: Distrito Federal
+                - `Municipality`: Município
+              enum: ["Union", "State", "FederalDistrict", "Municipality"]
+            operationType:
+              type: string
+              description: |
+                Tipo de Operação com Entes Governamentais (tpOperGov).
+                Valores possíveis:
+                - `SupplyFirstPayLater`: Fornecimento com pagamento posterior
+                - `PayForPastSupply`: Pagamento de fornecimento anterior
+                - `SupplyForPastPay`: Fornecimento com pagamento antecipado
+                - `SupplyPayTogether`: Fornecimento e pagamento concomitantes
+              enum: [SupplyFirstPayLater, PayForPastSupply, SupplyForPastPay, SupplyPayTogether]
+            ibs:
+              type: object
+              additionalProperties: false
+              properties:
+                totalAmount: {type: number, description: "Total do IBS em compras governamentais (vIBSTotGov)."}
+                state:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    rate: {type: number, description: "Alíquota IBS UF em compras governamentais (pAliqIBSUF)."}
+                    amount: {type: number, multipleOf: 0.01, description: "Valor IBS UF em compras governamentais (vTribIBSUF)."}
+                municipal:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    rate: {type: number, description: "Alíquota IBS Município em compras governamentais (pAliqIBSMun)."}
+                    amount: {type: number, multipleOf: 0.01, description: "Valor IBS Município em compras governamentais (vTribIBSMun)."}
+            cbs:
+              type: object
+              additionalProperties: false
+              properties:
+                rate: {type: number, description: "Alíquota CBS em compras governamentais (pAliqCBS)."}
+                amount: {type: number, multipleOf: 0.01, description: "Valor CBS em compras governamentais (vTribCBS)."}
+        creditTransfer:
+          type: object
+          additionalProperties: false
+          description: Transferência de créditos de IBS e CBS.
+          properties:
+            ibsAmount: {type: number, multipleOf: 0.01, description: "Valor de IBS a transferir (vIBS)."}
+            cbsAmount: {type: number, multipleOf: 0.01, description: "Valor de CBS a transferir (vCBS)."}
+        thirdPartyReimbursements:
+          type: object
+          additionalProperties: false
+          description: Valores de reembolso/repasse/ressarcimento já tributados e aqui referenciados. (tpGrupoReeRepRes)
+          properties:
+            documents:
+              type: array
+              minItems: 1
+              maxItems: 1000
+              items:
+                $ref: '#/components/schemas/thirdPartyReimbursementDocument'
+
+    thirdPartyReimbursementDocument:
+      type: object
+      additionalProperties: false
+      description: Documento utilizado para justificar exclusão da BC de IBS/CBS/ISS. (tpDocumento)
+      required: [issueDate, accrualOn, reimbursementType, amount]
+      anyOf:
+        - required: [nfseKey]
+        - required: [nfeKey]
+        - required: [cteKey]
+        - required: [otherNationalDfe]
+        - required: [otherFiscalDoc]
+        - required: [otherDoc]
+      properties:
+        nfseKey: {type: string, maxLength: 50, description: "Chave NFS-e (padrão nacional)."}
+        nfeKey: {type: string, pattern: '^[0-9]{44}$', description: "Chave NF-e (44 dígitos)."}
+        cteKey: {type: string, pattern: '^[0-9]{44}$', description: "Chave CT-e (44 dígitos)."}
+        otherNationalDfe:
+          type: object
+          additionalProperties: false
+          description: Outro DF-e presente no repositório nacional. (tpDFeNacional)
+          required: [dfeKey, dfeTypeText]
+          properties:
+            dfeKey: {type: string, maxLength: 50, description: "Chave do DF-e (chDFE)."}
+            dfeTypeText: {type: string, maxLength: 255, description: "Tipo do DF-e (xTpDFE, xTipoChaveDFe)."}
+            dfeType: {type: string, maxLength: 1, description: "Documento fiscal a que se refere a chaveDfe (tipoChaveDFE, tpTipoChaveDFE)."}
+        otherFiscalDoc:
+          type: object
+          additionalProperties: false
+          description: Documento fiscal que não está no repositório nacional (eletrônico ou não). (tpDocFiscalOutro)
+          required: [issuerCityCode, fiscalDocNumber]
+          properties:
+            issuerCityCode: {type: string, description: "Código IBGE do município emissor do documento fiscal (cMunEmiDocFisc). (cMunDocFiscal)"}
+            fiscalDocNumber: {type: string, maxLength: 255, description: "Número do documento fiscal (nDocFisc). (nDocFiscal, tpNumeroDescricaoDocumento)"}
+            fiscalDocDescription: {type: string, maxLength: 255, description: "Descrição do documento fiscal (xDocFisc). (xDocFiscal, tpNumeroDescricaoDocumento)"}
+        otherDoc:
+          type: object
+          additionalProperties: false
+          description: Documento não fiscal. (tpDocOutro)
+          required: [docNumber, docDescription]
+          properties:
+            docNumber: {type: string, maxLength: 255, description: "Número do documento (nDoc). (nDoc, tpNumeroDescricaoDocumento)"}
+            docDescription: {type: string, maxLength: 255, description: "Descrição do documento (xDoc). (xDoc, tpNumeroDescricaoDocumento)"}
+        supplier: {$ref: '#/components/schemas/partyDefinition', description: "Fornecedor/emitente do documento referenciado (quando aplicável). (fornec, tpFornecedor)"}
+        issueDate: {type: string, format: date, description: "Data de emissão (AAAA-MM-DD) (dtEmiDoc)."}
+        accrualOn: {type: string, format: date, description: "Data de competência (AAAA-MM-DD) (dtCompDoc)."}
+        reimbursementType:
+          type: string
+          description: |
+            Motivo do reembolso/repasse/ressarcimento (tpReemb). (tpReeRepRes)
+            Valores possíveis:
+            - `RealEstateBrokerPassThrough`: Repasse de corretagem de imóveis
+            - `TravelAgencySupplierPassThrough`: Repasse de valores de fornecedores em agência de viagens
+            - `AdAgencyExternalProductionReimbursement`: Reembolso de produção externa em agência de publicidade
+            - `AdAgencyMediaReimbursement`: Reembolso de despesas com mídia em agência de publicidade
+            - `OtherReimbursement`: Outros reembolsos ou ressarcimentos
+          enum: [RealEstateBrokerPassThrough, TravelAgencySupplierPassThrough, AdAgencyExternalProductionReimbursement, AdAgencyMediaReimbursement, OtherReimbursement]
+        reimbursementTypeText: {type: string, maxLength: 150, description: "Obrigatório quando reimbursementType = 'otherReimbursement' (xReembOutros). (tpXTpReeRepRes)"}
+        amount: {type: number, description: "Valor considerado para exclusão da BC (total ou parcial, R$) (vReemb). (vlrReembRepasse)"}

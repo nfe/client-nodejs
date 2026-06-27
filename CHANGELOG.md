@@ -7,6 +7,13 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não publicado]
 
+### ✨ Adicionado — Reforma Tributária do Consumo (RTC)
+
+- **`nfe.serviceInvoicesRtc`**: emissão de NFS-e no leiaute RTC (grupo `ibsCbs`), com `create`/`createAndWait` (polling) e `downloadCancellationXml` (XML do evento de cancelamento — Ambiente Nacional). Mesmo endpoint da emissão atual; RTC é selecionado pelo payload. Tipo de request: `NFSeRtcRequest` (schema `NFSeRequest`).
+- **`nfe.productInvoicesRtc`**: emissão de NF-e/NFC-e no leiaute RTC (IBS estadual/municipal, CBS, IS), `create` **webhook-driven** (não faz polling), espelhando `productInvoices`. Tipo de request: `ProductInvoiceRtcRequest` (schema `ProductInvoiceRequest`).
+- Recursos de emissão existentes (`serviceInvoices`/`productInvoices`) permanecem inalterados; RTC é opt-in. Proveniência das specs registrada em `openapi/spec/SOURCES.json` (NT_2025.002_v1.30).
+- Pipeline de geração agora descobre specs `.json` e falha em skip inesperado (allowlist dos 5 Swagger 2.0 legados).
+
 ### 🐛 Correções
 
 - **CertificateValidator**: `validate()` deixou de **fabricar metadata** (subject/issuer/validade falsos) e de reportar validade de 1 ano para qualquer arquivo bem-formado. Agora é um pré-flight **só de formato** (buffer, senha presente, magic bytes PKCS#12); subject/issuer/validade e a senha são verificados no servidor durante o upload. `metadata` passa a ser ausente no pré-flight local.

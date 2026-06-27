@@ -37,6 +37,8 @@ import {
   TaxCodesResource,
   ProductInvoicesResource,
   StateTaxesResource,
+  ServiceInvoicesRtcResource,
+  ProductInvoicesRtcResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL,
   LEGAL_ENTITY_API_BASE_URL,
@@ -171,6 +173,8 @@ export class NfeClient {
   private _taxCodes: TaxCodesResource | undefined;
   private _productInvoices: ProductInvoicesResource | undefined;
   private _stateTaxes: StateTaxesResource | undefined;
+  private _serviceInvoicesRtc: ServiceInvoicesRtcResource | undefined;
+  private _productInvoicesRtc: ProductInvoicesRtcResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -685,6 +689,31 @@ export class NfeClient {
   }
 
   /**
+   * Service Invoices RTC resource — emit NFS-e under the Reforma Tributária layout
+   * (IBS/CBS groups). Uses the main host (api.nfe.io); supports polling. Emission
+   * is opt-in via this resource; retrieve/cancel/PDF/XML are shared with
+   * {@link serviceInvoices}.
+   */
+  get serviceInvoicesRtc(): ServiceInvoicesRtcResource {
+    if (!this._serviceInvoicesRtc) {
+      this._serviceInvoicesRtc = new ServiceInvoicesRtcResource(this.getMainHttpClient());
+    }
+    return this._serviceInvoicesRtc;
+  }
+
+  /**
+   * Product Invoices RTC resource — emit NF-e/NFC-e under the Reforma Tributária
+   * layout (IBS state+municipal, CBS, IS). Uses api.nfse.io; webhook-driven (not
+   * polled), mirroring {@link productInvoices}.
+   */
+  get productInvoicesRtc(): ProductInvoicesRtcResource {
+    if (!this._productInvoicesRtc) {
+      this._productInvoicesRtc = new ProductInvoicesRtcResource(this.getCteHttpClient());
+    }
+    return this._productInvoicesRtc;
+  }
+
+  /**
    * Create a new NFE.io API client
    *
    * @param config - Client configuration options
@@ -1071,6 +1100,8 @@ export class NfeClient {
     this._taxCodes = undefined;
     this._productInvoices = undefined;
     this._stateTaxes = undefined;
+    this._serviceInvoicesRtc = undefined;
+    this._productInvoicesRtc = undefined;
   }
 
   /**

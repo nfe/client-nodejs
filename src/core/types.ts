@@ -402,6 +402,19 @@ export type NaturalPerson = {
 // Import the components type from generated spec
 import type { components as CteComponents } from '../generated/consulta-cte-v2.js';
 
+// ----------------------------------------------------------------------------
+// RTC (Reforma Tributária do Consumo) request types — from the dedicated specs
+// ----------------------------------------------------------------------------
+import type { components as ServiceInvoiceRtcComponents } from '../generated/service-invoice-rtc-v1.js';
+import type { components as ProductInvoiceRtcComponents } from '../generated/product-invoice-rtc-v1.js';
+
+/** RTC NFS-e (service) emission request body — named schema `NFSeRequest`. */
+export type NFSeRtcRequest = ServiceInvoiceRtcComponents['schemas']['NFSeRequest'];
+
+/** RTC NF-e/NFC-e (product) emission request body — named schema `ProductInvoiceRequest`. */
+export type ProductInvoiceRtcRequest =
+  ProductInvoiceRtcComponents['schemas']['ProductInvoiceRequest'];
+
 /**
  * Transportation Invoice inbound settings
  * Configuration for automatic CT-e search via SEFAZ Distribuição DFe

@@ -1,0 +1,17 @@
+{
+  "_comment": "Provenance of specs synced from nfeio-docs/static/api. Update via the docs->spec sync step. Verify-mode should fail if a spec no longer matches its recorded sha256.",
+  "source": "nfeio-docs/static/api",
+  "sourceCommit": "b487823",
+  "specs": {
+    "service-invoice-rtc-v1.yaml": {
+      "sha256": "5c3b751b63e6a0adabb185b974e141f1b06127934fa0bf05fc505676024db32b",
+      "layout": "RTC",
+      "nt": "NT_2025.002_v1.30_RTC (NFS-e)"
+    },
+    "product-invoice-rtc-v1.yaml": {
+      "sha256": "4327ad141eeace6219dc4267678c44a134ae1fdde93f7dd69cf4c9ae9418415a",
+      "layout": "RTC",
+      "nt": "NT_2025.002_v1.30_RTC_NF-e_IBS_CBS_IS"
+    }
+  }
+}

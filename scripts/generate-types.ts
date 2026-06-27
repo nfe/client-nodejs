@@ -128,8 +128,11 @@ async function main(): Promise<void> {
 async function discoverSpecs(): Promise<SpecConfig[]> {
   const files = await readdir(config.specDir);
 
+  // Non-spec sidecar files that live in openapi/spec/ but must NOT be generated.
+  const NON_SPEC_FILES = new Set(['SOURCES.json']);
   const specFiles = files.filter(file =>
-    file.endsWith('.yaml') || file.endsWith('.yml') || file.endsWith('.json')
+    !NON_SPEC_FILES.has(file) &&
+    (file.endsWith('.yaml') || file.endsWith('.yml') || file.endsWith('.json'))
   );
 
   if (specFiles.length === 0) {
