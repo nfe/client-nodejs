@@ -5,7 +5,7 @@
  * Types are namespaced by spec to avoid conflicts.
  *
  * @generated
- * Last updated: 2026-06-27T03:36:38.736Z
+ * Last updated: 2026-06-27T03:43:02.647Z
  */
 
 // ============================================================================
@@ -24,40 +24,8 @@ export * as Nfeio from './nfeio.js';
 // Convenience Type Aliases
 // ============================================================================
 
-// Common types from main spec (nf-servico-v1)
-// Use these for convenience, or use namespaced versions for specificity
-
-// Since OpenAPI specs don't have separate schemas (schemas: never),
-// we define minimal types here for backward compatibility
-// These are placeholders - real API responses may have more fields
-
-export interface ServiceInvoice {
-  id?: string;
-  flowStatus?: string;
-  status?: string;
-  [key: string]: unknown;
-}
-
-export interface Company {
-  id?: string;
-  federalTaxNumber?: number;
-  name?: string;
-  [key: string]: unknown;
-}
-
-export interface LegalPerson {
-  id?: string;
-  federalTaxNumber?: string | number;
-  name?: string;
-  [key: string]: unknown;
-}
-
-export interface NaturalPerson {
-  id?: string;
-  federalTaxNumber?: string | number;
-  name?: string;
-  [key: string]: unknown;
-}
+// Domain types are defined in src/core/types.ts (the public surface).
+// Main spec namespace: NfServico. Use namespaced generated types for raw operations/paths.
 
 // ============================================================================
 // Backward Compatibility
