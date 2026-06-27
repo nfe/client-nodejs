@@ -7,6 +7,10 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não publicado]
 
+### ✨ Adicionado — NFC-e (consumer invoices)
+
+- **`nfe.consumerInvoices`** (`ConsumerInvoicesResource`, api.nfse.io): ciclo de vida da NFC-e company-scoped — `create` (**webhook-driven**, sem polling), `list`, `retrieve`, `cancel`, `getItems`, `getEvents`, `downloadPdf`/`downloadXml`/`downloadRejectionXml`, e `disable` (inutilização). Distinto do `consumerInvoiceQuery` (consulta de cupom, somente leitura). Tipos: `ConsumerInvoiceData`, `ConsumerInvoice`, `ConsumerInvoiceDisablementData`.
+
 ### ✨ Adicionado — Inscrições Municipais (municipal taxes)
 
 - **`nfe.municipalTaxes`** (`MunicipalTaxesResource`, api.nfse.io): CRUD de inscrições municipais — pré-requisito para emissão de NFS-e —, espelhando `stateTaxes`. Inclui `updatePrefecture` (HTTP **PATCH** `.../updateprefecture`) e `getSeries` (`.../series/{serie}`). Tipos: `MunicipalTax`, `CreateMunicipalTaxData`, `UpdateMunicipalTaxData`.

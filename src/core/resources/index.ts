@@ -24,3 +24,4 @@ export { StateTaxesResource } from './state-taxes.js';
 export { ServiceInvoicesRtcResource, createServiceInvoicesRtcResource } from './service-invoices-rtc.js';
 export { ProductInvoicesRtcResource, createProductInvoicesRtcResource } from './product-invoices-rtc.js';
 export { MunicipalTaxesResource, createMunicipalTaxesResource } from './municipal-taxes.js';
+export { ConsumerInvoicesResource, createConsumerInvoicesResource } from './consumer-invoices.js';

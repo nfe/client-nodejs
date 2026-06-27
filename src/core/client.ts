@@ -40,6 +40,7 @@ import {
   ServiceInvoicesRtcResource,
   ProductInvoicesRtcResource,
   MunicipalTaxesResource,
+  ConsumerInvoicesResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL,
   LEGAL_ENTITY_API_BASE_URL,
@@ -177,6 +178,7 @@ export class NfeClient {
   private _serviceInvoicesRtc: ServiceInvoicesRtcResource | undefined;
   private _productInvoicesRtc: ProductInvoicesRtcResource | undefined;
   private _municipalTaxes: MunicipalTaxesResource | undefined;
+  private _consumerInvoices: ConsumerInvoicesResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -727,6 +729,18 @@ export class NfeClient {
   }
 
   /**
+   * Consumer Invoices resource — emit & manage NFC-e (company-scoped) on
+   * api.nfse.io. Webhook-driven emission. Distinct from {@link consumerInvoiceQuery}
+   * (read-only coupon lookup).
+   */
+  get consumerInvoices(): ConsumerInvoicesResource {
+    if (!this._consumerInvoices) {
+      this._consumerInvoices = new ConsumerInvoicesResource(this.getCteHttpClient());
+    }
+    return this._consumerInvoices;
+  }
+
+  /**
    * Create a new NFE.io API client
    *
    * @param config - Client configuration options
@@ -1116,6 +1130,7 @@ export class NfeClient {
     this._serviceInvoicesRtc = undefined;
     this._productInvoicesRtc = undefined;
     this._municipalTaxes = undefined;
+    this._consumerInvoices = undefined;
   }
 
   /**

@@ -482,6 +482,25 @@ export interface MunicipalTaxListResponse {
   [key: string]: unknown;
 }
 
+// ----------------------------------------------------------------------------
+// Consumer invoices (NFC-e) emission — from nf-consumidor-v2 named schemas.
+// ----------------------------------------------------------------------------
+import type { components as NfConsumidorComponents } from '../generated/nf-consumidor-v2.js';
+
+/** NFC-e emission request body (`ConsumerInvoiceRequest`). */
+export type ConsumerInvoiceData = NfConsumidorComponents['schemas']['ConsumerInvoiceRequest'];
+
+/** NFC-e invoice entity (`InvoiceResource`). */
+export type ConsumerInvoice = NfConsumidorComponents['schemas']['InvoiceResource'];
+
+/** NFC-e list response envelope (`ConsumerInvoicesResource`). */
+export type ConsumerInvoiceListResponse =
+  NfConsumidorComponents['schemas']['ConsumerInvoicesResource'];
+
+/** NFC-e disablement (inutilização) request body (`DisablementResource`). */
+export type ConsumerInvoiceDisablementData =
+  NfConsumidorComponents['schemas']['DisablementResource'];
+
 /**
  * Transportation Invoice inbound settings
  * Configuration for automatic CT-e search via SEFAZ Distribuição DFe

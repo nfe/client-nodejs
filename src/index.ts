@@ -333,6 +333,10 @@ export type {
   CreateMunicipalTaxData,
   UpdateMunicipalTaxData,
   MunicipalTaxListResponse,
+  ConsumerInvoiceData,
+  ConsumerInvoice,
+  ConsumerInvoiceListResponse,
+  ConsumerInvoiceDisablementData,
 } from './core/types.js';
 
 /**
@@ -439,6 +443,7 @@ export { StateTaxesResource } from './core/resources/state-taxes.js';
 export { ServiceInvoicesRtcResource } from './core/resources/service-invoices-rtc.js';
 export { ProductInvoicesRtcResource } from './core/resources/product-invoices-rtc.js';
 export { MunicipalTaxesResource } from './core/resources/municipal-taxes.js';
+export { ConsumerInvoicesResource } from './core/resources/consumer-invoices.js';
 
 // ============================================================================
 // Default Export (maintains v2 compatibility)
