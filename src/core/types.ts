@@ -460,6 +460,10 @@ export type UpdateCompanyResourceItem =
 export type CertificateMetadataResource =
   ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CertificateMetadataResource'];
 
+/** Digital certificate metadata collection (plural `/certificates`). */
+export type CertificatesMetadataResource =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CertificatesMetadataResource'];
+
 /** Company address (spec-backed). */
 export type CompanyAddress =
   ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.AddressResource'];

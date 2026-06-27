@@ -5,7 +5,7 @@
  * Types are namespaced by spec to avoid conflicts.
  *
  * @generated
- * Last updated: 2026-06-27T14:27:45.213Z
+ * Last updated: 2026-06-27T14:42:46.927Z
  */
 
 // ============================================================================

@@ -337,6 +337,7 @@ export type {
   ConsumerInvoice,
   ConsumerInvoiceListResponse,
   ConsumerInvoiceDisablementData,
+  CertificatesMetadataResource,
 } from './core/types.js';
 
 /**
@@ -444,6 +445,7 @@ export { ServiceInvoicesRtcResource } from './core/resources/service-invoices-rt
 export { ProductInvoicesRtcResource } from './core/resources/product-invoices-rtc.js';
 export { MunicipalTaxesResource } from './core/resources/municipal-taxes.js';
 export { ConsumerInvoicesResource } from './core/resources/consumer-invoices.js';
+export { CertificatesResource } from './core/resources/certificates.js';
 
 // ============================================================================
 // Default Export (maintains v2 compatibility)

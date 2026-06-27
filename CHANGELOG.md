@@ -7,6 +7,10 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não publicado]
 
+### ✨ Adicionado — Gestão de certificados por thumbprint
+
+- **`nfe.certificates`** (`CertificatesResource`, api.nfse.io): `list`, `getByThumbprint`/`deleteByThumbprint` (v2) e variantes v1 (`getByThumbprintV1`/`deleteByThumbprintV1`). Cobre o gap da consulta/remoção de certificado por thumbprint. Complementa o `companies.uploadCertificate` legado (host api.nfe.io) — recurso dedicado por estar em host diferente (contribuintes-v2 @ api.nfse.io).
+
 ### ✨ Adicionado — NFC-e (consumer invoices)
 
 - **`nfe.consumerInvoices`** (`ConsumerInvoicesResource`, api.nfse.io): ciclo de vida da NFC-e company-scoped — `create` (**webhook-driven**, sem polling), `list`, `retrieve`, `cancel`, `getItems`, `getEvents`, `downloadPdf`/`downloadXml`/`downloadRejectionXml`, e `disable` (inutilização). Distinto do `consumerInvoiceQuery` (consulta de cupom, somente leitura). Tipos: `ConsumerInvoiceData`, `ConsumerInvoice`, `ConsumerInvoiceDisablementData`.

@@ -41,6 +41,7 @@ import {
   ProductInvoicesRtcResource,
   MunicipalTaxesResource,
   ConsumerInvoicesResource,
+  CertificatesResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL,
   LEGAL_ENTITY_API_BASE_URL,
@@ -179,6 +180,7 @@ export class NfeClient {
   private _productInvoicesRtc: ProductInvoicesRtcResource | undefined;
   private _municipalTaxes: MunicipalTaxesResource | undefined;
   private _consumerInvoices: ConsumerInvoicesResource | undefined;
+  private _certificates: CertificatesResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -741,6 +743,18 @@ export class NfeClient {
   }
 
   /**
+   * Certificates resource — manage company digital certificates (retrieve/delete
+   * by thumbprint, list) via the contribuintes-v2 API on api.nfse.io. Complements
+   * the legacy `companies.uploadCertificate` (which targets the api.nfe.io host).
+   */
+  get certificates(): CertificatesResource {
+    if (!this._certificates) {
+      this._certificates = new CertificatesResource(this.getCteHttpClient());
+    }
+    return this._certificates;
+  }
+
+  /**
    * Create a new NFE.io API client
    *
    * @param config - Client configuration options
@@ -1131,6 +1145,7 @@ export class NfeClient {
     this._productInvoicesRtc = undefined;
     this._municipalTaxes = undefined;
     this._consumerInvoices = undefined;
+    this._certificates = undefined;
   }
 
   /**
