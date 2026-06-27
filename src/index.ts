@@ -321,6 +321,14 @@ export type {
   // RTC (Reforma Tributária do Consumo) emission request types
   NFSeRtcRequest,
   ProductInvoiceRtcRequest,
+
+  // Empresas (contribuintes-v2) spec-backed types
+  CompanyResourceItem,
+  CompanyResourceV1,
+  CreateCompanyResourceItem,
+  UpdateCompanyResourceItem,
+  CertificateMetadataResource,
+  CompanyAddress,
 } from './core/types.js';
 
 /**

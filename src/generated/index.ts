@@ -5,7 +5,7 @@
  * Types are namespaced by spec to avoid conflicts.
  *
  * @generated
- * Last updated: 2026-06-27T04:57:30.389Z
+ * Last updated: 2026-06-27T06:03:02.690Z
  */
 
 // ============================================================================
@@ -15,6 +15,7 @@
 export * as CalculoImpostos from './calculo-impostos-v1.js';
 export * as ConsultaCte from './consulta-cte-v2.js';
 export * as ConsultaNfeDistribuicao from './consulta-nfe-distribuicao-v1.js';
+export * as Contribuintes from './contribuintes-v2.js';
 export * as NfConsumidor from './nf-consumidor-v2.js';
 export * as NfProduto from './nf-produto-v2.js';
 export * as NfServico from './nf-servico-v1.js';

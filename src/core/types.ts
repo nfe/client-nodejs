@@ -370,16 +370,31 @@ export type ServiceInvoiceSingleResponse =
 export type { ServiceInvoiceData as ServiceInvoice };
 
 // TODO: Add proper type exports when implementing other resources
-/** Placeholder: Company type - to be properly defined when implementing Companies resource */
+/**
+ * Company entity.
+ *
+ * Additive enrichment (no breaking change, ships in a minor): the original
+ * required fields and the permissive `[key: string]: unknown` index are kept,
+ * and the documented `contribuintes-v2` fields (address, taxRegime, tradeName,
+ * stateTaxes, …) are added as **optional** — so autocomplete improves without
+ * tightening the type or the `create()` input. Use {@link CompanyResourceItem} /
+ * {@link CompanyResourceV1} for the strict spec shapes, and
+ * {@link CreateCompanyResourceItem} for a strict create input.
+ */
 export type Company = {
   id?: string;
   name: string;
   federalTaxNumber: number;
   email: string;
-  [key: string]: unknown;
-};
+} & Partial<Omit<CompanyResourceItem, 'id' | 'name' | 'federalTaxNumber' | 'email'>> & {
+    [key: string]: unknown;
+  };
 
-/** Placeholder: Legal Person type - to be properly defined when implementing LegalPeople resource */
+/**
+ * Legal Person type.
+ * NOTE: no dedicated 3.x spec backs the company-scoped legalpeople sub-resource yet,
+ * so this remains hand-typed (review F14). Keep the permissive index for compat.
+ */
 export type LegalPerson = {
   id?: string;
   federalTaxNumber: string;
@@ -387,7 +402,10 @@ export type LegalPerson = {
   [key: string]: unknown;
 };
 
-/** Placeholder: Natural Person type - to be properly defined when implementing NaturalPeople resource */
+/**
+ * Natural Person type.
+ * NOTE: hand-typed for the same reason as {@link LegalPerson}.
+ */
 export type NaturalPerson = {
   id?: string;
   federalTaxNumber: string;
@@ -414,6 +432,37 @@ export type NFSeRtcRequest = ServiceInvoiceRtcComponents['schemas']['NFSeRequest
 /** RTC NF-e/NFC-e (product) emission request body — named schema `ProductInvoiceRequest`. */
 export type ProductInvoiceRtcRequest =
   ProductInvoiceRtcComponents['schemas']['ProductInvoiceRequest'];
+
+// ----------------------------------------------------------------------------
+// Empresas (contribuintes-v2) — spec-backed company/certificate/address types.
+// Clean public aliases over the .NET-qualified generated keys (same pattern as
+// CteComponents above). Full key-normalization remains a pipeline task (1.2).
+// ----------------------------------------------------------------------------
+import type { components as ContribuintesComponents } from '../generated/contribuintes-v2.js';
+
+/** Company entity (list/item shape) — `contribuintes-v2` field-bearing schema. */
+export type CompanyResourceItem =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CompanyResourceItem'];
+
+/** Company entity (rich v1 shape, 28 fields). */
+export type CompanyResourceV1 =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CompanyResourceV1'];
+
+/** Company creation request body (opt-in, decoupled from the response type). */
+export type CreateCompanyResourceItem =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CreateCompanyResourceItem'];
+
+/** Company update request body. */
+export type UpdateCompanyResourceItem =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.UpdateCompanyResourceItem'];
+
+/** Digital certificate metadata (real, spec-backed). */
+export type CertificateMetadataResource =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CertificateMetadataResource'];
+
+/** Company address (spec-backed). */
+export type CompanyAddress =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.AddressResource'];
 
 /**
  * Transportation Invoice inbound settings

@@ -72,6 +72,7 @@
     "test:unit": "vitest tests/unit",
     "test:integration": "vitest tests/integration",
     "test:coverage": "vitest --coverage",
+    "test:types": "vitest --run --typecheck --dir tests/types",
     "test:ui": "vitest --ui",
     "validate:openapi": "tsx scripts/validate-openapi-compliance.js",
     "docs": "typedoc src/index.ts --out docs/api",

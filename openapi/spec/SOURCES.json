@@ -12,6 +12,11 @@
       "sha256": "4327ad141eeace6219dc4267678c44a134ae1fdde93f7dd69cf4c9ae9418415a",
       "layout": "RTC",
       "nt": "NT_2025.002_v1.30_RTC_NF-e_IBS_CBS_IS"
+    },
+    "contribuintes-v2.json": {
+      "sha256": "e2d215a19f5dc85c08067d51644e807aae32b6c4754390872670f2e18a938102",
+      "title": "Empresas (contribuintes) v2",
+      "note": "OpenAPI 3.0.4; verbose .NET schema keys (key-normalization pending, Task 1.2)"
     }
   }
 }

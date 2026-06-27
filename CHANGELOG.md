@@ -7,6 +7,13 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não publicado]
 
+### ✨ Adicionado — Empresas (contribuintes-v2) e tipagem de domínio
+
+- Spec **`contribuintes-v2`** (Empresas, OpenAPI 3.x) adotada na geração — destrava tipos reais de empresa/certificado/endereço.
+- **`Company`** enriquecido de forma **aditiva** (minor, sem quebra): mantém os campos atuais e o índice `[key: string]: unknown`, e adiciona os campos documentados do spec (`address`, `taxRegime`, `tradeName`, `stateTaxes`, …) como **opcionais** — melhora o autocomplete sem apertar o tipo nem o input do `create()`.
+- Novos tipos exportados (opt-in, estritos): `CompanyResourceItem`, `CompanyResourceV1`, `CreateCompanyResourceItem`, `UpdateCompanyResourceItem`, `CertificateMetadataResource`, `CompanyAddress`.
+- Guard de regressão de tipo executável: `npm run test:types` (vitest typecheck) garante que leituras de campo arbitrário continuam compilando e que `federalTaxNumber` segue `number`.
+
 ### ✨ Adicionado — Reforma Tributária do Consumo (RTC)
 
 - **`nfe.serviceInvoicesRtc`**: emissão de NFS-e no leiaute RTC (grupo `ibsCbs`), com `create`/`createAndWait` (polling) e `downloadCancellationXml` (XML do evento de cancelamento — Ambiente Nacional). Mesmo endpoint da emissão atual; RTC é selecionado pelo payload. Tipo de request: `NFSeRtcRequest` (schema `NFSeRequest`).
