@@ -971,9 +971,9 @@ const webhook = await nfe.webhooks.create(empresaId, {
   active: true
 });
 
-// No seu endpoint de webhook
+// No seu endpoint de webhook (capture o corpo cru: app.use(express.raw({ type: '*/*' })))
 app.post('/api/webhooks/nfe', (req, res) => {
-  const assinatura = req.headers['x-nfe-signature'];
+  const assinatura = req.headers['x-hub-signature']; // header correto (HMAC-SHA1), não 'x-nfe-signature'
   const ehValido = nfe.webhooks.validateSignature(
     req.body,
     assinatura,

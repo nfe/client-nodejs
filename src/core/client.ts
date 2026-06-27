@@ -1035,10 +1035,26 @@ export class NfeClient {
     // Update internal config
     Object.assign(this.config, normalizedConfig);
 
-    // Clear cached HTTP clients and resources so they're recreated with new config
+    // Clear ALL cached HTTP clients and resources so they're recreated with new config.
+    this.resetCaches();
+  }
+
+  /**
+   * Invalidate every lazily-cached HTTP client and resource.
+   *
+   * Must list every `_*Http` and resource field so that, after `updateConfig`,
+   * no cached instance retains a stale baseUrl/apiKey/timeout. When adding a new
+   * resource or HTTP client, add it here too (single source of cache truth).
+   */
+  private resetCaches(): void {
+    // HTTP clients
     this._http = undefined;
     this._addressHttp = undefined;
     this._cteHttp = undefined;
+    this._nfeQueryHttp = undefined;
+    this._legalEntityHttp = undefined;
+    this._naturalPersonHttp = undefined;
+    // Resources
     this._serviceInvoices = undefined;
     this._companies = undefined;
     this._legalPeople = undefined;
@@ -1046,6 +1062,15 @@ export class NfeClient {
     this._webhooks = undefined;
     this._addresses = undefined;
     this._transportationInvoices = undefined;
+    this._inboundProductInvoices = undefined;
+    this._productInvoiceQuery = undefined;
+    this._consumerInvoiceQuery = undefined;
+    this._legalEntityLookup = undefined;
+    this._naturalPersonLookup = undefined;
+    this._taxCalculation = undefined;
+    this._taxCodes = undefined;
+    this._productInvoices = undefined;
+    this._stateTaxes = undefined;
   }
 
   /**

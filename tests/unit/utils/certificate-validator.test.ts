@@ -29,15 +29,15 @@ describe('CertificateValidator', () => {
       expect(result.error).toContain('Invalid certificate format');
     });
 
-    it('should accept valid PKCS#12 signature', async () => {
+    it('should accept valid PKCS#12 signature (format pre-flight only)', async () => {
       // Create buffer with PKCS#12 signature (0x3082)
       const validBuffer = Buffer.from([0x30, 0x82, 0x01, 0x00]);
       const result = await CertificateValidator.validate(validBuffer, 'password');
 
       expect(result.valid).toBe(true);
-      expect(result.metadata).toBeDefined();
-      expect(result.metadata?.subject).toBeDefined();
-      expect(result.metadata?.issuer).toBeDefined();
+      // Honest pre-flight: it must NOT fabricate subject/issuer/validity it never parsed.
+      // Subject/issuer/validity/password are verified server-side on upload.
+      expect(result.metadata).toBeUndefined();
     });
   });
 

@@ -5,10 +5,18 @@
   "keywords": [
     "nfe",
     "nfse",
+    "nfse-nacional",
     "nota-fiscal",
+    "nota-fiscal-eletronica",
+    "nota-fiscal-de-servico",
     "invoice",
+    "e-invoice",
     "brazil",
-    "typescript"
+    "nodejs",
+    "typescript",
+    "sdk",
+    "api",
+    "fiscal"
   ],
   "author": {
     "name": "NFE.io Team",

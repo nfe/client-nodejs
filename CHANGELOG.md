@@ -5,6 +5,14 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não publicado]
+
+### 🐛 Correções
+
+- **CertificateValidator**: `validate()` deixou de **fabricar metadata** (subject/issuer/validade falsos) e de reportar validade de 1 ano para qualquer arquivo bem-formado. Agora é um pré-flight **só de formato** (buffer, senha presente, magic bytes PKCS#12); subject/issuer/validade e a senha são verificados no servidor durante o upload. `metadata` passa a ser ausente no pré-flight local.
+- **`updateConfig()`**: agora invalida **todos** os resources e HTTP clients em cache (via `resetCaches()`). Antes, resetava apenas ~10 — `productInvoices`, `stateTaxes`, `taxCalculation`, `taxCodes`, lookups e os clients de query/legalEntity/naturalPerson permaneciam com a configuração antiga após `updateConfig`.
+- **README**: exemplo de webhook corrigido para o header `x-hub-signature` (HMAC-SHA1), alinhado ao fix de verificação de assinatura; antes referenciava `x-nfe-signature`.
+
 ## [4.0.0] - 2026-06-12
 
 ### ⚠️ BREAKING CHANGE — Node.js >= 22
