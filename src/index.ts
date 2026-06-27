@@ -446,6 +446,8 @@ export { ProductInvoicesRtcResource } from './core/resources/product-invoices-rt
 export { MunicipalTaxesResource } from './core/resources/municipal-taxes.js';
 export { ConsumerInvoicesResource } from './core/resources/consumer-invoices.js';
 export { CertificatesResource } from './core/resources/certificates.js';
+export { NotificationsResource } from './core/resources/notifications.js';
+export type { Notification, NotificationListResponse } from './core/resources/notifications.js';
 
 // ============================================================================
 // Default Export (maintains v2 compatibility)

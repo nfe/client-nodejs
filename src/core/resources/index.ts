@@ -26,3 +26,4 @@ export { ProductInvoicesRtcResource, createProductInvoicesRtcResource } from './
 export { MunicipalTaxesResource, createMunicipalTaxesResource } from './municipal-taxes.js';
 export { ConsumerInvoicesResource, createConsumerInvoicesResource } from './consumer-invoices.js';
 export { CertificatesResource, createCertificatesResource } from './certificates.js';
+export { NotificationsResource, createNotificationsResource } from './notifications.js';

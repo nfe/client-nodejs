@@ -265,4 +265,26 @@ export class StateTaxesResource {
       `${this.basePath(companyId)}/${stateTaxId}`,
     );
   }
+
+  /**
+   * Switch the NF-e authorizer (SEFAZ environment/authorizer) for a state tax.
+   *
+   * @param companyId - The company ID
+   * @param stateTaxId - The state tax ID
+   * @param data - Optional switch payload (authorizer selection)
+   * @returns The updated state tax record
+   */
+  async switchAuthorizer(
+    companyId: string,
+    stateTaxId: string,
+    data?: Record<string, unknown>,
+  ): Promise<NfeStateTax> {
+    validateCompanyId(companyId);
+    validateStateTaxId(stateTaxId);
+    const response = await this.http.post<NfeStateTax>(
+      `${this.basePath(companyId)}/${stateTaxId}/switch-authorizer`,
+      data ?? {},
+    );
+    return response.data;
+  }
 }

@@ -7,6 +7,13 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não publicado]
 
+### ✨ Adicionado — Companies v2, notificações e avulsos
+
+- **`companies.exists(companyId)`**: checagem de existência via `HEAD /v2/companies/{id}` (api.nfse.io; 404 → `false`). HTTP client ganhou o verbo **`head`**.
+- **`nfe.notifications`** (`NotificationsResource`, api.nfe.io): `list`/`retrieve`/`delete`/`sendEmail` de notificações da empresa.
+- **`serviceInvoices.retrieveByExternalId(companyId, externalId)`**: busca por id externo (idempotência/reconciliação).
+- **`stateTaxes.switchAuthorizer(companyId, stateTaxId, data?)`**: troca de autorizador NF-e (`POST .../switch-authorizer`).
+
 ### ✨ Adicionado — Gestão de certificados por thumbprint
 
 - **`nfe.certificates`** (`CertificatesResource`, api.nfse.io): `list`, `getByThumbprint`/`deleteByThumbprint` (v2) e variantes v1 (`getByThumbprintV1`/`deleteByThumbprintV1`). Cobre o gap da consulta/remoção de certificado por thumbprint. Complementa o `companies.uploadCertificate` legado (host api.nfe.io) — recurso dedicado por estar em host diferente (contribuintes-v2 @ api.nfse.io).

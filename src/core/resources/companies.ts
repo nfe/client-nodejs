@@ -10,7 +10,7 @@ import type {
   PaginationOptions
 } from '../types.js';
 import type { HttpClient } from '../http/client.js';
-import { ValidationError } from '../errors/index.js';
+import { ValidationError, NotFoundError } from '../errors/index.js';
 import { CertificateValidator } from '../utils/certificate-validator.js';
 
 // ============================================================================
@@ -114,11 +114,37 @@ function validateCompanyData(data: Partial<Company>): void {
 // ============================================================================
 
 export class CompaniesResource {
-  constructor(private readonly http: HttpClient) {}
+  /**
+   * @param http - Main client (api.nfe.io) for the legacy v1 company CRUD.
+   * @param v2Http - Optional client for the contribuintes-v2 endpoints on
+   *   api.nfse.io (e.g. the HEAD existence check). Falls back to `http`.
+   */
+  constructor(
+    private readonly http: HttpClient,
+    private readonly v2Http: HttpClient = http
+  ) {}
 
   // --------------------------------------------------------------------------
   // Core CRUD Operations
   // --------------------------------------------------------------------------
+
+  /**
+   * Check whether a company exists, via `HEAD /v2/companies/{id}` (api.nfse.io).
+   *
+   * @returns `true` if the company exists (2xx), `false` on 404. Other errors propagate.
+   */
+  async exists(companyId: string): Promise<boolean> {
+    if (!companyId || companyId.trim() === '') {
+      throw new ValidationError('Company ID is required');
+    }
+    try {
+      await this.v2Http.head(`/v2/companies/${companyId}`);
+      return true;
+    } catch (error) {
+      if (error instanceof NotFoundError) return false;
+      throw error;
+    }
+  }
 
   /**
    * Create a new company

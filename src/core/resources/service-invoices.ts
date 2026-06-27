@@ -181,6 +181,29 @@ export class ServiceInvoicesResource {
   }
 
   /**
+   * Retrieve a service invoice by the caller's external id (idempotency key).
+   *
+   * @param companyId - Company ID (GUID)
+   * @param externalId - The `externalId` supplied at creation
+   * @returns The matching invoice
+   * @throws {NotFoundError} If no invoice with that external id exists
+   */
+  async retrieveByExternalId(
+    companyId: string,
+    externalId: string
+  ): Promise<ServiceInvoiceData> {
+    const path = `/companies/${companyId}/serviceinvoices/external/${externalId}`;
+    const response = await this.http.get<ServiceInvoiceData>(path);
+    if (!response.data) {
+      throw new NotFoundError(`Invoice with externalId ${externalId} not found`, {
+        companyId,
+        externalId,
+      });
+    }
+    return response.data;
+  }
+
+  /**
    * Cancel a service invoice
    *
    * Note: Cancellation may also be async (returns 202). Check response status.

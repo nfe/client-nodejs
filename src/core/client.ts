@@ -42,6 +42,7 @@ import {
   MunicipalTaxesResource,
   ConsumerInvoicesResource,
   CertificatesResource,
+  NotificationsResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL,
   LEGAL_ENTITY_API_BASE_URL,
@@ -181,6 +182,7 @@ export class NfeClient {
   private _municipalTaxes: MunicipalTaxesResource | undefined;
   private _consumerInvoices: ConsumerInvoicesResource | undefined;
   private _certificates: CertificatesResource | undefined;
+  private _notifications: NotificationsResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -234,7 +236,7 @@ export class NfeClient {
    */
   get companies(): CompaniesResource {
     if (!this._companies) {
-      this._companies = new CompaniesResource(this.getMainHttpClient());
+      this._companies = new CompaniesResource(this.getMainHttpClient(), this.getCteHttpClient());
     }
     return this._companies;
   }
@@ -755,6 +757,16 @@ export class NfeClient {
   }
 
   /**
+   * Notifications resource — company notification operations (api.nfe.io).
+   */
+  get notifications(): NotificationsResource {
+    if (!this._notifications) {
+      this._notifications = new NotificationsResource(this.getMainHttpClient());
+    }
+    return this._notifications;
+  }
+
+  /**
    * Create a new NFE.io API client
    *
    * @param config - Client configuration options
@@ -1146,6 +1158,7 @@ export class NfeClient {
     this._municipalTaxes = undefined;
     this._consumerInvoices = undefined;
     this._certificates = undefined;
+    this._notifications = undefined;
   }
 
   /**
