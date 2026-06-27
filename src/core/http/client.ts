@@ -64,6 +64,11 @@ export class HttpClient {
     return this.request<T>('DELETE', url);
   }
 
+  async patch<T = unknown>(path: string, data?: unknown): Promise<HttpResponse<T>> {
+    const url = this.buildUrl(path);
+    return this.request<T>('PATCH', url, data);
+  }
+
   /**
    * GET request expecting a binary buffer response (e.g., PDF, XML downloads).
    *

@@ -7,6 +7,11 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não publicado]
 
+### ✨ Adicionado — Inscrições Municipais (municipal taxes)
+
+- **`nfe.municipalTaxes`** (`MunicipalTaxesResource`, api.nfse.io): CRUD de inscrições municipais — pré-requisito para emissão de NFS-e —, espelhando `stateTaxes`. Inclui `updatePrefecture` (HTTP **PATCH** `.../updateprefecture`) e `getSeries` (`.../series/{serie}`). Tipos: `MunicipalTax`, `CreateMunicipalTaxData`, `UpdateMunicipalTaxData`.
+- HTTP client ganhou o verbo **`patch`** (mesma cadeia de retry/timeout/erro dos demais).
+
 ### ✨ Adicionado — Webhooks de conta
 
 - `WebhooksResource` ganhou operações **de conta** (`/v2/webhooks`, sem `companyId`): `listAccountWebhooks`, `createAccountWebhook`, `retrieveAccountWebhook`, `updateAccountWebhook`, `deleteAccountWebhook`, `pingAccountWebhook`, e `deleteAllAccountWebhooks` (método distinto e marcado como destrutivo). Os métodos company-scoped existentes seguem inalterados.

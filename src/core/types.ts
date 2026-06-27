@@ -464,6 +464,24 @@ export type CertificateMetadataResource =
 export type CompanyAddress =
   ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.AddressResource'];
 
+/** Municipal tax registration (Inscrição Municipal) entity. */
+export type MunicipalTax =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.MunicipalTaxResourceItem'];
+
+/** Municipal tax creation input (item; wrapped as `{ municipalTax }` on the wire). */
+export type CreateMunicipalTaxData =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CreateMunicipalTaxResourceItem'];
+
+/** Municipal tax update input (item). */
+export type UpdateMunicipalTaxData =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.UpdateMunicipalTaxResourceItem'];
+
+/** List response for municipal taxes (best-effort shape). */
+export interface MunicipalTaxListResponse {
+  municipalTaxes?: MunicipalTax[];
+  [key: string]: unknown;
+}
+
 /**
  * Transportation Invoice inbound settings
  * Configuration for automatic CT-e search via SEFAZ Distribuição DFe

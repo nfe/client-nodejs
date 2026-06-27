@@ -39,6 +39,7 @@ import {
   StateTaxesResource,
   ServiceInvoicesRtcResource,
   ProductInvoicesRtcResource,
+  MunicipalTaxesResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL,
   LEGAL_ENTITY_API_BASE_URL,
@@ -175,6 +176,7 @@ export class NfeClient {
   private _stateTaxes: StateTaxesResource | undefined;
   private _serviceInvoicesRtc: ServiceInvoicesRtcResource | undefined;
   private _productInvoicesRtc: ProductInvoicesRtcResource | undefined;
+  private _municipalTaxes: MunicipalTaxesResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -714,6 +716,17 @@ export class NfeClient {
   }
 
   /**
+   * Municipal Taxes resource — CRUD for company municipal tax registrations
+   * (Inscrições Municipais), prerequisite for NFS-e issuance. Uses api.nfse.io.
+   */
+  get municipalTaxes(): MunicipalTaxesResource {
+    if (!this._municipalTaxes) {
+      this._municipalTaxes = new MunicipalTaxesResource(this.getCteHttpClient());
+    }
+    return this._municipalTaxes;
+  }
+
+  /**
    * Create a new NFE.io API client
    *
    * @param config - Client configuration options
@@ -1102,6 +1115,7 @@ export class NfeClient {
     this._stateTaxes = undefined;
     this._serviceInvoicesRtc = undefined;
     this._productInvoicesRtc = undefined;
+    this._municipalTaxes = undefined;
   }
 
   /**
