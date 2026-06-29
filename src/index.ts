@@ -79,7 +79,6 @@ export type {
   Address,
   AddressCity,
   AddressLookupResponse,
-  AddressSearchOptions,
 
   // CT-e (Transportation Invoice) types
   TransportationInvoiceInboundSettings,
@@ -448,6 +447,10 @@ export { ConsumerInvoicesResource } from './core/resources/consumer-invoices.js'
 export { CertificatesResource } from './core/resources/certificates.js';
 export { NotificationsResource } from './core/resources/notifications.js';
 export type { Notification, NotificationListResponse } from './core/resources/notifications.js';
+export type {
+  CreateInvoiceResponse,
+  CancelInvoiceResponse,
+} from './core/resources/service-invoices.js';
 
 // ============================================================================
 // Default Export (maintains v2 compatibility)

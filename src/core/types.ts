@@ -215,32 +215,27 @@ export interface Address {
   streetSuffix: string;
   /** Street name */
   street: string;
-  /** Address number */
+  /** Address number (may be a textual range, e.g. "de 612 a 1510 - lado par") */
   number: string;
-  /** Minimum number in range */
-  numberMin: string;
-  /** Maximum number in range */
-  numberMax: string;
-  /** Postal code (CEP) */
+  /** Minimum number in range (omitted by the API for some entries) */
+  numberMin?: string;
+  /** Maximum number in range (omitted by the API for some entries) */
+  numberMax?: string;
+  /** Postal code (CEP), returned formatted with hyphen (e.g. "01310-100") */
   postalCode: string;
-  /** Country code */
+  /** Country code (ISO 3166-1 alpha-3, e.g. "BRA") */
   country: string;
 }
 
 /**
- * Response from address lookup endpoints
+ * Raw response envelope from the postal-code lookup endpoint
+ * (`GET /v2/addresses/{cep}`). The API wraps the single result in an `address` key;
+ * {@link AddressesResource.lookupByPostalCode} unwraps it and returns the inner
+ * {@link Address}.
  */
 export interface AddressLookupResponse {
-  /** Array of matching addresses */
-  addresses: Address[];
-}
-
-/**
- * Options for address search
- */
-export interface AddressSearchOptions {
-  /** OData filter expression (e.g., "city eq 'São Paulo'") */
-  filter?: string;
+  /** The single matching address */
+  address: Address;
 }
 
 // ============================================================================

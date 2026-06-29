@@ -6,7 +6,7 @@
  */
 
 import type { HttpClient } from '../http/client.js';
-import type { AddressLookupResponse, AddressSearchOptions } from '../types.js';
+import type { Address, AddressLookupResponse } from '../types.js';
 import { ValidationError } from '../errors/index.js';
 
 // ============================================================================
@@ -41,15 +41,6 @@ function validatePostalCode(postalCode: string): void {
 }
 
 /**
- * Validates search term is not empty
- */
-function validateTerm(term: string): void {
-  if (!term || term.trim() === '') {
-    throw new ValidationError('Search term is required');
-  }
-}
-
-/**
  * Normalizes postal code by removing hyphen and trimming whitespace
  */
 function normalizePostalCode(postalCode: string): string {
@@ -70,21 +61,15 @@ function normalizePostalCode(postalCode: string): string {
  * **Note:** This resource uses a different API host (address.api.nfe.io) and may require
  * a separate API key configured via `dataApiKey` in the client configuration.
  *
+ * The live `address.api.nfe.io/v2` API supports **postal code lookup only**. A single
+ * address is returned for a given CEP; there is no working address search/free-text
+ * endpoint on this host (see the `fix-address-lookup-api-mismatch` change).
+ *
  * @example Basic postal code lookup
  * ```typescript
- * const result = await nfe.addresses.lookupByPostalCode('01310-100');
- * console.log(result.addresses[0].street); // 'Paulista'
- * ```
- *
- * @example Search by term
- * ```typescript
- * const result = await nfe.addresses.lookupByTerm('Avenida Paulista');
- * console.log(result.addresses.length); // Number of matching addresses
- * ```
- *
- * @example Search with filter
- * ```typescript
- * const result = await nfe.addresses.search({ filter: "city eq 'São Paulo'" });
+ * const address = await nfe.addresses.lookupByPostalCode('01310-100');
+ * console.log(address.street); // 'Paulista'
+ * console.log(`${address.streetSuffix} ${address.street}, ${address.city.name}/${address.state}`);
  * ```
  */
 export class AddressesResource {
@@ -101,25 +86,24 @@ export class AddressesResource {
   /**
    * Lookup address by postal code (CEP)
    *
+   * Calls `GET /v2/addresses/{cep}` and returns the single {@link Address} carried in
+   * the API's `{ address }` envelope.
+   *
    * @param postalCode - Brazilian postal code (CEP), with or without hyphen
-   * @returns Promise with address lookup response
+   * @returns Promise resolving to the matching {@link Address}
    * @throws {ValidationError} If postal code format is invalid
    * @throws {NotFoundError} If no address found for the postal code
    *
    * @example
    * ```typescript
-   * // With hyphen
-   * const result = await nfe.addresses.lookupByPostalCode('01310-100');
+   * // With or without hyphen — both normalize to the 8-digit form
+   * const address = await nfe.addresses.lookupByPostalCode('01310-100');
    *
-   * // Without hyphen
-   * const result = await nfe.addresses.lookupByPostalCode('01310100');
-   *
-   * // Access address data
-   * const address = result.addresses[0];
    * console.log(`${address.streetSuffix} ${address.street}, ${address.city.name} - ${address.state}`);
+   * console.log(address.postalCode); // '01310-100' (API returns it formatted)
    * ```
    */
-  async lookupByPostalCode(postalCode: string): Promise<AddressLookupResponse> {
+  async lookupByPostalCode(postalCode: string): Promise<Address> {
     validatePostalCode(postalCode);
 
     const normalizedCode = normalizePostalCode(postalCode);
@@ -127,64 +111,7 @@ export class AddressesResource {
       `/addresses/${normalizedCode}`
     );
 
-    return response.data;
-  }
-
-  /**
-   * Search addresses by OData filter
-   *
-   * @param options - Search options with filter expression
-   * @returns Promise with address lookup response
-   *
-   * @example
-   * ```typescript
-   * // Search by city
-   * const result = await nfe.addresses.search({ filter: "city eq 'São Paulo'" });
-   *
-   * // Search by street
-   * const result = await nfe.addresses.search({ filter: "street eq 'Paulista'" });
-   * ```
-   */
-  async search(options: AddressSearchOptions = {}): Promise<AddressLookupResponse> {
-    const params: Record<string, unknown> = {};
-
-    if (options.filter) {
-      params['$filter'] = options.filter;
-    }
-
-    const response = await this.http.get<AddressLookupResponse>(
-      '/addresses',
-      params
-    );
-
-    return response.data;
-  }
-
-  /**
-   * Lookup addresses by generic search term
-   *
-   * @param term - Search term (street name, neighborhood, etc.)
-   * @returns Promise with address lookup response
-   * @throws {ValidationError} If term is empty
-   * @throws {NotFoundError} If no addresses found matching the term
-   *
-   * @example
-   * ```typescript
-   * const result = await nfe.addresses.lookupByTerm('Avenida Paulista');
-   *
-   * for (const address of result.addresses) {
-   *   console.log(`${address.postalCode} - ${address.city.name}/${address.state}`);
-   * }
-   * ```
-   */
-  async lookupByTerm(term: string): Promise<AddressLookupResponse> {
-    validateTerm(term);
-
-    const response = await this.http.get<AddressLookupResponse>(
-      `/addresses/${encodeURIComponent(term.trim())}`
-    );
-
-    return response.data;
+    return response.data.address;
   }
 }
 

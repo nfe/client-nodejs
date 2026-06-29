@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ServiceInvoicesResource } from '../../../../src/core/resources/service-invoices.js';
 import type { HttpClient } from '../../../../src/core/http/client.js';
 import type { HttpResponse } from '../../../../src/core/types.js';
-import { NotFoundError, InvoiceProcessingError, TimeoutError } from '../../../../src/core/errors/index.js';
+import { NotFoundError, InvoiceProcessingError } from '../../../../src/core/errors/index.js';
 
 describe('ServiceInvoicesResource', () => {
   let mockHttp: HttpClient;
@@ -256,7 +256,7 @@ describe('ServiceInvoicesResource', () => {
     const companyId = 'company-123';
     const invoiceId = 'invoice-456';
 
-    it('should cancel invoice successfully', async () => {
+    it('should return an immediate result when the API cancels synchronously (200)', async () => {
       const mockCancelledInvoice = {
         id: invoiceId,
         flowStatus: 'Cancelled',
@@ -270,10 +270,30 @@ describe('ServiceInvoicesResource', () => {
 
       const result = await resource.cancel(companyId, invoiceId);
 
-      expect(result).toEqual(mockCancelledInvoice);
+      expect(result.status).toBe('immediate');
+      if (result.status === 'immediate') {
+        expect(result.invoice).toEqual(mockCancelledInvoice);
+      }
       expect(mockHttp.delete).toHaveBeenCalledWith(
         `/companies/${companyId}/serviceinvoices/${invoiceId}`
       );
+    });
+
+    it('should return an async result with invoiceId from Location (202)', async () => {
+      vi.mocked(mockHttp.delete).mockResolvedValue({
+        data: { code: 202, status: 'pending', location: `/v1/companies/${companyId}/serviceinvoices/${invoiceId}` },
+        status: 202,
+        headers: { location: `/v1/companies/${companyId}/serviceinvoices/${invoiceId}` },
+      } as HttpResponse<any>);
+
+      const result = await resource.cancel(companyId, invoiceId);
+
+      expect(result.status).toBe('async');
+      if (result.status === 'async') {
+        expect(result.response.code).toBe(202);
+        expect(result.response.invoiceId).toBe(invoiceId);
+        expect(result.response.location).toContain('/serviceinvoices/');
+      }
     });
 
     it('should throw NotFoundError when trying to cancel non-existent invoice', async () => {

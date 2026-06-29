@@ -1,12 +1,15 @@
 /**
  * Unit tests for AddressesResource
- * Tests address lookup, search, and validation
+ *
+ * The live address.api.nfe.io/v2 API supports postal-code lookup only and returns the
+ * single address wrapped in an `{ address }` envelope. The resource unwraps it and
+ * returns a plain `Address`.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AddressesResource } from '../../../src/core/resources/addresses.js';
 import { HttpClient } from '../../../src/core/http/client.js';
-import type { HttpResponse, Address, AddressSearchOptions } from '../../../src/core/types.js';
+import type { HttpResponse, Address, AddressLookupResponse } from '../../../src/core/types.js';
 import { ValidationError } from '../../../src/core/errors/index.js';
 
 describe('AddressesResource', () => {
@@ -29,226 +32,80 @@ describe('AddressesResource', () => {
   });
 
   describe('lookupByPostalCode', () => {
+    // Shape mirrors the real API payload (single address, alpha-3 country, formatted CEP)
     const mockAddress: Address = {
-      postalCode: '01310100',
-      street: 'Avenida Paulista',
+      postalCode: '01310-100',
+      streetSuffix: 'Avenida',
+      street: 'Paulista',
+      number: 'de 612 a 1510 - lado par',
       district: 'Bela Vista',
+      additionalInformation: '',
       city: {
         code: '3550308',
         name: 'São Paulo',
       },
       state: 'SP',
-      country: 'BR',
+      country: 'BRA',
     };
 
-    it('should lookup address by postal code (without hyphen)', async () => {
-      const mockResponse: HttpResponse<Address> = {
-        data: mockAddress,
-        status: 200,
-        headers: {},
-      };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
+    const mockEnvelope = (address: Address): HttpResponse<AddressLookupResponse> => ({
+      data: { address },
+      status: 200,
+      headers: {},
+    });
+
+    it('unwraps the { address } envelope and returns the single Address', async () => {
+      mockHttpClient.get.mockResolvedValue(mockEnvelope(mockAddress));
 
       const result = await resource.lookupByPostalCode('01310100');
 
       expect(result).toEqual(mockAddress);
+      // Direct field access works (no `.addresses[0]`)
+      expect(result.street).toBe('Paulista');
+      expect(result.city.name).toBe('São Paulo');
       expect(mockHttpClient.get).toHaveBeenCalledWith('/addresses/01310100');
     });
 
-    it('should lookup address by postal code (with hyphen)', async () => {
-      const mockResponse: HttpResponse<Address> = {
-        data: mockAddress,
-        status: 200,
-        headers: {},
-      };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
+    it('normalizes a hyphenated CEP to the 8-digit path', async () => {
+      mockHttpClient.get.mockResolvedValue(mockEnvelope(mockAddress));
 
       const result = await resource.lookupByPostalCode('01310-100');
 
       expect(result).toEqual(mockAddress);
-      // CEP should be normalized to remove hyphen
       expect(mockHttpClient.get).toHaveBeenCalledWith('/addresses/01310100');
     });
 
-    it('should throw ValidationError for postal code with less than 8 digits', async () => {
-      await expect(resource.lookupByPostalCode('1234567')).rejects.toThrow(ValidationError);
-      await expect(resource.lookupByPostalCode('1234567')).rejects.toThrow(/Invalid postal code/);
-    });
-
-    it('should throw ValidationError for postal code with more than 8 digits', async () => {
-      await expect(resource.lookupByPostalCode('123456789')).rejects.toThrow(ValidationError);
-      await expect(resource.lookupByPostalCode('123456789')).rejects.toThrow(/Invalid postal code/);
-    });
-
-    it('should throw ValidationError for postal code with non-numeric characters', async () => {
-      await expect(resource.lookupByPostalCode('1234567a')).rejects.toThrow(ValidationError);
-      await expect(resource.lookupByPostalCode('abcd-efg')).rejects.toThrow(ValidationError);
-    });
-
-    it('should throw ValidationError for empty postal code', async () => {
-      await expect(resource.lookupByPostalCode('')).rejects.toThrow(ValidationError);
-    });
-
-    it('should throw ValidationError for whitespace-only postal code', async () => {
-      await expect(resource.lookupByPostalCode('   ')).rejects.toThrow(ValidationError);
-    });
-
-    it('should handle postal code with leading/trailing whitespace', async () => {
-      const mockResponse: HttpResponse<Address> = {
-        data: mockAddress,
-        status: 200,
-        headers: {},
-      };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
+    it('trims surrounding whitespace before normalizing', async () => {
+      mockHttpClient.get.mockResolvedValue(mockEnvelope(mockAddress));
 
       const result = await resource.lookupByPostalCode('  01310-100  ');
 
       expect(result).toEqual(mockAddress);
-      // Implementation trims whitespace and removes hyphen
       expect(mockHttpClient.get).toHaveBeenCalledWith('/addresses/01310100');
     });
 
-    it('should handle API error responses', async () => {
+    it('throws ValidationError for a CEP with fewer than 8 digits', async () => {
+      await expect(resource.lookupByPostalCode('1234567')).rejects.toThrow(ValidationError);
+      await expect(resource.lookupByPostalCode('1234567')).rejects.toThrow(/Invalid postal code/);
+    });
+
+    it('throws ValidationError for a CEP with more than 8 digits', async () => {
+      await expect(resource.lookupByPostalCode('123456789')).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError for non-numeric characters', async () => {
+      await expect(resource.lookupByPostalCode('1234567a')).rejects.toThrow(ValidationError);
+      await expect(resource.lookupByPostalCode('abcd-efg')).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError for empty / whitespace-only input', async () => {
+      await expect(resource.lookupByPostalCode('')).rejects.toThrow(ValidationError);
+      await expect(resource.lookupByPostalCode('   ')).rejects.toThrow(ValidationError);
+    });
+
+    it('propagates API errors (e.g. 404 NotFoundError)', async () => {
       mockHttpClient.get.mockRejectedValue(new Error('Not Found'));
-
       await expect(resource.lookupByPostalCode('00000000')).rejects.toThrow('Not Found');
-    });
-  });
-
-  describe('search', () => {
-    const mockAddresses: Address[] = [
-      {
-        postalCode: '01310100',
-        street: 'Avenida Paulista',
-        district: 'Bela Vista',
-        city: { code: '3550308', name: 'São Paulo' },
-        state: 'SP',
-        country: 'BR',
-      },
-      {
-        postalCode: '01310200',
-        street: 'Avenida Paulista',
-        district: 'Bela Vista',
-        city: { code: '3550308', name: 'São Paulo' },
-        state: 'SP',
-        country: 'BR',
-      },
-    ];
-
-    it('should search addresses with filter options', async () => {
-      const mockResponse: HttpResponse<{ addresses: Address[] }> = {
-        data: { addresses: mockAddresses },
-        status: 200,
-        headers: {},
-      };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
-
-      const options: AddressSearchOptions = {
-        filter: "city.name eq 'São Paulo'",
-      };
-
-      const result = await resource.search(options);
-
-      expect(result.addresses).toEqual(mockAddresses);
-      // Implementation passes params object directly to http.get
-      expect(mockHttpClient.get).toHaveBeenCalledWith('/addresses', {
-        $filter: "city.name eq 'São Paulo'",
-      });
-    });
-
-    it('should search addresses without filter (list all)', async () => {
-      const mockResponse: HttpResponse<{ addresses: Address[] }> = {
-        data: { addresses: mockAddresses },
-        status: 200,
-        headers: {},
-      };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
-
-      const result = await resource.search({});
-
-      expect(result.addresses).toEqual(mockAddresses);
-      // When no filter is provided, an empty object is passed
-      expect(mockHttpClient.get).toHaveBeenCalledWith('/addresses', {});
-    });
-
-    it('should handle empty results', async () => {
-      const mockResponse: HttpResponse<{ addresses: Address[] }> = {
-        data: { addresses: [] },
-        status: 200,
-        headers: {},
-      };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
-
-      const result = await resource.search({ filter: "state eq 'XX'" });
-
-      expect(result.addresses).toEqual([]);
-    });
-  });
-
-  describe('lookupByTerm', () => {
-    const mockAddresses: Address[] = [
-      {
-        postalCode: '01310100',
-        street: 'Avenida Paulista',
-        district: 'Bela Vista',
-        city: { code: '3550308', name: 'São Paulo' },
-        state: 'SP',
-        country: 'BR',
-      },
-    ];
-
-    it('should lookup addresses by term', async () => {
-      const mockResponse: HttpResponse<{ addresses: Address[] }> = {
-        data: { addresses: mockAddresses },
-        status: 200,
-        headers: {},
-      };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
-
-      const result = await resource.lookupByTerm('Avenida Paulista');
-
-      expect(result.addresses).toEqual(mockAddresses);
-      // Implementation uses URL path with encoded term
-      expect(mockHttpClient.get).toHaveBeenCalledWith('/addresses/Avenida%20Paulista');
-    });
-
-    it('should throw ValidationError for empty term', async () => {
-      await expect(resource.lookupByTerm('')).rejects.toThrow(ValidationError);
-      await expect(resource.lookupByTerm('')).rejects.toThrow(/Search term is required/);
-    });
-
-    it('should throw ValidationError for whitespace-only term', async () => {
-      await expect(resource.lookupByTerm('   ')).rejects.toThrow(ValidationError);
-    });
-
-    it('should handle term with leading/trailing whitespace', async () => {
-      const mockResponse: HttpResponse<{ addresses: Address[] }> = {
-        data: { addresses: mockAddresses },
-        status: 200,
-        headers: {},
-      };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
-
-      const result = await resource.lookupByTerm('  Paulista  ');
-
-      expect(result.addresses).toEqual(mockAddresses);
-      // Term should be trimmed before encoding
-      expect(mockHttpClient.get).toHaveBeenCalledWith('/addresses/Paulista');
-    });
-
-    it('should handle special characters in term', async () => {
-      const mockResponse: HttpResponse<{ addresses: Address[] }> = {
-        data: { addresses: [] },
-        status: 200,
-        headers: {},
-      };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
-
-      // Special characters should be URL encoded
-      await resource.lookupByTerm("D'Água");
-
-      // encodeURIComponent encodes single quote as %27 but leaves it unchanged in most implementations
-      expect(mockHttpClient.get).toHaveBeenCalledWith("/addresses/D'%C3%81gua");
     });
   });
 });

@@ -327,10 +327,8 @@ export class NfeClient {
    * Addresses API resource
    *
    * @description
-   * Provides operations for looking up Brazilian addresses:
-   * - Lookup by postal code (CEP)
-   * - Search by filter
-   * - Search by generic term
+   * Provides postal code (CEP) lookup for Brazilian addresses. The live API host
+   * supports postal-code lookup only and returns a single {@link Address}.
    *
    * **Note:** This resource uses a different API host (address.api.nfe.io).
    * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
@@ -340,8 +338,8 @@ export class NfeClient {
    *
    * @example
    * ```typescript
-   * const result = await nfe.addresses.lookupByPostalCode('01310-100');
-   * console.log(result.addresses[0].street); // 'Paulista'
+   * const address = await nfe.addresses.lookupByPostalCode('01310-100');
+   * console.log(address.street); // 'Paulista'
    * ```
    */
   get addresses(): AddressesResource {
