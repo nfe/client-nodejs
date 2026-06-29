@@ -163,13 +163,13 @@ import type {
 **Depends on**: Task 2.2  
 **Status**: ✅ COMPLETED  
 
-- [ ] Identify common types across specs (Company, Address, etc.)
-- [ ] Choose merge strategy:
+- [x] Identify common types across specs (Company, Address, etc.)
+- [x] Choose merge strategy: **Option A — namespace per spec** (`export * as NfServico`), plus clean public aliases in `src/core/types.ts`
   - Option A: Namespace per spec (`NfServico.Company`)
   - Option B: Use latest version (prefer v2 over v1)
   - Option C: Manual override file
-- [ ] Document resolution strategy in generated index
-- [ ] Create type aliases for common use cases
+- [x] Document resolution strategy in generated index (header comment: "Types are namespaced by spec to avoid conflicts.")
+- [x] Create type aliases for common use cases (clean aliases over verbose .NET keys in `src/core/types.ts`)
 
 ```typescript
 // Example merge strategy:
@@ -336,14 +336,14 @@ specs:
 
 After all tasks complete, verify:
 
-- [ ] `npm run validate:spec` passes for all 12 specs
-- [ ] `npm run generate` creates files in `src/generated/`
-- [ ] `npm run typecheck` passes with generated types
-- [ ] `npm run build` completes successfully
-- [ ] `npm test` passes with at least one resource using generated types
-- [ ] CI/CD pipeline includes generation steps
-- [ ] README documents both manual and automatic workflows
-- [ ] At least one example shows using generated types
+- [x] `npm run validate:spec` passes for all specs (14 valid, 0 errors)
+- [x] `npm run generate` creates files in `src/generated/`
+- [x] `npm run typecheck` passes with generated types (0 errors)
+- [x] `npm run build` completes successfully
+- [x] `npm test` passes with at least one resource using generated types (689 passed)
+- [x] CI/CD pipeline includes generation steps (`.github/workflows/ci.yml`)
+- [x] README documents both manual and automatic workflows
+- [x] At least one example shows using generated types (`docs/MIGRATION-TO-GENERATED-TYPES.md`)
 
 ---
 

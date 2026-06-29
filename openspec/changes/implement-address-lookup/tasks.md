@@ -69,4 +69,4 @@
 - [x] 9.2 Run `npm run lint` - ensure zero warnings (only pre-existing `any` warnings)
 - [x] 9.3 Run `npm test` - ensure all tests pass (322 passing, 47 skipped)
 - [x] 9.4 Run `npm run build` - ensure successful build
-- [ ] 9.5 Test examples manually against sandbox/production API
+- [x] 9.5 Test examples manually against sandbox/production API (live integration 6/6 green after `fix-address-lookup-api-mismatch` corrected the response shape + removed the dead search/term methods)
