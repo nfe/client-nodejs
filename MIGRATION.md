@@ -1,5 +1,87 @@
 # Guia de Migração
 
+## v4 → v5
+
+A v5 é a primeira release de **funcionalidades** desde a v3 (a v4 foi apenas o bump para
+Node 22). Ela traz muitos recursos novos — todos **aditivos** — e um conjunto pequeno de
+correções de contrato que são tecnicamente _breaking_.
+
+```bash
+npm install nfe-io@^5
+```
+
+> **Na prática, a maioria dos projetos não precisa mudar nada.** As quebras abaixo são em
+> superfícies que já estavam quebradas (métodos que só lançavam 404, retornos que vinham
+> `undefined`). Se você usa essas APIs, ajuste conforme a seguir.
+
+### 1. `addresses.lookupByPostalCode()` retorna um `Address`
+
+Antes devolvia um envelope tipado como `{ addresses: Address[] }` (mas a API real retorna
+um único endereço, então `result.addresses` vinha `undefined`). Agora retorna o `Address`
+direto.
+
+```ts
+// Antes (v4) — não funcionava como documentado
+const result = await nfe.addresses.lookupByPostalCode('01310-100');
+const street = result.addresses[0].street; // undefined
+
+// Agora (v5)
+const address = await nfe.addresses.lookupByPostalCode('01310-100');
+const street = address.street; // 'Paulista'
+```
+
+### 2. `addresses.search()` e `addresses.lookupByTerm()` foram removidos
+
+Os endpoints (`/v2/addresses` e `/v2/addresses/{term}`) respondem **404** no host real —
+os métodos só lançavam `NotFoundError`. Use `lookupByPostalCode()`. O tipo
+`AddressSearchOptions` foi removido e `AddressLookupResponse` agora descreve o envelope
+real (`{ address: Address }`).
+
+> Busca de endereço por texto livre só volta se/quando o backend expuser um endpoint real
+> — aí como adição não-breaking.
+
+### 3. `serviceInvoices.cancel()` retorna uma união discriminada
+
+O cancelamento de NFS-e é **assíncrono** (HTTP 202 + `Location`). Antes, `cancel()`
+retornava um stub de polling tipado como `ServiceInvoiceData` (então `cancelled.id` /
+`cancelled.flowStatus` vinham `undefined`). Agora retorna `CancelInvoiceResponse`.
+
+```ts
+// Antes (v4)
+const cancelled = await nfe.serviceInvoices.cancel(companyId, invoiceId);
+console.log(cancelled.flowStatus); // undefined
+
+// Agora (v5) — união discriminada (espelha create())
+const result = await nfe.serviceInvoices.cancel(companyId, invoiceId);
+if (result.status === 'async') {
+  console.log(result.response.invoiceId);
+}
+
+// ou bloqueie até concluir:
+const invoice = await nfe.serviceInvoices.cancelAndWait(companyId, invoiceId);
+console.log(invoice.flowStatus); // 'Cancelled'
+```
+
+### 4. `CertificateValidator.validate()` não fabrica mais `metadata`
+
+O pré-flight local valida apenas o **formato** (buffer, senha presente, magic bytes
+PKCS#12). Não retorna mais `subject`/`issuer`/`validade` inventados — esses dados são
+verificados no servidor durante o upload do certificado. Se você lia `result.metadata`,
+ele agora é ausente no pré-flight.
+
+### Novidades (aditivas, sem ação necessária)
+
+- Emissão RTC (Reforma Tributária): `nfe.serviceInvoicesRtc`, `nfe.productInvoicesRtc`
+- NFC-e: `nfe.consumerInvoices`
+- Inscrições municipais: `nfe.municipalTaxes`
+- Certificados por thumbprint: `nfe.certificates`
+- Notificações: `nfe.notifications`
+- Webhooks de conta + `fetchEventTypes()`
+- `companies.exists()`, `serviceInvoices.retrieveByExternalId()`, `serviceInvoices.cancelAndWait()`, `stateTaxes.switchAuthorizer()`
+- `Company` enriquecido com campos do spec (opcionais)
+
+---
+
 ## v3 → v4
 
 A v4.0.0 **não contém mudanças de API** — todo código escrito para a v3 funciona sem alterações.

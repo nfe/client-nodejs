@@ -5,7 +5,32 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [Não publicado]
+## [5.0.0] - 2026-06-30
+
+> Primeira release de **funcionalidades** desde a v3 — a v4 foi apenas o bump de runtime
+> (Node 22), sem mudanças de API. A v5 reúne os novos recursos (RTC, NFC-e, inscrições
+> municipais, certificados, notificações, webhooks de conta) e correções de contrato
+> descobertas testando contra a API ao vivo. Guia: [MIGRATION.md](MIGRATION.md#v4--v5).
+
+### ⚠️ BREAKING CHANGES
+
+Todas as quebras são em superfícies que **já estavam quebradas** (métodos que só lançavam
+404, retornos que vinham `undefined`); nenhum código correto deixa de funcionar, mas
+usuários TypeScript devem revisar estes pontos no upgrade:
+
+- **`addresses.lookupByPostalCode()`** agora retorna um `Address` (antes retornava o
+  envelope cru tipado como `{ addresses: Address[] }`). Acesse os campos direto:
+  `address.street` em vez de `result.addresses[0].street`.
+- **`addresses.search()` e `addresses.lookupByTerm()` removidos** — os endpoints não
+  existem no host real (404). Use `lookupByPostalCode()`. O tipo `AddressSearchOptions`
+  foi removido e `AddressLookupResponse` agora descreve o envelope `{ address: Address }`.
+- **`serviceInvoices.cancel()`** agora retorna `CancelInvoiceResponse` (união discriminada
+  `{ status: 'async', response } | { status: 'immediate', invoice }`), pois o cancelamento
+  é assíncrono. Antes retornava um stub tipado como `ServiceInvoiceData`. Use
+  `cancelAndWait()` para bloquear até concluir.
+- **`CertificateValidator.validate()`** não retorna mais `metadata` fabricada (subject/
+  issuer/validade falsos). O pré-flight local é só de formato; os dados do certificado são
+  verificados no servidor durante o upload.
 
 ### ✨ Adicionado — Companies v2, notificações e avulsos
 

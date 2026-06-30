@@ -1,6 +1,6 @@
 {
   "name": "nfe-io",
-  "version": "v4.0.0",
+  "version": "5.0.0",
   "description": "Official NFE.io SDK for Node.js - TypeScript native with zero runtime dependencies",
   "keywords": [
     "nfe",

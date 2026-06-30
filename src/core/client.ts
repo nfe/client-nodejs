@@ -1435,7 +1435,7 @@ export class NfeClient {
     hasApiKey: boolean;
   } {
     return {
-      version: '3.0.0-beta.1', // TODO: Read from package.json
+      version: VERSION,
       nodeVersion: this.getNodeVersion(),
       environment: this.config.environment,
       baseUrl: this.config.baseUrl,
@@ -1518,7 +1518,7 @@ export default function nfe(apiKey: string | NfeConfig): NfeClient {
  * Current SDK version
  * @constant
  */
-export const VERSION = '3.0.0-beta.1';
+export const VERSION = '5.0.0';
 
 /**
  * Supported Node.js version range (semver format)

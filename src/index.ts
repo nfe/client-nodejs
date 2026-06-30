@@ -32,7 +32,7 @@
  * ```
  *
  * @module @nfe-io/sdk
- * @version 3.0.0-beta.1
+ * @version 5.0.0
  * @author NFE.io
  * @license MIT
  */
@@ -503,7 +503,7 @@ export const PACKAGE_NAME = '@nfe-io/sdk';
  * Current SDK version
  * @constant
  */
-export const PACKAGE_VERSION = '3.0.0-beta.1';
+export const PACKAGE_VERSION = '5.0.0';
 
 /**
  * NFE.io API version supported by this SDK
