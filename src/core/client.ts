@@ -147,6 +147,8 @@ export class NfeClient {
 
   /** @internal HTTP client for CT-e API requests (created lazily) */
   private _cteHttp: HttpClient | undefined;
+  private _nfseMainHttp: HttpClient | undefined;
+  private _webhooksAccountHttp: HttpClient | undefined;
 
   /** @internal HTTP client for NF-e query API requests (created lazily) */
   private _nfeQueryHttp: HttpClient | undefined;
@@ -318,7 +320,10 @@ export class NfeClient {
    */
   get webhooks(): WebhooksResource {
     if (!this._webhooks) {
-      this._webhooks = new WebhooksResource(this.getMainHttpClient());
+      this._webhooks = new WebhooksResource(
+        this.getMainHttpClient(),
+        this.getWebhooksAccountHttpClient()
+      );
     }
     return this._webhooks;
   }
@@ -636,7 +641,7 @@ export class NfeClient {
    */
   get taxCodes(): TaxCodesResource {
     if (!this._taxCodes) {
-      this._taxCodes = new TaxCodesResource(this.getCteHttpClient());
+      this._taxCodes = new TaxCodesResource(this.getNfseMainHttpClient());
     }
     return this._taxCodes;
   }
@@ -737,7 +742,7 @@ export class NfeClient {
    */
   get consumerInvoices(): ConsumerInvoicesResource {
     if (!this._consumerInvoices) {
-      this._consumerInvoices = new ConsumerInvoicesResource(this.getCteHttpClient());
+      this._consumerInvoices = new ConsumerInvoicesResource(this.getNfseMainHttpClient());
     }
     return this._consumerInvoices;
   }
@@ -914,6 +919,58 @@ export class NfeClient {
       this._cteHttp = new HttpClient(httpConfig);
     }
     return this._cteHttp;
+  }
+
+  /**
+   * Get or create the HTTP client for api.nfse.io resources that require the
+   * MAIN api key (not the data key) — e.g. tax-codes and consumer invoices
+   * (NFC-e emission). Host is CTE_API_BASE_URL (api.nfse.io); key is the main key.
+   * @throws {ConfigurationError} If no main API key is configured
+   */
+  private getNfseMainHttpClient(): HttpClient {
+    if (!this._nfseMainHttp) {
+      const apiKey = this.resolveMainApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for this resource. Set "apiKey" in config or NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        CTE_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._nfseMainHttp = new HttpClient(httpConfig);
+    }
+    return this._nfseMainHttp;
+  }
+
+  /**
+   * Get or create the HTTP client for ACCOUNT-scoped webhook endpoints. These
+   * live at the host root under `/v2` (e.g. https://api.nfe.io/v2/webhooks) and
+   * use the MAIN key — NOT under the `/v1` base of the main client.
+   * @throws {ConfigurationError} If no main API key is configured
+   */
+  private getWebhooksAccountHttpClient(): HttpClient {
+    if (!this._webhooksAccountHttp) {
+      const apiKey = this.resolveMainApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for this resource. Set "apiKey" in config or NFE_API_KEY environment variable.'
+        );
+      }
+      // Account webhooks are at host-root /v2, not under the /v1 main base.
+      const v2BaseUrl = this.config.baseUrl.replace(/\/v1(\/)?$/, '/v2');
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        v2BaseUrl,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._webhooksAccountHttp = new HttpClient(httpConfig);
+    }
+    return this._webhooksAccountHttp;
   }
 
   /**
@@ -1131,6 +1188,8 @@ export class NfeClient {
     this._http = undefined;
     this._addressHttp = undefined;
     this._cteHttp = undefined;
+    this._nfseMainHttp = undefined;
+    this._webhooksAccountHttp = undefined;
     this._nfeQueryHttp = undefined;
     this._legalEntityHttp = undefined;
     this._naturalPersonHttp = undefined;

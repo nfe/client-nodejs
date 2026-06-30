@@ -166,26 +166,28 @@ describe('WebhooksResource', () => {
     });
   });
 
-  describe('account-scoped operations (/v2/webhooks)', () => {
-    it('listAccountWebhooks GETs /v2/webhooks (no companyId)', async () => {
+  describe('account-scoped operations (host-root /v2/webhooks)', () => {
+    it('listAccountWebhooks GETs /webhooks and unwraps the {webHooks} envelope', async () => {
       vi.mocked(mockHttpClient.get).mockResolvedValue({
-        data: { data: [] }, status: 200, headers: {},
-      } as HttpResponse<ListResponse<Webhook>>);
+        data: { webHooks: [{ id: 'w1' }, { id: 'w2' }] }, status: 200, headers: {},
+      } as HttpResponse<{ webHooks: Webhook[] }>);
 
-      await webhooks.listAccountWebhooks();
-      expect(mockHttpClient.get).toHaveBeenCalledWith('/v2/webhooks');
+      const result = await webhooks.listAccountWebhooks();
+      expect(mockHttpClient.get).toHaveBeenCalledWith('/webhooks');
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]?.id).toBe('w1');
     });
 
-    it('createAccountWebhook POSTs /v2/webhooks', async () => {
+    it('createAccountWebhook POSTs /webhooks', async () => {
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         data: { id: 'w1' }, status: 201, headers: {},
       } as HttpResponse<Webhook>);
 
       await webhooks.createAccountWebhook({ url: 'https://x.test/hook' });
-      expect(mockHttpClient.post).toHaveBeenCalledWith('/v2/webhooks', { url: 'https://x.test/hook' });
+      expect(mockHttpClient.post).toHaveBeenCalledWith('/webhooks', { url: 'https://x.test/hook' });
     });
 
-    it('retrieve/update/delete by id hit /v2/webhooks/{id}', async () => {
+    it('retrieve/update/delete by id hit /webhooks/{id}', async () => {
       vi.mocked(mockHttpClient.get).mockResolvedValue({ data: { id: 'w1' }, status: 200, headers: {} } as HttpResponse<Webhook>);
       vi.mocked(mockHttpClient.put).mockResolvedValue({ data: { id: 'w1' }, status: 200, headers: {} } as HttpResponse<Webhook>);
       vi.mocked(mockHttpClient.delete).mockResolvedValue({ data: undefined, status: 204, headers: {} } as HttpResponse<void>);
@@ -195,29 +197,31 @@ describe('WebhooksResource', () => {
       await webhooks.deleteAccountWebhook('w1');
       await webhooks.pingAccountWebhook('w1');
 
-      expect(mockHttpClient.get).toHaveBeenCalledWith('/v2/webhooks/w1');
-      expect(mockHttpClient.put).toHaveBeenCalledWith('/v2/webhooks/w1', { active: false });
-      expect(mockHttpClient.delete).toHaveBeenCalledWith('/v2/webhooks/w1');
-      expect(mockHttpClient.put).toHaveBeenCalledWith('/v2/webhooks/w1/pings', {});
+      expect(mockHttpClient.get).toHaveBeenCalledWith('/webhooks/w1');
+      expect(mockHttpClient.put).toHaveBeenCalledWith('/webhooks/w1', { active: false });
+      expect(mockHttpClient.delete).toHaveBeenCalledWith('/webhooks/w1');
+      expect(mockHttpClient.put).toHaveBeenCalledWith('/webhooks/w1/pings', {});
     });
 
-    it('deleteAllAccountWebhooks is a distinct method hitting DELETE /v2/webhooks (no id)', async () => {
+    it('deleteAllAccountWebhooks is a distinct method hitting DELETE /webhooks (no id)', async () => {
       vi.mocked(mockHttpClient.delete).mockResolvedValue({ data: undefined, status: 204, headers: {} } as HttpResponse<void>);
 
       await webhooks.deleteAllAccountWebhooks();
-      expect(mockHttpClient.delete).toHaveBeenCalledWith('/v2/webhooks');
+      expect(mockHttpClient.delete).toHaveBeenCalledWith('/webhooks');
       // It is NOT the same as the single-delete method
       expect(webhooks.deleteAllAccountWebhooks).not.toBe(webhooks.deleteAccountWebhook);
     });
 
-    it('fetchEventTypes GETs the live event types', async () => {
+    it('fetchEventTypes GETs /webhooks/eventTypes and extracts ids from the {eventTypes} envelope', async () => {
       vi.mocked(mockHttpClient.get).mockResolvedValue({
-        data: ['invoice.issued', 'invoice.cancelled', 'some.new.event'], status: 200, headers: {},
-      } as HttpResponse<Array<WebhookEvent | (string & {})>>);
+        data: { eventTypes: [{ id: 'invoice.issued' }, { id: 'invoice.cancelled' }, { id: 'some.new.event' }] },
+        status: 200, headers: {},
+      } as HttpResponse<{ eventTypes: Array<{ id: string }> }>);
 
       const types = await webhooks.fetchEventTypes();
-      expect(mockHttpClient.get).toHaveBeenCalledWith('/v2/webhooks/eventTypes');
+      expect(mockHttpClient.get).toHaveBeenCalledWith('/webhooks/eventTypes');
       expect(types).toContain('some.new.event');
+      expect(types).toHaveLength(3);
     });
   });
 

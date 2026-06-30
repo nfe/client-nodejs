@@ -444,6 +444,10 @@ export { ServiceInvoicesRtcResource } from './core/resources/service-invoices-rt
 export { ProductInvoicesRtcResource } from './core/resources/product-invoices-rtc.js';
 export { MunicipalTaxesResource } from './core/resources/municipal-taxes.js';
 export { ConsumerInvoicesResource } from './core/resources/consumer-invoices.js';
+export type {
+  ConsumerInvoiceListOptions,
+  ConsumerInvoiceEnvironment,
+} from './core/resources/consumer-invoices.js';
 export { CertificatesResource } from './core/resources/certificates.js';
 export { NotificationsResource } from './core/resources/notifications.js';
 export type { Notification, NotificationListResponse } from './core/resources/notifications.js';

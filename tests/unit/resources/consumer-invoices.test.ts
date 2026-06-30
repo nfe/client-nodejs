@@ -44,21 +44,27 @@ describe('ConsumerInvoicesResource', () => {
     http.get.mockResolvedValue({ status: 200, headers: {}, data: {} });
     http.delete.mockResolvedValue({ status: 200, headers: {}, data: { id: invoiceId } });
 
-    await resource.list(companyId);
+    await resource.list(companyId, { environment: 'Test' });
     await resource.retrieve(companyId, invoiceId);
     await resource.cancel(companyId, invoiceId);
 
-    expect(http.get).toHaveBeenCalledWith(base);
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}`);
+    expect(http.get).toHaveBeenCalledWith(base, { environment: 'Test' });
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}`, undefined);
     expect(http.delete).toHaveBeenCalledWith(`${base}/${invoiceId}`);
+  });
+
+  it('list requires environment', async () => {
+    await expect(
+      resource.list(companyId, {} as unknown as { environment: 'Test' })
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 
   it('items / events use sub-resource paths', async () => {
     http.get.mockResolvedValue({ status: 200, headers: {}, data: {} });
     await resource.getItems(companyId, invoiceId);
     await resource.getEvents(companyId, invoiceId);
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/items`);
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/events`);
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/items`, undefined);
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/events`, undefined);
   });
 
   it('downloads send the right Accept and path (pdf/xml/rejection)', async () => {

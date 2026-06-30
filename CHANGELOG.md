@@ -80,6 +80,12 @@ usuários TypeScript devem revisar estes pontos no upgrade:
 - **`addresses.search()` e `addresses.lookupByTerm()` removidos**: os endpoints que chamavam (`/v2/addresses` e `/v2/addresses/{term}`) respondem **404** no host real — os métodos só lançavam `NotFoundError`. Como nunca funcionaram, a remoção não quebra nenhum consumidor real. O tipo `AddressSearchOptions` foi removido e `AddressLookupResponse` agora descreve o envelope real (`{ address: Address }`). Se o backend confirmar um endpoint de busca, ele volta como change separada com contrato verificado.
 - **`serviceInvoices.cancel()`**: o cancelamento de NFS-e é **assíncrono** (HTTP `202` + `Location`). Antes, `cancel()` retornava o stub de polling `{ code, status, location }` **tipado como `ServiceInvoiceData`** (então `cancelled.id`/`flowStatus` vinham `undefined`). Agora retorna uma **união discriminada** `CancelInvoiceResponse` (`{ status: 'async', response }` ou `{ status: 'immediate', invoice }`), espelhando `create()`. Novo método **`cancelAndWait()`** faz polling até o cancelamento concluir (espelha `createAndWait`). Verificado contra a API ao vivo. Tipos exportados: `CreateInvoiceResponse`, `CancelInvoiceResponse`.
 
+#### Correções de recursos novos (descobertas em smoke test ao vivo de toda a SDK)
+
+- **`taxCodes.*`**: passou a usar a **chave principal** (`apiKey`) contra `api.nfse.io`. Antes estava ligado ao cliente CT-e (chave de dados), o que retornava **403** em setups com `dataApiKey` separada. Os 4 endpoints (`/tax-codes/*`) agora respondem 200.
+- **`consumerInvoices.list()`**: agora exige `environment` (`Production`/`Test`), obrigatório pela API — antes a chamada saía sem o parâmetro e retornava **400**. Também passou a usar a **chave principal** (antes 403 com chave de dados separada). Os métodos de leitura (`retrieve`/`getItems`/`getEvents`/downloads) aceitam `environment` opcional.
+- **`webhooks` de conta**: os métodos de conta (`listAccountWebhooks`, `createAccountWebhook`, `fetchEventTypes`, etc.) montavam o caminho `/v1/v2/webhooks` (duplo prefixo de versão) → **404**. Agora usam um cliente dedicado em `api.nfe.io/v2`. Além disso, `listAccountWebhooks` desempacota o envelope `{ webHooks }` para `{ data }` e `fetchEventTypes` extrai os ids de `{ eventTypes }`.
+
 ## [4.0.0] - 2026-06-12
 
 ### ⚠️ BREAKING CHANGE — Node.js >= 22

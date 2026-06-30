@@ -19,6 +19,20 @@ import type {
 } from '../types.js';
 import { ValidationError } from '../errors/index.js';
 
+/** The NFC-e API requires which environment's invoices to operate on. */
+export type ConsumerInvoiceEnvironment = 'Production' | 'Test';
+
+/** Options for {@link ConsumerInvoicesResource.list}. `environment` is required by the API. */
+export interface ConsumerInvoiceListOptions {
+  /** Required by the API (`Production` or `Test`). Omitting it yields HTTP 400. */
+  environment: ConsumerInvoiceEnvironment;
+  startingAfter?: string;
+  endingBefore?: string;
+  limit?: number;
+  /** Free-text query filter, if supported by the endpoint. */
+  q?: string;
+}
+
 function validateCompanyId(companyId: string): void {
   if (!companyId || companyId.trim() === '') {
     throw new ValidationError('Company ID is required');
@@ -50,19 +64,43 @@ export class ConsumerInvoicesResource {
     return response.data;
   }
 
-  /** List NFC-e for a company. */
-  async list(companyId: string): Promise<ConsumerInvoiceListResponse> {
+  /**
+   * List NFC-e for a company. The API **requires** `environment` (`Production` or
+   * `Test`); omitting it returns HTTP 400.
+   */
+  async list(
+    companyId: string,
+    options: ConsumerInvoiceListOptions
+  ): Promise<ConsumerInvoiceListResponse> {
     validateCompanyId(companyId);
-    const response = await this.http.get<ConsumerInvoiceListResponse>(this.basePath(companyId));
+    if (!options?.environment) {
+      throw new ValidationError('Environment is required (Production or Test)');
+    }
+    const params: Record<string, unknown> = { environment: options.environment };
+    if (options.startingAfter) params.startingAfter = options.startingAfter;
+    if (options.endingBefore) params.endingBefore = options.endingBefore;
+    if (options.limit !== undefined) params.limit = options.limit;
+    if (options.q) params.q = options.q;
+    const response = await this.http.get<ConsumerInvoiceListResponse>(
+      this.basePath(companyId),
+      params
+    );
     return response.data;
   }
 
-  /** Retrieve an NFC-e by id. */
-  async retrieve(companyId: string, invoiceId: string): Promise<ConsumerInvoice> {
+  /**
+   * Retrieve an NFC-e by id. Pass `environment` if the API requires it for reads.
+   */
+  async retrieve(
+    companyId: string,
+    invoiceId: string,
+    environment?: ConsumerInvoiceEnvironment
+  ): Promise<ConsumerInvoice> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
     const response = await this.http.get<ConsumerInvoice>(
-      `${this.basePath(companyId)}/${invoiceId}`
+      `${this.basePath(companyId)}/${invoiceId}`,
+      environment ? { environment } : undefined
     );
     return response.data;
   }
@@ -77,57 +115,79 @@ export class ConsumerInvoicesResource {
     return response.data;
   }
 
-  /** List the items of an NFC-e. */
-  async getItems(companyId: string, invoiceId: string): Promise<NfeInvoiceItemsResponse> {
+  /** List the items of an NFC-e. Pass `environment` if the API requires it. */
+  async getItems(
+    companyId: string,
+    invoiceId: string,
+    environment?: ConsumerInvoiceEnvironment
+  ): Promise<NfeInvoiceItemsResponse> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
     const response = await this.http.get<NfeInvoiceItemsResponse>(
-      `${this.basePath(companyId)}/${invoiceId}/items`
+      `${this.basePath(companyId)}/${invoiceId}/items`,
+      environment ? { environment } : undefined
     );
     return response.data;
   }
 
-  /** List the events of an NFC-e. */
-  async getEvents(companyId: string, invoiceId: string): Promise<NfeProductInvoiceEventsResponse> {
+  /** List the events of an NFC-e. Pass `environment` if the API requires it. */
+  async getEvents(
+    companyId: string,
+    invoiceId: string,
+    environment?: ConsumerInvoiceEnvironment
+  ): Promise<NfeProductInvoiceEventsResponse> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
     const response = await this.http.get<NfeProductInvoiceEventsResponse>(
-      `${this.basePath(companyId)}/${invoiceId}/events`
+      `${this.basePath(companyId)}/${invoiceId}/events`,
+      environment ? { environment } : undefined
     );
     return response.data;
   }
 
-  /** Download the DANFE-NFC-e PDF. */
-  async downloadPdf(companyId: string, invoiceId: string): Promise<Buffer> {
+  /** Download the DANFE-NFC-e PDF. Pass `environment` if the API requires it. */
+  async downloadPdf(
+    companyId: string,
+    invoiceId: string,
+    environment?: ConsumerInvoiceEnvironment
+  ): Promise<Buffer> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
     const response = await this.http.get<Buffer>(
       `${this.basePath(companyId)}/${invoiceId}/pdf`,
-      undefined,
+      environment ? { environment } : undefined,
       { Accept: 'application/pdf' }
     );
     return response.data;
   }
 
-  /** Download the NFC-e XML. */
-  async downloadXml(companyId: string, invoiceId: string): Promise<Buffer> {
+  /** Download the NFC-e XML. Pass `environment` if the API requires it. */
+  async downloadXml(
+    companyId: string,
+    invoiceId: string,
+    environment?: ConsumerInvoiceEnvironment
+  ): Promise<Buffer> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
     const response = await this.http.get<Buffer>(
       `${this.basePath(companyId)}/${invoiceId}/xml`,
-      undefined,
+      environment ? { environment } : undefined,
       { Accept: 'application/xml' }
     );
     return response.data;
   }
 
-  /** Download the rejection XML for a rejected NFC-e. */
-  async downloadRejectionXml(companyId: string, invoiceId: string): Promise<Buffer> {
+  /** Download the rejection XML for a rejected NFC-e. Pass `environment` if required. */
+  async downloadRejectionXml(
+    companyId: string,
+    invoiceId: string,
+    environment?: ConsumerInvoiceEnvironment
+  ): Promise<Buffer> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
     const response = await this.http.get<Buffer>(
       `${this.basePath(companyId)}/${invoiceId}/xml/rejection`,
-      undefined,
+      environment ? { environment } : undefined,
       { Accept: 'application/xml' }
     );
     return response.data;
