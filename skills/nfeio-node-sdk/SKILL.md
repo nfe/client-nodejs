@@ -371,4 +371,6 @@ Load these when you need detailed method signatures, full type definitions, or s
 
 - **`references/data-services-and-lookups.md`** — Read when working with CNPJ/CPF lookups, address/CEP lookup, NF-e/CFe-SAT query by access key. Contains LegalEntityBasicInfo structure, BrazilianState codes, the `Address` shape (postal-code lookup only), and host mapping.
 
+- **`references/rtc-nfce-and-account-resources.md`** — Read when working with RTC issuance (`serviceInvoicesRtc`/`productInvoicesRtc`), NFC-e (`consumerInvoices`, requires `environment`), municipal tax enrollments, certificates by thumbprint, notifications, or account-scoped webhooks. Contains the v5-new resource signatures plus `cancelAndWait`/`exists`/`switchAuthorizer`.
+
 - **`references/error-handling-and-patterns.md`** — Read when implementing error handling, retry strategies, or debugging SDK issues. Contains complete error class hierarchy, type guards, ErrorFactory, RetryConfig, and CertificateValidator.
