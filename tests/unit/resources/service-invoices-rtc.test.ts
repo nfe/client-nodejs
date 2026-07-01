@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ServiceInvoicesRtcResource } from '../../../src/core/resources/service-invoices-rtc.js';
 import { HttpClient } from '../../../src/core/http/client.js';
 import type { NFSeRtcRequest } from '../../../src/core/types.js';
-import { ValidationError } from '../../../src/core/errors/index.js';
+import { ValidationError, InvoiceProcessingError, NotFoundError } from '../../../src/core/errors/index.js';
 
 describe('ServiceInvoicesRtcResource', () => {
   let resource: ServiceInvoicesRtcResource;
@@ -99,6 +99,66 @@ describe('ServiceInvoicesRtcResource', () => {
       await expect(resource.downloadCancellationXml(companyId, '')).rejects.toBeInstanceOf(
         ValidationError
       );
+    });
+  });
+
+  describe('retrieve()', () => {
+    it('GETs the invoice (no /v1 prefix) and returns it', async () => {
+      http.get.mockResolvedValue({ status: 200, headers: {}, data: { id: 'inv-1', flowStatus: 'Issued' } });
+
+      const inv = await resource.retrieve(companyId, 'inv-1');
+
+      expect(http.get).toHaveBeenCalledWith(`/companies/${companyId}/serviceinvoices/inv-1`);
+      expect(inv.id).toBe('inv-1');
+    });
+
+    it('throws NotFoundError when the API returns no body', async () => {
+      http.get.mockResolvedValue({ status: 200, headers: {}, data: undefined });
+      await expect(resource.retrieve(companyId, 'ghost')).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  describe('createAndWait()', () => {
+    const fastPoll = { initialDelay: 0, maxDelay: 0, timeout: 2000 };
+
+    it('returns the invoice directly on immediate (201) creation', async () => {
+      http.post.mockResolvedValue({ status: 201, headers: {}, data: { id: 'inv-1', flowStatus: 'Issued' } });
+
+      const inv = await resource.createAndWait(companyId, minimalRtcPayload(), fastPoll);
+
+      expect(inv.id).toBe('inv-1');
+      expect(http.get).not.toHaveBeenCalled(); // no polling needed
+    });
+
+    it('polls until terminal on async (202 + Location) creation', async () => {
+      http.post.mockResolvedValue({
+        status: 202,
+        headers: { location: `/v1/companies/${companyId}/serviceinvoices/inv-async` },
+        data: {},
+      });
+      http.get.mockResolvedValue({ status: 200, headers: {}, data: { id: 'inv-async', flowStatus: 'Issued' } });
+
+      const onPoll = vi.fn();
+      const inv = await resource.createAndWait(companyId, minimalRtcPayload(), { ...fastPoll, onPoll });
+
+      expect(inv.id).toBe('inv-async');
+      expect(http.get).toHaveBeenCalledWith(`/companies/${companyId}/serviceinvoices/inv-async`);
+      expect(onPoll).toHaveBeenCalled();
+    });
+
+    it('throws InvoiceProcessingError when the invoice settles as IssueFailed', async () => {
+      http.post.mockResolvedValue({
+        status: 202,
+        headers: { location: `/v1/companies/${companyId}/serviceinvoices/inv-fail` },
+        data: {},
+      });
+      http.get.mockResolvedValue({
+        status: 200, headers: {}, data: { id: 'inv-fail', flowStatus: 'IssueFailed', flowMessage: 'rejected' },
+      });
+
+      await expect(
+        resource.createAndWait(companyId, minimalRtcPayload(), fastPoll)
+      ).rejects.toBeInstanceOf(InvoiceProcessingError);
     });
   });
 });

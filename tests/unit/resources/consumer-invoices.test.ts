@@ -79,6 +79,32 @@ describe('ConsumerInvoicesResource', () => {
     expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/xml/rejection`, undefined, { Accept: 'application/xml' });
   });
 
+  it('forwards environment on reads/downloads when provided', async () => {
+    http.get.mockResolvedValue({ status: 200, headers: {}, data: {} });
+
+    await resource.retrieve(companyId, invoiceId, 'Test');
+    await resource.getItems(companyId, invoiceId, 'Test');
+    await resource.getEvents(companyId, invoiceId, 'Test');
+    await resource.downloadPdf(companyId, invoiceId, 'Test');
+
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}`, { environment: 'Test' });
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/items`, { environment: 'Test' });
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/events`, { environment: 'Test' });
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/pdf`, { environment: 'Test' }, { Accept: 'application/pdf' });
+  });
+
+  it('list forwards optional filters (startingAfter/endingBefore/limit/q)', async () => {
+    http.get.mockResolvedValue({ status: 200, headers: {}, data: {} });
+
+    await resource.list(companyId, {
+      environment: 'Test', startingAfter: 'a', endingBefore: 'b', limit: 5, q: 'buyer.name:X',
+    });
+
+    expect(http.get).toHaveBeenCalledWith(base, {
+      environment: 'Test', startingAfter: 'a', endingBefore: 'b', limit: 5, q: 'buyer.name:X',
+    });
+  });
+
   it('disable POSTs to /disablement', async () => {
     http.post.mockResolvedValue({ status: 200, headers: {}, data: {} });
     const data = { serie: 1, numberStart: 1, numberEnd: 10 } as unknown as ConsumerInvoiceDisablementData;

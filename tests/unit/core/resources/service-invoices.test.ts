@@ -303,6 +303,49 @@ describe('ServiceInvoicesResource', () => {
     });
   });
 
+  describe('cancelAndWait()', () => {
+    const companyId = 'company-123';
+    const invoiceId = 'invoice-456';
+    const fastPoll = { initialDelay: 0, maxDelay: 0, timeout: 2000 };
+    const loc = `/v1/companies/${companyId}/serviceinvoices/${invoiceId}`;
+
+    it('polls until the async cancellation settles as Cancelled', async () => {
+      vi.mocked(mockHttp.delete).mockResolvedValue({
+        data: { code: 202, status: 'pending', location: loc }, status: 202, headers: { location: loc },
+      } as HttpResponse<any>);
+      vi.mocked(mockHttp.get).mockResolvedValue({
+        data: { id: invoiceId, flowStatus: 'Cancelled' }, status: 200, headers: {},
+      } as HttpResponse<any>);
+
+      const invoice = await resource.cancelAndWait(companyId, invoiceId, fastPoll);
+      expect(invoice.id).toBe(invoiceId);
+      expect(invoice.flowStatus).toBe('Cancelled');
+    });
+
+    it('returns immediately when cancellation is synchronous (200 body)', async () => {
+      vi.mocked(mockHttp.delete).mockResolvedValue({
+        data: { id: invoiceId, flowStatus: 'Cancelled' }, status: 200, headers: {},
+      } as HttpResponse<any>);
+
+      const invoice = await resource.cancelAndWait(companyId, invoiceId, fastPoll);
+      expect(invoice.flowStatus).toBe('Cancelled');
+      expect(mockHttp.get).not.toHaveBeenCalled();
+    });
+
+    it('throws InvoiceProcessingError when cancellation fails (CancelFailed)', async () => {
+      vi.mocked(mockHttp.delete).mockResolvedValue({
+        data: { code: 202, status: 'pending', location: loc }, status: 202, headers: { location: loc },
+      } as HttpResponse<any>);
+      vi.mocked(mockHttp.get).mockResolvedValue({
+        data: { id: invoiceId, flowStatus: 'CancelFailed', flowMessage: 'x' }, status: 200, headers: {},
+      } as HttpResponse<any>);
+
+      await expect(
+        resource.cancelAndWait(companyId, invoiceId, fastPoll)
+      ).rejects.toBeInstanceOf(InvoiceProcessingError);
+    });
+  });
+
   describe('sendEmail()', () => {
     const companyId = 'company-123';
     const invoiceId = 'invoice-456';
