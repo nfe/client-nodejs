@@ -56,9 +56,9 @@ describe('OpenAPI Type Generation', () => {
       const indexPath = join(GENERATED_DIR, 'index.ts');
       const content = readFileSync(indexPath, 'utf8');
 
-      // Basic syntax checks
+      // Basic syntax checks (the index re-exports namespaces: `export * as X`)
       expect(content).not.toContain('undefined');
-      expect(content).toMatch(/export (type|interface|const)/);
+      expect(content).toMatch(/export (type|interface|const|\*)/);
 
       // Should not have syntax errors (checked by typecheck in CI)
       // Here we just verify it's not empty and has exports
@@ -66,33 +66,29 @@ describe('OpenAPI Type Generation', () => {
     });
   });
 
-  describe('Generated Type Exports', () => {
-    it('should export ServiceInvoice type', () => {
-      const indexPath = join(GENERATED_DIR, 'index.ts');
-      const content = readFileSync(indexPath, 'utf8');
+  describe('Public Domain Type Exports', () => {
+    // Public domain types live in src/core/types.ts (the barrel re-exports from
+    // there). The generated index intentionally no longer defines placeholder
+    // `{ [key: string]: unknown }` interfaces (sync-openapi-specs-from-docs, 0B).
+    const TYPES_PATH = 'src/core/types.ts';
 
-      // Check that type is exported in source code
+    it('should export ServiceInvoice type', () => {
+      const content = readFileSync(TYPES_PATH, 'utf8');
       expect(content).toMatch(/export.*ServiceInvoice/);
     });
 
     it('should export Company type', () => {
-      const indexPath = join(GENERATED_DIR, 'index.ts');
-      const content = readFileSync(indexPath, 'utf8');
-
+      const content = readFileSync(TYPES_PATH, 'utf8');
       expect(content).toMatch(/export.*Company/);
     });
 
     it('should export LegalPerson type', () => {
-      const indexPath = join(GENERATED_DIR, 'index.ts');
-      const content = readFileSync(indexPath, 'utf8');
-
+      const content = readFileSync(TYPES_PATH, 'utf8');
       expect(content).toMatch(/export.*LegalPerson/);
     });
 
     it('should export NaturalPerson type', () => {
-      const indexPath = join(GENERATED_DIR, 'index.ts');
-      const content = readFileSync(indexPath, 'utf8');
-
+      const content = readFileSync(TYPES_PATH, 'utf8');
       expect(content).toMatch(/export.*NaturalPerson/);
     });
 
@@ -199,20 +195,26 @@ describe('OpenAPI Type Generation', () => {
       expect(existsSync(scriptPath)).toBe(true);
     });
 
-    it('npm run generate should work', () => {
+    it('npm run generate should work and apply the known-skipped allowlist', () => {
       // This test actually runs generation (slow test)
       // Skip in watch mode to avoid regeneration loops
       if (process.env.VITEST_WATCH === 'true') {
         return;
       }
 
+      let output = '';
       expect(() => {
-        execSync('npm run generate', {
+        output = execSync('npm run generate', {
           encoding: 'utf8',
           stdio: 'pipe',
           timeout: 30000, // 30 second timeout
         });
       }).not.toThrow();
+
+      // Allowlist semantics: the 5 legacy Swagger 2.0 specs are reported as
+      // known-skipped (not errors), and the count is reconciled.
+      expect(output).toContain('Known-skipped (hand-typed)');
+      expect(output).toMatch(/Generated \d+ of \d+ spec file\(s\) \(\d+ known-skipped\)/);
     }, 35000); // 35 second test timeout
 
     it('npm run validate:spec should work', () => {

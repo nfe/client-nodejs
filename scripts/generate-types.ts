@@ -42,6 +42,21 @@ const config: Omit<GeneratorConfig, 'specs'> = {
   outputDir: resolve(process.cwd(), 'src/generated'),
 };
 
+/**
+ * Specs that are KNOWN to be skipped (legacy Swagger 2.0, hand-typed in
+ * src/core/types.ts). A skip of one of these is expected and does NOT fail the
+ * build. A skip of anything NOT on this list is an error (fail-loud) — see
+ * the `sync-openapi-specs-from-docs` change (review finding B1). Keep this list
+ * in sync with the hand-typed resources until those specs are converted to 3.x.
+ */
+const KNOWN_SKIPPED = new Set<string>([
+  'consulta-cnpj',
+  'consulta-cpf',
+  'consulta-endereco',
+  'consulta-nf-consumidor',
+  'consulta-nf',
+]);
+
 // ============================================================================
 // Main Generation Logic
 // ============================================================================
@@ -61,11 +76,29 @@ async function main(): Promise<void> {
     // 3. Generate types for each spec
     console.log('⚙️  Generating TypeScript types...');
     const generatedSpecs: SpecConfig[] = [];
+    const skipped: SpecConfig[] = [];
     for (const spec of specs) {
       const wasGenerated = await generateTypesForSpec(spec);
       if (wasGenerated) {
         generatedSpecs.push(spec);
+      } else {
+        skipped.push(spec);
       }
+    }
+
+    // 3b. Fail-loud BEFORE writing the index / success banner: an UNEXPECTED skip
+    // (a spec not on the known-skipped allowlist) means types silently vanished.
+    const unexpected = skipped.filter(s => !KNOWN_SKIPPED.has(s.name));
+    if (skipped.length > 0) {
+      const known = skipped.filter(s => KNOWN_SKIPPED.has(s.name)).map(s => s.name);
+      if (known.length) console.log(`   ℹ️  Known-skipped (hand-typed): ${known.join(', ')}`);
+    }
+    if (unexpected.length > 0) {
+      throw new Error(
+        `Generation produced no output for ${unexpected.length} unexpected spec(s): ` +
+          `${unexpected.map(s => s.name).join(', ')}. ` +
+          `Convert to OpenAPI 3.x, or add to KNOWN_SKIPPED if intentionally hand-typed.`
+      );
     }
 
     // 4. Create unified index
@@ -73,7 +106,10 @@ async function main(): Promise<void> {
     await createUnifiedIndex(generatedSpecs);
 
     console.log('\n✅ Type generation completed successfully!');
-    console.log(`   Generated ${generatedSpecs.length} of ${specs.length} spec file(s)`);
+    console.log(
+      `   Generated ${generatedSpecs.length} of ${specs.length} spec file(s)` +
+        ` (${skipped.length} known-skipped)`
+    );
     console.log(`   Output directory: ${config.outputDir}\n`);
 
   } catch (error) {
@@ -92,8 +128,11 @@ async function main(): Promise<void> {
 async function discoverSpecs(): Promise<SpecConfig[]> {
   const files = await readdir(config.specDir);
 
+  // Non-spec sidecar files that live in openapi/spec/ but must NOT be generated.
+  const NON_SPEC_FILES = new Set(['SOURCES.json']);
   const specFiles = files.filter(file =>
-    file.endsWith('.yaml') || file.endsWith('.yml')
+    !NON_SPEC_FILES.has(file) &&
+    (file.endsWith('.yaml') || file.endsWith('.yml') || file.endsWith('.json'))
   );
 
   if (specFiles.length === 0) {
@@ -101,7 +140,8 @@ async function discoverSpecs(): Promise<SpecConfig[]> {
   }
 
   return specFiles.map(file => {
-    const baseName = basename(file, file.endsWith('.yaml') ? '.yaml' : '.yml');
+    const ext = file.endsWith('.yaml') ? '.yaml' : file.endsWith('.yml') ? '.yml' : '.json';
+    const baseName = basename(file, ext);
     const namespace = toNamespace(baseName);
 
     return {
@@ -268,42 +308,13 @@ function generateTypeAliases(specs: SpecConfig[]): string {
     return '// No main spec found for type aliases';
   }
 
-  // NOTE: OpenAPI specs have schemas: never (inline types only)
-  // So we define placeholder interfaces instead of importing from components['schemas']
-  return `// Common types from main spec (${mainSpec.name})
-// Use these for convenience, or use namespaced versions for specificity
-
-// Since OpenAPI specs don't have separate schemas (schemas: never),
-// we define minimal types here for backward compatibility
-// These are placeholders - real API responses may have more fields
-
-export interface ServiceInvoice {
-  id?: string;
-  flowStatus?: string;
-  status?: string;
-  [key: string]: unknown;
-}
-
-export interface Company {
-  id?: string;
-  federalTaxNumber?: number;
-  name?: string;
-  [key: string]: unknown;
-}
-
-export interface LegalPerson {
-  id?: string;
-  federalTaxNumber?: string | number;
-  name?: string;
-  [key: string]: unknown;
-}
-
-export interface NaturalPerson {
-  id?: string;
-  federalTaxNumber?: string | number;
-  name?: string;
-  [key: string]: unknown;
-}`;
+  // The public domain types (ServiceInvoice, Company, LegalPerson, NaturalPerson)
+  // live in src/core/types.ts — that is the public surface (the barrel re-exports
+  // from there, not from this generated index). We deliberately do NOT emit
+  // placeholder `{ [key: string]: unknown }` interfaces here: they were dead code
+  // that masked the real types and invited drift. (sync-openapi-specs-from-docs, 0B)
+  return `// Domain types are defined in src/core/types.ts (the public surface).
+// Main spec namespace: ${mainSpec.namespace}. Use namespaced generated types for raw operations/paths.`;
 }
 
 // ============================================================================

@@ -1,14 +1,22 @@
 {
   "name": "nfe-io",
-  "version": "v4.0.0",
+  "version": "5.0.0",
   "description": "Official NFE.io SDK for Node.js - TypeScript native with zero runtime dependencies",
   "keywords": [
     "nfe",
     "nfse",
+    "nfse-nacional",
     "nota-fiscal",
+    "nota-fiscal-eletronica",
+    "nota-fiscal-de-servico",
     "invoice",
+    "e-invoice",
     "brazil",
-    "typescript"
+    "nodejs",
+    "typescript",
+    "sdk",
+    "api",
+    "fiscal"
   ],
   "author": {
     "name": "NFE.io Team",
@@ -64,6 +72,7 @@
     "test:unit": "vitest tests/unit",
     "test:integration": "vitest tests/integration",
     "test:coverage": "vitest --coverage",
+    "test:types": "vitest --run --typecheck --dir tests/types",
     "test:ui": "vitest --ui",
     "validate:openapi": "tsx scripts/validate-openapi-compliance.js",
     "docs": "typedoc src/index.ts --out docs/api",

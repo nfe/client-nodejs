@@ -1,21 +1,18 @@
 /**
  * Integration tests for AddressesResource
  *
- * These tests require a valid API key and make real API calls.
- * Skip these tests in CI/CD unless API key is available.
+ * These tests require a valid API key and make real API calls against the live
+ * address.api.nfe.io/v2 host (postal-code lookup only).
  *
  * To run these tests:
  *   1. Set NFE_DATA_API_KEY or NFE_API_KEY environment variable
- *   2. Run: npm run test:integration
+ *   2. Run: RUN_INTEGRATION_TESTS=true npm run test:integration
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { NfeClient } from '../../src/core/client.js';
-import { NotFoundError } from '../../src/core/errors/index.js';
-import type { AddressLookupResponse } from '../../src/core/types.js';
 import { shouldRunIntegrationTests, INTEGRATION_TEST_CONFIG } from './setup.js';
 
-// Use the shared integration test check
 const shouldRun = shouldRunIntegrationTests();
 
 describe.skipIf(!shouldRun)('AddressesResource Integration', () => {
@@ -24,122 +21,68 @@ describe.skipIf(!shouldRun)('AddressesResource Integration', () => {
   beforeAll(() => {
     client = new NfeClient({
       apiKey: process.env.NFE_API_KEY,
-      dataApiKey:
-        process.env.NFE_DATA_API_KEY ||
-        process.env.INTEGRATION_TEST_API_KEY,
-      environment: 'production',
+      dataApiKey: process.env.NFE_DATA_API_KEY || process.env.INTEGRATION_TEST_API_KEY,
+      environment: INTEGRATION_TEST_CONFIG.environment,
     });
-  });
-
-  afterAll(() => {
-    // Cleanup if needed
   });
 
   describe('lookupByPostalCode', () => {
-    it('should lookup a valid São Paulo postal code', async () => {
-      // CEP 01310-100 is Avenida Paulista, São Paulo
-      const result = await client.addresses.lookupByPostalCode('01310100');
+    it('looks up a valid São Paulo postal code (Avenida Paulista)', async () => {
+      const address = await client.addresses.lookupByPostalCode('01310100');
 
-      expect(result).toBeDefined();
-      expect(result.postalCode).toBe('01310100');
-      expect(result.state).toBe('SP');
-      expect(result.city?.name).toContain('São Paulo');
+      expect(address).toBeDefined();
+      // API returns the CEP formatted with a hyphen
+      expect(address.postalCode).toBe('01310-100');
+      expect(address.state).toBe('SP');
+      expect(address.city.name).toContain('São Paulo');
+      expect(address.street).toBeTruthy();
     });
 
-    it('should lookup a valid Rio de Janeiro postal code', async () => {
-      // CEP 20040-020 is Centro, Rio de Janeiro
-      const result = await client.addresses.lookupByPostalCode('20040-020');
+    it('looks up a valid Rio de Janeiro postal code (with hyphen input)', async () => {
+      const address = await client.addresses.lookupByPostalCode('20040-020');
 
-      expect(result).toBeDefined();
-      expect(result.postalCode).toBe('20040020');
-      expect(result.state).toBe('RJ');
+      expect(address).toBeDefined();
+      expect(address.postalCode).toBe('20040-020');
+      expect(address.state).toBe('RJ');
     });
 
-    it('should handle non-existent postal code gracefully', async () => {
-      // CEP 00000-000 should not exist
-      await expect(
-        client.addresses.lookupByPostalCode('00000000')
-      ).rejects.toThrow();
+    it('rejects a non-existent postal code', async () => {
+      await expect(client.addresses.lookupByPostalCode('00000000')).rejects.toThrow();
     });
   });
 
-  describe('search', () => {
-    it('should search addresses by state filter', async () => {
-      const result = await client.addresses.search({
-        filter: "state eq 'SP'",
-      });
+  describe('response shape', () => {
+    it('returns a single Address with the expected fields (no envelope, no array)', async () => {
+      const address = await client.addresses.lookupByPostalCode('01310100');
 
-      expect(result).toBeDefined();
-      // Response structure may vary
-      if (result.addresses) {
-        expect(Array.isArray(result.addresses)).toBe(true);
-      }
-    });
-
-    it('should search addresses by city filter', async () => {
-      const result = await client.addresses.search({
-        filter: "city.name eq 'São Paulo'",
-      });
-
-      expect(result).toBeDefined();
-    });
-  });
-
-  describe('lookupByTerm', () => {
-    it('should lookup addresses by street name', async () => {
-      const result = await client.addresses.lookupByTerm('Paulista');
-
-      expect(result).toBeDefined();
-      // Response structure may vary based on API
-    });
-
-    it('should handle search term with no results', async () => {
-      // Search for something unlikely to exist
-      const result = await client.addresses.lookupByTerm('ZZZZNONEXISTENTZZZ123');
-
-      expect(result).toBeDefined();
-      // May return empty results or throw
-    });
-  });
-
-  describe('API response format', () => {
-    it('should return address with expected structure', async () => {
-      const result = await client.addresses.lookupByPostalCode('01310100');
-
-      // Verify essential fields are present
-      expect(result).toHaveProperty('postalCode');
-      expect(result).toHaveProperty('state');
-      expect(result).toHaveProperty('city');
-
-      // City should have code and name
-      if (result.city) {
-        expect(result.city).toHaveProperty('code');
-        expect(result.city).toHaveProperty('name');
-      }
+      expect(address).toHaveProperty('postalCode');
+      expect(address).toHaveProperty('state');
+      expect(address).toHaveProperty('city');
+      expect(address.city).toHaveProperty('code');
+      expect(address.city).toHaveProperty('name');
+      // Must NOT be the old wrong shapes
+      expect(address).not.toHaveProperty('address');
+      expect(address).not.toHaveProperty('addresses');
     });
   });
 });
 
 /**
- * Tests for multi-API key configuration in integration
+ * Multi-API key configuration against the live API.
  */
 describe.skipIf(!shouldRun)('Multi-API Key Integration', () => {
-  it('should create client with only dataApiKey', () => {
+  it('creates a client with only dataApiKey and can access addresses', () => {
     const client = new NfeClient({
       dataApiKey: process.env.NFE_DATA_API_KEY || process.env.NFE_API_KEY,
     });
-
-    // Should be able to access addresses
     expect(() => client.addresses).not.toThrow();
   });
 
-  it('should make address API call with separate dataApiKey', async () => {
+  it('makes an address API call with a separate dataApiKey', async () => {
     const client = new NfeClient({
       dataApiKey: process.env.NFE_DATA_API_KEY || process.env.NFE_API_KEY,
     });
-
-    // This should work because we have dataApiKey
-    const result = await client.addresses.lookupByPostalCode('01310100');
-    expect(result).toBeDefined();
+    const address = await client.addresses.lookupByPostalCode('01310100');
+    expect(address.state).toBe('SP');
   });
 });

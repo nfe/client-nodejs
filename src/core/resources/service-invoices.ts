@@ -29,6 +29,17 @@ export type CreateInvoiceResponse =
   | { status: 'immediate'; invoice: ServiceInvoiceData }
   | { status: 'async'; response: ServiceInvoiceAsyncResponse };
 
+/**
+ * Discriminated union for cancel() response.
+ *
+ * Cancellation is normally asynchronous: the API replies `202 + Location` and the
+ * invoice moves through `WaitingSendCancel` → `Cancelled`. Use `cancelAndWait()` to poll
+ * until it settles.
+ */
+export type CancelInvoiceResponse =
+  | { status: 'immediate'; invoice: ServiceInvoiceData }
+  | { status: 'async'; response: ServiceInvoiceAsyncResponse };
+
 // ============================================================================
 // Service Invoices Resource
 // ============================================================================
@@ -181,29 +192,152 @@ export class ServiceInvoicesResource {
   }
 
   /**
+   * Retrieve a service invoice by the caller's external id (idempotency key).
+   *
+   * @param companyId - Company ID (GUID)
+   * @param externalId - The `externalId` supplied at creation
+   * @returns The matching invoice
+   * @throws {NotFoundError} If no invoice with that external id exists
+   */
+  async retrieveByExternalId(
+    companyId: string,
+    externalId: string
+  ): Promise<ServiceInvoiceData> {
+    const path = `/companies/${companyId}/serviceinvoices/external/${externalId}`;
+    const response = await this.http.get<ServiceInvoiceData>(path);
+    if (!response.data) {
+      throw new NotFoundError(`Invoice with externalId ${externalId} not found`, {
+        companyId,
+        externalId,
+      });
+    }
+    return response.data;
+  }
+
+  /**
    * Cancel a service invoice
    *
-   * Note: Cancellation may also be async (returns 202). Check response status.
+   * Cancellation is normally **asynchronous**: the API replies `202 Accepted` with a
+   * `Location` header and the invoice transitions `WaitingSendCancel` → `Cancelled`.
+   * This method returns a discriminated union (mirroring {@link create}) so the static
+   * type always matches the runtime shape. Use {@link cancelAndWait} to poll until the
+   * cancellation settles.
    *
    * @param companyId - Company ID (GUID)
    * @param invoiceId - Invoice ID (GUID)
-   * @returns Cancelled invoice data
-   * @throws {InvoiceProcessingError} If invoice cannot be cancelled
+   * @returns `{ status: 'async', response }` (202 + Location) or `{ status: 'immediate', invoice }`
+   * @throws {InvoiceProcessingError} If a 202 is returned without a Location header
    *
    * @example
    * ```typescript
-   * const cancelled = await nfe.serviceInvoices.cancel(companyId, invoiceId);
-   * console.log('Cancellation status:', cancelled.flowStatus);
+   * const result = await nfe.serviceInvoices.cancel(companyId, invoiceId);
+   * if (result.status === 'async') {
+   *   console.log('Cancellation in progress:', result.response.invoiceId);
+   *   // or use cancelAndWait() to block until it settles
+   * } else {
+   *   console.log('Cancelled immediately:', result.invoice.flowStatus);
+   * }
    * ```
    */
   async cancel(
     companyId: string,
     invoiceId: string
-  ): Promise<ServiceInvoiceData> {
+  ): Promise<CancelInvoiceResponse> {
     const path = `/companies/${companyId}/serviceinvoices/${invoiceId}`;
     const response = await this.http.delete<ServiceInvoiceData>(path);
 
-    return response.data;
+    // Async cancellation (202 + Location) — the normal path
+    if (response.status === 202) {
+      const location = response.headers['location'] || response.headers['Location'];
+
+      if (!location) {
+        throw new InvoiceProcessingError(
+          'Async cancel response (202) received but no Location header found',
+          { status: 202, headers: response.headers }
+        );
+      }
+
+      const extractedId = this.extractInvoiceIdFromLocation(location);
+      // Keep full path for polling (with or without /v1 prefix)
+      const fullPath = location.startsWith('http') ? new URL(location).pathname : location;
+
+      return {
+        status: 'async',
+        response: {
+          code: 202,
+          status: 'pending',
+          location: fullPath,
+          invoiceId: extractedId,
+        },
+      };
+    }
+
+    // Immediate cancellation (200/201 with the invoice body)
+    return {
+      status: 'immediate',
+      invoice: response.data,
+    };
+  }
+
+  /**
+   * Cancel an invoice and wait for the cancellation to settle.
+   *
+   * Combines {@link cancel} + polling, mirroring {@link createAndWait}. Polls the invoice
+   * until it reaches a terminal flow status and returns it.
+   *
+   * @param companyId - Company ID (GUID)
+   * @param invoiceId - Invoice ID (GUID)
+   * @param options - Polling configuration (timeout, delays, callback)
+   * @returns The settled invoice (expected `flowStatus: 'Cancelled'`)
+   * @throws {TimeoutError} If polling timeout exceeded
+   * @throws {InvoiceProcessingError} If cancellation failed (`flowStatus: 'CancelFailed'`)
+   *
+   * @example
+   * ```typescript
+   * const invoice = await nfe.serviceInvoices.cancelAndWait(companyId, invoiceId);
+   * console.log(invoice.flowStatus); // 'Cancelled'
+   * ```
+   */
+  async cancelAndWait(
+    companyId: string,
+    invoiceId: string,
+    options: PollingOptions = {}
+  ): Promise<ServiceInvoiceData> {
+    const cancelResult = await this.cancel(companyId, invoiceId);
+
+    // Immediate cancellation — nothing to poll
+    if (cancelResult.status === 'immediate') {
+      return cancelResult.invoice;
+    }
+
+    const { invoiceId: targetId } = cancelResult.response;
+
+    const pollingConfig: import('../utils/polling.js').PollingOptions<ServiceInvoiceData> = {
+      fn: async () => this.retrieve(companyId, targetId),
+      isComplete: (invoice) => isTerminalFlowStatus(invoice.flowStatus as FlowStatus),
+      timeout: options.timeout ?? 120000,
+      initialDelay: options.initialDelay ?? 1000,
+      maxDelay: options.maxDelay ?? 10000,
+      backoffFactor: options.backoffFactor ?? 1.5,
+    };
+
+    if (options.onPoll) {
+      pollingConfig.onPoll = (attempt, result) => {
+        options.onPoll!(attempt, result.flowStatus as FlowStatus);
+      };
+    }
+
+    const invoice = await poll<ServiceInvoiceData>(pollingConfig);
+
+    const flowStatus = invoice.flowStatus as FlowStatus;
+    if (flowStatus === 'CancelFailed') {
+      throw new InvoiceProcessingError(
+        `Invoice cancellation failed with status: ${flowStatus}`,
+        { flowStatus, flowMessage: invoice.flowMessage, invoice }
+      );
+    }
+
+    return invoice;
   }
 
   // --------------------------------------------------------------------------

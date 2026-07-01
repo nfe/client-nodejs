@@ -64,6 +64,21 @@ export class HttpClient {
     return this.request<T>('DELETE', url);
   }
 
+  async patch<T = unknown>(path: string, data?: unknown): Promise<HttpResponse<T>> {
+    const url = this.buildUrl(path);
+    return this.request<T>('PATCH', url, data);
+  }
+
+  /**
+   * HEAD request — returns status/headers, no body. Non-2xx still throws via the
+   * error factory (e.g. 404 → NotFoundError), so callers checking existence
+   * should catch NotFoundError and treat it as "not found".
+   */
+  async head(path: string): Promise<HttpResponse<void>> {
+    const url = this.buildUrl(path);
+    return this.request<void>('HEAD', url);
+  }
+
   /**
    * GET request expecting a binary buffer response (e.g., PDF, XML downloads).
    *

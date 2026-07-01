@@ -367,11 +367,13 @@ async function example10_cancel(invoiceId) {
 
   try {
     console.log(`Cancelling invoice ${invoiceId}...`);
-    const cancelled = await nfe.serviceInvoices.cancel(companyId, invoiceId);
+    // Cancellation is asynchronous (202 + Location). cancel() returns a
+    // discriminated union; cancelAndWait() polls until it settles.
+    const cancelled = await nfe.serviceInvoices.cancelAndWait(companyId, invoiceId);
 
     console.log('✅ Invoice cancelled successfully');
     console.log(`   ID: ${cancelled.id}`);
-    console.log(`   Status: ${cancelled.status} (should be "cancelled")`);
+    console.log(`   Status: ${cancelled.flowStatus} (should be "Cancelled")`);
   } catch (error) {
     console.error('❌ Error cancelling invoice:', error.message);
   }

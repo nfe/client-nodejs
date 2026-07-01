@@ -13,7 +13,18 @@ import type { Webhook, WebhookEvent, ListResponse, ResourceId } from '../types.j
  * All operations are scoped by company_id
  */
 export class WebhooksResource {
-  constructor(private readonly http: HttpClient) {}
+  /**
+   * HTTP client for ACCOUNT-scoped endpoints (host-root `/v2/webhooks`). When not
+   * provided, falls back to the company-scoped client (back-compat for tests).
+   */
+  private readonly account: HttpClient;
+
+  constructor(
+    private readonly http: HttpClient,
+    accountHttp?: HttpClient
+  ) {
+    this.account = accountHttp ?? http;
+  }
 
   /**
    * List all webhooks for a company
@@ -236,18 +247,82 @@ export class WebhooksResource {
     return response.data;
   }
 
+  // --------------------------------------------------------------------------
+  // Account-scoped operations (/v2/webhooks) — NOT company-scoped.
+  // These take no companyId; they manage webhooks at the account level.
+  // --------------------------------------------------------------------------
+
   /**
-   * Get available webhook events
-   * 
-   * Returns a list of all available webhook event types
-   * 
+   * List account-level webhooks (`GET /v2/webhooks`).
+   *
+   * The API wraps the result as `{ webHooks: [...] }`; this normalizes it to the
+   * SDK's `ListResponse<Webhook>` (`{ data: [...] }`).
+   */
+  async listAccountWebhooks(): Promise<ListResponse<Webhook>> {
+    const response = await this.account.get<{ webHooks?: Webhook[] }>('/webhooks');
+    return { data: response.data?.webHooks ?? [] };
+  }
+
+  /** Create an account-level webhook (`POST /v2/webhooks`). */
+  async createAccountWebhook(data: Partial<Webhook>): Promise<Webhook> {
+    const response = await this.account.post<Webhook>('/webhooks', data);
+    return response.data;
+  }
+
+  /** Retrieve an account-level webhook by id (`GET /v2/webhooks/{id}`). */
+  async retrieveAccountWebhook(webhookId: ResourceId): Promise<Webhook> {
+    const response = await this.account.get<Webhook>(`/webhooks/${webhookId}`);
+    return response.data;
+  }
+
+  /** Update an account-level webhook by id (`PUT /v2/webhooks/{id}`). */
+  async updateAccountWebhook(webhookId: ResourceId, data: Partial<Webhook>): Promise<Webhook> {
+    const response = await this.account.put<Webhook>(`/webhooks/${webhookId}`, data);
+    return response.data;
+  }
+
+  /** Delete a single account-level webhook by id (`DELETE /v2/webhooks/{id}`). */
+  async deleteAccountWebhook(webhookId: ResourceId): Promise<void> {
+    await this.account.delete(`/webhooks/${webhookId}`);
+  }
+
+  /**
+   * ⚠️ DANGEROUS: delete **ALL** account-level webhooks (`DELETE /v2/webhooks`).
+   *
+   * Named distinctly from {@link deleteAccountWebhook} so it can never be reached
+   * by a mistyped single delete. This removes every webhook on the account.
+   */
+  async deleteAllAccountWebhooks(): Promise<void> {
+    await this.account.delete('/webhooks');
+  }
+
+  /** Trigger a test ping for an account-level webhook (`PUT /v2/webhooks/{id}/pings`). */
+  async pingAccountWebhook(webhookId: ResourceId): Promise<void> {
+    await this.account.put(`/webhooks/${webhookId}/pings`, {});
+  }
+
+  /**
+   * Fetch the live list of available webhook event types (`GET /v2/webhooks/eventTypes`).
+   *
+   * Prefer this over {@link getAvailableEvents}: the server is the source of truth,
+   * so new event types are picked up automatically. The return is an **open** union
+   * (`WebhookEvent | (string & {})`) so new server-side events don't break typing.
+   * The API wraps the result as `{ eventTypes: [{ id, ... }] }`; this extracts the ids.
+   */
+  async fetchEventTypes(): Promise<Array<WebhookEvent | (string & {})>> {
+    const response = await this.account.get<{ eventTypes?: Array<{ id: string }> }>(
+      '/webhooks/eventTypes'
+    );
+    return (response.data?.eventTypes ?? []).map((e) => e.id);
+  }
+
+  /**
+   * Get available webhook events.
+   *
+   * @deprecated This returns a hardcoded list that can drift from the platform's
+   * real event set. Use {@link fetchEventTypes} to get the live list from the API.
+   *
    * @returns List of available events
-   * 
-   * @example
-   * ```typescript
-   * const events = nfe.webhooks.getAvailableEvents();
-   * console.log('Available events:', events);
-   * ```
    */
   getAvailableEvents(): WebhookEvent[] {
     return [

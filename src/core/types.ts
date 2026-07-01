@@ -215,32 +215,27 @@ export interface Address {
   streetSuffix: string;
   /** Street name */
   street: string;
-  /** Address number */
+  /** Address number (may be a textual range, e.g. "de 612 a 1510 - lado par") */
   number: string;
-  /** Minimum number in range */
-  numberMin: string;
-  /** Maximum number in range */
-  numberMax: string;
-  /** Postal code (CEP) */
+  /** Minimum number in range (omitted by the API for some entries) */
+  numberMin?: string;
+  /** Maximum number in range (omitted by the API for some entries) */
+  numberMax?: string;
+  /** Postal code (CEP), returned formatted with hyphen (e.g. "01310-100") */
   postalCode: string;
-  /** Country code */
+  /** Country code (ISO 3166-1 alpha-3, e.g. "BRA") */
   country: string;
 }
 
 /**
- * Response from address lookup endpoints
+ * Raw response envelope from the postal-code lookup endpoint
+ * (`GET /v2/addresses/{cep}`). The API wraps the single result in an `address` key;
+ * {@link AddressesResource.lookupByPostalCode} unwraps it and returns the inner
+ * {@link Address}.
  */
 export interface AddressLookupResponse {
-  /** Array of matching addresses */
-  addresses: Address[];
-}
-
-/**
- * Options for address search
- */
-export interface AddressSearchOptions {
-  /** OData filter expression (e.g., "city eq 'São Paulo'") */
-  filter?: string;
+  /** The single matching address */
+  address: Address;
 }
 
 // ============================================================================
@@ -370,16 +365,31 @@ export type ServiceInvoiceSingleResponse =
 export type { ServiceInvoiceData as ServiceInvoice };
 
 // TODO: Add proper type exports when implementing other resources
-/** Placeholder: Company type - to be properly defined when implementing Companies resource */
+/**
+ * Company entity.
+ *
+ * Additive enrichment (no breaking change, ships in a minor): the original
+ * required fields and the permissive `[key: string]: unknown` index are kept,
+ * and the documented `contribuintes-v2` fields (address, taxRegime, tradeName,
+ * stateTaxes, …) are added as **optional** — so autocomplete improves without
+ * tightening the type or the `create()` input. Use {@link CompanyResourceItem} /
+ * {@link CompanyResourceV1} for the strict spec shapes, and
+ * {@link CreateCompanyResourceItem} for a strict create input.
+ */
 export type Company = {
   id?: string;
   name: string;
   federalTaxNumber: number;
   email: string;
-  [key: string]: unknown;
-};
+} & Partial<Omit<CompanyResourceItem, 'id' | 'name' | 'federalTaxNumber' | 'email'>> & {
+    [key: string]: unknown;
+  };
 
-/** Placeholder: Legal Person type - to be properly defined when implementing LegalPeople resource */
+/**
+ * Legal Person type.
+ * NOTE: no dedicated 3.x spec backs the company-scoped legalpeople sub-resource yet,
+ * so this remains hand-typed (review F14). Keep the permissive index for compat.
+ */
 export type LegalPerson = {
   id?: string;
   federalTaxNumber: string;
@@ -387,7 +397,10 @@ export type LegalPerson = {
   [key: string]: unknown;
 };
 
-/** Placeholder: Natural Person type - to be properly defined when implementing NaturalPeople resource */
+/**
+ * Natural Person type.
+ * NOTE: hand-typed for the same reason as {@link LegalPerson}.
+ */
 export type NaturalPerson = {
   id?: string;
   federalTaxNumber: string;
@@ -401,6 +414,91 @@ export type NaturalPerson = {
 
 // Import the components type from generated spec
 import type { components as CteComponents } from '../generated/consulta-cte-v2.js';
+
+// ----------------------------------------------------------------------------
+// RTC (Reforma Tributária do Consumo) request types — from the dedicated specs
+// ----------------------------------------------------------------------------
+import type { components as ServiceInvoiceRtcComponents } from '../generated/service-invoice-rtc-v1.js';
+import type { components as ProductInvoiceRtcComponents } from '../generated/product-invoice-rtc-v1.js';
+
+/** RTC NFS-e (service) emission request body — named schema `NFSeRequest`. */
+export type NFSeRtcRequest = ServiceInvoiceRtcComponents['schemas']['NFSeRequest'];
+
+/** RTC NF-e/NFC-e (product) emission request body — named schema `ProductInvoiceRequest`. */
+export type ProductInvoiceRtcRequest =
+  ProductInvoiceRtcComponents['schemas']['ProductInvoiceRequest'];
+
+// ----------------------------------------------------------------------------
+// Empresas (contribuintes-v2) — spec-backed company/certificate/address types.
+// Clean public aliases over the .NET-qualified generated keys (same pattern as
+// CteComponents above). Full key-normalization remains a pipeline task (1.2).
+// ----------------------------------------------------------------------------
+import type { components as ContribuintesComponents } from '../generated/contribuintes-v2.js';
+
+/** Company entity (list/item shape) — `contribuintes-v2` field-bearing schema. */
+export type CompanyResourceItem =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CompanyResourceItem'];
+
+/** Company entity (rich v1 shape, 28 fields). */
+export type CompanyResourceV1 =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CompanyResourceV1'];
+
+/** Company creation request body (opt-in, decoupled from the response type). */
+export type CreateCompanyResourceItem =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CreateCompanyResourceItem'];
+
+/** Company update request body. */
+export type UpdateCompanyResourceItem =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.UpdateCompanyResourceItem'];
+
+/** Digital certificate metadata (real, spec-backed). */
+export type CertificateMetadataResource =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CertificateMetadataResource'];
+
+/** Digital certificate metadata collection (plural `/certificates`). */
+export type CertificatesMetadataResource =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CertificatesMetadataResource'];
+
+/** Company address (spec-backed). */
+export type CompanyAddress =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.AddressResource'];
+
+/** Municipal tax registration (Inscrição Municipal) entity. */
+export type MunicipalTax =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.MunicipalTaxResourceItem'];
+
+/** Municipal tax creation input (item; wrapped as `{ municipalTax }` on the wire). */
+export type CreateMunicipalTaxData =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CreateMunicipalTaxResourceItem'];
+
+/** Municipal tax update input (item). */
+export type UpdateMunicipalTaxData =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.UpdateMunicipalTaxResourceItem'];
+
+/** List response for municipal taxes (best-effort shape). */
+export interface MunicipalTaxListResponse {
+  municipalTaxes?: MunicipalTax[];
+  [key: string]: unknown;
+}
+
+// ----------------------------------------------------------------------------
+// Consumer invoices (NFC-e) emission — from nf-consumidor-v2 named schemas.
+// ----------------------------------------------------------------------------
+import type { components as NfConsumidorComponents } from '../generated/nf-consumidor-v2.js';
+
+/** NFC-e emission request body (`ConsumerInvoiceRequest`). */
+export type ConsumerInvoiceData = NfConsumidorComponents['schemas']['ConsumerInvoiceRequest'];
+
+/** NFC-e invoice entity (`InvoiceResource`). */
+export type ConsumerInvoice = NfConsumidorComponents['schemas']['InvoiceResource'];
+
+/** NFC-e list response envelope (`ConsumerInvoicesResource`). */
+export type ConsumerInvoiceListResponse =
+  NfConsumidorComponents['schemas']['ConsumerInvoicesResource'];
+
+/** NFC-e disablement (inutilização) request body (`DisablementResource`). */
+export type ConsumerInvoiceDisablementData =
+  NfConsumidorComponents['schemas']['DisablementResource'];
 
 /**
  * Transportation Invoice inbound settings

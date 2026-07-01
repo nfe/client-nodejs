@@ -65,14 +65,20 @@ All resources are lazy-initialized via property getters on `NfeClient`. No resou
 
 | Accessor | Resource | API Host | Scope | Key Operations |
 |----------|----------|----------|-------|----------------|
-| `nfe.serviceInvoices` | NFS-e Service Invoices | api.nfe.io | Company | create, createAndWait, list, retrieve, cancel, sendEmail, downloadPdf/Xml |
-| `nfe.companies` | Companies | api.nfe.io | Global | CRUD, uploadCertificate, findByTaxNumber, listAll, listIterator |
+| `nfe.serviceInvoices` | NFS-e Service Invoices | api.nfe.io | Company | create, createAndWait, list, retrieve, retrieveByExternalId, cancel, cancelAndWait, sendEmail, downloadPdf/Xml |
+| `nfe.serviceInvoicesRtc` | NFS-e RTC (Reforma Tributária) | api.nfe.io | Company | create, createAndWait, retrieve, downloadCancellationXml (leiaute IBS/CBS; RTC selecionado pelo payload) |
+| `nfe.companies` | Companies | api.nfe.io | Global | CRUD, exists, uploadCertificate, findByTaxNumber, listAll, listIterator |
 | `nfe.legalPeople` | Legal People (PJ) | api.nfe.io | Company | CRUD, createBatch, findByTaxNumber |
 | `nfe.naturalPeople` | Natural People (PF) | api.nfe.io | Company | CRUD, createBatch, findByTaxNumber |
-| `nfe.webhooks` | Webhooks | api.nfe.io | Company | CRUD, validateSignature, test |
-| `nfe.addresses` | Address Lookup | address.api.nfe.io | Global | lookupByPostalCode, search, lookupByTerm |
-| `nfe.productInvoices` | NF-e Product Invoices | api.nfse.io | Company | create, list, retrieve, cancel, downloadPdf/Xml, sendCorrectionLetter |
-| `nfe.stateTaxes` | State Tax (IE) | api.nfse.io | Company | CRUD (prerequisite for NF-e issuance) |
+| `nfe.webhooks` | Webhooks | api.nfe.io (v2 p/ conta) | Company + Account | company CRUD, validateSignature; conta: listAccountWebhooks/create/retrieve/update/delete, deleteAllAccountWebhooks, pingAccountWebhook, fetchEventTypes |
+| `nfe.notifications` | Notifications | api.nfe.io | Company | list, retrieve, delete, sendEmail |
+| `nfe.addresses` | Address Lookup | address.api.nfe.io | Global | lookupByPostalCode (só CEP; busca/termo não existem na API real) |
+| `nfe.productInvoices` | NF-e Product Invoices | api.nfse.io | Company | create, list (requer environment), retrieve, cancel, downloadPdf/Xml, sendCorrectionLetter |
+| `nfe.productInvoicesRtc` | NF-e/NFC-e RTC | api.nfse.io | Company | create (webhook-driven; IBS/CBS/IS) |
+| `nfe.consumerInvoices` | NFC-e Consumer Invoices | api.nfse.io | Company | create (webhook-driven), list (requer environment), retrieve, cancel, getItems, getEvents, downloadPdf/Xml/Rejection, disable |
+| `nfe.stateTaxes` | State Tax (IE) | api.nfse.io | Company | CRUD, switchAuthorizer (pré-requisito p/ NF-e) |
+| `nfe.municipalTaxes` | Municipal Tax (IM) | api.nfse.io | Company | CRUD, updatePrefecture, getSeries (pré-requisito p/ NFS-e) |
+| `nfe.certificates` | Certificates (por thumbprint) | api.nfse.io | Company | list, getByThumbprint, deleteByThumbprint (+ variantes v1) |
 | `nfe.taxCalculation` | Tax Engine | api.nfse.io | Tenant | calculate (ICMS, PIS, COFINS, IPI, II) |
 | `nfe.taxCodes` | Tax Code Reference | api.nfse.io | Global | listOperationCodes, listAcquisitionPurposes, listIssuer/RecipientTaxProfiles |
 | `nfe.transportationInvoices` | CT-e Transport | api.nfse.io | Company | enable/disable, retrieve, downloadXml |
@@ -349,7 +355,7 @@ Available events: `invoice.created`, `invoice.issued`, `invoice.cancelled`, `inv
 | Manage people (PF) under company | `nfe.naturalPeople.*` |
 | Set up webhook notifications | `nfe.webhooks.create(companyId, {...})` |
 | Manage state tax registrations (IE) | `nfe.stateTaxes.*` |
-| Cancel a service invoice | `nfe.serviceInvoices.cancel(companyId, invoiceId)` |
+| Cancel a service invoice | `nfe.serviceInvoices.cancelAndWait(companyId, invoiceId)` (async; `cancel()` retorna união discriminada) |
 | Cancel a product invoice | `nfe.productInvoices.cancel(companyId, invoiceId)` |
 | Download DANFE PDF | `nfe.serviceInvoices.downloadPdf(companyId, id)` or `nfe.productInvoiceQuery.downloadPdf(accessKey)` |
 | Send invoice by email | `nfe.serviceInvoices.sendEmail(companyId, invoiceId)` |
@@ -363,6 +369,8 @@ Load these when you need detailed method signatures, full type definitions, or s
 
 - **`references/product-invoices-and-taxes.md`** — Read when working with NF-e product invoices, state tax registrations (IE), tax calculation, tax codes, CT-e, or inbound NF-e distribution. Contains cursor pagination, NfeProductInvoiceIssueData structure, TaxCalculation request/response, and manifest events.
 
-- **`references/data-services-and-lookups.md`** — Read when working with CNPJ/CPF lookups, address/CEP lookup, NF-e/CFe-SAT query by access key. Contains LegalEntityBasicInfo structure, BrazilianState codes, AddressLookupResponse, and host mapping.
+- **`references/data-services-and-lookups.md`** — Read when working with CNPJ/CPF lookups, address/CEP lookup, NF-e/CFe-SAT query by access key. Contains LegalEntityBasicInfo structure, BrazilianState codes, the `Address` shape (postal-code lookup only), and host mapping.
+
+- **`references/rtc-nfce-and-account-resources.md`** — Read when working with RTC issuance (`serviceInvoicesRtc`/`productInvoicesRtc`), NFC-e (`consumerInvoices`, requires `environment`), municipal tax enrollments, certificates by thumbprint, notifications, or account-scoped webhooks. Contains the v5-new resource signatures plus `cancelAndWait`/`exists`/`switchAuthorizer`.
 
 - **`references/error-handling-and-patterns.md`** — Read when implementing error handling, retry strategies, or debugging SDK issues. Contains complete error class hierarchy, type guards, ErrorFactory, RetryConfig, and CertificateValidator.

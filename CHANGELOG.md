@@ -5,6 +5,87 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [5.0.0] - 2026-06-30
+
+> Primeira release de **funcionalidades** desde a v3 — a v4 foi apenas o bump de runtime
+> (Node 22), sem mudanças de API. A v5 reúne os novos recursos (RTC, NFC-e, inscrições
+> municipais, certificados, notificações, webhooks de conta) e correções de contrato
+> descobertas testando contra a API ao vivo. Guia: [MIGRATION.md](MIGRATION.md#v4--v5).
+
+### ⚠️ BREAKING CHANGES
+
+Todas as quebras são em superfícies que **já estavam quebradas** (métodos que só lançavam
+404, retornos que vinham `undefined`); nenhum código correto deixa de funcionar, mas
+usuários TypeScript devem revisar estes pontos no upgrade:
+
+- **`addresses.lookupByPostalCode()`** agora retorna um `Address` (antes retornava o
+  envelope cru tipado como `{ addresses: Address[] }`). Acesse os campos direto:
+  `address.street` em vez de `result.addresses[0].street`.
+- **`addresses.search()` e `addresses.lookupByTerm()` removidos** — os endpoints não
+  existem no host real (404). Use `lookupByPostalCode()`. O tipo `AddressSearchOptions`
+  foi removido e `AddressLookupResponse` agora descreve o envelope `{ address: Address }`.
+- **`serviceInvoices.cancel()`** agora retorna `CancelInvoiceResponse` (união discriminada
+  `{ status: 'async', response } | { status: 'immediate', invoice }`), pois o cancelamento
+  é assíncrono. Antes retornava um stub tipado como `ServiceInvoiceData`. Use
+  `cancelAndWait()` para bloquear até concluir.
+- **`CertificateValidator.validate()`** não retorna mais `metadata` fabricada (subject/
+  issuer/validade falsos). O pré-flight local é só de formato; os dados do certificado são
+  verificados no servidor durante o upload.
+
+### ✨ Adicionado — Companies v2, notificações e avulsos
+
+- **`companies.exists(companyId)`**: checagem de existência via `HEAD /v2/companies/{id}` (api.nfse.io; 404 → `false`). HTTP client ganhou o verbo **`head`**.
+- **`nfe.notifications`** (`NotificationsResource`, api.nfe.io): `list`/`retrieve`/`delete`/`sendEmail` de notificações da empresa.
+- **`serviceInvoices.retrieveByExternalId(companyId, externalId)`**: busca por id externo (idempotência/reconciliação).
+- **`stateTaxes.switchAuthorizer(companyId, stateTaxId, data?)`**: troca de autorizador NF-e (`POST .../switch-authorizer`).
+
+### ✨ Adicionado — Gestão de certificados por thumbprint
+
+- **`nfe.certificates`** (`CertificatesResource`, api.nfse.io): `list`, `getByThumbprint`/`deleteByThumbprint` (v2) e variantes v1 (`getByThumbprintV1`/`deleteByThumbprintV1`). Cobre o gap da consulta/remoção de certificado por thumbprint. Complementa o `companies.uploadCertificate` legado (host api.nfe.io) — recurso dedicado por estar em host diferente (contribuintes-v2 @ api.nfse.io).
+
+### ✨ Adicionado — NFC-e (consumer invoices)
+
+- **`nfe.consumerInvoices`** (`ConsumerInvoicesResource`, api.nfse.io): ciclo de vida da NFC-e company-scoped — `create` (**webhook-driven**, sem polling), `list`, `retrieve`, `cancel`, `getItems`, `getEvents`, `downloadPdf`/`downloadXml`/`downloadRejectionXml`, e `disable` (inutilização). Distinto do `consumerInvoiceQuery` (consulta de cupom, somente leitura). Tipos: `ConsumerInvoiceData`, `ConsumerInvoice`, `ConsumerInvoiceDisablementData`.
+
+### ✨ Adicionado — Inscrições Municipais (municipal taxes)
+
+- **`nfe.municipalTaxes`** (`MunicipalTaxesResource`, api.nfse.io): CRUD de inscrições municipais — pré-requisito para emissão de NFS-e —, espelhando `stateTaxes`. Inclui `updatePrefecture` (HTTP **PATCH** `.../updateprefecture`) e `getSeries` (`.../series/{serie}`). Tipos: `MunicipalTax`, `CreateMunicipalTaxData`, `UpdateMunicipalTaxData`.
+- HTTP client ganhou o verbo **`patch`** (mesma cadeia de retry/timeout/erro dos demais).
+
+### ✨ Adicionado — Webhooks de conta
+
+- `WebhooksResource` ganhou operações **de conta** (`/v2/webhooks`, sem `companyId`): `listAccountWebhooks`, `createAccountWebhook`, `retrieveAccountWebhook`, `updateAccountWebhook`, `deleteAccountWebhook`, `pingAccountWebhook`, e `deleteAllAccountWebhooks` (método distinto e marcado como destrutivo). Os métodos company-scoped existentes seguem inalterados.
+- **`fetchEventTypes()`**: lista de tipos de evento **ao vivo** (`GET /v2/webhooks/eventTypes`), com retorno em união aberta. `getAvailableEvents()` (lista hardcoded) foi marcado `@deprecated`.
+
+### ✨ Adicionado — Empresas (contribuintes-v2) e tipagem de domínio
+
+- Spec **`contribuintes-v2`** (Empresas, OpenAPI 3.x) adotada na geração — destrava tipos reais de empresa/certificado/endereço.
+- **`Company`** enriquecido de forma **aditiva** (minor, sem quebra): mantém os campos atuais e o índice `[key: string]: unknown`, e adiciona os campos documentados do spec (`address`, `taxRegime`, `tradeName`, `stateTaxes`, …) como **opcionais** — melhora o autocomplete sem apertar o tipo nem o input do `create()`.
+- Novos tipos exportados (opt-in, estritos): `CompanyResourceItem`, `CompanyResourceV1`, `CreateCompanyResourceItem`, `UpdateCompanyResourceItem`, `CertificateMetadataResource`, `CompanyAddress`.
+- Guard de regressão de tipo executável: `npm run test:types` (vitest typecheck) garante que leituras de campo arbitrário continuam compilando e que `federalTaxNumber` segue `number`.
+
+### ✨ Adicionado — Reforma Tributária do Consumo (RTC)
+
+- **`nfe.serviceInvoicesRtc`**: emissão de NFS-e no leiaute RTC (grupo `ibsCbs`), com `create`/`createAndWait` (polling) e `downloadCancellationXml` (XML do evento de cancelamento — Ambiente Nacional). Mesmo endpoint da emissão atual; RTC é selecionado pelo payload. Tipo de request: `NFSeRtcRequest` (schema `NFSeRequest`).
+- **`nfe.productInvoicesRtc`**: emissão de NF-e/NFC-e no leiaute RTC (IBS estadual/municipal, CBS, IS), `create` **webhook-driven** (não faz polling), espelhando `productInvoices`. Tipo de request: `ProductInvoiceRtcRequest` (schema `ProductInvoiceRequest`).
+- Recursos de emissão existentes (`serviceInvoices`/`productInvoices`) permanecem inalterados; RTC é opt-in. Proveniência das specs registrada em `openapi/spec/SOURCES.json` (NT_2025.002_v1.30).
+- Pipeline de geração agora descobre specs `.json` e falha em skip inesperado (allowlist dos 5 Swagger 2.0 legados).
+
+### 🐛 Correções
+
+- **CertificateValidator**: `validate()` deixou de **fabricar metadata** (subject/issuer/validade falsos) e de reportar validade de 1 ano para qualquer arquivo bem-formado. Agora é um pré-flight **só de formato** (buffer, senha presente, magic bytes PKCS#12); subject/issuer/validade e a senha são verificados no servidor durante o upload. `metadata` passa a ser ausente no pré-flight local.
+- **`updateConfig()`**: agora invalida **todos** os resources e HTTP clients em cache (via `resetCaches()`). Antes, resetava apenas ~10 — `productInvoices`, `stateTaxes`, `taxCalculation`, `taxCodes`, lookups e os clients de query/legalEntity/naturalPerson permaneciam com a configuração antiga após `updateConfig`.
+- **README**: exemplo de webhook corrigido para o header `x-hub-signature` (HMAC-SHA1), alinhado ao fix de verificação de assinatura; antes referenciava `x-nfe-signature`.
+- **`addresses.lookupByPostalCode()`**: passou a **desempacotar** o envelope `{ address }` da API e retornar um único `Address`. Antes retornava o envelope cru tipado como `{ addresses: Address[] }` — quem seguia o JSDoc (`result.addresses[0].street`) recebia `undefined`. Verificado contra a API ao vivo (`address.api.nfe.io/v2`).
+- **`addresses.search()` e `addresses.lookupByTerm()` removidos**: os endpoints que chamavam (`/v2/addresses` e `/v2/addresses/{term}`) respondem **404** no host real — os métodos só lançavam `NotFoundError`. Como nunca funcionaram, a remoção não quebra nenhum consumidor real. O tipo `AddressSearchOptions` foi removido e `AddressLookupResponse` agora descreve o envelope real (`{ address: Address }`). Se o backend confirmar um endpoint de busca, ele volta como change separada com contrato verificado.
+- **`serviceInvoices.cancel()`**: o cancelamento de NFS-e é **assíncrono** (HTTP `202` + `Location`). Antes, `cancel()` retornava o stub de polling `{ code, status, location }` **tipado como `ServiceInvoiceData`** (então `cancelled.id`/`flowStatus` vinham `undefined`). Agora retorna uma **união discriminada** `CancelInvoiceResponse` (`{ status: 'async', response }` ou `{ status: 'immediate', invoice }`), espelhando `create()`. Novo método **`cancelAndWait()`** faz polling até o cancelamento concluir (espelha `createAndWait`). Verificado contra a API ao vivo. Tipos exportados: `CreateInvoiceResponse`, `CancelInvoiceResponse`.
+
+#### Correções de recursos novos (descobertas em smoke test ao vivo de toda a SDK)
+
+- **`taxCodes.*`**: passou a usar a **chave principal** (`apiKey`) contra `api.nfse.io`. Antes estava ligado ao cliente CT-e (chave de dados), o que retornava **403** em setups com `dataApiKey` separada. Os 4 endpoints (`/tax-codes/*`) agora respondem 200.
+- **`consumerInvoices.list()`**: agora exige `environment` (`Production`/`Test`), obrigatório pela API — antes a chamada saía sem o parâmetro e retornava **400**. Também passou a usar a **chave principal** (antes 403 com chave de dados separada). Os métodos de leitura (`retrieve`/`getItems`/`getEvents`/downloads) aceitam `environment` opcional.
+- **`webhooks` de conta**: os métodos de conta (`listAccountWebhooks`, `createAccountWebhook`, `fetchEventTypes`, etc.) montavam o caminho `/v1/v2/webhooks` (duplo prefixo de versão) → **404**. Agora usam um cliente dedicado em `api.nfe.io/v2`. Além disso, `listAccountWebhooks` desempacota o envelope `{ webHooks }` para `{ data }` e `fetchEventTypes` extrai os ids de `{ eventTypes }`.
+
 ## [4.0.0] - 2026-06-12
 
 ### ⚠️ BREAKING CHANGE — Node.js >= 22

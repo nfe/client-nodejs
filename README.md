@@ -1,4 +1,4 @@
-# NFE.io SDK para Node.js (v4)
+# NFE.io SDK para Node.js (v5)
 
 [![npm version](https://img.shields.io/npm/v/nfe-io.svg)](https://www.npmjs.com/package/nfe-io)
 [![Node.js Version](https://img.shields.io/node/v/nfe-io.svg)](https://nodejs.org)
@@ -8,7 +8,7 @@
 
 **SDK Oficial NFE.io para Node.js 22+** - SDK TypeScript moderno para emissão de notas fiscais de serviço eletrônicas (NFS-e).
 
-> ✨ **Versão 4** - TypeScript nativo, zero dependências em runtime e API moderna async/await.
+> ✨ **Versão 5** - TypeScript nativo, zero dependências em runtime e API moderna async/await. Inclui emissão RTC (Reforma Tributária), NFC-e, inscrições municipais, certificados, notificações e webhooks de conta. Veja a [migração v4 → v5](MIGRATION.md#v4--v5).
 
 ## 📋 Índice
 
@@ -971,9 +971,9 @@ const webhook = await nfe.webhooks.create(empresaId, {
   active: true
 });
 
-// No seu endpoint de webhook
+// No seu endpoint de webhook (capture o corpo cru: app.use(express.raw({ type: '*/*' })))
 app.post('/api/webhooks/nfe', (req, res) => {
-  const assinatura = req.headers['x-nfe-signature'];
+  const assinatura = req.headers['x-hub-signature']; // header correto (HMAC-SHA1), não 'x-nfe-signature'
   const ehValido = nfe.webhooks.validateSignature(
     req.body,
     assinatura,

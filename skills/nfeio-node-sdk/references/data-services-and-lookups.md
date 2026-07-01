@@ -20,39 +20,25 @@ Resources using `dataApiKey` will fall back to `apiKey` if `dataApiKey` is not c
 
 Access via `nfe.addresses`. Global scope (no company ID needed).
 
-### lookupByPostalCode(postalCode): Promise<AddressLookupResponse>
+The live host (`address.api.nfe.io/v2`) supports **postal-code lookup only**. There is no
+working free-text/search endpoint, so the SDK exposes `lookupByPostalCode` only.
+
+### lookupByPostalCode(postalCode): Promise<Address>
+
+Returns the single `Address` (the API's `{ address }` envelope is unwrapped for you).
 
 ```typescript
-// Both formats accepted:
-const result = await nfe.addresses.lookupByPostalCode('01310-100');
-const result = await nfe.addresses.lookupByPostalCode('01310100');
+// Both formats accepted (normalized to 8 digits):
+const address = await nfe.addresses.lookupByPostalCode('01310-100');
+console.log(address.street);         // 'Paulista'
+console.log(address.city.name);      // 'São Paulo'
 ```
 
-Validates CEP format (8 digits, with or without dash).
+Validates CEP format (8 digits, with or without dash) before the request.
 
-### search(options?): Promise<AddressLookupResponse>
-
-OData filter expression support:
-```typescript
-const result = await nfe.addresses.search({
-  filter: "city eq 'Sao Paulo' and state eq 'SP'",
-});
-```
-
-### lookupByTerm(term): Promise<AddressLookupResponse>
-
-Free-text search:
-```typescript
-const result = await nfe.addresses.lookupByTerm('Avenida Paulista Sao Paulo');
-```
-
-### AddressLookupResponse
+### Address
 
 ```typescript
-interface AddressLookupResponse {
-  addresses: Address[];
-}
-
 interface Address {
   state: string;                    // UF code (e.g., 'SP')
   city: {
@@ -61,15 +47,18 @@ interface Address {
   };
   district: string;
   street: string;
-  streetSuffix: string;
-  number: string;
-  numberMin: string;
-  numberMax: string;
+  streetSuffix: string;             // e.g., 'Avenida'
+  number: string;                   // may be a textual range
+  numberMin?: string;               // omitted by the API for some entries
+  numberMax?: string;
   additionalInformation: string;
-  postalCode: string;               // Format: '01310100' (no dash)
-  country: string;
+  postalCode: string;               // returned WITH dash, e.g. '01310-100'
+  country: string;                  // ISO 3166-1 alpha-3, e.g. 'BRA'
 }
 ```
+
+> Removed in v5: `addresses.search()` and `addresses.lookupByTerm()` (their endpoints
+> return 404 on the live host). Use `lookupByPostalCode`.
 
 ---
 

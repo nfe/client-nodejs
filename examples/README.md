@@ -1,4 +1,4 @@
-# 📚 Exemplos Reais do SDK NFE.io v3
+# 📚 Exemplos Reais do SDK NFE.io v5
 
 Este diretório contém exemplos práticos que você pode executar usando suas credenciais do arquivo `.env.test`.
 
@@ -176,6 +176,42 @@ node examples/tax-calculation.js
 ```
 
 **Requer**: `NFE_TENANT_ID` no `.env.test` com o ID da subscription/conta.
+
+---
+
+## ✨ Novos na v5
+
+Recursos introduzidos na v5 (validados contra a API ao vivo). Todos usam `NFE_API_KEY` e,
+os company-scoped, `NFE_COMPANY_ID` de uma empresa apta a emitir.
+
+### **rtc-invoices.js** - Reforma Tributária (RTC)
+Emissão no leiaute RTC (IBS/CBS/IS) — `serviceInvoicesRtc` (polling) e `productInvoicesRtc` (webhook-driven). O RTC é selecionado pelo payload.
+
+### **consumer-invoices.js** - NFC-e
+Ciclo de vida da NFC-e (`consumerInvoices`): emissão webhook-driven, `list`/leituras **exigem `environment`** (`Production`/`Test`), downloads e inutilização.
+
+### **municipal-taxes.js** - Inscrições Municipais
+CRUD de inscrições municipais (`municipalTaxes`) — pré-requisito para NFS-e —, com `updatePrefecture` (PATCH) e `getSeries`.
+
+### **certificates.js** - Certificados por thumbprint
+Consulta/remoção de certificados por thumbprint (`certificates`), com variantes v1.
+
+### **notifications.js** - Notificações
+Notificações da empresa (`notifications`): listar, obter, remover, enviar e-mail.
+
+### **account-webhooks.js** - Webhooks de Conta
+Webhooks no nível da **conta** (`webhooks.*Account*`) + `fetchEventTypes()` (lista de eventos ao vivo).
+
+```bash
+node examples/rtc-invoices.js
+node examples/consumer-invoices.js
+node examples/municipal-taxes.js
+node examples/certificates.js
+node examples/notifications.js
+node examples/account-webhooks.js
+```
+
+> Emissão contra a API real cria documentos de homologação (env `development`/`Test`). Ajuste os payloads ao seu caso antes de rodar.
 
 ---
 

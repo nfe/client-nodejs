@@ -157,7 +157,10 @@ describe('ServiceInvoicesResource', () => {
       expect(mockHttpClient.delete).toHaveBeenCalledWith(
         `/companies/${TEST_COMPANY_ID}/serviceinvoices/${TEST_INVOICE_ID}`
       );
-      expect(result.flowStatus).toBe('Cancelled');
+      expect(result.status).toBe('immediate');
+      if (result.status === 'immediate') {
+        expect(result.invoice.flowStatus).toBe('Cancelled');
+      }
     });
   });
 

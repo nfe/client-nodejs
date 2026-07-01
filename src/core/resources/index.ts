@@ -21,3 +21,9 @@ export { TaxCalculationResource, createTaxCalculationResource } from './tax-calc
 export { TaxCodesResource, createTaxCodesResource } from './tax-codes.js';
 export { ProductInvoicesResource } from './product-invoices.js';
 export { StateTaxesResource } from './state-taxes.js';
+export { ServiceInvoicesRtcResource, createServiceInvoicesRtcResource } from './service-invoices-rtc.js';
+export { ProductInvoicesRtcResource, createProductInvoicesRtcResource } from './product-invoices-rtc.js';
+export { MunicipalTaxesResource, createMunicipalTaxesResource } from './municipal-taxes.js';
+export { ConsumerInvoicesResource, createConsumerInvoicesResource } from './consumer-invoices.js';
+export { CertificatesResource, createCertificatesResource } from './certificates.js';
+export { NotificationsResource, createNotificationsResource } from './notifications.js';

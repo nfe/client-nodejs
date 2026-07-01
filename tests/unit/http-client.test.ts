@@ -180,6 +180,47 @@ describe('HttpClient', () => {
     });
   });
 
+  describe('PATCH Requests', () => {
+    it('should make successful PATCH request', async () => {
+      const patchData = { foo: 'bar' };
+      const responseBody = { id: '123', ...patchData };
+
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: createMockHeaders([['content-type', 'application/json']]),
+        json: async () => responseBody,
+      });
+
+      const response = await httpClient.patch('/companies/123/municipaltaxes/1/updateprefecture', patchData);
+
+      expect(response.data).toEqual(responseBody);
+      expect(fetchMock.mock.calls[0][1].method).toBe('PATCH');
+    });
+
+    it('inherits retry behavior (503 then success), proving verb parity', async () => {
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: createMockHeaders([['content-type', 'application/json']]),
+          json: async () => ({ error: 'Temporarily unavailable' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: createMockHeaders([['content-type', 'application/json']]),
+          json: async () => ({ ok: true }),
+        });
+
+      const response = await httpClient.patch<{ ok: boolean }>('/test', {});
+
+      expect(response.data).toEqual({ ok: true });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('DELETE Requests', () => {
     it('should make successful DELETE request', async () => {
       fetchMock.mockResolvedValue({

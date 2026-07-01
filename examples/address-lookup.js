@@ -53,60 +53,16 @@ async function lookupByPostalCode() {
 }
 
 /**
- * Example 2: Search addresses by term
+ * Note: the live address.api.nfe.io/v2 host supports postal-code lookup only.
+ * There is no working free-text/search endpoint, so this SDK exposes
+ * `lookupByPostalCode` only.
  */
-async function lookupByTerm() {
-  console.log('\n🔍 Example 2: Search by Term');
-  console.log('='.repeat(50));
-
-  try {
-    const result = await client.addresses.lookupByTerm('Avenida Paulista');
-
-    console.log('Search results:');
-    if (result.addresses && result.addresses.length > 0) {
-      for (const address of result.addresses.slice(0, 3)) {
-        console.log(`  - ${address.postalCode}: ${address.street}, ${address.city?.name}/${address.state}`);
-      }
-      if (result.addresses.length > 3) {
-        console.log(`  ... and ${result.addresses.length - 3} more`);
-      }
-    } else {
-      console.log('  No addresses found');
-    }
-  } catch (error) {
-    console.error('Error:', error.message);
-  }
-}
 
 /**
- * Example 3: Search with OData filter
- */
-async function searchWithFilter() {
-  console.log('\n🎯 Example 3: Search with Filter');
-  console.log('='.repeat(50));
-
-  try {
-    // Search addresses in São Paulo
-    const result = await client.addresses.search({
-      filter: "city.name eq 'São Paulo'",
-    });
-
-    console.log('Filtered search results:');
-    if (result.addresses && result.addresses.length > 0) {
-      console.log(`  Found ${result.addresses.length} addresses in São Paulo`);
-    } else {
-      console.log('  No addresses found');
-    }
-  } catch (error) {
-    console.error('Error:', error.message);
-  }
-}
-
-/**
- * Example 4: Using only dataApiKey (isolated usage)
+ * Example 2: Using only dataApiKey (isolated usage)
  */
 async function isolatedAddressUsage() {
-  console.log('\n🔐 Example 4: Isolated Data API Usage');
+  console.log('\n🔐 Example 2: Isolated Data API Usage');
   console.log('='.repeat(50));
 
   // Create a client with ONLY dataApiKey
@@ -130,10 +86,10 @@ async function isolatedAddressUsage() {
 }
 
 /**
- * Example 5: Error handling
+ * Example 3: Error handling
  */
 async function errorHandling() {
-  console.log('\n⚠️  Example 5: Error Handling');
+  console.log('\n⚠️  Example 3: Error Handling');
   console.log('='.repeat(50));
 
   try {
@@ -141,13 +97,6 @@ async function errorHandling() {
     await client.addresses.lookupByPostalCode('invalid');
   } catch (error) {
     console.log('ValidationError for invalid CEP:', error.message);
-  }
-
-  try {
-    // Empty search term
-    await client.addresses.lookupByTerm('');
-  } catch (error) {
-    console.log('ValidationError for empty term:', error.message);
   }
 
   try {
@@ -175,8 +124,6 @@ async function main() {
   }
 
   await lookupByPostalCode();
-  await lookupByTerm();
-  await searchWithFilter();
   await isolatedAddressUsage();
   await errorHandling();
 

@@ -29,11 +29,21 @@ export interface CertificateValidationResult {
 
 export class CertificateValidator {
   /**
-   * Validate certificate file and extract metadata
+   * Pre-flight a certificate file before upload.
+   *
+   * IMPORTANT: this performs **format-only** local checks (non-empty buffer,
+   * password provided, PKCS#12 `3082` magic bytes). It does NOT parse the
+   * certificate and CANNOT verify the password, expiry, subject or issuer —
+   * doing so requires a PKCS#12 reader, which would violate the SDK's
+   * no-runtime-dependency rule. Subject/issuer/validity and the password are
+   * verified **server-side** by the NFE.io API when the certificate is uploaded.
+   *
+   * Therefore a `valid: true` result means "looks like a PKCS#12 file", not
+   * "this is a valid, in-date certificate with the right password".
    *
    * @param file - Certificate file buffer
-   * @param password - Certificate password
-   * @returns Validation result with metadata if valid
+   * @param password - Certificate password (presence checked only)
+   * @returns Pre-flight result (no fabricated metadata)
    */
   static async validate(
     file: Buffer,
@@ -57,19 +67,11 @@ export class CertificateValidator {
         return { valid: false, error: 'Invalid certificate format. Expected PKCS#12 (.pfx/.p12)' };
       }
 
-      // Note: Full PKCS#12 parsing requires native crypto libraries or specialized packages
-      // For production, consider using packages like 'node-forge' or rely on API validation
-      // This implementation provides basic pre-flight checks
-
-      return {
-        valid: true,
-        metadata: {
-          subject: 'Certificate Subject',
-          issuer: 'Certificate Issuer',
-          validFrom: new Date(),
-          validTo: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
-        }
-      };
+      // Format pre-flight passed. We deliberately DO NOT return metadata:
+      // full PKCS#12 parsing (subject/issuer/validity) and password verification
+      // require a runtime dependency we don't take. The API validates these on
+      // upload. Returning fabricated metadata here would lie about validation.
+      return { valid: true };
 
     } catch (error) {
       if (error instanceof Error) {

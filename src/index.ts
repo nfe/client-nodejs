@@ -32,7 +32,7 @@
  * ```
  *
  * @module @nfe-io/sdk
- * @version 3.0.0-beta.1
+ * @version 5.0.0
  * @author NFE.io
  * @license MIT
  */
@@ -79,7 +79,6 @@ export type {
   Address,
   AddressCity,
   AddressLookupResponse,
-  AddressSearchOptions,
 
   // CT-e (Transportation Invoice) types
   TransportationInvoiceInboundSettings,
@@ -317,6 +316,27 @@ export type {
   // Utility types
   ResourceId,
   ApiErrorResponse,
+
+  // RTC (Reforma Tributária do Consumo) emission request types
+  NFSeRtcRequest,
+  ProductInvoiceRtcRequest,
+
+  // Empresas (contribuintes-v2) spec-backed types
+  CompanyResourceItem,
+  CompanyResourceV1,
+  CreateCompanyResourceItem,
+  UpdateCompanyResourceItem,
+  CertificateMetadataResource,
+  CompanyAddress,
+  MunicipalTax,
+  CreateMunicipalTaxData,
+  UpdateMunicipalTaxData,
+  MunicipalTaxListResponse,
+  ConsumerInvoiceData,
+  ConsumerInvoice,
+  ConsumerInvoiceListResponse,
+  ConsumerInvoiceDisablementData,
+  CertificatesMetadataResource,
 } from './core/types.js';
 
 /**
@@ -420,6 +440,21 @@ export { TaxCalculationResource, createTaxCalculationResource } from './core/res
 export { TaxCodesResource, createTaxCodesResource } from './core/resources/tax-codes.js';
 export { ProductInvoicesResource } from './core/resources/product-invoices.js';
 export { StateTaxesResource } from './core/resources/state-taxes.js';
+export { ServiceInvoicesRtcResource } from './core/resources/service-invoices-rtc.js';
+export { ProductInvoicesRtcResource } from './core/resources/product-invoices-rtc.js';
+export { MunicipalTaxesResource } from './core/resources/municipal-taxes.js';
+export { ConsumerInvoicesResource } from './core/resources/consumer-invoices.js';
+export type {
+  ConsumerInvoiceListOptions,
+  ConsumerInvoiceEnvironment,
+} from './core/resources/consumer-invoices.js';
+export { CertificatesResource } from './core/resources/certificates.js';
+export { NotificationsResource } from './core/resources/notifications.js';
+export type { Notification, NotificationListResponse } from './core/resources/notifications.js';
+export type {
+  CreateInvoiceResponse,
+  CancelInvoiceResponse,
+} from './core/resources/service-invoices.js';
 
 // ============================================================================
 // Default Export (maintains v2 compatibility)
@@ -472,7 +507,7 @@ export const PACKAGE_NAME = '@nfe-io/sdk';
  * Current SDK version
  * @constant
  */
-export const PACKAGE_VERSION = '3.0.0-beta.1';
+export const PACKAGE_VERSION = '5.0.0';
 
 /**
  * NFE.io API version supported by this SDK

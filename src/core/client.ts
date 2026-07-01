@@ -37,6 +37,12 @@ import {
   TaxCodesResource,
   ProductInvoicesResource,
   StateTaxesResource,
+  ServiceInvoicesRtcResource,
+  ProductInvoicesRtcResource,
+  MunicipalTaxesResource,
+  ConsumerInvoicesResource,
+  CertificatesResource,
+  NotificationsResource,
   ADDRESS_API_BASE_URL,
   NFE_QUERY_API_BASE_URL,
   LEGAL_ENTITY_API_BASE_URL,
@@ -141,6 +147,8 @@ export class NfeClient {
 
   /** @internal HTTP client for CT-e API requests (created lazily) */
   private _cteHttp: HttpClient | undefined;
+  private _nfseMainHttp: HttpClient | undefined;
+  private _webhooksAccountHttp: HttpClient | undefined;
 
   /** @internal HTTP client for NF-e query API requests (created lazily) */
   private _nfeQueryHttp: HttpClient | undefined;
@@ -171,6 +179,12 @@ export class NfeClient {
   private _taxCodes: TaxCodesResource | undefined;
   private _productInvoices: ProductInvoicesResource | undefined;
   private _stateTaxes: StateTaxesResource | undefined;
+  private _serviceInvoicesRtc: ServiceInvoicesRtcResource | undefined;
+  private _productInvoicesRtc: ProductInvoicesRtcResource | undefined;
+  private _municipalTaxes: MunicipalTaxesResource | undefined;
+  private _consumerInvoices: ConsumerInvoicesResource | undefined;
+  private _certificates: CertificatesResource | undefined;
+  private _notifications: NotificationsResource | undefined;
 
   /**
    * Service Invoices API resource
@@ -224,7 +238,7 @@ export class NfeClient {
    */
   get companies(): CompaniesResource {
     if (!this._companies) {
-      this._companies = new CompaniesResource(this.getMainHttpClient());
+      this._companies = new CompaniesResource(this.getMainHttpClient(), this.getCteHttpClient());
     }
     return this._companies;
   }
@@ -306,7 +320,10 @@ export class NfeClient {
    */
   get webhooks(): WebhooksResource {
     if (!this._webhooks) {
-      this._webhooks = new WebhooksResource(this.getMainHttpClient());
+      this._webhooks = new WebhooksResource(
+        this.getMainHttpClient(),
+        this.getWebhooksAccountHttpClient()
+      );
     }
     return this._webhooks;
   }
@@ -315,10 +332,8 @@ export class NfeClient {
    * Addresses API resource
    *
    * @description
-   * Provides operations for looking up Brazilian addresses:
-   * - Lookup by postal code (CEP)
-   * - Search by filter
-   * - Search by generic term
+   * Provides postal code (CEP) lookup for Brazilian addresses. The live API host
+   * supports postal-code lookup only and returns a single {@link Address}.
    *
    * **Note:** This resource uses a different API host (address.api.nfe.io).
    * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
@@ -328,8 +343,8 @@ export class NfeClient {
    *
    * @example
    * ```typescript
-   * const result = await nfe.addresses.lookupByPostalCode('01310-100');
-   * console.log(result.addresses[0].street); // 'Paulista'
+   * const address = await nfe.addresses.lookupByPostalCode('01310-100');
+   * console.log(address.street); // 'Paulista'
    * ```
    */
   get addresses(): AddressesResource {
@@ -626,7 +641,7 @@ export class NfeClient {
    */
   get taxCodes(): TaxCodesResource {
     if (!this._taxCodes) {
-      this._taxCodes = new TaxCodesResource(this.getCteHttpClient());
+      this._taxCodes = new TaxCodesResource(this.getNfseMainHttpClient());
     }
     return this._taxCodes;
   }
@@ -682,6 +697,76 @@ export class NfeClient {
       this._stateTaxes = new StateTaxesResource(this.getCteHttpClient());
     }
     return this._stateTaxes;
+  }
+
+  /**
+   * Service Invoices RTC resource — emit NFS-e under the Reforma Tributária layout
+   * (IBS/CBS groups). Uses the main host (api.nfe.io); supports polling. Emission
+   * is opt-in via this resource; retrieve/cancel/PDF/XML are shared with
+   * {@link serviceInvoices}.
+   */
+  get serviceInvoicesRtc(): ServiceInvoicesRtcResource {
+    if (!this._serviceInvoicesRtc) {
+      this._serviceInvoicesRtc = new ServiceInvoicesRtcResource(this.getMainHttpClient());
+    }
+    return this._serviceInvoicesRtc;
+  }
+
+  /**
+   * Product Invoices RTC resource — emit NF-e/NFC-e under the Reforma Tributária
+   * layout (IBS state+municipal, CBS, IS). Uses api.nfse.io; webhook-driven (not
+   * polled), mirroring {@link productInvoices}.
+   */
+  get productInvoicesRtc(): ProductInvoicesRtcResource {
+    if (!this._productInvoicesRtc) {
+      this._productInvoicesRtc = new ProductInvoicesRtcResource(this.getCteHttpClient());
+    }
+    return this._productInvoicesRtc;
+  }
+
+  /**
+   * Municipal Taxes resource — CRUD for company municipal tax registrations
+   * (Inscrições Municipais), prerequisite for NFS-e issuance. Uses api.nfse.io.
+   */
+  get municipalTaxes(): MunicipalTaxesResource {
+    if (!this._municipalTaxes) {
+      this._municipalTaxes = new MunicipalTaxesResource(this.getCteHttpClient());
+    }
+    return this._municipalTaxes;
+  }
+
+  /**
+   * Consumer Invoices resource — emit & manage NFC-e (company-scoped) on
+   * api.nfse.io. Webhook-driven emission. Distinct from {@link consumerInvoiceQuery}
+   * (read-only coupon lookup).
+   */
+  get consumerInvoices(): ConsumerInvoicesResource {
+    if (!this._consumerInvoices) {
+      this._consumerInvoices = new ConsumerInvoicesResource(this.getNfseMainHttpClient());
+    }
+    return this._consumerInvoices;
+  }
+
+  /**
+   * Certificates resource — manage company digital certificates (retrieve/delete
+   * by thumbprint, list) via the contribuintes-v2 API on api.nfse.io. Complements
+   * the legacy `companies.uploadCertificate` (which targets the api.nfe.io host).
+   */
+  get certificates(): CertificatesResource {
+    if (!this._certificates) {
+      this._certificates = new CertificatesResource(this.getCteHttpClient());
+    }
+    return this._certificates;
+  }
+
+  /**
+   * Notifications resource — company notification operations (api.nfe.io).
+   */
+  get notifications(): NotificationsResource {
+    if (!this._notifications) {
+      this._notifications = new NotificationsResource(this.getMainHttpClient());
+    }
+    return this._notifications;
   }
 
   /**
@@ -834,6 +919,58 @@ export class NfeClient {
       this._cteHttp = new HttpClient(httpConfig);
     }
     return this._cteHttp;
+  }
+
+  /**
+   * Get or create the HTTP client for api.nfse.io resources that require the
+   * MAIN api key (not the data key) — e.g. tax-codes and consumer invoices
+   * (NFC-e emission). Host is CTE_API_BASE_URL (api.nfse.io); key is the main key.
+   * @throws {ConfigurationError} If no main API key is configured
+   */
+  private getNfseMainHttpClient(): HttpClient {
+    if (!this._nfseMainHttp) {
+      const apiKey = this.resolveMainApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for this resource. Set "apiKey" in config or NFE_API_KEY environment variable.'
+        );
+      }
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        CTE_API_BASE_URL,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._nfseMainHttp = new HttpClient(httpConfig);
+    }
+    return this._nfseMainHttp;
+  }
+
+  /**
+   * Get or create the HTTP client for ACCOUNT-scoped webhook endpoints. These
+   * live at the host root under `/v2` (e.g. https://api.nfe.io/v2/webhooks) and
+   * use the MAIN key — NOT under the `/v1` base of the main client.
+   * @throws {ConfigurationError} If no main API key is configured
+   */
+  private getWebhooksAccountHttpClient(): HttpClient {
+    if (!this._webhooksAccountHttp) {
+      const apiKey = this.resolveMainApiKey();
+      if (!apiKey) {
+        throw new ConfigurationError(
+          'API key required for this resource. Set "apiKey" in config or NFE_API_KEY environment variable.'
+        );
+      }
+      // Account webhooks are at host-root /v2, not under the /v1 main base.
+      const v2BaseUrl = this.config.baseUrl.replace(/\/v1(\/)?$/, '/v2');
+      const httpConfig = buildHttpConfig(
+        apiKey,
+        v2BaseUrl,
+        this.config.timeout,
+        this.config.retryConfig
+      );
+      this._webhooksAccountHttp = new HttpClient(httpConfig);
+    }
+    return this._webhooksAccountHttp;
   }
 
   /**
@@ -1035,10 +1172,28 @@ export class NfeClient {
     // Update internal config
     Object.assign(this.config, normalizedConfig);
 
-    // Clear cached HTTP clients and resources so they're recreated with new config
+    // Clear ALL cached HTTP clients and resources so they're recreated with new config.
+    this.resetCaches();
+  }
+
+  /**
+   * Invalidate every lazily-cached HTTP client and resource.
+   *
+   * Must list every `_*Http` and resource field so that, after `updateConfig`,
+   * no cached instance retains a stale baseUrl/apiKey/timeout. When adding a new
+   * resource or HTTP client, add it here too (single source of cache truth).
+   */
+  private resetCaches(): void {
+    // HTTP clients
     this._http = undefined;
     this._addressHttp = undefined;
     this._cteHttp = undefined;
+    this._nfseMainHttp = undefined;
+    this._webhooksAccountHttp = undefined;
+    this._nfeQueryHttp = undefined;
+    this._legalEntityHttp = undefined;
+    this._naturalPersonHttp = undefined;
+    // Resources
     this._serviceInvoices = undefined;
     this._companies = undefined;
     this._legalPeople = undefined;
@@ -1046,6 +1201,21 @@ export class NfeClient {
     this._webhooks = undefined;
     this._addresses = undefined;
     this._transportationInvoices = undefined;
+    this._inboundProductInvoices = undefined;
+    this._productInvoiceQuery = undefined;
+    this._consumerInvoiceQuery = undefined;
+    this._legalEntityLookup = undefined;
+    this._naturalPersonLookup = undefined;
+    this._taxCalculation = undefined;
+    this._taxCodes = undefined;
+    this._productInvoices = undefined;
+    this._stateTaxes = undefined;
+    this._serviceInvoicesRtc = undefined;
+    this._productInvoicesRtc = undefined;
+    this._municipalTaxes = undefined;
+    this._consumerInvoices = undefined;
+    this._certificates = undefined;
+    this._notifications = undefined;
   }
 
   /**
@@ -1324,7 +1494,7 @@ export class NfeClient {
     hasApiKey: boolean;
   } {
     return {
-      version: '3.0.0-beta.1', // TODO: Read from package.json
+      version: VERSION,
       nodeVersion: this.getNodeVersion(),
       environment: this.config.environment,
       baseUrl: this.config.baseUrl,
@@ -1407,7 +1577,7 @@ export default function nfe(apiKey: string | NfeConfig): NfeClient {
  * Current SDK version
  * @constant
  */
-export const VERSION = '3.0.0-beta.1';
+export const VERSION = '5.0.0';
 
 /**
  * Supported Node.js version range (semver format)

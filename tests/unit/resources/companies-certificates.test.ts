@@ -29,7 +29,8 @@ describe('CompaniesResource - Certificate Management', () => {
       const result = await companies.validateCertificate(validBuffer, 'password');
 
       expect(result.valid).toBe(true);
-      expect(result.metadata).toBeDefined();
+      // Pre-flight does not fabricate metadata (verified server-side on upload).
+      expect(result.metadata).toBeUndefined();
     });
 
     it('should reject invalid certificate format', async () => {

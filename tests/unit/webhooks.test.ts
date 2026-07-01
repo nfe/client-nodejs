@@ -166,6 +166,65 @@ describe('WebhooksResource', () => {
     });
   });
 
+  describe('account-scoped operations (host-root /v2/webhooks)', () => {
+    it('listAccountWebhooks GETs /webhooks and unwraps the {webHooks} envelope', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: { webHooks: [{ id: 'w1' }, { id: 'w2' }] }, status: 200, headers: {},
+      } as HttpResponse<{ webHooks: Webhook[] }>);
+
+      const result = await webhooks.listAccountWebhooks();
+      expect(mockHttpClient.get).toHaveBeenCalledWith('/webhooks');
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]?.id).toBe('w1');
+    });
+
+    it('createAccountWebhook POSTs /webhooks', async () => {
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: { id: 'w1' }, status: 201, headers: {},
+      } as HttpResponse<Webhook>);
+
+      await webhooks.createAccountWebhook({ url: 'https://x.test/hook' });
+      expect(mockHttpClient.post).toHaveBeenCalledWith('/webhooks', { url: 'https://x.test/hook' });
+    });
+
+    it('retrieve/update/delete by id hit /webhooks/{id}', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValue({ data: { id: 'w1' }, status: 200, headers: {} } as HttpResponse<Webhook>);
+      vi.mocked(mockHttpClient.put).mockResolvedValue({ data: { id: 'w1' }, status: 200, headers: {} } as HttpResponse<Webhook>);
+      vi.mocked(mockHttpClient.delete).mockResolvedValue({ data: undefined, status: 204, headers: {} } as HttpResponse<void>);
+
+      await webhooks.retrieveAccountWebhook('w1');
+      await webhooks.updateAccountWebhook('w1', { active: false });
+      await webhooks.deleteAccountWebhook('w1');
+      await webhooks.pingAccountWebhook('w1');
+
+      expect(mockHttpClient.get).toHaveBeenCalledWith('/webhooks/w1');
+      expect(mockHttpClient.put).toHaveBeenCalledWith('/webhooks/w1', { active: false });
+      expect(mockHttpClient.delete).toHaveBeenCalledWith('/webhooks/w1');
+      expect(mockHttpClient.put).toHaveBeenCalledWith('/webhooks/w1/pings', {});
+    });
+
+    it('deleteAllAccountWebhooks is a distinct method hitting DELETE /webhooks (no id)', async () => {
+      vi.mocked(mockHttpClient.delete).mockResolvedValue({ data: undefined, status: 204, headers: {} } as HttpResponse<void>);
+
+      await webhooks.deleteAllAccountWebhooks();
+      expect(mockHttpClient.delete).toHaveBeenCalledWith('/webhooks');
+      // It is NOT the same as the single-delete method
+      expect(webhooks.deleteAllAccountWebhooks).not.toBe(webhooks.deleteAccountWebhook);
+    });
+
+    it('fetchEventTypes GETs /webhooks/eventTypes and extracts ids from the {eventTypes} envelope', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: { eventTypes: [{ id: 'invoice.issued' }, { id: 'invoice.cancelled' }, { id: 'some.new.event' }] },
+        status: 200, headers: {},
+      } as HttpResponse<{ eventTypes: Array<{ id: string }> }>);
+
+      const types = await webhooks.fetchEventTypes();
+      expect(mockHttpClient.get).toHaveBeenCalledWith('/webhooks/eventTypes');
+      expect(types).toContain('some.new.event');
+      expect(types).toHaveLength(3);
+    });
+  });
+
   describe('Error Handling', () => {
     it('should propagate HTTP client errors', async () => {
       const error = new Error('Network error');
