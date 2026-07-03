@@ -5,10 +5,10 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [5.1.0] - Não lançado
+## [5.1.0] - 2026-07-03
 
 > Correção do contrato de webhooks contra a API real, provado por sonda ao vivo
-> (2026-07-02, duas contas). O contrato correto sempre esteve nos specs oficiais
+> (2026-07-02/03, três contas). O contrato correto sempre esteve nos specs oficiais
 > (`openapi/spec/nf-servico-v1.yaml` e equivalentes) — o recurso manuscrito havia
 > divergido deles.
 
@@ -44,7 +44,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 - Métodos company-scoped de webhooks (`list`, `create`, `retrieve`, `update`,
   `delete`, `test` sobre `/v1/companies/{id}/webhooks`): a rota retorna **404**
-  na API atual (confirmado em duas contas, 2026-07-02). Use os equivalentes
+  na API atual (confirmado em três contas, 2026-07-02/03). Use os equivalentes
   account-scoped. O comportamento não mudou; remoção fica para a próxima major.
 - Tipos `Webhook` e `WebhookEvent`: shapes que a API real rejeita. Use
   `AccountWebhook` e `WebhookEventType`.
@@ -837,6 +837,8 @@ SDK JavaScript legado com API baseada em callbacks.
 
 ## Links
 
-[Unreleased]: https://github.com/nfe/client-nodejs/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/nfe/client-nodejs/compare/v5.1.0...HEAD
+[5.1.0]: https://github.com/nfe/client-nodejs/compare/v5.0.0...v5.1.0
+[5.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v5.0.0
 [3.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v3.0.0
 [2.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v2.0.0

@@ -1582,7 +1582,7 @@ export default function nfe(apiKey: string | NfeConfig): NfeClient {
  * Current SDK version
  * @constant
  */
-export const VERSION = '5.0.0';
+export const VERSION = '5.1.0';
 
 /**
  * Supported Node.js version range (semver format)
