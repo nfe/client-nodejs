@@ -8,7 +8,7 @@ client-python
 node_modules/
 bower_components/
 jspm_packages/
-openspec/
+
 nfeio-docs
 client-ruby
 client-php
