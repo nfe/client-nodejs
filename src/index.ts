@@ -57,7 +57,7 @@ export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS, CTE_API_B
  * @see {@link ServiceInvoice} - Service invoice entity type
  * @see {@link LegalPerson} - Legal person (empresa) entity type
  * @see {@link NaturalPerson} - Natural person (pessoa física) entity type
- * @see {@link Webhook} - Webhook configuration type
+ * @see {@link AccountWebhook} - Webhook configuration type (account-scoped, `/v2/webhooks`)
  */
 export type {
   // Configuration
@@ -74,6 +74,8 @@ export type {
   ServiceInvoiceDetails,
   Webhook,
   WebhookEvent,
+  AccountWebhook,
+  WebhookEventType,
 
   // Address types
   Address,

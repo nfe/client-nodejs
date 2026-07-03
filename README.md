@@ -323,22 +323,24 @@ const pessoa = await nfe.naturalPeople.findByTaxNumber(empresaId, '12345678901')
 
 #### 🔗 Webhooks (`nfe.webhooks`)
 
-Gerenciar configurações de webhook:
+Gerenciar configurações de webhook. Webhooks são gerenciados **por conta**
+(`/v2/webhooks`) — os métodos por empresa estão deprecated (a rota retorna 404):
 
 ```typescript
-// Criar webhook
-const webhook = await nfe.webhooks.create(empresaId, {
-  url: 'https://meuapp.com.br/webhooks/nfe',
-  events: ['invoice.issued', 'invoice.cancelled'],
-  active: true
+// Criar webhook — a URI precisa responder 2xx já na criação (ping de verificação)
+const webhook = await nfe.webhooks.createAccountWebhook({
+  uri: 'https://meuapp.com.br/webhooks/nfe',
+  contentType: 'json',
+  secret: 'um-segredo-de-32-a-64-caracteres-aqui',
+  filters: ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully']
 });
 
-// Listar webhooks
-const webhooks = await nfe.webhooks.list(empresaId);
+// Listar webhooks da conta
+const webhooks = await nfe.webhooks.listAccountWebhooks();
 
 // Atualizar webhook
-await nfe.webhooks.update(empresaId, webhookId, {
-  events: ['invoice.issued']
+await nfe.webhooks.updateAccountWebhook(webhookId, {
+  filters: ['service_invoice.issued_successfully']
 });
 
 // Validar assinatura do webhook

@@ -41,16 +41,22 @@ verificação falha. Use `express.raw()` e passe o `Buffer`.
 A comparação é feita com `timingSafeEqual` (resistente a timing attacks) e
 aceita a assinatura como `string` ou `string[]`.
 
-## Webhooks por empresa vs por conta
+## Webhooks são por conta
 
-| Escopo | Acesso | Caminho |
-|---|---|---|
-| Empresa | `nfe.webhooks.list/create/retrieve/update/delete(companyId, ...)` | `/companies/{id}/webhooks` |
-| Conta | `nfe.webhooks.listAccountWebhooks/createAccountWebhook/...` | `/v2/webhooks` (host-root) |
-
-Métodos de conta (sem `companyId`): `listAccountWebhooks`, `createAccountWebhook`,
+Webhooks são registrados e gerenciados **por conta** (`/v2/webhooks`), sem
+`companyId`: `listAccountWebhooks`, `createAccountWebhook`,
 `retrieveAccountWebhook`, `updateAccountWebhook`, `deleteAccountWebhook`,
 `pingAccountWebhook` e `deleteAllAccountWebhooks` (⚠️ remove **todos**).
+
+Na criação, a NFE.io **verifica a `uri`** com um ping que exige resposta 2xx —
+o endpoint precisa estar no ar antes do `createAccountWebhook`. O `secret`
+deve ter 32–64 caracteres.
+
+:::caution Métodos por empresa deprecated
+`nfe.webhooks.list/create/retrieve/update/delete/test(companyId, ...)` estão
+**deprecated**: a rota `/v1/companies/{id}/webhooks` retorna 404 na API atual.
+Use os métodos por conta acima.
+:::
 
 ## Tipos de evento ao vivo
 

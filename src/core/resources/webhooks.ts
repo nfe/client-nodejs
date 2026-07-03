@@ -6,11 +6,23 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import type { HttpClient } from '../http/client.js';
-import type { Webhook, WebhookEvent, ListResponse, ResourceId } from '../types.js';
+import type {
+  AccountWebhook,
+  Webhook,
+  WebhookEvent,
+  WebhookEventType,
+  ListResponse,
+  ResourceId,
+} from '../types.js';
 
 /**
- * Webhooks resource for managing event subscriptions
- * All operations are scoped by company_id
+ * Webhooks resource for managing event subscriptions.
+ *
+ * Webhooks are managed at the **account** level (`/v2/webhooks`) — use the
+ * `*AccountWebhook*` methods. The company-scoped methods (`list`, `create`,
+ * `retrieve`, `update`, `delete`, `test`) are deprecated: the route
+ * `/v1/companies/{id}/webhooks` returns 404 on the current API (confirmed on
+ * two accounts, 2026-07-02).
  */
 export class WebhooksResource {
   /**
@@ -28,7 +40,10 @@ export class WebhooksResource {
 
   /**
    * List all webhooks for a company
-   * 
+   *
+   * @deprecated A rota `/v1/companies/{id}/webhooks` retorna 404 na API atual
+   * (confirmado em duas contas, 2026-07-02). Use {@link listAccountWebhooks}.
+   *
    * @param companyId - Company ID
    * @returns List of webhooks
    * 
@@ -47,7 +62,10 @@ export class WebhooksResource {
 
   /**
    * Create a new webhook subscription
-   * 
+   *
+   * @deprecated A rota `/v1/companies/{id}/webhooks` retorna 404 na API atual
+   * (confirmado em duas contas, 2026-07-02). Use {@link createAccountWebhook}.
+   *
    * @param companyId - Company ID
    * @param data - Webhook configuration
    * @returns Created webhook
@@ -73,7 +91,10 @@ export class WebhooksResource {
 
   /**
    * Retrieve a specific webhook
-   * 
+   *
+   * @deprecated A rota `/v1/companies/{id}/webhooks` retorna 404 na API atual
+   * (confirmado em duas contas, 2026-07-02). Use {@link retrieveAccountWebhook}.
+   *
    * @param companyId - Company ID
    * @param webhookId - Webhook ID
    * @returns Webhook details
@@ -96,7 +117,10 @@ export class WebhooksResource {
 
   /**
    * Update a webhook
-   * 
+   *
+   * @deprecated A rota `/v1/companies/{id}/webhooks` retorna 404 na API atual
+   * (confirmado em duas contas, 2026-07-02). Use {@link updateAccountWebhook}.
+   *
    * @param companyId - Company ID
    * @param webhookId - Webhook ID
    * @param data - Data to update
@@ -124,7 +148,10 @@ export class WebhooksResource {
 
   /**
    * Delete a webhook
-   * 
+   *
+   * @deprecated A rota `/v1/companies/{id}/webhooks` retorna 404 na API atual
+   * (confirmado em duas contas, 2026-07-02). Use {@link deleteAccountWebhook}.
+   *
    * @param companyId - Company ID
    * @param webhookId - Webhook ID
    * 
@@ -219,9 +246,12 @@ export class WebhooksResource {
 
   /**
    * Test webhook delivery
-   * 
+   *
    * Sends a test event to the webhook URL to verify it's working
-   * 
+   *
+   * @deprecated A rota `/v1/companies/{id}/webhooks` retorna 404 na API atual
+   * (confirmado em duas contas, 2026-07-02). Use {@link pingAccountWebhook}.
+   *
    * @param companyId - Company ID
    * @param webhookId - Webhook ID
    * @returns Test result
@@ -250,35 +280,85 @@ export class WebhooksResource {
   // --------------------------------------------------------------------------
   // Account-scoped operations (/v2/webhooks) — NOT company-scoped.
   // These take no companyId; they manage webhooks at the account level.
+  //
+  // Wire contract (specs oficiais + confirmado ao vivo em 2026-07-02):
+  //  - create/update REQUESTS must be wrapped in a `webHook` envelope — the API
+  //    rejects a bare body with 400 "missing required properties: 'webHook'".
+  //  - Single-object RESPONSES come wrapped as { webHook: {...} } and are
+  //    unwrapped here (with a defensive raw-body fallback).
   // --------------------------------------------------------------------------
 
   /**
    * List account-level webhooks (`GET /v2/webhooks`).
    *
    * The API wraps the result as `{ webHooks: [...] }`; this normalizes it to the
-   * SDK's `ListResponse<Webhook>` (`{ data: [...] }`).
+   * SDK's `ListResponse<AccountWebhook>` (`{ data: [...] }`).
    */
-  async listAccountWebhooks(): Promise<ListResponse<Webhook>> {
-    const response = await this.account.get<{ webHooks?: Webhook[] }>('/webhooks');
+  async listAccountWebhooks(): Promise<ListResponse<AccountWebhook>> {
+    const response = await this.account.get<{ webHooks?: AccountWebhook[] }>('/webhooks');
     return { data: response.data?.webHooks ?? [] };
   }
 
-  /** Create an account-level webhook (`POST /v2/webhooks`). */
-  async createAccountWebhook(data: Partial<Webhook>): Promise<Webhook> {
-    const response = await this.account.post<Webhook>('/webhooks', data);
-    return response.data;
+  /**
+   * Create an account-level webhook (`POST /v2/webhooks`).
+   *
+   * NFE.io **verifies the target URI at creation time**: it sends a test request
+   * (ping) to `data.uri` and the endpoint must already be live and answer 2xx,
+   * otherwise creation fails. The `secret` must be 32–64 characters; it is echoed
+   * back in the create response but omitted on subsequent reads.
+   *
+   * @example
+   * ```typescript
+   * const webhook = await nfe.webhooks.createAccountWebhook({
+   *   uri: 'https://seu-site.com/webhook/nfe', // precisa responder 2xx já na criação
+   *   contentType: 'json',
+   *   secret: 'um-segredo-de-32-a-64-caracteres-aqui',
+   *   filters: ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully'],
+   * });
+   * console.log('Webhook criado:', webhook.id);
+   * ```
+   */
+  async createAccountWebhook(data: AccountWebhook): Promise<AccountWebhook> {
+    const response = await this.account.post<{ webHook?: AccountWebhook }>('/webhooks', {
+      webHook: data,
+    });
+    return response.data?.webHook ?? (response.data as AccountWebhook);
   }
 
   /** Retrieve an account-level webhook by id (`GET /v2/webhooks/{id}`). */
-  async retrieveAccountWebhook(webhookId: ResourceId): Promise<Webhook> {
-    const response = await this.account.get<Webhook>(`/webhooks/${webhookId}`);
-    return response.data;
+  async retrieveAccountWebhook(webhookId: ResourceId): Promise<AccountWebhook> {
+    const response = await this.account.get<{ webHook?: AccountWebhook }>(
+      `/webhooks/${webhookId}`
+    );
+    return response.data?.webHook ?? (response.data as AccountWebhook);
   }
 
-  /** Update an account-level webhook by id (`PUT /v2/webhooks/{id}`). */
-  async updateAccountWebhook(webhookId: ResourceId, data: Partial<Webhook>): Promise<Webhook> {
-    const response = await this.account.put<Webhook>(`/webhooks/${webhookId}`, data);
-    return response.data;
+  /**
+   * Update an account-level webhook by id (`PUT /v2/webhooks/{id}`).
+   *
+   * ⚠️ O `PUT` tem **semântica de substituição integral** (confirmado ao vivo em
+   * 2026-07-03): campos omitidos voltam ao padrão — em particular, um update sem
+   * `status` **desativa o webhook** (`status` volta a `"Inactive"`). Envie o
+   * objeto completo, por exemplo partindo de {@link retrieveAccountWebhook}:
+   *
+   * @example
+   * ```typescript
+   * const current = await nfe.webhooks.retrieveAccountWebhook(id);
+   * await nfe.webhooks.updateAccountWebhook(id, {
+   *   ...current,
+   *   filters: [...(current.filters ?? []), 'service_invoice.cancelled_successfully'],
+   * });
+   * ```
+   */
+  async updateAccountWebhook(
+    webhookId: ResourceId,
+    data: Partial<AccountWebhook>
+  ): Promise<AccountWebhook> {
+    const response = await this.account.put<{ webHook?: AccountWebhook }>(
+      `/webhooks/${webhookId}`,
+      { webHook: data }
+    );
+    return response.data?.webHook ?? (response.data as AccountWebhook);
   }
 
   /** Delete a single account-level webhook by id (`DELETE /v2/webhooks/{id}`). */
@@ -305,11 +385,11 @@ export class WebhooksResource {
    * Fetch the live list of available webhook event types (`GET /v2/webhooks/eventTypes`).
    *
    * Prefer this over {@link getAvailableEvents}: the server is the source of truth,
-   * so new event types are picked up automatically. The return is an **open** union
-   * (`WebhookEvent | (string & {})`) so new server-side events don't break typing.
+   * so new event types are picked up automatically. The return is the **open** union
+   * {@link WebhookEventType}, so new server-side events don't break typing.
    * The API wraps the result as `{ eventTypes: [{ id, ... }] }`; this extracts the ids.
    */
-  async fetchEventTypes(): Promise<Array<WebhookEvent | (string & {})>> {
+  async fetchEventTypes(): Promise<WebhookEventType[]> {
     const response = await this.account.get<{ eventTypes?: Array<{ id: string }> }>(
       '/webhooks/eventTypes'
     );

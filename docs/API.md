@@ -1425,53 +1425,71 @@ const person = await nfe.naturalPeople.findByTaxNumber('company-id', '1234567890
 
 **Resource:** `nfe.webhooks`
 
-Webhook configuration and management.
+Webhook configuration and management. Webhooks are **account-scoped**
+(`/v2/webhooks`) — the methods take no `companyId`.
 
-#### `create(data: Partial<Webhook>): Promise<Webhook>`
+> ⚠ **Deprecated:** the company-scoped methods (`create/list/retrieve/update/delete/test(companyId, ...)`)
+> target `/v1/companies/{id}/webhooks`, which returns **404** on the current API.
+> Use the account-scoped methods below.
 
-Create a webhook.
+#### `createAccountWebhook(data: AccountWebhook): Promise<AccountWebhook>`
+
+Create an account webhook. NFE.io **verifies the `uri` at creation time** with a
+ping that must receive a 2xx response — the endpoint must already be live. The
+`secret` must be 32–64 characters (echoed in the create response, omitted on reads).
 
 ```typescript
-const webhook = await nfe.webhooks.create({
-  url: 'https://example.com/webhook',
-  events: ['invoice.issued', 'invoice.cancelled'],
-  secret: 'webhook-secret'
+const webhook = await nfe.webhooks.createAccountWebhook({
+  uri: 'https://example.com/webhook', // must answer 2xx at creation time
+  contentType: 'json',
+  secret: 'a-secret-with-32-to-64-characters-x',
+  filters: ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully']
 });
 ```
 
-#### `list(options?: PaginationOptions): Promise<ListResponse<Webhook>>`
+#### `listAccountWebhooks(): Promise<ListResponse<AccountWebhook>>`
 
-List all webhooks.
+List all account webhooks.
 
 ```typescript
-const webhooks = await nfe.webhooks.list();
+const webhooks = await nfe.webhooks.listAccountWebhooks();
 ```
 
-#### `retrieve(webhookId: string): Promise<Webhook>`
+#### `retrieveAccountWebhook(webhookId: string): Promise<AccountWebhook>`
 
 Get a specific webhook.
 
 ```typescript
-const webhook = await nfe.webhooks.retrieve('webhook-id');
+const webhook = await nfe.webhooks.retrieveAccountWebhook('webhook-id');
 ```
 
-#### `update(webhookId: string, data: Partial<Webhook>): Promise<Webhook>`
+#### `updateAccountWebhook(webhookId: string, data: Partial<AccountWebhook>): Promise<AccountWebhook>`
 
 Update webhook configuration.
 
+> ⚠ `PUT` is a **full replacement**: omitted fields reset to their defaults — an
+> update without `status` **deactivates the webhook** (`status` becomes
+> `"Inactive"`). Send the complete object, e.g. starting from a retrieve:
+
 ```typescript
-const updated = await nfe.webhooks.update('webhook-id', {
-  events: ['invoice.issued', 'invoice.cancelled', 'invoice.error']
+const current = await nfe.webhooks.retrieveAccountWebhook('webhook-id');
+const updated = await nfe.webhooks.updateAccountWebhook('webhook-id', {
+  ...current,
+  filters: ['service_invoice.issued_successfully', 'service_invoice.issued_error']
 });
 ```
 
-#### `delete(webhookId: string): Promise<void>`
+#### `deleteAccountWebhook(webhookId: string): Promise<void>`
 
 Delete a webhook.
 
 ```typescript
-await nfe.webhooks.delete('webhook-id');
+await nfe.webhooks.deleteAccountWebhook('webhook-id');
 ```
+
+#### `deleteAllAccountWebhooks(): Promise<void>`
+
+⚠ **Destructive:** removes **all** webhooks on the account.
 
 #### `validateSignature(payload: Buffer | string, signature: string | string[] | undefined, secret: string): boolean`
 
@@ -1503,21 +1521,22 @@ app.post(
 );
 ```
 
-#### `test(webhookId: string): Promise<void>`
+#### `pingAccountWebhook(webhookId: string): Promise<void>`
 
-Test webhook delivery.
+Trigger a test ping for a webhook.
 
 ```typescript
-await nfe.webhooks.test('webhook-id');
+await nfe.webhooks.pingAccountWebhook('webhook-id');
 ```
 
-#### `getAvailableEvents(): Promise<WebhookEvent[]>`
+#### `fetchEventTypes(): Promise<WebhookEventType[]>`
 
-Get list of available webhook event types.
+Fetch the live list of available webhook event types from the API (prefer this
+over the deprecated hardcoded `getAvailableEvents()`).
 
 ```typescript
-const events = await nfe.webhooks.getAvailableEvents();
-// ['invoice.issued', 'invoice.cancelled', ...]
+const events = await nfe.webhooks.fetchEventTypes();
+// ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully', ...]
 ```
 
 ---
