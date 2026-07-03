@@ -40,28 +40,20 @@ async function configurarWebhooks() {
     const empresa = await nfe.companies.retrieve(companyId);
     console.log(`✅ Empresa: ${empresa.name}`);
 
-    // 2. Listar webhooks existentes
-    console.log('\n📋 2. Listando webhooks configurados...');
-    let webhooks = { data: [] };
-    try {
-      webhooks = await nfe.webhooks.list(companyId);
-    } catch (error) {
-      // API retorna 404 quando não há webhooks configurados
-      if (error.status === 404 || error.type === 'NotFoundError') {
-        console.log('⚠️  Nenhum webhook configurado ainda');
-      } else {
-        throw error;
-      }
-    }
+    // 2. Listar webhooks existentes (webhooks são gerenciados POR CONTA — /v2/webhooks)
+    console.log('\n📋 2. Listando webhooks configurados na conta...');
+    const webhooks = await nfe.webhooks.listAccountWebhooks();
 
     if (webhooks.data && webhooks.data.length > 0) {
       console.log(`✅ ${webhooks.data.length} webhook(s) encontrado(s):`);
       webhooks.data.forEach((webhook, index) => {
-        console.log(`   ${index + 1}. URL: ${webhook.url}`);
-        console.log(`      Status: ${webhook.active ? 'Ativo' : 'Inativo'}`);
-        console.log(`      Eventos: ${webhook.events?.join(', ') || 'N/A'}`);
+        console.log(`   ${index + 1}. URI: ${webhook.uri}`);
+        console.log(`      Status: ${webhook.status}`);
+        console.log(`      Filtros: ${webhook.filters?.join(', ') || 'N/A'}`);
         console.log('      ' + '─'.repeat(60));
       });
+    } else {
+      console.log('⚠️  Nenhum webhook configurado ainda');
     }
 
     // 3. Criar novo webhook (ou usar existente)
@@ -74,7 +66,7 @@ async function configurarWebhooks() {
     console.log('   Para produção, substitua pela URL real do seu servidor!');
 
     let webhook;
-    const webhookExistente = webhooks.data?.find(w => w.url === webhookUrl);
+    const webhookExistente = webhooks.data?.find(w => w.uri === webhookUrl);
 
     if (webhookExistente) {
       console.log('✅ Webhook já existe, usando configuração existente');
@@ -83,26 +75,26 @@ async function configurarWebhooks() {
       console.log('⚠️  Criando novo webhook...');
 
       try {
-        webhook = await nfe.webhooks.create(companyId, {
-          url: webhookUrl,
-          events: [
-            'invoice.issued',
-            'invoice.cancelled',
-            'invoice.error'
-          ],
-          active: true
+        // ATENÇÃO: na criação a NFE.io faz um ping na URI e exige resposta 2xx —
+        // o endpoint precisa estar no ar. O secret deve ter 32–64 caracteres.
+        webhook = await nfe.webhooks.createAccountWebhook({
+          uri: webhookUrl,
+          contentType: 'json',
+          secret: process.env.NFE_WEBHOOK_SECRET || 'um-segredo-de-32-a-64-caracteres-aqui',
+          filters: [
+            'service_invoice.issued_successfully',
+            'service_invoice.issued_error',
+            'service_invoice.cancelled_successfully'
+          ]
         });
 
         console.log('✅ Webhook criado com sucesso!');
         console.log(`   ID: ${webhook.id}`);
-        console.log(`   URL: ${webhook.url}`);
-        console.log(`   Eventos: ${webhook.events?.join(', ')}`);
+        console.log(`   URI: ${webhook.uri}`);
+        console.log(`   Filtros: ${webhook.filters?.join(', ')}`);
       } catch (error) {
         if (error.status === 400 || error.status === 409 || error.type === 'ValidationError') {
-          console.warn('⚠️  Webhook já existe ou URL inválida');
-          console.warn('   Continue para ver exemplo de validação de assinatura');
-        } else if (error.status === 404 || error.type === 'NotFoundError') {
-          console.warn('⚠️  Recurso não encontrado - webhooks podem não estar disponíveis neste ambiente');
+          console.warn('⚠️  URI inválida ou não respondeu 2xx ao ping de verificação');
           console.warn('   Continue para ver exemplo de validação de assinatura');
         } else {
           throw error;
@@ -115,8 +107,8 @@ async function configurarWebhooks() {
       console.log('\n📋 4. Exemplo de atualização de webhook...');
       console.log('   (não executado neste exemplo, mas o código está disponível)');
       console.log('\n   Código para atualizar:');
-      console.log(`   await nfe.webhooks.update('${companyId}', '${webhook.id}', {`);
-      console.log(`     events: ['invoice.issued', 'invoice.cancelled']`);
+      console.log(`   await nfe.webhooks.updateAccountWebhook('${webhook.id}', {`);
+      console.log(`     filters: ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully']`);
       console.log(`   });`);
     }
 
@@ -126,7 +118,7 @@ async function configurarWebhooks() {
 
     // Exemplo de payload que você receberá no seu endpoint
     const examplePayload = {
-      event: 'invoice.issued',
+      event: 'service_invoice.issued_successfully',
       data: {
         id: 'nota-fiscal-id-123',
         number: '12345',
@@ -169,17 +161,17 @@ async function configurarWebhooks() {
     console.log('  const { event, data } = payload;');
     console.log('  ');
     console.log('  switch (event) {');
-    console.log('    case "invoice.issued":');
+    console.log('    case "service_invoice.issued_successfully":');
     console.log('      console.log("Nota fiscal emitida:", data.id);');
     console.log('      // Sua lógica aqui');
     console.log('      break;');
     console.log('    ');
-    console.log('    case "invoice.cancelled":');
+    console.log('    case "service_invoice.cancelled_successfully":');
     console.log('      console.log("Nota fiscal cancelada:", data.id);');
     console.log('      // Sua lógica aqui');
     console.log('      break;');
     console.log('    ');
-    console.log('    case "invoice.error":');
+    console.log('    case "service_invoice.issued_error":');
     console.log('      console.error("Erro ao emitir nota:", data.error);');
     console.log('      // Sua lógica de tratamento de erro');
     console.log('      break;');
@@ -189,14 +181,12 @@ async function configurarWebhooks() {
     console.log('});');
     console.log('```');
 
-    // 6. Tipos de eventos disponíveis
-    console.log('\n📋 6. Eventos disponíveis para webhooks:');
+    // 6. Tipos de eventos disponíveis (lista viva do servidor)
+    console.log('\n📋 6. Eventos disponíveis para webhooks (via fetchEventTypes):');
     console.log('═'.repeat(70));
-    console.log('   • invoice.issued       - Nota fiscal emitida com sucesso');
-    console.log('   • invoice.cancelled    - Nota fiscal cancelada');
-    console.log('   • invoice.error        - Erro ao processar nota fiscal');
-    console.log('   • invoice.authorized   - Nota fiscal autorizada pela prefeitura');
-    console.log('   • invoice.rejected     - Nota fiscal rejeitada pela prefeitura');
+    const eventTypes = await nfe.webhooks.fetchEventTypes();
+    eventTypes.slice(0, 10).forEach((id) => console.log(`   • ${id}`));
+    console.log(`   ... (${eventTypes.length} no total — use nfe.webhooks.fetchEventTypes())`);
 
     // 7. Melhores práticas
     console.log('\n💡 Melhores Práticas para Webhooks:');

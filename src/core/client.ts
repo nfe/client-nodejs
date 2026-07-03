@@ -301,20 +301,25 @@ export class NfeClient {
    * Webhooks API resource
    *
    * @description
-   * Provides operations for managing webhooks:
-   * - CRUD operations for webhook configurations
+   * Provides operations for managing webhooks (account-scoped, `/v2/webhooks`):
+   * - CRUD operations for webhook configurations (`*AccountWebhook*` methods)
    * - Webhook signature validation
-   * - Test webhook delivery
-   * - List available event types
+   * - Ping/test webhook delivery
+   * - Fetch available event types from the live API
+   *
+   * The company-scoped methods (`create`, `list`, ...) are deprecated — the
+   * `/v1/companies/{id}/webhooks` route returns 404 on the current API.
    *
    * @see {@link WebhooksResource}
    * @throws {ConfigurationError} If API key is not configured
    *
    * @example
    * ```typescript
-   * const webhook = await nfe.webhooks.create({
-   *   url: 'https://example.com/webhook',
-   *   events: ['invoice.issued', 'invoice.cancelled']
+   * const webhook = await nfe.webhooks.createAccountWebhook({
+   *   uri: 'https://example.com/webhook', // precisa responder 2xx já na criação
+   *   contentType: 'json',
+   *   secret: 'um-segredo-de-32-a-64-caracteres-aqui',
+   *   filters: ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully'],
    * });
    * ```
    */
@@ -1577,7 +1582,7 @@ export default function nfe(apiKey: string | NfeConfig): NfeClient {
  * Current SDK version
  * @constant
  */
-export const VERSION = '5.0.0';
+export const VERSION = '5.1.0';
 
 /**
  * Supported Node.js version range (semver format)

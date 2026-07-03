@@ -134,22 +134,23 @@ const naturalPerson = await nfe.naturalPeople.create('company-id', {
     console.log('\n5️⃣  WEBHOOKS - Notificações de Eventos');
     console.log('─'.repeat(50));
 
-    console.log('Funcionalidades:');
-    console.log('✓ list(companyId) - Listar webhooks');
-    console.log('✓ create(companyId, data) - Criar webhook');
-    console.log('✓ retrieve(companyId, id) - Buscar webhook');
-    console.log('✓ update(companyId, id, data) - Atualizar');
-    console.log('✓ delete(companyId, id) - Deletar');
-    console.log('✓ test(companyId, id) - Testar webhook');
+    console.log('Funcionalidades (escopo CONTA — /v2/webhooks):');
+    console.log('✓ listAccountWebhooks() - Listar webhooks');
+    console.log('✓ createAccountWebhook(data) - Criar webhook');
+    console.log('✓ retrieveAccountWebhook(id) - Buscar webhook');
+    console.log('✓ updateAccountWebhook(id, data) - Atualizar');
+    console.log('✓ deleteAccountWebhook(id) - Deletar');
+    console.log('✓ pingAccountWebhook(id) - Testar webhook');
     console.log('✓ validateSignature() - Validar assinatura');
-    console.log('✓ getAvailableEvents() - Eventos disponíveis\n');
+    console.log('✓ fetchEventTypes() - Eventos disponíveis (lista viva)\n');
 
-    console.log('Exemplo de criação:');
+    console.log('Exemplo de criação (escopo CONTA — a uri precisa responder 2xx na criação):');
     console.log(`
-const webhook = await nfe.webhooks.create('company-id', {
-  url: 'https://seu-site.com/webhook/nfe',
-  events: ['invoice.issued', 'invoice.cancelled'],
-  secret: 'sua-chave-secreta'
+const webhook = await nfe.webhooks.createAccountWebhook({
+  uri: 'https://seu-site.com/webhook/nfe',
+  contentType: 'json',
+  secret: 'um-segredo-de-32-a-64-caracteres-aqui',
+  filters: ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully']
 });
     `);
 

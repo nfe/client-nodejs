@@ -287,13 +287,23 @@ const expiring = await nfe.companies.getCompaniesWithExpiringCertificates(30); /
 
 ## Core Pattern: Webhooks
 
+Webhooks are **account-scoped** (`/v2/webhooks`) — no `companyId`. The company-scoped
+methods (`nfe.webhooks.create(companyId, ...)` etc.) are **deprecated**: the
+`/v1/companies/{id}/webhooks` route 404s on the current API.
+
 ```typescript
-// Create webhook
-const webhook = await nfe.webhooks.create(companyId, {
-  url: 'https://your-app.com/webhooks/nfe',
-  events: ['invoice.created', 'invoice.issued', 'invoice.cancelled', 'invoice.failed'],
-  active: true,
+// Create an account webhook. NFE.io PINGS the uri at creation time and requires
+// a 2xx response — the endpoint must already be live. secret: 32–64 chars.
+const webhook = await nfe.webhooks.createAccountWebhook({
+  uri: 'https://your-app.com/webhooks/nfe',   // uri, NOT url
+  contentType: 'json',
+  secret: 'a-secret-with-32-to-64-characters-x',
+  filters: ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully'],
 });
+
+// Other account methods: listAccountWebhooks(), retrieveAccountWebhook(id),
+// updateAccountWebhook(id, data), deleteAccountWebhook(id), pingAccountWebhook(id),
+// deleteAllAccountWebhooks() (⚠️ removes ALL), fetchEventTypes() (live list).
 
 // Validate incoming webhook signature (in your handler).
 // IMPORTANT: pass req.body as a Buffer (use express.raw()) — NOT JSON.stringify(req.body).
@@ -307,7 +317,10 @@ const isValid = nfe.webhooks.validateSignature(
 // Useful delivery headers: x-hook-id (idempotency key), x-hook-attempts (retry counter).
 ```
 
-Available events: `invoice.created`, `invoice.issued`, `invoice.cancelled`, `invoice.failed`.
+Event types follow `service_invoice.*` / `product_invoice.*` / `consumer_invoice.*`
+patterns (e.g. `service_invoice.issued_successfully`, `service_invoice.issued_error`,
+`service_invoice.cancelled_successfully`). The legacy `invoice.*` literals do NOT exist
+on the live API — fetch the real list with `await nfe.webhooks.fetchEventTypes()`.
 
 ## Critical Pitfalls
 
@@ -353,7 +366,7 @@ Available events: `invoice.created`, `invoice.issued`, `invoice.cancelled`, `inv
 | Manage companies & certificates | `nfe.companies.*` |
 | Manage people (PJ) under company | `nfe.legalPeople.*` |
 | Manage people (PF) under company | `nfe.naturalPeople.*` |
-| Set up webhook notifications | `nfe.webhooks.create(companyId, {...})` |
+| Set up webhook notifications | `nfe.webhooks.createAccountWebhook({ uri, secret, filters })` |
 | Manage state tax registrations (IE) | `nfe.stateTaxes.*` |
 | Cancel a service invoice | `nfe.serviceInvoices.cancelAndWait(companyId, invoiceId)` (async; `cancel()` retorna união discriminada) |
 | Cancel a product invoice | `nfe.productInvoices.cancel(companyId, invoiceId)` |

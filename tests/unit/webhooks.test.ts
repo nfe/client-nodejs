@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WebhooksResource } from '../../src/core/resources/webhooks';
 import type { HttpClient } from '../../src/core/http/client';
-import type { HttpResponse, ListResponse, Webhook, WebhookEvent } from '../../src/core/types';
+import type {
+  AccountWebhook,
+  HttpResponse,
+  ListResponse,
+  Webhook,
+  WebhookEvent,
+} from '../../src/core/types';
 import { TEST_COMPANY_ID, TEST_WEBHOOK_ID } from '../setup';
 
 describe('WebhooksResource', () => {
@@ -178,29 +184,84 @@ describe('WebhooksResource', () => {
       expect(result.data[0]?.id).toBe('w1');
     });
 
-    it('createAccountWebhook POSTs /webhooks', async () => {
-      vi.mocked(mockHttpClient.post).mockResolvedValue({
-        data: { id: 'w1' }, status: 201, headers: {},
-      } as HttpResponse<Webhook>);
+    // Fixture do 201 real da sonda ao vivo (2026-07-02): resposta envelopada em
+    // { webHook } e secret ecoado na criação. Sem o envelope no REQUEST a API
+    // responde 400 "missing required properties including: 'webHook'".
+    const LIVE_CREATED: AccountWebhook = {
+      id: '948ee1f570934e768805c199d70e2e86',
+      uri: 'https://httpbin.org/status/200',
+      secret: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      contentType: 'json',
+      insecureSsl: false,
+      status: 'Active',
+      filters: ['service_invoice.issued_successfully'],
+      createdOn: '2026-07-03T02:41:53.5466401+00:00',
+      modifiedOn: '2026-07-03T02:41:53.546678+00:00',
+    };
 
-      await webhooks.createAccountWebhook({ url: 'https://x.test/hook' });
-      expect(mockHttpClient.post).toHaveBeenCalledWith('/webhooks', { url: 'https://x.test/hook' });
+    it('createAccountWebhook wraps the request in a {webHook} envelope and unwraps the response', async () => {
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: { webHook: LIVE_CREATED }, status: 201, headers: {},
+      } as HttpResponse<{ webHook: AccountWebhook }>);
+
+      const input: AccountWebhook = {
+        uri: 'https://httpbin.org/status/200',
+        contentType: 'json',
+        secret: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        filters: ['service_invoice.issued_successfully'],
+      };
+      const created = await webhooks.createAccountWebhook(input);
+
+      expect(mockHttpClient.post).toHaveBeenCalledWith('/webhooks', { webHook: input });
+      expect(created.id).toBe('948ee1f570934e768805c199d70e2e86');
+      expect(created.status).toBe('Active');
+      expect(created.secret).toBe('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     });
 
-    it('retrieve/update/delete by id hit /webhooks/{id}', async () => {
-      vi.mocked(mockHttpClient.get).mockResolvedValue({ data: { id: 'w1' }, status: 200, headers: {} } as HttpResponse<Webhook>);
-      vi.mocked(mockHttpClient.put).mockResolvedValue({ data: { id: 'w1' }, status: 200, headers: {} } as HttpResponse<Webhook>);
+    it('createAccountWebhook falls back to the raw body when the response has no envelope', async () => {
+      vi.mocked(mockHttpClient.post).mockResolvedValue({
+        data: { id: 'w-raw', uri: 'https://x.test/hook' }, status: 201, headers: {},
+      } as HttpResponse<AccountWebhook>);
+
+      const created = await webhooks.createAccountWebhook({ uri: 'https://x.test/hook' });
+      expect(created.id).toBe('w-raw');
+    });
+
+    it('retrieve/update unwrap the {webHook} envelope; update wraps its request', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: { webHook: { id: 'w1', uri: 'https://x.test/hook' } }, status: 200, headers: {},
+      } as HttpResponse<{ webHook: AccountWebhook }>);
+      vi.mocked(mockHttpClient.put).mockResolvedValue({
+        data: { webHook: { id: 'w1', uri: 'https://x.test/hook', insecureSsl: true } },
+        status: 200, headers: {},
+      } as HttpResponse<{ webHook: AccountWebhook }>);
       vi.mocked(mockHttpClient.delete).mockResolvedValue({ data: undefined, status: 204, headers: {} } as HttpResponse<void>);
 
-      await webhooks.retrieveAccountWebhook('w1');
-      await webhooks.updateAccountWebhook('w1', { active: false });
+      const got = await webhooks.retrieveAccountWebhook('w1');
+      const updated = await webhooks.updateAccountWebhook('w1', { insecureSsl: true });
       await webhooks.deleteAccountWebhook('w1');
       await webhooks.pingAccountWebhook('w1');
 
+      expect(got.id).toBe('w1');
+      expect(updated.insecureSsl).toBe(true);
       expect(mockHttpClient.get).toHaveBeenCalledWith('/webhooks/w1');
-      expect(mockHttpClient.put).toHaveBeenCalledWith('/webhooks/w1', { active: false });
+      expect(mockHttpClient.put).toHaveBeenCalledWith('/webhooks/w1', {
+        webHook: { insecureSsl: true },
+      });
       expect(mockHttpClient.delete).toHaveBeenCalledWith('/webhooks/w1');
       expect(mockHttpClient.put).toHaveBeenCalledWith('/webhooks/w1/pings', {});
+    });
+
+    it('retrieve/update fall back to the raw body when the response has no envelope', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: { id: 'w-raw', uri: 'https://x.test/hook' }, status: 200, headers: {},
+      } as HttpResponse<AccountWebhook>);
+      vi.mocked(mockHttpClient.put).mockResolvedValue({
+        data: { id: 'w-raw', uri: 'https://x.test/hook' }, status: 200, headers: {},
+      } as HttpResponse<AccountWebhook>);
+
+      expect((await webhooks.retrieveAccountWebhook('w-raw')).id).toBe('w-raw');
+      expect((await webhooks.updateAccountWebhook('w-raw', {})).id).toBe('w-raw');
     });
 
     it('deleteAllAccountWebhooks is a distinct method hitting DELETE /webhooks (no id)', async () => {

@@ -5,6 +5,50 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [5.1.0] - 2026-07-03
+
+> Correção do contrato de webhooks contra a API real, provado por sonda ao vivo
+> (2026-07-02/03, três contas). O contrato correto sempre esteve nos specs oficiais
+> (`openapi/spec/nf-servico-v1.yaml` e equivalentes) — o recurso manuscrito havia
+> divergido deles.
+
+### Corrigido
+
+- **`createAccountWebhook` funcionava 0% das vezes**: a API exige o request
+  envelopado em `{ "webHook": {...} }` (sem ele responde
+  `400 "missing required properties including: 'webHook'"`) e devolve a resposta
+  também envelopada. O SDK agora envelopa o request (create/update) e desembrulha
+  as respostas (create/retrieve/update), com fallback defensivo para corpo cru.
+- `listAccountWebhooks`/`retrieveAccountWebhook`/`updateAccountWebhook` agora
+  tipados com o shape real do recurso (ver `AccountWebhook` abaixo).
+
+### Adicionado
+
+- Tipo **`AccountWebhook`** com o shape real da API: `uri`, `contentType`,
+  `secret` (32–64 caracteres, ecoado no create e omitido nas leituras), `filters`,
+  `insecureSsl`, `headers`, `properties`, `status`, `createdOn`, `modifiedOn`.
+  Nota: o spec declara `contentType`/`status` como enums inteiros, mas a API
+  serializa strings (`"json"`, `"Active"`) — o tipo segue o fio real.
+- Tipo **`WebhookEventType`** (união aberta) com os 46 event types reais de
+  `GET /v2/webhooks/eventTypes` (`service_invoice.issued_successfully`, etc.).
+- Teste de alinhamento (`tests/types/account-webhook-alignment.test-d.ts`)
+  amarrando o `AccountWebhook` ao schema gerado do spec oficial — um sync de spec
+  que mude o contrato de webhooks quebra o `npm run test:types` em vez de driftar.
+- JSDoc do `createAccountWebhook` documenta a verificação de URI na criação
+  (a NFE.io faz um ping e exige resposta 2xx).
+- JSDoc do `updateAccountWebhook` documenta que o `PUT` é substituição integral
+  (confirmado ao vivo em 2026-07-03): campos omitidos voltam ao padrão — update
+  sem `status` **desativa o webhook**. Envie o objeto completo (parta do retrieve).
+
+### Deprecado
+
+- Métodos company-scoped de webhooks (`list`, `create`, `retrieve`, `update`,
+  `delete`, `test` sobre `/v1/companies/{id}/webhooks`): a rota retorna **404**
+  na API atual (confirmado em três contas, 2026-07-02/03). Use os equivalentes
+  account-scoped. O comportamento não mudou; remoção fica para a próxima major.
+- Tipos `Webhook` e `WebhookEvent`: shapes que a API real rejeita. Use
+  `AccountWebhook` e `WebhookEventType`.
+
 ## [5.0.0] - 2026-06-30
 
 > Primeira release de **funcionalidades** desde a v3 — a v4 foi apenas o bump de runtime
@@ -793,6 +837,8 @@ SDK JavaScript legado com API baseada em callbacks.
 
 ## Links
 
-[Unreleased]: https://github.com/nfe/client-nodejs/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/nfe/client-nodejs/compare/v5.1.0...HEAD
+[5.1.0]: https://github.com/nfe/client-nodejs/compare/v5.0.0...v5.1.0
+[5.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v5.0.0
 [3.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v3.0.0
 [2.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v2.0.0

@@ -166,6 +166,12 @@ export type SpecialTaxRegime = 'Automatico' | 'Nenhum' | 'MicroempresaMunicipal'
 // Webhook Types
 // ============================================================================
 
+/**
+ * @deprecated Este shape (`url`/`events`/`active`) não corresponde ao contrato real da
+ * API de webhooks (confirmado ao vivo em 2026-07-02: a API rejeita `url` com
+ * `400 "The Uri field is required"`). Use {@link AccountWebhook} com os métodos
+ * account-scoped (`listAccountWebhooks`, `createAccountWebhook`, ...).
+ */
 export interface Webhook {
   /** Webhook ID */
   id?: string;
@@ -183,7 +189,105 @@ export interface Webhook {
   modifiedOn?: string;
 }
 
+/**
+ * @deprecated Estes literais (`invoice.*`) não existem na API real — os event types
+ * vivos seguem o padrão `service_invoice.issued_successfully` etc. Use
+ * {@link WebhookEventType} (lista viva via `webhooks.fetchEventTypes()`).
+ */
 export type WebhookEvent = 'invoice.created' | 'invoice.issued' | 'invoice.cancelled' | 'invoice.failed';
+
+/**
+ * Webhook de conta — shape real do recurso em `/v2/webhooks`, conforme os specs
+ * oficiais (`openapi/spec/nf-servico-v1.yaml` e equivalentes) e confirmado ao vivo
+ * (2026-07-02).
+ *
+ * Nota de contrato: o spec declara `contentType`/`status` como enums inteiros, mas a
+ * API serializa strings (`"json"`, `"Active"`) — o tipo segue o formato de fio real.
+ */
+export interface AccountWebhook {
+  /** ID exclusivo do webhook (GUID gerado pela API) */
+  id?: string;
+  /** URL de entrega das notificações. Verificada com ping na criação (exige 2xx). */
+  uri: string;
+  /** Media type das entregas (a API serializa string, ex.: `"json"`) */
+  contentType?: 'json' | (string & {});
+  /**
+   * Segredo de 32–64 caracteres usado no HMAC-SHA1 do header `X-Hub-Signature`.
+   * Ecoado na resposta do create; omitido em list/retrieve (write-only na leitura).
+   */
+  secret?: string;
+  /** Filtros de event types (ver {@link WebhookEventType} e `fetchEventTypes()`) */
+  filters?: Array<WebhookEventType | (string & {})>;
+  /** Pular verificação do certificado SSL do host da URI (padrão: `false`) */
+  insecureSsl?: boolean;
+  /** Cabeçalhos HTTP adicionais enviados nas entregas */
+  headers?: Record<string, string>;
+  /** Propriedades adicionais incluídas no corpo das notificações */
+  properties?: Record<string, unknown>;
+  /** Status do webhook (a API serializa string, ex.: `"Active"`) */
+  status?: 'Active' | (string & {});
+  /** Data de criação */
+  createdOn?: string;
+  /** Data de modificação */
+  modifiedOn?: string;
+}
+
+/**
+ * Event types reais de webhook, extraídos de `GET /v2/webhooks/eventTypes` ao vivo
+ * (2026-07-02). União aberta: ids novos do servidor continuam aceitos sem quebra.
+ * Prefira `webhooks.fetchEventTypes()` para a lista viva.
+ *
+ * (O id `legal_entity_taxpayer:updated_sucessfully` — com `:` e grafia `sucessfully` —
+ * é reproduzido exatamente como a API o retorna.)
+ */
+export type WebhookEventType =
+  | 'service_invoice.issued'
+  | 'service_invoice.issued_successfully'
+  | 'service_invoice.issued_error'
+  | 'service_invoice.issued_failed'
+  | 'service_invoice.cancelled'
+  | 'service_invoice.cancelled_successfully'
+  | 'service_invoice.cancelled_error'
+  | 'service_invoice.cancelled_failed'
+  | 'service_invoice.pulled'
+  | 'service_invoice_inbound.issued_successfully'
+  | 'service_invoice_inbound.event_raised_successfully'
+  | 'product_invoice.issued_successfully'
+  | 'product_invoice.issued_error'
+  | 'product_invoice.issued_failed'
+  | 'product_invoice.cancelled_successfully'
+  | 'product_invoice.cancelled_error'
+  | 'product_invoice.cancelled_failed'
+  | 'product_invoice.cce_successfully'
+  | 'product_invoice.cce_error'
+  | 'product_invoice.cce_failed'
+  | 'product_invoice.dfe_event_successfully'
+  | 'product_invoice.dfe_event_error'
+  | 'product_invoice.dfe_event_failed'
+  | 'product_invoice.disabled_successfully'
+  | 'product_invoice.disabled_error'
+  | 'product_invoice.disabled_failed'
+  | 'product_invoice_inbound.issued_successfully'
+  | 'product_invoice_inbound.event_raised_successfully'
+  | 'product_invoice_inbound.input_event_raised_successfully'
+  | 'product_invoice_inbound_summary.issued_successfully'
+  | 'product_invoice_inbound_summary.event_raised_successfully'
+  | 'consumer_invoice.issued_successfully'
+  | 'consumer_invoice.issued_error'
+  | 'consumer_invoice.issued_failed'
+  | 'consumer_invoice.cancelled_successfully'
+  | 'consumer_invoice.cancelled_error'
+  | 'consumer_invoice.cancelled_failed'
+  | 'transportation_invoice_inbound.issued_successfully'
+  | 'transportation_invoice_inbound.event_raised_successfully'
+  | 'legal_entity_taxpayer:updated_sucessfully'
+  | 'product_tax.created_successfully'
+  | 'product_tax.creation_failed'
+  | 'product_tax.custom_rules_requested'
+  | 'tax_payment_form.created_successfully'
+  | 'tax_payment_form.creation_failed'
+  | 'tax_payment_form.creation_not_needed'
+  | (string & {});
 
 // ============================================================================
 // Address Types (for Address Lookup API)

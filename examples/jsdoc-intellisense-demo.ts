@@ -110,18 +110,20 @@ async function demonstrateJSDoc() {
   const envClient = createClientFromEnv('production');
 
   // Example 7: Resource-specific operations with docs
-  // All webhook methods have comprehensive documentation
-  const webhook = await nfe.webhooks.create(companyId, {
-    url: 'https://example.com/webhook',
-    events: ['invoice.issued', 'invoice.cancelled'],
-    secret: 'webhook-secret'
+  // All webhook methods have comprehensive documentation.
+  // Webhooks are account-scoped (/v2/webhooks); the uri must answer 2xx at creation.
+  const webhook = await nfe.webhooks.createAccountWebhook({
+    uri: 'https://example.com/webhook',
+    contentType: 'json',
+    secret: 'um-segredo-de-32-a-64-caracteres-aqui',
+    filters: ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully'],
   });
 
   // Hover over "validateSignature" to see HMAC validation docs
   const isValid = nfe.webhooks.validateSignature(
-    '{"event": "invoice.issued"}',
+    '{"event": "service_invoice.issued_successfully"}',
     'signature-from-header',
-    'webhook-secret'
+    'um-segredo-de-32-a-64-caracteres-aqui'
   );
 
   // Example 8: Company operations with certificate upload

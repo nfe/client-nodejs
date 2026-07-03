@@ -32,7 +32,7 @@
  * ```
  *
  * @module @nfe-io/sdk
- * @version 5.0.0
+ * @version 5.1.0
  * @author NFE.io
  * @license MIT
  */
@@ -57,7 +57,7 @@ export { NfeClient, createNfeClient, VERSION, SUPPORTED_NODE_VERSIONS, CTE_API_B
  * @see {@link ServiceInvoice} - Service invoice entity type
  * @see {@link LegalPerson} - Legal person (empresa) entity type
  * @see {@link NaturalPerson} - Natural person (pessoa física) entity type
- * @see {@link Webhook} - Webhook configuration type
+ * @see {@link AccountWebhook} - Webhook configuration type (account-scoped, `/v2/webhooks`)
  */
 export type {
   // Configuration
@@ -74,6 +74,8 @@ export type {
   ServiceInvoiceDetails,
   Webhook,
   WebhookEvent,
+  AccountWebhook,
+  WebhookEventType,
 
   // Address types
   Address,
@@ -507,7 +509,7 @@ export const PACKAGE_NAME = '@nfe-io/sdk';
  * Current SDK version
  * @constant
  */
-export const PACKAGE_VERSION = '5.0.0';
+export const PACKAGE_VERSION = '5.1.0';
 
 /**
  * NFE.io API version supported by this SDK
