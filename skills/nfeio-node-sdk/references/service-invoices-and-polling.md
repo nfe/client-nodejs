@@ -79,7 +79,7 @@ Throws `PollingTimeoutError` if timeout exceeded. Throws `InvoiceProcessingError
 
 ```typescript
 interface ListServiceInvoicesOptions {
-  pageIndex?: number;      // 0-based page (default: 0)
+  pageIndex?: number;      // 1-based page — first page is 1; the API rejects 0
   pageCount?: number;      // Items per page (default: 50)
   issuedBegin?: string;    // Filter by issue date start (yyyy-MM-dd)
   issuedEnd?: string;      // Filter by issue date end

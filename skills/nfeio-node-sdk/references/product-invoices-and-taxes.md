@@ -235,7 +235,7 @@ Access via `nfe.taxCodes`. Global scope. Reference data for tax calculation inpu
 | `listIssuerTaxProfiles(options?)` | Issuer tax profile codes |
 | `listRecipientTaxProfiles(options?)` | Recipient tax profile codes |
 
-All return `TaxCodePaginatedResponse` with `{ data: TaxCode[], totalCount, page }`.
+All return `TaxCodePaginatedResponse` with `{ items?: TaxCode[], currentPage?, totalPages?, totalCount? }` (live-verified 2026-07-13 — note it is `items`/`currentPage`, NOT the `data`/`page` shape used by `ListResponse<T>` elsewhere in the SDK). Pagination is 1-based (`pageIndex`, default 1).
 
 ```typescript
 interface TaxCode {

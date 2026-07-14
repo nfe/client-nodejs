@@ -3,6 +3,7 @@ import { CompaniesResource } from '../../src/core/resources/companies';
 import type { HttpClient } from '../../src/core/http/client';
 import type { HttpResponse, ListResponse, Company } from '../../src/core/types';
 import { createMockCompany, TEST_COMPANY_ID } from '../setup';
+import { ValidationError } from '../../src/core/errors/index.js';
 import { CertificateValidator } from '../../src/core/utils/certificate-validator';
 
 // Mock CertificateValidator to avoid certificate format validation issues in tests
@@ -60,6 +61,76 @@ describe('CompaniesResource', () => {
       expect(result.data).toHaveLength(2);
       expect(result.data[0].name).toBe('Company One');
       expect(mockHttpClient.get).toHaveBeenCalledWith('/companies', {});
+    });
+  });
+
+  describe('pagination (1-based API contract)', () => {
+    // Mirrors the real API (probed live 2026-07-13): GET /companies rejects
+    // pageIndex < 1, and accepts pageCount only in 2-50 (1 is rejected too,
+    // despite the API's "between 1 and 50" error message)
+    const mirrorApiGet = (pages: Company[][]) =>
+      vi
+        .fn()
+        .mockImplementation(
+          (_path: string, options: { pageIndex?: number; pageCount?: number } = {}) => {
+            const pageIndex = options.pageIndex ?? 1;
+            if (pageIndex < 1) {
+              return Promise.reject(new ValidationError('pageIndex must be greater or equal to 1'));
+            }
+            if (options.pageCount !== undefined && (options.pageCount < 2 || options.pageCount > 50)) {
+              return Promise.reject(new ValidationError('pageCount must be between 1 and 50'));
+            }
+            return Promise.resolve({
+              data: { companies: pages[pageIndex - 1] ?? [], page: pageIndex },
+              status: 200,
+              headers: {},
+            });
+          }
+        );
+
+    it('list returns page.pageIndex exactly as the API sent it (no 0-based normalization)', async () => {
+      mockHttpClient.get = mirrorApiGet([[createMockCompany()]]);
+
+      const result = await companies.list({ pageIndex: 1 });
+
+      expect(result.page?.pageIndex).toBe(1);
+    });
+
+    it('list({ pageIndex: 0 }) is rejected by the API contract', async () => {
+      mockHttpClient.get = mirrorApiGet([[createMockCompany()]]);
+
+      await expect(companies.list({ pageIndex: 0 })).rejects.toThrow(
+        'pageIndex must be greater or equal to 1'
+      );
+    });
+
+    it('listAll starts at pageIndex 1, respects the pageCount cap, and paginates 1 -> 2', async () => {
+      const fullPage = Array.from({ length: 50 }, (_, i) =>
+        createMockCompany({ id: `company-${i}` })
+      );
+      const lastPage = [createMockCompany({ id: 'company-last' })];
+      mockHttpClient.get = mirrorApiGet([fullPage, lastPage]);
+
+      const result = await companies.listAll();
+
+      expect(result).toHaveLength(51);
+      expect(vi.mocked(mockHttpClient.get).mock.calls[0][1]).toMatchObject({
+        pageIndex: 1,
+        pageCount: 50,
+      });
+      expect(vi.mocked(mockHttpClient.get).mock.calls[1][1]).toMatchObject({ pageIndex: 2 });
+    });
+
+    it('listIterator starts at pageIndex 1', async () => {
+      mockHttpClient.get = mirrorApiGet([[createMockCompany({ id: 'company-1' })]]);
+
+      const seen: Company[] = [];
+      for await (const company of companies.listIterator()) {
+        seen.push(company);
+      }
+
+      expect(seen).toHaveLength(1);
+      expect(vi.mocked(mockHttpClient.get).mock.calls[0][1]).toMatchObject({ pageIndex: 1 });
     });
   });
 

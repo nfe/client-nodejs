@@ -18,18 +18,20 @@ paths:
       parameters:
         - name: pageCount
           in: query
-          description: Items por página
+          description: Items por página (a API aceita 2–50 e retorna 10 quando omitido; 1 é rejeitado apesar da mensagem "between 1 and 50")
           required: false
           schema:
             type: integer
             format: int32
+            maximum: 50
         - name: pageIndex
           in: query
-          description: Número da página
+          description: Número da página (1-based — a primeira página é 1)
           required: false
           schema:
             type: integer
             format: int32
+            minimum: 1
       responses:
         "200":
           description: Consulta realizada com sucesso
@@ -2590,11 +2592,12 @@ paths:
             format: int32
         - name: pageIndex
           in: query
-          description: Número da página
+          description: Número da página (1-based — a primeira página é 1)
           required: false
           schema:
             type: integer
             format: int32
+            minimum: 1
         - name: issuedBegin
           in: query
           description: Data de competência início
