@@ -356,7 +356,7 @@ export interface ListResponse<T> {
 }
 
 export interface PageInfo {
-  /** Current page index */
+  /** Current page index (1-based — the first page is 1) */
   pageIndex: number;
   /** Items per page */
   pageCount: number;
@@ -367,7 +367,7 @@ export interface PageInfo {
 }
 
 export interface PaginationOptions extends Record<string, unknown> {
-  /** Page index (0-based) */
+  /** Page index (1-based — the first page is 1; the API rejects 0) */
   pageIndex?: number;
   /** Items per page */
   pageCount?: number;
@@ -554,6 +554,34 @@ export type CreateCompanyResourceItem =
 /** Company update request body. */
 export type UpdateCompanyResourceItem =
   ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.UpdateCompanyResourceItem'];
+
+/**
+ * Options for the v2 cursor-based company listing
+ * (`GET api.nfse.io/v2/companies`, contribuintes-v2).
+ */
+export interface CompanyV2ListOptions {
+  /** Cursor: start after this company ID */
+  startingAfter?: string;
+  /** Cursor: end before this company ID */
+  endingBefore?: string;
+  /** Number of results per page — the API accepts 1-50 (default: 10) */
+  limit?: number;
+}
+
+/**
+ * Response of the v2 cursor-based company listing.
+ *
+ * Items follow the v2 projection ({@link CompanyResourceItem}) — a different
+ * shape from the v1 {@link Company}: no NFS-e config fields (`rpsNumber`,
+ * `issRate`, `environment`, `fiscalStatus`, `certificate`, ...), and with
+ * v2-only fields (`stateTaxes`, `municipalTaxes`, `type`, `version`).
+ */
+export interface CompanyV2ListResponse {
+  /** Companies in this page (v2 projection) */
+  data: CompanyResourceItem[];
+  /** Whether more pages exist after this one */
+  hasMore: boolean;
+}
 
 /** Digital certificate metadata (real, spec-backed). */
 export type CertificateMetadataResource =

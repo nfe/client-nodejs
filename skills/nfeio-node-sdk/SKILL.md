@@ -97,7 +97,7 @@ Most resources are scoped to a company. The pattern is always `resource.method(c
 ```typescript
 // List service invoices for a company
 const invoices = await nfe.serviceInvoices.list('company-uuid', {
-  pageIndex: 0,
+  pageIndex: 1, // pagination is 1-based (the API rejects 0)
   pageCount: 50,
 });
 
@@ -202,11 +202,11 @@ All error objects have: `message`, `type`, `code`/`status`/`statusCode`, `detail
 
 The SDK uses **two different pagination styles**, and the response shape varies by resource:
 
-**Offset-based** (service invoices, companies, people, webhooks):
+**Offset-based** (service invoices, companies, people, webhooks) — **1-based**: the first page is `pageIndex: 1`; the API rejects `pageIndex: 0` with a validation error (confirmed live for companies and service invoices):
 ```typescript
 // Service invoices return { serviceInvoices, totalResults, totalPages, page }
 const page = await nfe.serviceInvoices.list(companyId, {
-  pageIndex: 0,    // 0-based page number
+  pageIndex: 1,    // 1-based page number (first page = 1)
   pageCount: 50,   // Items per page
 });
 page.serviceInvoices; // ServiceInvoiceData[]
@@ -214,11 +214,18 @@ page.totalResults;    // number
 page.totalPages;      // number
 
 // Companies, people and webhooks return the generic ListResponse<T>
-const companies = await nfe.companies.list({ pageIndex: 0, pageCount: 50 });
+const companies = await nfe.companies.list({ pageIndex: 1, pageCount: 50 });
 companies.data;       // Company[]
 companies.totalCount; // number | undefined
-companies.page;       // { pageIndex, pageCount }
+companies.page;       // { pageIndex, pageCount } — pageIndex is 1-based as of v5.2.0
 ```
+
+> ⚠️ Version note: in `nfe-io` ≤ 5.1.x, `companies.list()` subtracted 1 from the response
+> (`page.pageIndex` came back 0-based) and `listAll()`/`listIterator()` started at page 0 —
+> which the API rejects, so auto-pagination (and `findByTaxNumber`/`findByName`/
+> `getCompaniesWithCertificates`/`getCompaniesWithExpiringCertificates`) failed on the first
+> call. Fixed in v5.2.0: 1-based on both request and response. The request was ALWAYS 1-based
+> on the wire — never send `pageIndex: 0` regardless of SDK version.
 
 **Cursor-based** (product invoices, state taxes):
 ```typescript

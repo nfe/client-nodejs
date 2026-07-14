@@ -200,7 +200,7 @@ if ('id' in result) {
 // Listar notas fiscais com filtros
 const notas = await nfe.serviceInvoices.list(empresaId, {
   pageCount: 50,
-  pageIndex: 0,
+  pageIndex: 1, // paginação é 1-based (primeira página = 1)
   searchPeriod: {
     startDate: '2024-01-01',
     endDate: '2024-01-31',
@@ -259,22 +259,38 @@ console.log(`✅ ${notas.length} notas fiscais criadas em lote`);
 Gerenciar empresas na sua conta:
 
 ```typescript
-// Criar empresa
+// Criar empresa (a API exige name, federalTaxNumber, taxRegime e address)
 const empresa = await nfe.companies.create({
-  federalTaxNumber: '12345678000190',
   name: 'Nome da Empresa',
-  // ... outros campos
+  federalTaxNumber: 12345678000190,
+  taxRegime: 'SimplesNacional',
+  address: {
+    state: 'SP',
+    city: { code: '3550308', name: 'São Paulo' },
+    district: 'Centro',
+    street: 'Rua Exemplo',
+    number: '100',
+    postalCode: '01001000',
+    country: 'BRA',
+  },
 });
 
-// Listar todas as empresas
-const empresas = await nfe.companies.list();
+// Listar empresas — v2, cursor-based (recomendado; a API v1 está sendo descontinuada)
+const pagina = await nfe.companies.listV2({ limit: 50 });
+// próxima página: listV2({ limit: 50, startingAfter: <id do último item> })
+
+// Listar todas as empresas (varredura completa com paginação automática)
+const empresas = await nfe.companies.listAll();
 
 // Buscar empresa específica
 const empresa = await nfe.companies.retrieve(empresaId);
 
-// Atualizar empresa
+// Atualizar empresa — ATENÇÃO: é PUT (substituição total), não update parcial.
+// Envie o objeto completo (read-modify-write); campos omitidos são zerados.
+const atual = await nfe.companies.retrieve(empresaId);
 const atualizada = await nfe.companies.update(empresaId, {
-  email: 'novoemail@empresa.com.br'
+  ...atual,
+  tradeName: 'Novo Nome Fantasia',
 });
 
 // Upload de certificado digital

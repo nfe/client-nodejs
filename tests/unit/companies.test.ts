@@ -3,6 +3,7 @@ import { CompaniesResource } from '../../src/core/resources/companies';
 import type { HttpClient } from '../../src/core/http/client';
 import type { HttpResponse, ListResponse, Company } from '../../src/core/types';
 import { createMockCompany, TEST_COMPANY_ID } from '../setup';
+import { ValidationError } from '../../src/core/errors/index.js';
 import { CertificateValidator } from '../../src/core/utils/certificate-validator';
 
 // Mock CertificateValidator to avoid certificate format validation issues in tests
@@ -60,6 +61,145 @@ describe('CompaniesResource', () => {
       expect(result.data).toHaveLength(2);
       expect(result.data[0].name).toBe('Company One');
       expect(mockHttpClient.get).toHaveBeenCalledWith('/companies', {});
+    });
+  });
+
+  describe('pagination (1-based API contract)', () => {
+    // Mirrors the real API (probed live 2026-07-13): GET /companies rejects
+    // pageIndex < 1, and accepts pageCount only in 2-50 (1 is rejected too,
+    // despite the API's "between 1 and 50" error message)
+    const mirrorApiGet = (pages: Company[][]) =>
+      vi
+        .fn()
+        .mockImplementation(
+          (_path: string, options: { pageIndex?: number; pageCount?: number } = {}) => {
+            const pageIndex = options.pageIndex ?? 1;
+            if (pageIndex < 1) {
+              return Promise.reject(new ValidationError('pageIndex must be greater or equal to 1'));
+            }
+            if (options.pageCount !== undefined && (options.pageCount < 2 || options.pageCount > 50)) {
+              return Promise.reject(new ValidationError('pageCount must be between 1 and 50'));
+            }
+            return Promise.resolve({
+              data: { companies: pages[pageIndex - 1] ?? [], page: pageIndex },
+              status: 200,
+              headers: {},
+            });
+          }
+        );
+
+    it('list returns page.pageIndex exactly as the API sent it (no 0-based normalization)', async () => {
+      mockHttpClient.get = mirrorApiGet([[createMockCompany()]]);
+
+      const result = await companies.list({ pageIndex: 1 });
+
+      expect(result.page?.pageIndex).toBe(1);
+    });
+
+    it('list({ pageIndex: 0 }) is rejected by the API contract', async () => {
+      mockHttpClient.get = mirrorApiGet([[createMockCompany()]]);
+
+      await expect(companies.list({ pageIndex: 0 })).rejects.toThrow(
+        'pageIndex must be greater or equal to 1'
+      );
+    });
+
+    it('listAll starts at pageIndex 1, respects the pageCount cap, and paginates 1 -> 2', async () => {
+      const fullPage = Array.from({ length: 50 }, (_, i) =>
+        createMockCompany({ id: `company-${i}` })
+      );
+      const lastPage = [createMockCompany({ id: 'company-last' })];
+      mockHttpClient.get = mirrorApiGet([fullPage, lastPage]);
+
+      const result = await companies.listAll();
+
+      expect(result).toHaveLength(51);
+      expect(vi.mocked(mockHttpClient.get).mock.calls[0][1]).toMatchObject({
+        pageIndex: 1,
+        pageCount: 50,
+      });
+      expect(vi.mocked(mockHttpClient.get).mock.calls[1][1]).toMatchObject({ pageIndex: 2 });
+    });
+
+    it('listIterator starts at pageIndex 1', async () => {
+      mockHttpClient.get = mirrorApiGet([[createMockCompany({ id: 'company-1' })]]);
+
+      const seen: Company[] = [];
+      for await (const company of companies.listIterator()) {
+        seen.push(company);
+      }
+
+      expect(seen).toHaveLength(1);
+      expect(vi.mocked(mockHttpClient.get).mock.calls[0][1]).toMatchObject({ pageIndex: 1 });
+    });
+  });
+
+  describe('listV2 (v2 cursor API contract)', () => {
+    // Mirrors the real v2 API (probed live 2026-07-14): GET /v2/companies
+    // returns { hasMore, companies }; limit above 50 is rejected with
+    // "limit must be less than 50"; limit=0 returns 200 with an empty page.
+    const mirrorV2Get = (pages: Company[][]) =>
+      vi
+        .fn()
+        .mockImplementation(
+          (_path: string, options: { limit?: number; startingAfter?: string } = {}) => {
+            if (options.limit !== undefined && options.limit > 50) {
+              return Promise.reject(new ValidationError('limit must be less than 50'));
+            }
+            const pageIdx = options.startingAfter
+              ? pages.findIndex((p) => p.some((c) => c.id === options.startingAfter)) + 1
+              : 0;
+            return Promise.resolve({
+              data: { companies: pages[pageIdx] ?? [], hasMore: pageIdx < pages.length - 1 },
+              status: 200,
+              headers: {},
+            });
+          }
+        );
+
+    it('returns { data, hasMore } and hits /v2/companies', async () => {
+      mockHttpClient.get = mirrorV2Get([[createMockCompany({ id: 'v2-1' })]]);
+
+      const result = await companies.listV2({ limit: 10 });
+
+      expect(result.data).toHaveLength(1);
+      expect(result.hasMore).toBe(false);
+      expect(vi.mocked(mockHttpClient.get).mock.calls[0][0]).toBe('/v2/companies');
+      expect(vi.mocked(mockHttpClient.get).mock.calls[0][1]).toMatchObject({ limit: 10 });
+    });
+
+    it('follows the cursor with startingAfter across pages', async () => {
+      const page1 = [createMockCompany({ id: 'v2-1' }), createMockCompany({ id: 'v2-2' })];
+      const page2 = [createMockCompany({ id: 'v2-3' })];
+      mockHttpClient.get = mirrorV2Get([page1, page2]);
+
+      const first = await companies.listV2({ limit: 2 });
+      expect(first.hasMore).toBe(true);
+
+      const second = await companies.listV2({ limit: 2, startingAfter: 'v2-2' });
+      expect(second.data.map((c) => c.id)).toEqual(['v2-3']);
+      expect(second.hasMore).toBe(false);
+    });
+
+    it('rejects limit 0 and 51 client-side before any HTTP call', async () => {
+      mockHttpClient.get = mirrorV2Get([[]]);
+
+      await expect(companies.listV2({ limit: 0 })).rejects.toThrow('limit must be between 1 and 50');
+      await expect(companies.listV2({ limit: 51 })).rejects.toThrow('limit must be between 1 and 50');
+      expect(mockHttpClient.get).not.toHaveBeenCalled();
+    });
+
+    it('handles a null companies array defensively', async () => {
+      mockHttpClient.get = vi.fn().mockResolvedValue({
+        data: { companies: null, hasMore: false },
+        status: 200,
+        headers: {},
+      });
+
+      const result = await companies.listV2();
+
+      expect(result.data).toEqual([]);
+      expect(result.hasMore).toBe(false);
     });
   });
 

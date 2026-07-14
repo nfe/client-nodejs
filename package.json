@@ -1,6 +1,6 @@
 {
   "name": "nfe-io",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "description": "Official NFE.io SDK for Node.js - TypeScript native with zero runtime dependencies",
   "keywords": [
     "nfe",
@@ -28,7 +28,7 @@
     "url": "git+https://github.com/nfe/client-nodejs.git"
   },
   "bugs": "https://github.com/nfe/client-nodejs/issues",
-  "homepage": "https://nfe.io",
+  "homepage": "https://nfe.io/docs/desenvolvedores/bibliotecas/node/",
   "engines": {
     "node": ">=22.0.0"
   },

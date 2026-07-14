@@ -140,7 +140,7 @@ export class ServiceInvoicesResource {
    * ```typescript
    * // List recent invoices
    * const result = await nfe.serviceInvoices.list(companyId, {
-   *   pageIndex: 0,
+   *   pageIndex: 1,
    *   pageCount: 20,
    *   issuedBegin: '2026-01-01',
    *   issuedEnd: '2026-01-31'

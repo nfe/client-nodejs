@@ -440,7 +440,7 @@ List service invoices for a company with pagination and filtering.
 | Option | Type | Description |
 |--------|------|-------------|
 | `pageCount` | `number` | Items per page (default: 25) |
-| `pageIndex` | `number` | Page number, 0-indexed (default: 0) |
+| `pageIndex` | `number` | Page number, 1-indexed — first page is 1 (default: 1) |
 | `searchPeriod` | `object` | Date range filter |
 | `searchPeriod.startDate` | `string` | Start date: 'YYYY-MM-DD' |
 | `searchPeriod.endDate` | `string` | End date: 'YYYY-MM-DD' |
@@ -457,7 +457,7 @@ console.log(`Found ${invoices.length} invoices`);
 // Example 2: Pagination
 const page2 = await nfe.serviceInvoices.list('company-id', {
   pageCount: 50,   // 50 per page
-  pageIndex: 1,    // Second page (0-indexed)
+  pageIndex: 2,    // Second page (1-indexed)
 });
 
 // Example 3: Date filtering
@@ -470,7 +470,7 @@ const lastMonth = await nfe.serviceInvoices.list('company-id', {
 });
 
 // Example 4: Process all invoices
-let pageIndex = 0;
+let pageIndex = 1; // pagination is 1-based
 let allInvoices = [];
 
 while (true) {
@@ -1083,13 +1083,32 @@ const company = await nfe.companies.create({
 
 ##### `list(options?: PaginationOptions): Promise<ListResponse<Company>>`
 
-List companies with pagination.
+> ⚠️ **Deprecated** — a API v1 de companies está sendo descontinuada. Prefira
+> `listV2()` (cursor, v2) para listagem paginada; `listAll()`/`listIterator()`
+> para varredura completa. O método continua funcionando durante a convivência.
+
+List companies with pagination (1-based; `pageCount` aceito: 2–50, default 10).
 
 ```typescript
 const companies = await nfe.companies.list({
   pageCount: 20,
-  pageIndex: 0
+  pageIndex: 1 // first page (pagination is 1-based)
 });
+```
+
+##### `listV2(options?: CompanyV2ListOptions): Promise<CompanyV2ListResponse>`
+
+Lista empresas pela API v2 (`api.nfse.io/v2/companies`, cursor-based). `limit`
+1–50 (default 10); use o `id` do último item como `startingAfter` para a
+próxima página; `hasMore` indica se há mais. Os itens seguem a projeção v2
+(`CompanyResourceItem`) — shape diferente do `Company` v1.
+
+```typescript
+let page = await nfe.companies.listV2({ limit: 50 });
+while (page.hasMore) {
+  const last = page.data[page.data.length - 1];
+  page = await nfe.companies.listV2({ limit: 50, startingAfter: last.id });
+}
 ```
 
 ##### `listAll(): Promise<Company[]>`
@@ -2765,10 +2784,16 @@ interface PollOptions {
 }
 
 interface ListResponse<T> {
-  items: T[];
-  totalCount: number;
-  pageIndex: number;
+  data: T[];
+  totalCount?: number;
+  page?: PageInfo;
+}
+
+interface PageInfo {
+  pageIndex: number; // 1-based — first page is 1
   pageCount: number;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
 }
 ```
 

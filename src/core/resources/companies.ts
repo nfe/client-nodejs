@@ -6,12 +6,19 @@
 
 import type {
   Company,
+  CompanyResourceItem,
+  CompanyV2ListOptions,
+  CompanyV2ListResponse,
   ListResponse,
   PaginationOptions
 } from '../types.js';
 import type { HttpClient } from '../http/client.js';
 import { ValidationError, NotFoundError } from '../errors/index.js';
 import { CertificateValidator } from '../utils/certificate-validator.js';
+
+// Page size for listAll/listIterator: the API caps GET /companies at
+// pageCount 50 (values above 50 — and also 1 — are rejected with a 400).
+const AUTO_PAGINATION_PAGE_SIZE = 50;
 
 // ============================================================================
 // Validation Helpers
@@ -149,6 +156,13 @@ export class CompaniesResource {
   /**
    * Create a new company
    *
+   * The API requires `name`, `federalTaxNumber`, `taxRegime` and `address`
+   * (with `state`, `city { code, name }`, `district`, `street`, `number`,
+   * `postalCode`, `country`) — a payload without them compiles against the
+   * loose `Company`-based signature but fails with a 400. Note that `email`
+   * is NOT part of the create body. For the strict wire shape, see
+   * {@link CreateCompanyResourceItem} (exported from the package root).
+   *
    * @param data - Company data (excluding id, createdOn, modifiedOn)
    * @returns The created company with generated id
    * @throws {ValidationError} If company data is invalid
@@ -159,8 +173,17 @@ export class CompaniesResource {
    * ```typescript
    * const company = await nfe.companies.create({
    *   name: 'Acme Corp',
-   *   federalTaxNumber: 12345678901234,
-   *   email: 'contact@acme.com'
+   *   federalTaxNumber: 12345678000190,
+   *   taxRegime: 'SimplesNacional',
+   *   address: {
+   *     state: 'SP',
+   *     city: { code: '3550308', name: 'São Paulo' },
+   *     district: 'Centro',
+   *     street: 'Rua Exemplo',
+   *     number: '100',
+   *     postalCode: '01001000',
+   *     country: 'BRA',
+   *   },
    * });
    * ```
    */
@@ -176,15 +199,27 @@ export class CompaniesResource {
   }
 
   /**
-   * List companies
+   * List companies (v1 API — offset pagination)
+   *
+   * @deprecated The v1 companies API (`api.nfe.io/v1/companies`) is being
+   * discontinued. Prefer {@link listV2} (cursor-based, `api.nfse.io/v2`) for
+   * page-by-page listing, or {@link listAll}/{@link listIterator} for full
+   * sweeps. This method keeps working during the coexistence window.
+   *
+   * Pagination is 1-based (API contract): the first page is `pageIndex: 1`.
+   * The API rejects `pageIndex: 0` with a validation error.
+   *
+   * `pageCount` accepted by the API: 2-50 (when omitted, the API returns 10
+   * items). Values outside that range — including 1, despite the API's
+   * "between 1 and 50" error message — are rejected with a 400.
    *
    * @param options - Pagination options (pageCount, pageIndex)
    * @returns List response with companies and pagination info
    *
    * @example
    * ```typescript
-   * const page1 = await nfe.companies.list({ pageCount: 20, pageIndex: 0 });
-   * const page2 = await nfe.companies.list({ pageCount: 20, pageIndex: 1 });
+   * const page1 = await nfe.companies.list({ pageCount: 20, pageIndex: 1 });
+   * const page2 = await nfe.companies.list({ pageCount: 20, pageIndex: 2 });
    * ```
    */
   async list(options: PaginationOptions = {}): Promise<ListResponse<Company>> {
@@ -192,13 +227,68 @@ export class CompaniesResource {
     const response = await this.http.get<{ companies: Company[]; page: number }>(path, options);
 
     // API returns: { companies: [...], page: number }
-    // Transform to our standard ListResponse format
+    // Transform to our standard ListResponse format (pageIndex stays 1-based, as on the wire)
     return {
       data: response.data.companies,
       page: {
-        pageIndex: response.data.page - 1, // API uses 1-based, we use 0-based
-        pageCount: options.pageCount || 100,
+        pageIndex: response.data.page,
+        pageCount: options.pageCount ?? 10, // the API returns 10 items when pageCount is omitted
       }
+    };
+  }
+
+  /**
+   * List companies via the v2 cursor API (`GET api.nfse.io/v2/companies`)
+   *
+   * This is the successor of {@link list} (the v1 companies API is being
+   * discontinued). Cursor-based: pass the last item's `id` as
+   * `startingAfter` to fetch the next page; `hasMore` tells whether more
+   * pages exist. Results are ordered by name, then id.
+   *
+   * `limit` accepted by the API: 1-50 (default 10). Values above 50 are
+   * rejected; `limit: 0` is rejected client-side (the API would silently
+   * return an empty page). Items follow the **v2 projection**
+   * ({@link CompanyResourceItem}) — a different shape from the v1
+   * {@link Company} (no NFS-e config fields; adds `stateTaxes`,
+   * `municipalTaxes`, `type`, `version`).
+   *
+   * Known API issue (reported 2026-07-14): on some accounts, specific
+   * records make the server answer 500 for any page window containing
+   * them, which breaks full sweeps — the reason {@link listAll}/
+   * {@link listIterator} still run on v1 in this release.
+   *
+   * @param options - Cursor pagination options (limit, startingAfter, endingBefore)
+   * @returns Page of companies (v2 projection) plus `hasMore`
+   * @throws {ValidationError} If `limit` is outside 1-50
+   *
+   * @example
+   * ```typescript
+   * let page = await nfe.companies.listV2({ limit: 50 });
+   * while (page.hasMore) {
+   *   const last = page.data[page.data.length - 1];
+   *   page = await nfe.companies.listV2({ limit: 50, startingAfter: last.id });
+   * }
+   * ```
+   */
+  async listV2(options: CompanyV2ListOptions = {}): Promise<CompanyV2ListResponse> {
+    if (options.limit !== undefined && (options.limit < 1 || options.limit > 50)) {
+      throw new ValidationError('limit must be between 1 and 50');
+    }
+
+    const params: Record<string, unknown> = {};
+    if (options.limit !== undefined) params.limit = options.limit;
+    if (options.startingAfter) params.startingAfter = options.startingAfter;
+    if (options.endingBefore) params.endingBefore = options.endingBefore;
+
+    // Wire response: { hasMore, companies } (the spec omits hasMore; the live API sends it)
+    const response = await this.v2Http.get<{
+      hasMore?: boolean;
+      companies?: CompanyResourceItem[] | null;
+    }>('/v2/companies', params);
+
+    return {
+      data: (response.data.companies ?? []) as CompanyResourceItem[],
+      hasMore: response.data.hasMore ?? false,
     };
   }
 
@@ -218,16 +308,16 @@ export class CompaniesResource {
    */
   async listAll(): Promise<Company[]> {
     const companies: Company[] = [];
-    let pageIndex = 0;
+    let pageIndex = 1; // pagination is 1-based; the API rejects pageIndex 0
     let hasMore = true;
 
     while (hasMore) {
-      const page = await this.list({ pageCount: 100, pageIndex });
+      const page = await this.list({ pageCount: AUTO_PAGINATION_PAGE_SIZE, pageIndex });
       const pageData = Array.isArray(page) ? page : (page.data || []);
       companies.push(...pageData);
 
       // Check if there are more pages
-      hasMore = pageData.length === 100;
+      hasMore = pageData.length === AUTO_PAGINATION_PAGE_SIZE;
       pageIndex++;
     }
 
@@ -250,18 +340,18 @@ export class CompaniesResource {
    * ```
    */
   async *listIterator(): AsyncIterableIterator<Company> {
-    let pageIndex = 0;
+    let pageIndex = 1; // pagination is 1-based; the API rejects pageIndex 0
     let hasMore = true;
 
     while (hasMore) {
-      const page = await this.list({ pageCount: 100, pageIndex });
+      const page = await this.list({ pageCount: AUTO_PAGINATION_PAGE_SIZE, pageIndex });
       const pageData = Array.isArray(page) ? page : (page.data || []);
 
       for (const company of pageData) {
         yield company;
       }
 
-      hasMore = pageData.length === 100;
+      hasMore = pageData.length === AUTO_PAGINATION_PAGE_SIZE;
       pageIndex++;
     }
   }
@@ -291,17 +381,29 @@ export class CompaniesResource {
   /**
    * Update a company
    *
+   * **This is a PUT (full replacement), NOT a partial update.** The API
+   * requires the complete object (`name`, `federalTaxNumber`, `taxRegime`,
+   * `address`, ...) on every call; omitted fields are reset/replaced, not
+   * kept. Sending only the fields you want to change either fails with a
+   * 400 or silently wipes the rest. Always read-modify-write.
+   *
+   * For the strict wire shape, see {@link UpdateCompanyResourceItem}
+   * (exported from the package root). The loose `Partial<Company>`
+   * signature is kept for backwards compatibility only.
+   *
    * @param companyId - Company ID to update
-   * @param data - Partial company data (only fields to update)
+   * @param data - The COMPLETE company data (full replacement)
    * @returns The updated company
    * @throws {ValidationError} If update data is invalid
    * @throws {NotFoundError} If company doesn't exist
    *
    * @example
    * ```typescript
+   * // Read-modify-write: fetch the current object, change it, send it whole
+   * const current = await nfe.companies.retrieve('company-123');
    * const updated = await nfe.companies.update('company-123', {
-   *   name: 'New Name',
-   *   email: 'new@example.com'
+   *   ...current,
+   *   tradeName: 'Novo Nome Fantasia',
    * });
    * ```
    */
