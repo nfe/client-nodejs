@@ -5,6 +5,90 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [5.2.0] - 2026-07-13
+
+> Correção do contrato de paginação de `companies` contra a API real, provado
+> por sonda ao vivo (2026-07-13, duas contas). O request de `GET /companies` é
+> **1-based** — a API rejeita `pageIndex: 0` com `"pageIndex must be greater or
+> equal to 1"` — igual ao de `serviceInvoices` (rejeição de `pageIndex: 0`
+> reconfirmada ao vivo), não o oposto como se supunha.
+
+### Corrigido
+
+- **`companies.listAll()` e `companies.listIterator()` falhavam na primeira
+  chamada**, por dois motivos independentes: (1) iniciavam a paginação em
+  `pageIndex = 0`, que a API rejeita — agora iniciam em `1`; (2) pediam
+  `pageCount: 100`, mas a API limita `GET /companies` a **50 itens por página**
+  (sonda ao vivo: aceita 2–50; rejeita 1, apesar da mensagem `"between 1 and
+  50"`, e rejeita ≥51) — agora pedem `50`. Consertados transitivamente os
+  quatro métodos que dependem de `listAll()`: `findByTaxNumber`, `findByName`,
+  `getCompaniesWithCertificates` e `getCompaniesWithExpiringCertificates`.
+- `companies.list()` ecoava `pageCount: 100` como default no `page` da resposta;
+  o default real da API é **10 itens** quando `pageCount` é omitido.
+- ⚠️ **JSDoc de `companies.update()` era ativamente enganoso**: dizia *"only
+  fields to update"* (semântica PATCH), mas a API faz **PUT (substituição
+  total)** — update parcial seguindo o docblock resulta em 400 ou em campos
+  zerados silenciosamente. O JSDoc agora documenta o replace integral com
+  exemplo read-modify-write. As assinaturas frouxas (`Partial<Company>`/
+  `Omit<Company>`) foram mantidas por compat; o aperto para os schemas
+  estritos fica para a próxima major (política de versionamento) ou para a
+  migração de CRUD v2.
+- JSDoc de `companies.create()` documenta os obrigatórios reais do corpo
+  (`name`, `federalTaxNumber`, `taxRegime`, `address`) e que `email` **não**
+  faz parte dele; exemplo corrigido (o anterior compilava e falhava com 400).
+- Vitest coletava os testes **5×** através dos symlinks `client-php`/
+  `client-ruby` (que apontam de volta para este repo), causando flakes por
+  corrida no `.test-temp` compartilhado e inflando a suíte (3710 → 698 testes
+  reais). O `include` agora é restrito a `tests/**`.
+
+### Deprecado
+
+- **`companies.list()`** (API v1, paginação offset): a API v1 de companies
+  está sendo descontinuada. Use `listV2()` (cursor, v2) para listagem
+  paginada, ou `listAll()`/`listIterator()` para varredura completa. O método
+  continua funcionando (e corrigido — ver acima) durante a convivência.
+  **Nota**: `listAll()`/`listIterator()` permanecem no transporte v1 nesta
+  release porque a enumeração completa via v2 falha de forma determinística
+  em contas com certos registros (HTTP 500 server-side em qualquer janela
+  que os contenha — bug reportado ao backend em 2026-07-14), e porque as
+  projeções v1/v2 divergem de campos. A troca de transporte fica para quando
+  o backend corrigir o 500.
+- JSDoc de `companies.list` e `serviceInvoices.list`, `docs/API.md` e `README`
+  exemplificavam `pageIndex: 0` — todos corrigidos para a convenção 1-based.
+- `PaginationOptions.pageIndex` e `PageInfo.pageIndex` documentados como
+  1-based (a primeira página é 1).
+- Specs OpenAPI (`nf-servico-v1.yaml`): `pageIndex` agora declara `minimum: 1`
+  em `/v1/companies` e na listagem de notas de serviço; `pageCount` de
+  `/v1/companies` declara `maximum: 50`.
+
+### Alterado
+
+- ⚠️ **Nota de migração**: `companies.list()` deixou de subtrair 1 da resposta.
+  `list({ pageIndex: 1 }).page.pageIndex` agora retorna `1` (antes retornava
+  `0`). A convenção do SDK passa a ser **1-based nos dois lados** (request e
+  response), fiel ao fio da API. Se seu código lia `page.pageIndex` assumindo
+  base 0 (ex.: `pageIndex + 1` para exibir o número da página), remova o ajuste.
+
+### Adicionado
+
+- **`companies.listV2()`** — listagem pela API v2 (`api.nfse.io/v2/companies`,
+  contribuintes-v2), **cursor-based**: `{ limit (1–50, default 10),
+  startingAfter, endingBefore }` → `{ data, hasMore }` (contrato provado ao
+  vivo em 2026-07-14). Os itens seguem a projeção v2 (`CompanyResourceItem`)
+  — shape diferente do `Company` v1 (sem campos de configuração NFS-e; com
+  `stateTaxes`, `municipalTaxes`, `type`, `version`). `limit` fora de 1–50 é
+  rejeitado client-side (a API aceitaria `limit: 0` devolvendo página vazia).
+  Tipos novos: `CompanyV2ListOptions`, `CompanyV2ListResponse`.
+- Testes de contrato de paginação: mock espelha a rejeição da API a
+  `pageIndex: 0` e trava a regressão — `listAll`/`listIterator` são testados
+  iniciando em 1 e incrementando 1 → 2; suite equivalente para o contrato
+  cursor do `listV2`.
+- Teste de alinhamento de tipos para os corpos de escrita de companies
+  (`tests/types/company-write-alignment.test-d.ts`): pina os obrigatórios de
+  `CreateCompanyResourceItem`/`UpdateCompanyResourceItem` (mesmo conjunto —
+  evidência da semântica PUT) e a ausência de `email` no corpo; um sync de
+  spec que mude o contrato quebra o `npm run test:types` em vez de driftar.
+
 ## [5.1.0] - 2026-07-03
 
 > Correção do contrato de webhooks contra a API real, provado por sonda ao vivo
@@ -837,7 +921,8 @@ SDK JavaScript legado com API baseada em callbacks.
 
 ## Links
 
-[Unreleased]: https://github.com/nfe/client-nodejs/compare/v5.1.0...HEAD
+[Unreleased]: https://github.com/nfe/client-nodejs/compare/v5.2.0...HEAD
+[5.2.0]: https://github.com/nfe/client-nodejs/compare/v5.1.0...v5.2.0
 [5.1.0]: https://github.com/nfe/client-nodejs/compare/v5.0.0...v5.1.0
 [5.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v5.0.0
 [3.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v3.0.0
