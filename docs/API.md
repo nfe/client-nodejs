@@ -1083,6 +1083,10 @@ const company = await nfe.companies.create({
 
 ##### `list(options?: PaginationOptions): Promise<ListResponse<Company>>`
 
+> ⚠️ **Deprecated** — a API v1 de companies está sendo descontinuada. Prefira
+> `listV2()` (cursor, v2) para listagem paginada; `listAll()`/`listIterator()`
+> para varredura completa. O método continua funcionando durante a convivência.
+
 List companies with pagination (1-based; `pageCount` aceito: 2–50, default 10).
 
 ```typescript
@@ -1090,6 +1094,21 @@ const companies = await nfe.companies.list({
   pageCount: 20,
   pageIndex: 1 // first page (pagination is 1-based)
 });
+```
+
+##### `listV2(options?: CompanyV2ListOptions): Promise<CompanyV2ListResponse>`
+
+Lista empresas pela API v2 (`api.nfse.io/v2/companies`, cursor-based). `limit`
+1–50 (default 10); use o `id` do último item como `startingAfter` para a
+próxima página; `hasMore` indica se há mais. Os itens seguem a projeção v2
+(`CompanyResourceItem`) — shape diferente do `Company` v1.
+
+```typescript
+let page = await nfe.companies.listV2({ limit: 50 });
+while (page.hasMore) {
+  const last = page.data[page.data.length - 1];
+  page = await nfe.companies.listV2({ limit: 50, startingAfter: last.id });
+}
 ```
 
 ##### `listAll(): Promise<Company[]>`

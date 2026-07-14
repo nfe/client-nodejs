@@ -328,6 +328,8 @@ export type {
   CompanyResourceV1,
   CreateCompanyResourceItem,
   UpdateCompanyResourceItem,
+  CompanyV2ListOptions,
+  CompanyV2ListResponse,
   CertificateMetadataResource,
   CompanyAddress,
   MunicipalTax,

@@ -275,6 +275,10 @@ const empresa = await nfe.companies.create({
   },
 });
 
+// Listar empresas — v2, cursor-based (recomendado; a API v1 está sendo descontinuada)
+const pagina = await nfe.companies.listV2({ limit: 50 });
+// próxima página: listV2({ limit: 50, startingAfter: <id do último item> })
+
 // Listar todas as empresas (varredura completa com paginação automática)
 const empresas = await nfe.companies.listAll();
 
