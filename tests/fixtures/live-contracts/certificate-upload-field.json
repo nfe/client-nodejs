@@ -1,0 +1,15 @@
+{
+  "probe": "③ campo multipart do certificado",
+  "capturedOn": "2026-09-01",
+  "note": "O SDK envia 'certificate'; a API le 'file'/'File' (model binding case-insensitive).",
+  "pathShape": "/v1/companies/{companyId}/certificate",
+  "byFieldName": {
+    "certificate": {
+      "status": 400,
+      "headers": { "content-type": "application/json; charset=utf-8" },
+      "body": { "title": "One or more validation errors occurred.", "status": 400, "errors": { "file": ["The File field is required."] } }
+    },
+    "file": { "status": 500, "headers": { "content-type": "application/json; charset=utf-8" }, "body": { "title": "An error occurred while processing your request.", "status": 500 } },
+    "File": { "status": 500, "headers": { "content-type": "application/json; charset=utf-8" }, "body": { "title": "An error occurred while processing your request.", "status": 500 } }
+  }
+}

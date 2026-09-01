@@ -1,0 +1,15 @@
+{
+  "probe": "⑦ RTC de NFS-e responde 202+Location",
+  "capturedOn": "2026-09-01",
+  "note": "O ramo async do SDK esta correto. A spec documenta apenas 200/400 — incompleta. Location vem em http://, nao https://.",
+  "request": { "method": "POST", "pathShape": "/v1/companies/{companyId}/serviceinvoices", "requiredFields": ["cityServiceCode", "description", "servicesAmount", "nbsCode"] },
+  "response": {
+    "status": 202,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "location": "http://api.nfe.io/v1/companies/{companyId}/serviceinvoices/{invoiceId}"
+    },
+    "bodyLabel": "json",
+    "body": { "id": "{invoiceId}", "environment": "Development", "flowStatus": "WaitingCalculateTaxes" }
+  }
+}

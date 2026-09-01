@@ -1,0 +1,28 @@
+{
+  "probe": "④ casing de eventtypes + ⑤ tipos no fio",
+  "capturedOn": "2026-09-01",
+  "eventTypesCasing": {
+    "note": "Gateway case-insensitive: as duas grafias devolvem 200 com corpo identico.",
+    "/v2/webhooks/eventTypes": { "status": 200, "bytes": 9859 },
+    "/v2/webhooks/eventtypes": { "status": 200, "bytes": 9859 }
+  },
+  "webhookListing": {
+    "note": "contentType e status sao STRINGS no fio. A spec define integer enum [0,1] — spec errada.",
+    "status": 200,
+    "headers": { "content-type": "application/json; charset=utf-8" },
+    "body": {
+      "webHooks": [
+        {
+          "id": "{webhookId}",
+          "uri": "https://example.invalid/hooks/synthetic",
+          "contentType": "json",
+          "insecureSsl": false,
+          "status": "Active",
+          "filters": ["{eventType}"],
+          "createdOn": "2026-01-01T00:00:00Z",
+          "modifiedOn": "2026-01-01T00:00:00Z"
+        }
+      ]
+    }
+  }
+}
