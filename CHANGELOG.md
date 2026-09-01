@@ -5,6 +5,38 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+> Dois bugs de contrato provados por sonda ao vivo contra a API real (2026-09-01).
+> Nenhum dos dois era divergência de especificação: em ambos o SDK estava errado.
+> Evidência versionada em `tests/fixtures/live-contracts/`.
+
+### Corrigido
+
+- **Credencial errada em nove recursos fiscais.** As duas chaves da plataforma são
+  **complementares, não intercambiáveis** — cada uma responde `403` nos hosts da
+  outra família. O cliente HTTP de `api.nfse.io` resolvia a **chave de dados** num
+  host **fiscal**, afetando `productInvoices`, `productInvoicesRtc`,
+  `transportationInvoices`, `inboundProductInvoices`, `municipalTaxes`,
+  `certificates`, `stateTaxes`, `taxCalculation` e o lado v2 de `companies`.
+
+  Esses recursos só funcionavam por acidente: quem configurava **apenas** `apiKey`
+  caía no fallback `dataApiKey → apiKey` e nunca via o problema. Quem configurava
+  `dataApiKey` — o que a documentação recomenda para consultas — tomava `403`.
+
+  **Como migrar:** se você usa `dataApiKey`, nada a fazer — os nove recursos passam
+  a funcionar. Se você configurava **somente** `dataApiKey` e acessava algum deles,
+  agora é preciso informar também `apiKey`: o acesso lança `ConfigurationError` na
+  hora, em vez de falhar com `403` na chamada.
+
+  O mapa de qual chave vale em qual host está documentado em
+  `NfeConfig.apiKey` / `NfeConfig.dataApiKey`.
+
+- **`companies.uploadCertificate()` nunca funcionou.** O campo multipart era enviado
+  como `certificate`; a API faz binding de `file` e respondia
+  `400 {"errors":{"file":["The File field is required."]}}` — ou seja, o método não
+  tinha como completar. A assinatura pública não mudou.
+
 ## [5.2.0] - 2026-07-13
 
 > Correção do contrato de paginação de `companies` contra a API real, provado

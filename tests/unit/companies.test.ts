@@ -328,7 +328,7 @@ describe('CompaniesResource', () => {
 
       expect(result.uploaded).toBe(true);
       expect(result.message).toBe('Certificate uploaded successfully');
-      expect(mockFormData.append).toHaveBeenCalledWith('certificate', certificateBuffer);
+      expect(mockFormData.append).toHaveBeenCalledWith('file', certificateBuffer);
       expect(mockFormData.append).toHaveBeenCalledWith('password', 'secret123');
       expect(mockHttpClient.post).toHaveBeenCalledWith(
         `/companies/${TEST_COMPANY_ID}/certificate`,
@@ -359,7 +359,7 @@ describe('CompaniesResource', () => {
 
       expect(result.uploaded).toBe(true);
       expect(mockFormData.append).toHaveBeenCalledWith(
-        'certificate',
+        'file',
         certificateBuffer,
         'company-cert.pfx'
       );
@@ -383,7 +383,7 @@ describe('CompaniesResource', () => {
       await companies.uploadCertificate(TEST_COMPANY_ID, certificateData);
 
       expect(mockFormData.append).toHaveBeenCalledWith(
-        'certificate',
+        'file',
         certificateBlob,
         'cert.p12'
       );

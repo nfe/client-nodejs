@@ -15,9 +15,30 @@
 // ----------------------------------------------------------------------------
 
 export interface NfeConfig {
-  /** NFE.io API Key for main resources (companies, invoices, etc.) */
+  /**
+   * API key for every FISCAL host — `api.nfe.io` and `api.nfse.io`.
+   *
+   * Covers companies, service/product/consumer invoices (incl. RTC), certificates,
+   * municipal and state taxes, tax calculation, tax codes, webhooks, and the
+   * inbound CT-e / NF-e distribution resources.
+   */
   apiKey?: string;
-  /** NFE.io API Key for data/query services: Addresses, CT-e, CNPJ, CPF (optional, falls back to apiKey) */
+  /**
+   * API key for the LOOKUP hosts — `nfe.api.nfe.io`, `legalentity.api.nfe.io`,
+   * `naturalperson.api.nfe.io`, `address.api.nfe.io`.
+   *
+   * Covers address (CEP), legal entity (CNPJ), natural person (CPF) and the
+   * product/consumer invoice *query* resources.
+   *
+   * **The two keys are NOT interchangeable.** Each is rejected with HTTP 403 on
+   * the other family's hosts — verified live on 2026-09-01, see
+   * `tests/fixtures/live-contracts/api-key-host-matrix.json`. Setting this key
+   * does not affect any fiscal resource.
+   *
+   * Optional: falls back to {@link NfeConfig.apiKey} when omitted. Note the
+   * fallback is one-way — a client configured with ONLY `dataApiKey` cannot
+   * reach fiscal resources and throws `ConfigurationError` when one is accessed.
+   */
   dataApiKey?: string;
   /** Environment to use (both use same endpoint, differentiated by API key) */
   environment?: 'production' | 'development';
@@ -395,7 +416,7 @@ export interface PollOptions {
 export interface RequiredNfeConfig {
   /** Main API key (may be undefined if only using data services) */
   apiKey: string | undefined;
-  /** Data API key for query services: Addresses, CT-e, CNPJ, CPF (may be undefined, will fallback to apiKey) */
+  /** Data API key for the lookup hosts (address, CNPJ, CPF, invoice query). Not valid on fiscal hosts. May be undefined; falls back to apiKey. */
   dataApiKey: string | undefined;
   /** Environment */
   environment: 'production' | 'development';

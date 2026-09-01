@@ -146,8 +146,7 @@ export class NfeClient {
   private _addressHttp: HttpClient | undefined;
 
   /** @internal HTTP client for CT-e API requests (created lazily) */
-  private _cteHttp: HttpClient | undefined;
-  private _nfseMainHttp: HttpClient | undefined;
+  private _nfseHttp: HttpClient | undefined;
   private _webhooksAccountHttp: HttpClient | undefined;
 
   /** @internal HTTP client for NF-e query API requests (created lazily) */
@@ -238,7 +237,7 @@ export class NfeClient {
    */
   get companies(): CompaniesResource {
     if (!this._companies) {
-      this._companies = new CompaniesResource(this.getMainHttpClient(), this.getCteHttpClient());
+      this._companies = new CompaniesResource(this.getMainHttpClient(), this.getNfseHttpClient());
     }
     return this._companies;
   }
@@ -374,10 +373,10 @@ export class NfeClient {
    * - Webhook must be configured to receive CT-e notifications
    *
    * **Note:** This resource uses a different API host (api.nfse.io).
-   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   * Uses the main `apiKey` — `api.nfse.io` is a FISCAL host and rejects the data key with 403.
    *
    * @see {@link TransportationInvoicesResource}
-   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   * @throws {ConfigurationError} If no main API key is configured (apiKey)
    *
    * @example
    * ```typescript
@@ -393,7 +392,7 @@ export class NfeClient {
    */
   get transportationInvoices(): TransportationInvoicesResource {
     if (!this._transportationInvoices) {
-      this._transportationInvoices = new TransportationInvoicesResource(this.getCteHttpClient());
+      this._transportationInvoices = new TransportationInvoicesResource(this.getNfseHttpClient());
     }
     return this._transportationInvoices;
   }
@@ -415,10 +414,10 @@ export class NfeClient {
    * - Webhook must be configured to receive NF-e notifications
    *
    * **Note:** This resource uses a different API host (api.nfse.io).
-   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   * Uses the main `apiKey` — `api.nfse.io` is a FISCAL host and rejects the data key with 403.
    *
    * @see {@link InboundProductInvoicesResource}
-   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   * @throws {ConfigurationError} If no main API key is configured (apiKey)
    *
    * @example
    * ```typescript
@@ -438,7 +437,7 @@ export class NfeClient {
    */
   get inboundProductInvoices(): InboundProductInvoicesResource {
     if (!this._inboundProductInvoices) {
-      this._inboundProductInvoices = new InboundProductInvoicesResource(this.getCteHttpClient());
+      this._inboundProductInvoices = new InboundProductInvoicesResource(this.getNfseHttpClient());
     }
     return this._inboundProductInvoices;
   }
@@ -596,10 +595,10 @@ export class NfeClient {
    * IPI, II) on product operations.
    *
    * **Note:** This resource uses a different API host (api.nfse.io).
-   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   * Uses the main `apiKey` — `api.nfse.io` is a FISCAL host and rejects the data key with 403.
    *
    * @see {@link TaxCalculationResource}
-   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   * @throws {ConfigurationError} If no main API key is configured (apiKey)
    *
    * @example
    * ```typescript
@@ -616,7 +615,7 @@ export class NfeClient {
    */
   get taxCalculation(): TaxCalculationResource {
     if (!this._taxCalculation) {
-      this._taxCalculation = new TaxCalculationResource(this.getCteHttpClient());
+      this._taxCalculation = new TaxCalculationResource(this.getNfseHttpClient());
     }
     return this._taxCalculation;
   }
@@ -630,11 +629,11 @@ export class NfeClient {
    * acquisition purposes, issuer tax profiles, and recipient tax profiles.
    *
    * **Note:** This resource uses a different API host (api.nfse.io).
-   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   * Uses the main `apiKey` — `api.nfse.io` is a FISCAL host and rejects the data key with 403.
    *
    * @see {@link TaxCodesResource}
    * @see {@link TaxCalculationResource}
-   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   * @throws {ConfigurationError} If no main API key is configured (apiKey)
    *
    * @example
    * ```typescript
@@ -646,7 +645,7 @@ export class NfeClient {
    */
   get taxCodes(): TaxCodesResource {
     if (!this._taxCodes) {
-      this._taxCodes = new TaxCodesResource(this.getNfseMainHttpClient());
+      this._taxCodes = new TaxCodesResource(this.getNfseHttpClient());
     }
     return this._taxCodes;
   }
@@ -660,10 +659,10 @@ export class NfeClient {
    * disable invoice numbers, and download files (PDF/XML).
    *
    * **Note:** This resource uses the api.nfse.io host.
-   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   * Uses the main `apiKey` — `api.nfse.io` is a FISCAL host and rejects the data key with 403.
    *
    * @see {@link ProductInvoicesResource}
-   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   * @throws {ConfigurationError} If no main API key is configured (apiKey)
    *
    * @example
    * ```typescript
@@ -673,7 +672,7 @@ export class NfeClient {
    */
   get productInvoices(): ProductInvoicesResource {
     if (!this._productInvoices) {
-      this._productInvoices = new ProductInvoicesResource(this.getCteHttpClient());
+      this._productInvoices = new ProductInvoicesResource(this.getNfseHttpClient());
     }
     return this._productInvoices;
   }
@@ -686,10 +685,10 @@ export class NfeClient {
    * NF-e product invoice issuance — list, create, retrieve, update, and delete.
    *
    * **Note:** This resource uses the api.nfse.io host.
-   * Configure `dataApiKey` for a separate key, or it will fallback to `apiKey`.
+   * Uses the main `apiKey` — `api.nfse.io` is a FISCAL host and rejects the data key with 403.
    *
    * @see {@link StateTaxesResource}
-   * @throws {ConfigurationError} If no API key is configured (dataApiKey or apiKey)
+   * @throws {ConfigurationError} If no main API key is configured (apiKey)
    *
    * @example
    * ```typescript
@@ -699,7 +698,7 @@ export class NfeClient {
    */
   get stateTaxes(): StateTaxesResource {
     if (!this._stateTaxes) {
-      this._stateTaxes = new StateTaxesResource(this.getCteHttpClient());
+      this._stateTaxes = new StateTaxesResource(this.getNfseHttpClient());
     }
     return this._stateTaxes;
   }
@@ -724,7 +723,7 @@ export class NfeClient {
    */
   get productInvoicesRtc(): ProductInvoicesRtcResource {
     if (!this._productInvoicesRtc) {
-      this._productInvoicesRtc = new ProductInvoicesRtcResource(this.getCteHttpClient());
+      this._productInvoicesRtc = new ProductInvoicesRtcResource(this.getNfseHttpClient());
     }
     return this._productInvoicesRtc;
   }
@@ -735,7 +734,7 @@ export class NfeClient {
    */
   get municipalTaxes(): MunicipalTaxesResource {
     if (!this._municipalTaxes) {
-      this._municipalTaxes = new MunicipalTaxesResource(this.getCteHttpClient());
+      this._municipalTaxes = new MunicipalTaxesResource(this.getNfseHttpClient());
     }
     return this._municipalTaxes;
   }
@@ -747,7 +746,7 @@ export class NfeClient {
    */
   get consumerInvoices(): ConsumerInvoicesResource {
     if (!this._consumerInvoices) {
-      this._consumerInvoices = new ConsumerInvoicesResource(this.getNfseMainHttpClient());
+      this._consumerInvoices = new ConsumerInvoicesResource(this.getNfseHttpClient());
     }
     return this._consumerInvoices;
   }
@@ -759,7 +758,7 @@ export class NfeClient {
    */
   get certificates(): CertificatesResource {
     if (!this._certificates) {
-      this._certificates = new CertificatesResource(this.getCteHttpClient());
+      this._certificates = new CertificatesResource(this.getNfseHttpClient());
     }
     return this._certificates;
   }
@@ -904,36 +903,18 @@ export class NfeClient {
   }
 
   /**
-   * Get or create the CT-e API HTTP client
-   * @throws {ConfigurationError} If no API key is configured
-   */
-  private getCteHttpClient(): HttpClient {
-    if (!this._cteHttp) {
-      const apiKey = this.resolveDataApiKey();
-      if (!apiKey) {
-        throw new ConfigurationError(
-          'API key required for data services. Set "dataApiKey" or "apiKey" in config, or NFE_DATA_API_KEY/NFE_API_KEY environment variable.'
-        );
-      }
-      const httpConfig = buildHttpConfig(
-        apiKey,
-        CTE_API_BASE_URL,
-        this.config.timeout,
-        this.config.retryConfig
-      );
-      this._cteHttp = new HttpClient(httpConfig);
-    }
-    return this._cteHttp;
-  }
-
-  /**
-   * Get or create the HTTP client for api.nfse.io resources that require the
-   * MAIN api key (not the data key) — e.g. tax-codes and consumer invoices
-   * (NFC-e emission). Host is CTE_API_BASE_URL (api.nfse.io); key is the main key.
+   * Get or create the HTTP client for `api.nfse.io` — the FISCAL host.
+   *
+   * Every resource on this host uses the MAIN api key. The two platform keys are
+   * complementary, not interchangeable: the data key is rejected with 403 here,
+   * and the main key is rejected with 403 on the lookup hosts
+   * (`nfe.api.nfe.io`, `legalentity`, `naturalperson`, `address`).
+   * Verified live on 2026-09-01 — see tests/fixtures/live-contracts/api-key-host-matrix.json.
+   *
    * @throws {ConfigurationError} If no main API key is configured
    */
-  private getNfseMainHttpClient(): HttpClient {
-    if (!this._nfseMainHttp) {
+  private getNfseHttpClient(): HttpClient {
+    if (!this._nfseHttp) {
       const apiKey = this.resolveMainApiKey();
       if (!apiKey) {
         throw new ConfigurationError(
@@ -946,9 +927,9 @@ export class NfeClient {
         this.config.timeout,
         this.config.retryConfig
       );
-      this._nfseMainHttp = new HttpClient(httpConfig);
+      this._nfseHttp = new HttpClient(httpConfig);
     }
-    return this._nfseMainHttp;
+    return this._nfseHttp;
   }
 
   /**
@@ -1192,8 +1173,7 @@ export class NfeClient {
     // HTTP clients
     this._http = undefined;
     this._addressHttp = undefined;
-    this._cteHttp = undefined;
-    this._nfseMainHttp = undefined;
+    this._nfseHttp = undefined;
     this._webhooksAccountHttp = undefined;
     this._nfeQueryHttp = undefined;
     this._legalEntityHttp = undefined;

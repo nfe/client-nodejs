@@ -544,11 +544,14 @@ export class CompaniesResource {
     // Create FormData for file upload
     const formData = this.createFormData();
 
-    // Add certificate file
+    // Field name MUST be `file`: the API binds this multipart field and rejects
+    // anything else with 400 `{"errors":{"file":["The File field is required."]}}`.
+    // Verified live on 2026-09-01 — the previous name (`certificate`) meant this
+    // method could never succeed. See tests/fixtures/live-contracts/certificate-upload-field.json.
     if (certificateData.filename) {
-      formData.append('certificate', certificateData.file, certificateData.filename);
+      formData.append('file', certificateData.file, certificateData.filename);
     } else {
-      formData.append('certificate', certificateData.file);
+      formData.append('file', certificateData.file);
     }
 
     // Add password
