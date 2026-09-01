@@ -20,7 +20,18 @@ documentos capturados.
 | `getSettings(companyId)` | Configuração atual. | settings |
 | `getDetails(companyId, ...)` / `getProductInvoiceDetails(...)` | Detalhes dos documentos. | dados |
 | `getEventDetails(...)` / `getProductInvoiceEventDetails(...)` | Detalhes de eventos. | dados |
-| `getXml(companyId, accessKey)` | XML do documento capturado. | XML |
+| `getXml(companyId, accessKey)` / `getPdf(...)` / `getEventXml(...)` | Documento capturado. | `{ publicTemporaryUri }` |
+
+:::info Downloads devolvem uma URL, não o arquivo
+`getXml`, `getPdf` e `getEventXml` respondem com um objeto `{ publicTemporaryUri }`
+— uma URL pré-assinada e temporária. Binário não trafega nessas rotas e o header
+`Accept` não altera a resposta; baixar a URL é responsabilidade do chamador.
+
+```typescript
+const res = await nfe.inboundProductInvoices.getPdf(companyId, accessKey);
+const bytes = await fetch(res.publicTemporaryUri!).then((r) => r.arrayBuffer());
+```
+:::
 
 ## Exemplo
 

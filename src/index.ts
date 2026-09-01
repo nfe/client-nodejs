@@ -286,6 +286,7 @@ export type {
   NfeProductInvoiceEventsResponse,
   NfeProductInvoiceSubListOptions,
   NfeFileResource,
+  InboundFileResource,
   NfeRequestCancellationResource,
   NfeDisablementData,
   NfeDisablementResource,

@@ -9,7 +9,8 @@ import { HttpClient } from '../../../src/core/http/client.js';
 import type {
   HttpResponse,
   TransportationInvoiceInboundSettings,
-  TransportationInvoiceMetadata
+  TransportationInvoiceMetadata,
+  InboundFileResource
 } from '../../../src/core/types.js';
 import { ValidationError } from '../../../src/core/errors/index.js';
 
@@ -291,11 +292,12 @@ describe('TransportationInvoicesResource', () => {
   // ==========================================================================
 
   describe('downloadXml', () => {
-    const mockXml = '<?xml version="1.0" encoding="UTF-8"?><CTe>...</CTe>';
+    // A rota devolve file-resource JSON, nunca XML bruto (probe 2026-09-01).
+    const mockFile = { publicTemporaryUri: 'https://example.invalid/storage/synthetic-inbound.xml?sig=SYNTHETIC' };
 
     it('should download CT-e XML by access key', async () => {
-      const mockResponse: HttpResponse<string> = {
-        data: mockXml,
+      const mockResponse: HttpResponse<InboundFileResource> = {
+        data: mockFile,
         status: 200,
         headers: {},
       };
@@ -303,7 +305,8 @@ describe('TransportationInvoicesResource', () => {
 
       const result = await resource.downloadXml(testCompanyId, validAccessKey);
 
-      expect(result).toBe(mockXml);
+      expect(result).toEqual(mockFile);
+      expect(result.publicTemporaryUri).toBeTypeOf('string');
       expect(mockHttpClient.get).toHaveBeenCalledWith(
         `/v2/companies/${testCompanyId}/inbound/${validAccessKey}/xml`
       );
@@ -399,11 +402,11 @@ describe('TransportationInvoicesResource', () => {
   // ==========================================================================
 
   describe('downloadEventXml', () => {
-    const mockEventXml = '<?xml version="1.0" encoding="UTF-8"?><procEventoCTe>...</procEventoCTe>';
+    const mockEventFile = { publicTemporaryUri: 'https://example.invalid/storage/synthetic-inbound.xml?sig=SYNTHETIC' };
 
     it('should download CT-e event XML', async () => {
-      const mockResponse: HttpResponse<string> = {
-        data: mockEventXml,
+      const mockResponse: HttpResponse<InboundFileResource> = {
+        data: mockEventFile,
         status: 200,
         headers: {},
       };
@@ -411,7 +414,8 @@ describe('TransportationInvoicesResource', () => {
 
       const result = await resource.downloadEventXml(testCompanyId, validAccessKey, testEventKey);
 
-      expect(result).toBe(mockEventXml);
+      expect(result).toEqual(mockEventFile);
+      expect(result.publicTemporaryUri).toBeTypeOf('string');
       expect(mockHttpClient.get).toHaveBeenCalledWith(
         `/v2/companies/${testCompanyId}/inbound/${validAccessKey}/events/${testEventKey}/xml`
       );

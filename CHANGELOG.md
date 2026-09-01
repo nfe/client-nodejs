@@ -32,6 +32,27 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   O mapa de qual chave vale em qual host está documentado em
   `NfeConfig.apiKey` / `NfeConfig.dataApiKey`.
 
+- **Downloads de documentos de entrada (CT-e e NF-e Distribuição) devolviam objeto
+  tipado como texto.** As rotas `/inbound/{chave}/xml`, `/pdf` e
+  `/inbound/{chave}/events/{evento}/xml` respondem com `{ publicTemporaryUri }` —
+  uma URL pré-assinada e temporária. **Binário nunca trafega nessas rotas** e o
+  header `Accept` não altera a resposta.
+
+  Os cinco métodos (`inboundProductInvoices.getXml`, `.getPdf`, `.getEventXml`,
+  `transportationInvoices.downloadXml`, `.downloadEventXml`) passam a devolver o
+  novo tipo `InboundFileResource` em vez de `string`.
+
+  **Como migrar:** baixe a URL devolvida.
+
+  ```typescript
+  const res = await nfe.inboundProductInvoices.getPdf(companyId, accessKey);
+  const bytes = await fetch(res.publicTemporaryUri!).then((r) => r.arrayBuffer());
+  ```
+
+  Nenhum chamador correto quebra: o retorno anterior já era este objeto se passando
+  por `string`. O envelope é **diferente** do de NFC-e/NF-e produto, que usa `uri` —
+  por isso o tipo é separado de `NfeFileResource`.
+
 - **`companies.uploadCertificate()` nunca funcionou.** O campo multipart era enviado
   como `certificate`; a API faz binding de `file` e respondia
   `400 {"errors":{"file":["The File field is required."]}}` — ou seja, o método não

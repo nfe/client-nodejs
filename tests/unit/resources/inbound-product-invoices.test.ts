@@ -10,7 +10,8 @@ import type {
   HttpResponse,
   InboundInvoiceMetadata,
   InboundProductInvoiceMetadata,
-  InboundSettings
+  InboundSettings,
+  InboundFileResource
 } from '../../../src/core/types.js';
 import { ValidationError } from '../../../src/core/errors/index.js';
 
@@ -332,8 +333,8 @@ describe('InboundProductInvoicesResource', () => {
 
   describe('getXml', () => {
     it('should download XML with correct path', async () => {
-      const mockResponse: HttpResponse<string> = {
-        data: '<xml>content</xml>',
+      const mockResponse: HttpResponse<InboundFileResource> = {
+        data: { publicTemporaryUri: 'https://example.invalid/storage/synthetic-inbound.xml?sig=SYNTHETIC' },
         status: 200,
         headers: {},
       };
@@ -341,7 +342,8 @@ describe('InboundProductInvoicesResource', () => {
 
       const result = await resource.getXml(testCompanyId, validAccessKey);
 
-      expect(result).toBe('<xml>content</xml>');
+      expect(result).toEqual({ publicTemporaryUri: 'https://example.invalid/storage/synthetic-inbound.xml?sig=SYNTHETIC' });
+      expect(result.publicTemporaryUri).toBeTypeOf('string');
       expect(mockHttpClient.get).toHaveBeenCalledWith(
         `/v2/companies/${testCompanyId}/inbound/${validAccessKey}/xml`
       );
@@ -350,8 +352,8 @@ describe('InboundProductInvoicesResource', () => {
 
   describe('getEventXml', () => {
     it('should download event XML with correct path', async () => {
-      const mockResponse: HttpResponse<string> = {
-        data: '<xml>event</xml>',
+      const mockResponse: HttpResponse<InboundFileResource> = {
+        data: { publicTemporaryUri: 'https://example.invalid/storage/synthetic-inbound.xml?sig=SYNTHETIC' },
         status: 200,
         headers: {},
       };
@@ -359,7 +361,8 @@ describe('InboundProductInvoicesResource', () => {
 
       const result = await resource.getEventXml(testCompanyId, validAccessKey, testEventKey);
 
-      expect(result).toBe('<xml>event</xml>');
+      expect(result).toEqual({ publicTemporaryUri: 'https://example.invalid/storage/synthetic-inbound.xml?sig=SYNTHETIC' });
+      expect(result.publicTemporaryUri).toBeTypeOf('string');
       expect(mockHttpClient.get).toHaveBeenCalledWith(
         `/v2/companies/${testCompanyId}/inbound/${validAccessKey}/events/${testEventKey}/xml`
       );
@@ -374,8 +377,8 @@ describe('InboundProductInvoicesResource', () => {
 
   describe('getPdf', () => {
     it('should download PDF with correct path', async () => {
-      const mockResponse: HttpResponse<string> = {
-        data: 'pdf-content',
+      const mockResponse: HttpResponse<InboundFileResource> = {
+        data: { publicTemporaryUri: 'https://example.invalid/storage/synthetic-inbound.xml?sig=SYNTHETIC' },
         status: 200,
         headers: {},
       };
@@ -383,7 +386,8 @@ describe('InboundProductInvoicesResource', () => {
 
       const result = await resource.getPdf(testCompanyId, validAccessKey);
 
-      expect(result).toBe('pdf-content');
+      expect(result).toEqual({ publicTemporaryUri: 'https://example.invalid/storage/synthetic-inbound.xml?sig=SYNTHETIC' });
+      expect(result.publicTemporaryUri).toBeTypeOf('string');
       expect(mockHttpClient.get).toHaveBeenCalledWith(
         `/v2/companies/${testCompanyId}/inbound/${validAccessKey}/pdf`
       );
@@ -507,4 +511,40 @@ describe('InboundProductInvoicesResource', () => {
       await expect(resource.reprocessWebhook(testCompanyId, '   ')).rejects.toThrow(ValidationError);
     });
   });
+  // ==========================================================================
+  // Contrato de download (probe ao vivo 2026-09-01)
+  // ==========================================================================
+
+  describe('contrato de download: file-resource, nunca binario', () => {
+    const FILE = { publicTemporaryUri: 'https://example.invalid/s/doc?sig=SYNTHETIC' };
+
+    beforeEach(() => {
+      mockHttpClient.get.mockResolvedValue({ data: FILE, status: 200, headers: {} });
+    });
+
+    it('xml e pdf devolvem o MESMO formato — a rota nao diferencia', async () => {
+      const xml = await resource.getXml(testCompanyId, validAccessKey);
+      const pdf = await resource.getPdf(testCompanyId, validAccessKey);
+
+      expect(Object.keys(xml)).toEqual(Object.keys(pdf));
+      expect(xml.publicTemporaryUri).toBeTypeOf('string');
+      expect(pdf.publicTemporaryUri).toBeTypeOf('string');
+    });
+
+    it('nao envia header Accept — a API ignora e sempre devolve JSON', async () => {
+      await resource.getPdf(testCompanyId, validAccessKey);
+
+      const args = mockHttpClient.get.mock.calls[0]!;
+      // Assinatura: get(path) — sem params e sem headers customizados.
+      expect(args.length).toBe(1);
+    });
+
+    it('o retorno nao e Buffer nem string (regressao do contrato antigo)', async () => {
+      const result = await resource.getPdf(testCompanyId, validAccessKey);
+
+      expect(Buffer.isBuffer(result)).toBe(false);
+      expect(typeof result).toBe('object');
+    });
+  });
+
 });

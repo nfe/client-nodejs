@@ -3382,10 +3382,27 @@ export interface NfeProductInvoiceSubListOptions {
   startingAfter?: number | string;
 }
 
-/** File resource (PDF/XML download response) */
+/** File resource (PDF/XML download response) — product and consumer invoices. */
 export interface NfeFileResource {
   /** Absolute URI to the file */
   uri?: string;
+}
+
+/**
+ * File resource returned by the INBOUND routes
+ * (`/v2/companies/{id}/inbound/{accessKey}/xml` and `/pdf`, shared by CT-e and
+ * NF-e distribution).
+ *
+ * Deliberately separate from {@link NfeFileResource}: the inbound routes name the
+ * field `publicTemporaryUri`, not `uri`. Two envelopes, two types — verified live
+ * on 2026-09-01, see `tests/fixtures/live-contracts/inbound-download.json`.
+ *
+ * The URI is a pre-signed, time-limited link. No binary is ever returned on these
+ * routes, and the `Accept` header does not change the response.
+ */
+export interface InboundFileResource {
+  /** Pre-signed, time-limited URI to the document. Download is up to the caller. */
+  publicTemporaryUri?: string;
 }
 
 /** Request cancellation response */
