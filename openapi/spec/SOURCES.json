@@ -18,5 +18,125 @@
       "title": "Empresas (contribuintes) v2",
       "note": "OpenAPI 3.0.4; verbose .NET schema keys (key-normalization pending, Task 1.2)"
     }
-  }
+  },
+  "sharedSections": {
+    "_comment": "Seções declaradas em mais de uma spec. `canonical` é a fonte de verdade dos tipos daquele grupo; o check cross-spec do validate:spec compara as `duplicatedIn` contra ela campo a campo. Medido em 2026-09-01: 131 endpoints únicos, 30 compartilhados.",
+    "A-companies-v2": {
+      "canonical": "contribuintes-v2.json",
+      "duplicatedIn": [
+        "nf-consumidor-v2.yaml",
+        "nf-produto-v2.yaml"
+      ],
+      "rationale": "Serviço dedicado de cadastro e superset: declara HEAD, municipaltaxes, switch-authorizer e as variantes v1 que as cópias não têm. As cópias são o mesmo bloco replicado nas specs de emissão.",
+      "paths": [
+        "DELETE /v2/companies/{}",
+        "DELETE /v2/companies/{}/certificates/{}",
+        "DELETE /v2/companies/{}/statetaxes/{}",
+        "GET /v2/companies",
+        "GET /v2/companies/{}",
+        "GET /v2/companies/{}/certificates",
+        "GET /v2/companies/{}/certificates/{}",
+        "GET /v2/companies/{}/statetaxes",
+        "GET /v2/companies/{}/statetaxes/{}",
+        "POST /v2/companies",
+        "POST /v2/companies/{}/certificates",
+        "POST /v2/companies/{}/statetaxes",
+        "PUT /v2/companies/{}",
+        "PUT /v2/companies/{}/statetaxes/{}"
+      ]
+    },
+    "B-companies-v1": {
+      "canonical": "contribuintes-v2.json",
+      "duplicatedIn": [
+        "nf-servico-v1.yaml"
+      ],
+      "rationale": "Mesmo serviço dedicado do grupo A, que também descreve a superfície v1. Atenção: a cópia em nf-servico-v1 carrega correções locais provadas por sonda (minimum:1 em pageIndex, maximum:50 em pageCount, commit 100327e) que a canônica não tem — ver knownDivergences.",
+      "paths": [
+        "DELETE /v1/companies/{}",
+        "GET /v1/companies",
+        "GET /v1/companies/{}",
+        "POST /v1/companies",
+        "POST /v1/companies/{}/certificate",
+        "PUT /v1/companies/{}"
+      ]
+    },
+    "C-webhooks-v2": {
+      "canonical": "nf-consumidor-v2.yaml",
+      "duplicatedIn": [
+        "nf-produto-v2.yaml",
+        "nf-servico-v1.yaml"
+      ],
+      "rationale": "Única das três com o TIPO correto: contentType e status como string, confirmado no fio pela sonda de 2026-09-01 (\"json\", \"Active\"). Também é superset — 11 campos contra 10, único a declarar `id`. As outras duas dizem integer enum [0,1], que nenhum cliente consegue usar. Ressalva: o casing dos VALORES dela é camelCase (`active` onde o fio manda `Active`), defeito separado — ver knownDivergences enum-casing.",
+      "paths": [
+        "DELETE /v2/webhooks",
+        "DELETE /v2/webhooks/{}",
+        "GET /v2/webhooks",
+        "GET /v2/webhooks/eventtypes",
+        "GET /v2/webhooks/{}",
+        "POST /v2/webhooks",
+        "PUT /v2/webhooks/{}",
+        "PUT /v2/webhooks/{}/pings"
+      ]
+    }
+  },
+  "ignoredOverloads": {
+    "_comment": "Mesmo path, contratos deliberadamente diferentes (layout legado × layout RTC da Reforma Tributária). Não é drift a resolver: é overload. O check não os compara.",
+    "paths": [
+      {
+        "path": "POST /v2/companies/{}/productinvoices",
+        "specs": [
+          "nf-produto-v2.yaml",
+          "product-invoice-rtc-v1.yaml"
+        ]
+      },
+      {
+        "path": "POST /v1/companies/{}/serviceinvoices",
+        "specs": [
+          "nf-servico-v1.yaml",
+          "service-invoice-rtc-v1.yaml"
+        ]
+      }
+    ]
+  },
+  "knownDivergences": [
+    {
+      "group": "A-companies-v2",
+      "class": "enum-mismatch",
+      "fields": [
+        "taxRegime",
+        "specialTaxRegime",
+        "legalNature",
+        "status",
+        "code",
+        "type",
+        "environmentType"
+      ],
+      "count": 74,
+      "reason": "Valores de enum camelCased nas duas cópias: códigos de UF viram 'sP'/'aC', status vira 'active', tipo de inscrição vira 'nFe'/'nFCe'. Defeito de serialização na origem, não contrato diferente — a canônica usa 'SP'/'Active'/'NFe'. 10 ocorrências em cada cópia; nf-servico-v1 e contribuintes-v2 não têm nenhuma.",
+      "upstream": "SDKs/Node/probe-09-01-2026/02 - Pendencias upstream, item 12"
+    },
+    {
+      "group": "C-webhooks-v2",
+      "class": "type-mismatch",
+      "fields": [
+        "contentType",
+        "status"
+      ],
+      "count": 24,
+      "reason": "As cópias declaram integer enum [0,1]; a canônica declara string, e a sonda ao vivo de 2026-09-01 confirmou o fio: 'json' e 'Active'. O SDK tipa à mão em AccountWebhook e está correto. Ressalva: o casing dos valores da canônica ('active') sofre do mesmo defeito do item 12.",
+      "upstream": "SDKs/Node/probe-09-01-2026/02 - Pendencias upstream, item 2"
+    },
+    {
+      "group": "B-companies-v1",
+      "class": "enum-subset",
+      "fields": [
+        "taxRegime",
+        "legalNature",
+        "status"
+      ],
+      "count": 18,
+      "reason": "A cópia em nf-servico-v1 está atrasada: enums são subconjunto próprio dos da canônica (faltam 'Inactive', 'None' e ~25 naturezas jurídicas). Defasagem, não contradição — nada quebra, mas some quando a spec for re-sincronizada.",
+      "upstream": "change sync-openapi-specs-from-docs, Phase 3"
+    }
+  ]
 }

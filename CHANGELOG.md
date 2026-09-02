@@ -7,9 +7,31 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não lançado]
 
-> Dois bugs de contrato provados por sonda ao vivo contra a API real (2026-09-01).
-> Nenhum dos dois era divergência de especificação: em ambos o SDK estava errado.
+> Quatro bugs de contrato provados por sonda ao vivo contra a API real (2026-09-01).
+> Em nenhum deles a especificação era a culpada: o SDK é que estava errado.
 > Evidência versionada em `tests/fixtures/live-contracts/`.
+
+### Manutenção
+
+- **`validate:spec` passa a detectar drift entre cópias da mesma seção.** 30 dos 131
+  endpoints das specs são declarados em mais de um arquivo (companies, certificates,
+  statetaxes, webhooks) e as cópias divergem — algo que o `SOURCES.json` não pegava,
+  porque ele compara repo × docs e este drift é *entre* specs do mesmo lado.
+
+  O `SOURCES.json` ganhou `sharedSections`, declarando a fonte canônica de cada grupo,
+  e o `validate:spec` agora compara as cópias contra ela **campo a campo**, classificando
+  em `type-mismatch` e `enum-mismatch` (falham o build), `enum-subset` (aviso, a cópia
+  está atrasada) e presença de campo (informativo). Diferença de prosa ou de forma
+  (`$ref` × inline) não conta.
+
+  As 116 divergências existentes entram como baseline declarada, cada uma com motivo e
+  referência à pendência upstream — e uma entrada que deixe de reproduzir é reportada
+  como obsoleta, para a baseline não virar tapete. O que falha o build é drift **novo**.
+
+  O `discoverSpecs()` do validador também passou a aceitar `.json`: `contribuintes-v2.json`
+  — canônica das seções de companies — nunca tinha sido validado.
+
+  Sem efeito em runtime, tipos gerados ou API pública: `dist/index.d.ts` sai byte-idêntico.
 
 ### Corrigido
 
