@@ -654,6 +654,37 @@ export type ConsumerInvoiceDisablementData =
   NfConsumidorComponents['schemas']['DisablementResource'];
 
 /**
+ * NFC-e items response (`InvoiceItemsResource`) — `{ accountId, companyId, id,
+ * items, hasMore }`. Cursor pagination via `limit`/`startingAfter`.
+ */
+export type ConsumerInvoiceItemsResponse =
+  NfConsumidorComponents['schemas']['InvoiceItemsResource'];
+
+/**
+ * NFC-e events response (`InvoiceEventsResource`) — `{ id, accountId, companyId,
+ * events, hasMore }`. Its own type: the product-invoice events envelope is a
+ * different shape and must not be reused here.
+ */
+export type ConsumerInvoiceEventsResponse =
+  NfConsumidorComponents['schemas']['InvoiceEventsResource'];
+
+/**
+ * NFC-e cancellation response (`RequestCancellationResource`) — returned by
+ * `DELETE /consumerinvoices/{id}` (204).
+ */
+export type ConsumerInvoiceCancellationResponse =
+  NfConsumidorComponents['schemas']['RequestCancellationResource'];
+
+/**
+ * NFC-e document download response (`FileResource`) — `{ uri }`.
+ *
+ * Note the envelope differs from the inbound routes, which use
+ * `publicTemporaryUri` ({@link InboundFileResource}). Verified live 2026-09-01.
+ */
+export type ConsumerInvoiceFileResource =
+  NfConsumidorComponents['schemas']['FileResource'];
+
+/**
  * Transportation Invoice inbound settings
  * Configuration for automatic CT-e search via SEFAZ Distribuição DFe
  */

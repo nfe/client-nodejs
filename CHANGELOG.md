@@ -32,6 +32,34 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   O mapa de qual chave vale em qual host está documentado em
   `NfeConfig.apiKey` / `NfeConfig.dataApiKey`.
 
+- **NFC-e: parâmetros da spec não expostos e contrato de download divergente.**
+
+  - `cancel()` aceita `reason` (query definida pela spec) e devolve
+    `ConsumerInvoiceCancellationResponse` em vez da nota.
+  - `getItems()` / `getEvents()` aceitam paginação cursor (`limit`/`startingAfter`)
+    e devolvem envelopes **próprios**, com `hasMore`. O de eventos deixa de reusar
+    o tipo do recurso de produto, que tem outra forma.
+  - `downloadPdf()` aceita `force`. Os três downloads passam a devolver
+    `ConsumerInvoiceFileResource` (`{ uri }`) em vez de `Buffer`: a API devolve
+    JSON com URL e **ignora o header `Accept`**. O retorno anterior já era este
+    objeto se passando por `Buffer` — nenhum chamador correto quebra.
+  - `retrieve()`, `getItems()` e `getEvents()` param de enviar `environment`, que
+    a spec não define nessas rotas.
+
+  **Como migrar:** baixe a URL devolvida pelos downloads.
+
+  ```typescript
+  const res = await nfe.consumerInvoices.downloadPdf(companyId, invoiceId);
+  const bytes = await fetch(res.uri!).then((r) => r.arrayBuffer());
+  ```
+
+  Atenção: o envelope da NFC-e usa `uri`; o das rotas de entrada usa
+  `publicTemporaryUri`. São tipos distintos de propósito.
+
+  `list()` **continua exigindo** `environment`: a API responde
+  `400 environment has to be production or test` sem ele. A spec marca o parâmetro
+  como opcional e está errada.
+
 - **Downloads de documentos de entrada (CT-e e NF-e Distribuição) devolviam objeto
   tipado como texto.** As rotas `/inbound/{chave}/xml`, `/pdf` e
   `/inbound/{chave}/events/{evento}/xml` respondem com `{ publicTemporaryUri }` —

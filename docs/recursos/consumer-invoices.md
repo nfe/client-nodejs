@@ -19,18 +19,32 @@ leitura).
 |---|---|---|
 | `create(companyId, data)` | Emite a NFC-e (webhook-driven). | `ConsumerInvoice` |
 | `list(companyId, options)` | Lista NFC-e. **`options.environment` é obrigatório.** | `{ consumerInvoices, hasMore }` |
-| `retrieve(companyId, invoiceId, environment?)` | Consulta por id. | `ConsumerInvoice` |
-| `cancel(companyId, invoiceId)` | Cancela a NFC-e. | `ConsumerInvoice` |
-| `getItems(companyId, invoiceId, environment?)` | Itens da nota. | resposta de itens |
-| `getEvents(companyId, invoiceId, environment?)` | Eventos da nota. | resposta de eventos |
-| `downloadPdf` / `downloadXml` / `downloadRejectionXml` (`, environment?`) | Downloads (Buffer). | `Buffer` |
+| `retrieve(companyId, invoiceId)` | Consulta por id. | `ConsumerInvoice` |
+| `cancel(companyId, invoiceId, reason?)` | Cancela a NFC-e. | `ConsumerInvoiceCancellationResponse` |
+| `getItems(companyId, invoiceId, { limit?, startingAfter? })` | Itens da nota, com paginação cursor. | `{ items, hasMore, … }` |
+| `getEvents(companyId, invoiceId, { limit?, startingAfter? })` | Eventos da nota, com paginação cursor. | `{ events, hasMore, … }` |
+| `downloadPdf(companyId, invoiceId, force?)` / `downloadXml` / `downloadRejectionXml` | Link do documento. | `{ uri }` |
 | `disable(companyId, data)` | Inutilização de numeração. | resultado |
 
 `ConsumerInvoiceListOptions = { environment: 'Production' \| 'Test'; startingAfter?; endingBefore?; limit?; q? }`.
 
-:::warning `environment` obrigatório
-A API exige `environment` (`Production`/`Test`) na listagem; as leituras aceitam
-`environment` opcional. Sem ele, a listagem retorna `400`.
+:::warning `environment` só na listagem
+A API exige `environment` (`Production`/`Test`) em `list()` — sem ele responde
+`400 environment has to be production or test`. As demais rotas **não definem**
+esse parâmetro e não o recebem mais.
+:::
+
+:::info Downloads devolvem uma URL, não o arquivo
+`downloadPdf`, `downloadXml` e `downloadRejectionXml` respondem com `{ uri }` — o
+header `Accept` não altera a resposta. Baixar a URL é responsabilidade do chamador.
+
+```typescript
+const res = await nfe.consumerInvoices.downloadPdf(companyId, invoiceId);
+const bytes = await fetch(res.uri!).then((r) => r.arrayBuffer());
+```
+
+O envelope difere do usado pelas rotas de **entrada**, que nomeiam o campo
+`publicTemporaryUri`.
 :::
 
 ## Listar e emitir
