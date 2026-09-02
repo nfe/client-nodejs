@@ -134,9 +134,10 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
     logTestInfo('Testing retry configuration (should succeed normally)');
 
     // This should succeed on first try (no retry needed)
+    // `list()` devolve ListResponse<Company> = { data, page } — não um array.
     const companies = await clientWithRetry.companies.list();
     expect(companies).toBeDefined();
-    expect(Array.isArray(companies)).toBe(true);
+    expect(Array.isArray(companies.data)).toBe(true);
 
     logTestInfo('Retry configuration test passed');
   });
@@ -237,7 +238,7 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
     expect(results).toHaveLength(3);
     results.forEach(companies => {
       expect(companies).toBeDefined();
-      expect(Array.isArray(companies)).toBe(true);
+      expect(Array.isArray(companies.data)).toBe(true);
     });
 
     logTestInfo('Concurrent requests handled correctly');
@@ -252,9 +253,9 @@ describe.skipIf(skipIfNoApiKey())('Error Handling Integration Tests', () => {
     const companies = await client.companies.list();
 
     expect(companies).toBeDefined();
-    expect(Array.isArray(companies)).toBe(true);
+    expect(Array.isArray(companies.data)).toBe(true);
     // Length could be 0 or more - both are valid
-    expect(companies.length).toBeGreaterThanOrEqual(0);
+    expect(companies.data.length).toBeGreaterThanOrEqual(0);
 
     logTestInfo('Empty response handled correctly', { count: companies.length });
   });

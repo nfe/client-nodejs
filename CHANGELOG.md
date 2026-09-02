@@ -13,6 +13,33 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ### Manutenção
 
+- **O portão de publicação passou a poder reprovar.** `.github/workflows/publish.yml`
+  marcava o passo de testes com `continue-on-error: true`, e um bloco logo abaixo
+  justificava por escrito: *"expected for integration tests without API credentials"*.
+
+  A justificativa era falsa. Sem credencial a suíte dá **41 passed | 4 skipped, exit 0** —
+  os testes de integração **pulam**, não falham; o guard `shouldRunIntegrationTests()`
+  cuida disso desde sempre. Ou seja: o `continue-on-error` protegia contra um modo de
+  falha inexistente e, em troca, deixava passar todos os reais. Os três bugs de contrato
+  corrigidos nesta mesma versão saíram por esse portão.
+
+  Agora `publish.yml` roda testes, `lint`, `typecheck` e `test:types` antes do build, e
+  qualquer um deles reprova a publicação. O `test:types` também entrou no `ci.yml`: eram
+  18 assertions — incluindo os guards de alinhamento de contrato — que **nunca executavam**.
+
+- **A suíte de integração voltou a ser executável.** `dotenv` era devDependency e nada
+  carregava o `.env`, então `NFE_API_KEY` chegava vazia e a integração pulava sempre,
+  inclusive na máquina de quem tinha credencial. Com o `.env` carregado em `tests/setup.ts`,
+  a execução local passou de **742 para 779 testes** — 37 que nunca haviam rodado.
+
+  Três assertions de `errors.integration.test.ts` afirmavam `Array.isArray(companies)`
+  contra um `ListResponse` (`{ data, page }`), e uma quarta lia `companies.length`
+  (`undefined`). Eram de antes da migração para `ListResponse` e nunca falharam porque
+  nunca rodaram. Corrigidas.
+
+  O guard não mudou: em CI a integração continua pulando sem `RUN_INTEGRATION_TESTS=true`.
+  Credencial de conta compartilhada não vai para runner.
+
 - **`validate:spec` passa a detectar drift entre cópias da mesma seção.** 30 dos 131
   endpoints das specs são declarados em mais de um arquivo (companies, certificates,
   statetaxes, webhooks) e as cópias divergem — algo que o `SOURCES.json` não pegava,

@@ -183,8 +183,22 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     expect(duplicate.federalTaxNumber).toBe(created.federalTaxNumber);
   });
 
-  // Note: Certificate upload test commented out as it requires valid PFX file
-  // and test environment might not support it
+  // DESLIGADO DE PROPÓSITO — dois bloqueios, nenhum deles temporário:
+  //
+  //  1. exigiria um .pfx versionado no repositório (certificado digital é material
+  //     sensível: não entra em repo, nem de teste);
+  //  2. o corpo do teste CRIA uma empresa, e a conta é compartilhada pelo time —
+  //     escrita de teste automatizado ali não é aceitável.
+  //
+  // O que este teste protegeria já está coberto sem rede: o nome do campo multipart
+  // (`file`, não `certificate`) é afirmado em tests/unit/companies-certificate-field.ts
+  // contra o FormData montado, e foi o campo errado — não a falta de teste ao vivo —
+  // que manteve uploadCertificate quebrado até 2026-09-01.
+  //
+  // Contrato medido ao vivo naquela data: campo `certificate` -> 400
+  // {"errors":{"file":["The File field is required."]}}; campo `file` -> 500 (a API
+  // leu o arquivo e falhou ao parsear o PFX falso). Evidência versionada em
+  // tests/fixtures/live-contracts/certificate-upload-field.json.
   it.skipIf(skipIfNoApiKey()).skip('should upload certificate', async () => {
     // Create company first
     const companyData = {

@@ -34,22 +34,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Sem NFE_API_KEY a suite de integracao PULA (guard em
+      # tests/integration/setup.ts) e a unitaria passa: 41 passed | 4 skipped,
+      # exit 0. Falha aqui e falha de verdade, e barra a publicacao.
       - name: Run tests
-        id: tests
-        continue-on-error: true
         run: npm test -- --run
         env:
           NFE_API_KEY: ""
 
-      - name: Test Results Summary
-        if: steps.tests.outcome == 'failure'
-        run: |
-          echo "⚠️ Some tests failed, but continuing with publish" >> $GITHUB_STEP_SUMMARY
-          echo "This is expected for integration tests without API credentials" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+      - name: Run linter
+        run: npm run lint
 
       - name: Run type checking
         run: npm run typecheck
+
+      # Guards de alinhamento de contrato (tests/types/*.test-d.ts). Existem para
+      # quebrar quando um contrato pinado muda; sem este passo, nunca executam.
+      - name: Run type-level tests
+        run: npm run test:types
 
       - name: Build package
         run: npm run build
