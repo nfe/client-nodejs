@@ -31,6 +31,43 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
+      # A tag da release e a versao do package.json precisam concordar ANTES de
+      # qualquer coisa cara rodar. Ate 2026-09-03 este passo so LIA a versao para
+      # uma saida -- publicar a release `v6.0.0` com o package.json em `5.2.0`
+      # passaria por aqui sem reclamar. O `npm publish` acabaria falhando por
+      # versao ja publicada, mas por acidente, e depois de todo o build.
+      #
+      # Vale para os dois gatilhos: `release: created` traz a tag em
+      # `github.event.release.tag_name`; `workflow_dispatch` traz em `inputs.tag`.
+      - name: Check tag matches package.json version
+        id: package-version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          TAG_VERSION="${TAG#v}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "📦 package.json: $VERSION"
+          echo "🏷️  tag:          $TAG (versao: $TAG_VERSION)"
+
+          if [ -z "$TAG" ]; then
+            echo "❌ Nao foi possivel resolver a tag desta publicacao."
+            exit 1
+          fi
+
+          if [ "$VERSION" != "$TAG_VERSION" ]; then
+            echo ""
+            echo "❌ A tag e a versao do package.json nao concordam."
+            echo "   tag:          $TAG        (versao $TAG_VERSION)"
+            echo "   package.json: $VERSION"
+            echo ""
+            echo "   Publicar assim mandaria $VERSION para o npm sob o nome de $TAG_VERSION."
+            echo "   Ajuste o package.json e refaca a tag, ou crie a release com a tag certa."
+            exit 1
+          fi
+
+          echo "✅ tag e package.json concordam em $VERSION"
+
       - name: Install dependencies
         run: npm ci
 
@@ -65,13 +102,6 @@ jobs:
           echo ""
           echo "✅ All build artifacts present"
 
-      - name: Check package.json version
-        id: package-version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Package version: $VERSION"
-
       - name: Publish to NPM (dry-run)
         run: npm publish --dry-run
         env:
@@ -93,10 +123,6 @@ jobs:
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo "npm install nfe-io@${{ steps.package-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.tests.outcome }}" == "failure" ]; then
-            echo "⚠️ **Note:** Some tests failed during CI (expected for integration tests)" >> $GITHUB_STEP_SUMMARY
-          fi
 
       - name: Comment on related issues/PRs
         if: github.event_name == 'release'
