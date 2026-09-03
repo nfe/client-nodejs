@@ -1,5 +1,34 @@
 # Guia de Migração
 
+## Não lançado (próxima major)
+
+Quebras já no `master` e ainda não publicadas. As demais mudanças desta faixa estão no
+`CHANGELOG.md`, em `[Não lançado]`, cada uma com sua nota de migração — esta seção guarda
+as que mudam **assinatura**, porque só elas quebram em tempo de compilação.
+
+### `serviceInvoices.downloadPdf()` / `downloadXml()` exigem o `invoiceId`
+
+O parâmetro era opcional e a documentação prometia um ZIP com todas as notas da empresa
+quando ele fosse omitido. **A rota não existe.** `/serviceinvoices/pdf` responde
+`404 "service invoice with id (pdf) was not found"` — o servidor casa a rota `/{id}` e
+lê `pdf` como identificador. Medido em 2026-09-02; a rota também não está na spec
+`nf-servico-v1` nem no `nfeio-docs`.
+
+```ts
+// Antes — compilava e sempre lançava NotFoundError em runtime
+const zip = await nfe.serviceInvoices.downloadPdf(empresaId);
+
+// Agora — não compila. Para várias notas, itere sobre os ids:
+for (const nota of notas) {
+  const pdf = await nfe.serviceInvoices.downloadPdf(empresaId, nota.id);
+  fs.writeFileSync(`nota-${nota.number}.pdf`, pdf);
+}
+```
+
+O download por nota não muda.
+
+---
+
 ## v4 → v5
 
 A v5 é a primeira release de **funcionalidades** desde a v3 (a v4 foi apenas o bump para

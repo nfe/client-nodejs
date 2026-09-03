@@ -435,24 +435,10 @@ describe('ServiceInvoicesResource', () => {
       );
     });
 
-    it('should download PDF for all company invoices (bulk)', async () => {
-      const mockZipBuffer = Buffer.from('ZIP content');
-
-      vi.mocked(mockHttp.get).mockResolvedValue({
-        data: mockZipBuffer,
-        status: 200,
-        headers: { 'content-type': 'application/pdf' },
-      } as HttpResponse<Buffer>);
-
-      const result = await resource.downloadPdf(companyId);
-
-      expect(result).toEqual(mockZipBuffer);
-      expect(mockHttp.get).toHaveBeenCalledWith(
-        `/companies/${companyId}/serviceinvoices/pdf`,
-        undefined,
-        { Accept: 'application/pdf' }
-      );
-    });
+    // Nao ha download em lote por empresa: `/serviceinvoices/pdf` responde
+    // 404 "service invoice with id (pdf) was not found" (medido 2026-09-02, e
+    // ausente da spec nf-servico-v1). O teste que existia aqui afirmava o caminho
+    // que o SDK montava, nunca que a API o servisse.
 
     it('should throw NotFoundError when PDF is not ready', async () => {
       vi.mocked(mockHttp.get).mockRejectedValue(
@@ -486,24 +472,7 @@ describe('ServiceInvoicesResource', () => {
       );
     });
 
-    it('should download XML for all company invoices (bulk)', async () => {
-      const mockZipBuffer = Buffer.from('ZIP with XMLs');
-
-      vi.mocked(mockHttp.get).mockResolvedValue({
-        data: mockZipBuffer,
-        status: 200,
-        headers: { 'content-type': 'application/xml' },
-      } as HttpResponse<Buffer>);
-
-      const result = await resource.downloadXml(companyId);
-
-      expect(result).toEqual(mockZipBuffer);
-      expect(mockHttp.get).toHaveBeenCalledWith(
-        `/companies/${companyId}/serviceinvoices/xml`,
-        undefined,
-        { Accept: 'application/xml' }
-      );
-    });
+    // Mesma medicao do downloadPdf.
 
     it('should throw NotFoundError when XML is not ready', async () => {
       vi.mocked(mockHttp.get).mockRejectedValue(

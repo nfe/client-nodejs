@@ -760,18 +760,25 @@ for (const invoice of invoices) {
 
 ---
 
-##### `downloadPdf(companyId: string, invoiceId?: string): Promise<Buffer>`
+##### `downloadPdf(companyId: string, invoiceId: string): Promise<Buffer>`
 
-Download invoice PDF. If `invoiceId` is omitted, downloads all invoices as ZIP.
+Download invoice PDF.
+
+> **There is no bulk download.** Until 5.2.0 `invoiceId` was optional and this
+> page promised a ZIP with every invoice. The route does not exist:
+> `/serviceinvoices/pdf` answers `404 "service invoice with id (pdf) was not
+> found"` — the server matches the `/{id}` route and reads `pdf` as an id.
+> Measured 2026-09-02; the route is absent from the `nf-servico-v1` spec too.
+> To download many invoices, iterate over their ids.
 
 **Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `companyId` | `string` | Company ID |
-| `invoiceId` | `string` | Invoice ID (optional - omit for bulk ZIP) |
+| `invoiceId` | `string` | Invoice ID (required) |
 
-**Returns:** `Promise<Buffer>` - PDF file as Buffer (or ZIP for bulk)
+**Returns:** `Promise<Buffer>` - PDF file as Buffer
 
 **Examples:**
 
@@ -790,13 +797,7 @@ if (pdfBuffer.toString('utf8', 0, 4) === '%PDF') {
 writeFileSync('invoice.pdf', pdfBuffer);
 console.log('Saved invoice.pdf');
 
-// Example 2: Download all invoices as ZIP
-const zipBuffer = await nfe.serviceInvoices.downloadPdf('company-id');
-
-writeFileSync(`invoices_${Date.now()}.zip`, zipBuffer);
-console.log('Saved ZIP with all invoices');
-
-// Example 3: Download and send via HTTP response (Express)
+// Example 2: Download and send via HTTP response (Express)
 app.get('/invoice/:id/pdf', async (req, res) => {
   try {
     const pdfBuffer = await nfe.serviceInvoices.downloadPdf(
@@ -812,7 +813,7 @@ app.get('/invoice/:id/pdf', async (req, res) => {
   }
 });
 
-// Example 4: Download after creation
+// Example 3: Download after creation
 const invoice = await nfe.serviceInvoices.createAndWait('company-id', data);
 
 const pdf = await nfe.serviceInvoices.downloadPdf('company-id', invoice.id);
@@ -826,18 +827,22 @@ console.log(`Downloaded invoice ${invoice.number}`);
 
 ---
 
-##### `downloadXml(companyId: string, invoiceId?: string): Promise<Buffer>`
+##### `downloadXml(companyId: string, invoiceId: string): Promise<Buffer>`
 
-Download invoice XML. If `invoiceId` is omitted, downloads all invoices as ZIP.
+Download invoice XML.
+
+> **There is no bulk download** — same measurement as `downloadPdf` above:
+> `/serviceinvoices/xml` answers `404 "service invoice with id (xml) was not
+> found"`.
 
 **Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `companyId` | `string` | Company ID |
-| `invoiceId` | `string` | Invoice ID (optional - omit for bulk ZIP) |
+| `invoiceId` | `string` | Invoice ID (required) |
 
-**Returns:** `Promise<Buffer>` - XML file as Buffer (or ZIP for bulk)
+**Returns:** `Promise<Buffer>` - XML file as Buffer
 
 **Examples:**
 
@@ -859,11 +864,7 @@ if (xmlString.startsWith('<?xml')) {
 // Save to file
 writeFileSync('invoice.xml', xmlBuffer);
 
-// Example 2: Download all invoices as ZIP
-const zipBuffer = await nfe.serviceInvoices.downloadXml('company-id');
-writeFileSync(`invoices_xml_${Date.now()}.zip`, zipBuffer);
-
-// Example 3: Parse XML for integration
+// Example 2: Parse XML for integration
 import { parseString } from 'xml2js';
 
 const xmlBuffer = await nfe.serviceInvoices.downloadXml('company-id', 'invoice-id');
@@ -874,15 +875,6 @@ parseString(xmlString, (err, result) => {
   console.log('Parsed XML:', result);
   // Process structured data
 });
-
-// Example 4: Bulk download and extract
-const zipBuffer = await nfe.serviceInvoices.downloadXml('company-id');
-writeFileSync('invoices.zip', zipBuffer);
-
-// Extract ZIP using library like 'adm-zip'
-// const AdmZip = require('adm-zip');
-// const zip = new AdmZip(zipBuffer);
-// zip.extractAllTo('./invoices/', true);
 ```
 
 ---

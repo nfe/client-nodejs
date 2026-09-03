@@ -222,13 +222,9 @@ await nfe.serviceInvoices.sendEmail(empresaId, notaFiscalId, {
   emails: ['cliente@example.com', 'financeiro@example.com'],
 });
 
-// Baixar PDF (single ou bulk)
+// Baixar PDF
 const pdfBuffer = await nfe.serviceInvoices.downloadPdf(empresaId, notaFiscalId);
 fs.writeFileSync('nota.pdf', pdfBuffer);
-
-// Baixar todas as notas como ZIP
-const zipBuffer = await nfe.serviceInvoices.downloadPdf(empresaId);
-fs.writeFileSync('todas-notas.zip', zipBuffer);
 
 // Baixar XML
 const xmlBuffer = await nfe.serviceInvoices.downloadXml(empresaId, notaFiscalId);
@@ -248,7 +244,6 @@ console.log(`✅ ${notas.length} notas fiscais criadas em lote`);
 
 - ⏱️ **Polling Automático**: `createAndWait()` lida automaticamente com processamento assíncrono
 - 📦 **Criação em Lote**: `createBatch()` cria múltiplas notas com controle de concorrência
-- 📥 **Downloads Bulk**: Baixe todas as notas como ZIP (PDF ou XML)
 - 🔍 **Verificação de Status**: `getStatus()` verifica se nota completou processamento
 - 🎯 **Discriminated Unions**: TypeScript detecta automaticamente tipo de resposta (201 vs 202)
 
