@@ -209,7 +209,7 @@ describe('ConsumerInvoiceQueryResource', () => {
 
       expect(mockHttpClient.getBuffer).toHaveBeenCalledWith(
         `/v1/consumerinvoices/coupon/${VALID_ACCESS_KEY}.xml`,
-        'application/xml'
+        'application/xml, application/json;q=0.9'
       );
       expect(result).toBeInstanceOf(Buffer);
       expect(result.toString()).toContain('<CFe>');

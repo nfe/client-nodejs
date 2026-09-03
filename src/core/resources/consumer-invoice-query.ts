@@ -9,6 +9,7 @@
 import type { HttpClient } from '../http/client.js';
 import type { TaxCoupon } from '../types.js';
 import { ValidationError } from '../errors/index.js';
+import { withUnservedRouteNote } from '../utils/unserved-route.js';
 
 // ============================================================================
 // Constants
@@ -45,6 +46,17 @@ function validateAccessKey(accessKey: string): void {
 
 /**
  * Consumer Invoice Query Resource
+ *
+ * @deprecated **A plataforma não serve nenhuma das duas rotas deste recurso.**
+ * Elas estão declaradas na spec `consulta-nf-consumidor` e no `nfeio-docs`, em
+ * `nfe.api.nfe.io` — e respondem `404` de corpo vazio, sem `content-type`,
+ * idêntico ao de um path inventado no mesmo host. Confirmação independente: o
+ * `404` vem **inclusive sem credencial**, enquanto uma rota servida no mesmo host
+ * responde `401` sem credencial — o middleware de autenticação nem chega a rodar.
+ * Noventa dias de log de gateway não têm um único `200`. Medido em 2026-09-02.
+ *
+ * Os métodos continuam emitindo a requisição: se a rota subir, o resultado passa
+ * sem alteração.
  *
  * @description
  * Queries CFe-SAT (Cupom Fiscal Eletrônico) consumer invoices by access key.
@@ -96,8 +108,9 @@ export class ConsumerInvoiceQueryResource {
    */
   async retrieve(accessKey: string): Promise<TaxCoupon> {
     validateAccessKey(accessKey);
-    const response = await this.http.get<TaxCoupon>(
-      `/v1/consumerinvoices/coupon/${accessKey.trim()}`
+    const response = await withUnservedRouteNote(
+      'GET /v1/consumerinvoices/coupon/{accessKey}',
+      () => this.http.get<TaxCoupon>(`/v1/consumerinvoices/coupon/${accessKey.trim()}`)
     );
     return response.data;
   }
@@ -121,9 +134,15 @@ export class ConsumerInvoiceQueryResource {
    */
   async downloadXml(accessKey: string): Promise<Buffer> {
     validateAccessKey(accessKey);
-    const response = await this.http.getBuffer(
-      `/v1/consumerinvoices/coupon/${accessKey.trim()}.xml`,
-      'application/xml'
+    const response = await withUnservedRouteNote(
+      'GET /v1/consumerinvoices/coupon/{accessKey}.xml',
+      () =>
+        this.http.getBuffer(
+          `/v1/consumerinvoices/coupon/${accessKey.trim()}.xml`,
+          // Mesmo motivo do productInvoiceQuery: sem o JSON de segunda escolha, o
+          // erro volta 406 de corpo vazio em vez da mensagem da API.
+          'application/xml, application/json;q=0.9'
+        )
     );
     return response.data;
   }
