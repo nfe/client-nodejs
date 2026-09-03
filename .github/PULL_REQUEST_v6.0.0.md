@@ -90,8 +90,10 @@ que era a exceção:
 
 ## Upstream
 
-Sete issues abertas em `nfe/docs` a partir desta rodada: #335, #336, #337, #338, #343
-(comentada), #345, #346, #347, #348.
+Nove issues abertas em `nfe/docs` a partir desta rodada — `nfe/docs#335`, `#336`, `#337`,
+`#338`, `#345`, `#346`, `#347`, `#348`, `#349` — mais um comentário em `nfe/docs#343`.
+A `#349` cobre as páginas publicadas do SDK Node e está atribuída a `@andrenfe`; as outras
+seguem sem dono.
 
 ## Verificação
 
@@ -110,7 +112,7 @@ portão      tag v6.0.0 passa; v5.2.0 reprova
 1. Criar a release **`v6.0.0`** no GitHub — é o que dispara o `publish.yml`.
 2. O portão confere tag × `package.json`, roda testes/lint/typecheck/`test:types`/build,
    verifica os artefatos e publica com provenance.
-3. **`nfeio-docs` precisa de PR próprio**: a página pública
+3. **`nfeio-docs` precisa de PR próprio** — rastreado em `nfe/docs#349`: a página pública
    `docs/desenvolvedores/bibliotecas/nodejs/multi-host-routing.md` tem a mesma tabela errada
-   de credencial que este PR corrige aqui.
+   de credencial que este PR corrige aqui, e mais quatro classes de divergência.
 4. Apagar este arquivo (`.github/PULL_REQUEST_v6.0.0.md`).
