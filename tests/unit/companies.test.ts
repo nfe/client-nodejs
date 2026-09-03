@@ -6,23 +6,39 @@ import { createMockCompany, TEST_COMPANY_ID } from '../setup';
 import { ValidationError } from '../../src/core/errors/index.js';
 import { CertificateValidator } from '../../src/core/utils/certificate-validator';
 
-// Mock CertificateValidator to avoid certificate format validation issues in tests
-vi.mock('../../src/core/utils/certificate-validator', () => ({
-  CertificateValidator: {
-    validate: vi.fn().mockResolvedValue({
-      valid: true,
-      metadata: {
-        subject: 'CN=Test',
-        issuer: 'CN=Test CA',
-        validFrom: new Date('2024-01-01'),
-        validTo: new Date('2026-12-31'),
-      },
-    }),
-    isSupportedFormat: vi.fn().mockReturnValue(true),
-    getDaysUntilExpiration: vi.fn().mockReturnValue(365),
-    isExpiringSoon: vi.fn().mockReturnValue(false),
-  },
-}));
+// Mock parcial do CertificateValidator: só o que depende de um .pfx de verdade.
+//
+// A aritmética de datas (`getDaysUntilExpiration` / `isExpiringSoon`) fica REAL.
+// A versão anterior a stubava em 365 dias fixos, e com isso todo teste de
+// vencimento media a constante do mock em vez da data — o que só ficou visível
+// quando a varredura por conta passou a derivar do vencimento (2026-09-02).
+vi.mock('../../src/core/utils/certificate-validator', async importOriginal => {
+  const original = await importOriginal<
+    typeof import('../../src/core/utils/certificate-validator')
+  >();
+
+  return {
+    CertificateValidator: {
+      ...original.CertificateValidator,
+      getDaysUntilExpiration: original.CertificateValidator.getDaysUntilExpiration.bind(
+        original.CertificateValidator
+      ),
+      isExpiringSoon: original.CertificateValidator.isExpiringSoon.bind(
+        original.CertificateValidator
+      ),
+      validate: vi.fn().mockResolvedValue({
+        valid: true,
+        metadata: {
+          subject: 'CN=Test',
+          issuer: 'CN=Test CA',
+          validFrom: new Date('2024-01-01'),
+          validTo: new Date('2026-12-31'),
+        },
+      }),
+      isSupportedFormat: vi.fn().mockReturnValue(true),
+    },
+  };
+});
 
 describe('CompaniesResource', () => {
   let companies: CompaniesResource;
@@ -328,7 +344,7 @@ describe('CompaniesResource', () => {
 
       expect(result.uploaded).toBe(true);
       expect(result.message).toBe('Certificate uploaded successfully');
-      expect(mockFormData.append).toHaveBeenCalledWith('certificate', certificateBuffer);
+      expect(mockFormData.append).toHaveBeenCalledWith('file', certificateBuffer);
       expect(mockFormData.append).toHaveBeenCalledWith('password', 'secret123');
       expect(mockHttpClient.post).toHaveBeenCalledWith(
         `/companies/${TEST_COMPANY_ID}/certificate`,
@@ -359,7 +375,7 @@ describe('CompaniesResource', () => {
 
       expect(result.uploaded).toBe(true);
       expect(mockFormData.append).toHaveBeenCalledWith(
-        'certificate',
+        'file',
         certificateBuffer,
         'company-cert.pfx'
       );
@@ -383,7 +399,7 @@ describe('CompaniesResource', () => {
       await companies.uploadCertificate(TEST_COMPANY_ID, certificateData);
 
       expect(mockFormData.append).toHaveBeenCalledWith(
-        'certificate',
+        'file',
         certificateBlob,
         'cert.p12'
       );
@@ -448,16 +464,21 @@ describe('CompaniesResource', () => {
   });
 
   describe('getCertificateStatus', () => {
+    // Envelope real: { certificates: [...] } com `validUntil` e `status`.
+    // Ver o cabeçalho de tests/unit/resources/companies-certificates.test.ts.
     it('should get certificate status', async () => {
-      const mockStatus = {
-        hasCertificate: true,
-        expiresOn: '2025-12-31T23:59:59Z',
-        isValid: true,
-        details: { issuer: 'CA' },
-      };
-
       vi.mocked(mockHttpClient.get).mockResolvedValue({
-        data: mockStatus,
+        data: {
+          certificates: [
+            {
+              providerType: 'Pfx',
+              thumbprint: 'AABBCC',
+              subject: 'CN=EMPRESA TESTE',
+              validUntil: '2025-12-31T23:59:59Z',
+              status: 'Active',
+            },
+          ],
+        },
         status: 200,
         headers: {},
       });
@@ -467,18 +488,15 @@ describe('CompaniesResource', () => {
       expect(result.hasCertificate).toBe(true);
       expect(result.isValid).toBe(true);
       expect(result.expiresOn).toBe('2025-12-31T23:59:59Z');
+      expect(result.certificates[0]?.thumbprint).toBe('AABBCC');
       expect(mockHttpClient.get).toHaveBeenCalledWith(
         `/companies/${TEST_COMPANY_ID}/certificate`
       );
     });
 
     it('should handle company without certificate', async () => {
-      const mockStatus = {
-        hasCertificate: false,
-      };
-
       vi.mocked(mockHttpClient.get).mockResolvedValue({
-        data: mockStatus,
+        data: { certificates: [] },
         status: 200,
         headers: {},
       });
@@ -487,6 +505,7 @@ describe('CompaniesResource', () => {
 
       expect(result.hasCertificate).toBe(false);
       expect(result.isValid).toBeUndefined();
+      expect(result.certificates).toEqual([]);
     });
   });
 
@@ -530,65 +549,129 @@ describe('CompaniesResource', () => {
   });
 
   describe('getCompaniesWithCertificates', () => {
-    it('should return companies with valid certificates', async () => {
-      const mockCompanies = [
-        createMockCompany({ id: 'company-1' }),
-        createMockCompany({ id: 'company-2' }),
-        createMockCompany({ id: 'company-3' }),
-      ];
+    // `GET /v1/companies` devolve `certificate` em cada item — a varredura NÃO
+    // emite uma requisição por empresa. Medido em 2026-09-02 nos 50 itens da
+    // primeira página da conta do time.
+    function listing(companiesPayload: unknown[]) {
+      return { data: { companies: companiesPayload, page: 1 }, status: 200, headers: {} };
+    }
 
-      vi.mocked(mockHttpClient.get)
-        .mockResolvedValueOnce({
-          data: { companies: mockCompanies, page: 1 },
-          status: 200,
-          headers: {},
-        })
-        .mockResolvedValueOnce({
-          data: { hasCertificate: true, isValid: true },
-          status: 200,
-          headers: {},
-        })
-        .mockResolvedValueOnce({
-          data: { hasCertificate: false },
-          status: 200,
-          headers: {},
-        })
-        .mockResolvedValueOnce({
-          data: { hasCertificate: true, isValid: true },
-          status: 200,
-          headers: {},
-        });
+    it('devolve as empresas cujo certificado está ativo', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValueOnce(
+        listing([
+          createMockCompany({
+            id: 'company-1',
+            certificate: { thumbprint: 'A', expiresOn: '2027-01-01T00:00:00Z', status: 'Active' },
+          }),
+          createMockCompany({
+            id: 'company-2',
+            certificate: { thumbprint: 'B', expiresOn: '2027-01-01T00:00:00Z', status: 'Overdue' },
+          }),
+          createMockCompany({
+            id: 'company-3',
+            certificate: { thumbprint: 'C', expiresOn: '2027-01-01T00:00:00Z', status: 'Active' },
+          }),
+        ]) as any
+      );
 
       const result = await companies.getCompaniesWithCertificates();
 
       expect(result).toHaveLength(2);
-      expect(result[0].id).toBe('company-1');
-      expect(result[1].id).toBe('company-3');
+      expect(result[0]!.id).toBe('company-1');
+      expect(result[1]!.id).toBe('company-3');
     });
 
-    it('should skip companies where certificate check fails', async () => {
-      const mockCompanies = [
-        createMockCompany({ id: 'company-1' }),
-        createMockCompany({ id: 'company-2' }),
-      ];
-
-      vi.mocked(mockHttpClient.get)
-        .mockResolvedValueOnce({
-          data: { companies: mockCompanies, page: 1 },
-          status: 200,
-          headers: {},
-        })
-        .mockResolvedValueOnce({
-          data: { hasCertificate: true, isValid: true },
-          status: 200,
-          headers: {},
-        })
-        .mockRejectedValueOnce(new Error('Certificate check failed'));
+    it('empresa sem o campo certificate é omitida, sem erro', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValueOnce(
+        listing([
+          createMockCompany({
+            id: 'company-1',
+            certificate: { thumbprint: 'A', expiresOn: '2027-01-01T00:00:00Z', status: 'Active' },
+          }),
+          createMockCompany({ id: 'company-2' }),
+        ]) as any
+      );
 
       const result = await companies.getCompaniesWithCertificates();
 
       expect(result).toHaveLength(1);
-      expect(result[0].id).toBe('company-1');
+      expect(result[0]!.id).toBe('company-1');
+    });
+
+    it('não emite uma requisição por empresa', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValueOnce(
+        listing(
+          Array.from({ length: 10 }, (_, i) =>
+            createMockCompany({
+              id: `company-${i}`,
+              certificate: { thumbprint: 'X', expiresOn: '2027-01-01T00:00:00Z', status: 'Active' },
+            })
+          )
+        ) as any
+      );
+
+      await companies.getCompaniesWithCertificates();
+
+      // Só a listagem. Uma página de 10 (< 50) encerra a auto-paginação.
+      expect(mockHttpClient.get).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getCompaniesWithExpiringCertificates', () => {
+    function daysFromNow(days: number) {
+      return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    it('seleciona pelo vencimento que a listagem já traz', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValueOnce({
+        data: {
+          companies: [
+            createMockCompany({
+              id: 'vence-em-15',
+              certificate: { expiresOn: daysFromNow(15), status: 'Active' },
+            }),
+            createMockCompany({
+              id: 'vence-em-90',
+              certificate: { expiresOn: daysFromNow(90), status: 'Active' },
+            }),
+            createMockCompany({
+              id: 'ja-venceu',
+              certificate: { expiresOn: daysFromNow(-5), status: 'Overdue' },
+            }),
+            createMockCompany({ id: 'sem-certificado' }),
+          ],
+          page: 1,
+        },
+        status: 200,
+        headers: {},
+      } as any);
+
+      const result = await companies.getCompaniesWithExpiringCertificates(30);
+
+      expect(result.map(c => c.id)).toEqual(['vence-em-15']);
+      expect(mockHttpClient.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('respeita o limite informado', async () => {
+      const payload = {
+        data: {
+          companies: [
+            createMockCompany({
+              id: 'vence-em-20',
+              certificate: { expiresOn: daysFromNow(20), status: 'Active' },
+            }),
+          ],
+          page: 1,
+        },
+        status: 200,
+        headers: {},
+      } as any;
+
+      vi.mocked(mockHttpClient.get).mockResolvedValueOnce(payload);
+      expect(await companies.getCompaniesWithExpiringCertificates(30)).toHaveLength(1);
+
+      vi.mocked(mockHttpClient.get).mockResolvedValueOnce(payload);
+      expect(await companies.getCompaniesWithExpiringCertificates(10)).toHaveLength(0);
     });
   });
 

@@ -13,8 +13,10 @@ import type {
   ConsumerInvoice,
   ConsumerInvoiceListResponse,
   ConsumerInvoiceDisablementData,
-  NfeInvoiceItemsResponse,
-  NfeProductInvoiceEventsResponse,
+  ConsumerInvoiceItemsResponse,
+  ConsumerInvoiceEventsResponse,
+  ConsumerInvoiceCancellationResponse,
+  ConsumerInvoiceFileResource,
   NfeDisablementResource,
 } from '../types.js';
 import { ValidationError } from '../errors/index.js';
@@ -45,6 +47,40 @@ function validateInvoiceId(invoiceId: string): void {
   }
 }
 
+/**
+ * Builds a query string from present values. Mirrors the local helper in
+ * `product-invoices.ts` — `http.delete()` takes no params object, so the query
+ * has to go in the path.
+ */
+function buildQueryString(params: Record<string, string | number | boolean>): string {
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
+    }
+  }
+  return parts.length > 0 ? `?${parts.join('&')}` : '';
+}
+
+/** Cursor pagination for the NFC-e sub-collections (items and events). */
+export interface ConsumerInvoicePageOptions {
+  /** Page size. */
+  limit?: number;
+  /** Cursor: start after this index. */
+  startingAfter?: number;
+}
+
+/** Builds the query for the paginated sub-collections; omits absent values. */
+function buildPageParams(
+  options?: ConsumerInvoicePageOptions
+): Record<string, unknown> | undefined {
+  if (!options) return undefined;
+  const params: Record<string, unknown> = {};
+  if (options.limit !== undefined) params.limit = options.limit;
+  if (options.startingAfter !== undefined) params.startingAfter = options.startingAfter;
+  return Object.keys(params).length > 0 ? params : undefined;
+}
+
 export class ConsumerInvoicesResource {
   constructor(private readonly http: HttpClient) {}
 
@@ -73,6 +109,10 @@ export class ConsumerInvoicesResource {
     options: ConsumerInvoiceListOptions
   ): Promise<ConsumerInvoiceListResponse> {
     validateCompanyId(companyId);
+    // A API EXIGE `environment` aqui: sem ele responde
+    // 400 {"code":40001,"message":"environment has to be production or test"}.
+    // A spec marca o parametro como opcional — a spec e que esta errada
+    // (verificado ao vivo em 2026-09-01). Este throw e a falha rapida equivalente.
     if (!options?.environment) {
       throw new ValidationError('Environment is required (Production or Test)');
     }
@@ -89,106 +129,140 @@ export class ConsumerInvoicesResource {
   }
 
   /**
-   * Retrieve an NFC-e by id. Pass `environment` if the API requires it for reads.
+   * Retrieve an NFC-e by id.
+   *
+   * The route takes no query parameters — `environment` is neither required nor
+   * defined by the spec here (verified live 2026-09-01).
    */
-  async retrieve(
-    companyId: string,
-    invoiceId: string,
-    environment?: ConsumerInvoiceEnvironment
-  ): Promise<ConsumerInvoice> {
+  async retrieve(companyId: string, invoiceId: string): Promise<ConsumerInvoice> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
     const response = await this.http.get<ConsumerInvoice>(
-      `${this.basePath(companyId)}/${invoiceId}`,
-      environment ? { environment } : undefined
-    );
-    return response.data;
-  }
-
-  /** Cancel an NFC-e. */
-  async cancel(companyId: string, invoiceId: string): Promise<ConsumerInvoice> {
-    validateCompanyId(companyId);
-    validateInvoiceId(invoiceId);
-    const response = await this.http.delete<ConsumerInvoice>(
       `${this.basePath(companyId)}/${invoiceId}`
     );
     return response.data;
   }
 
-  /** List the items of an NFC-e. Pass `environment` if the API requires it. */
+  /**
+   * Cancel an NFC-e.
+   *
+   * @param reason - Optional cancellation reason, sent as the `reason` query
+   *   parameter defined by the spec.
+   */
+  async cancel(
+    companyId: string,
+    invoiceId: string,
+    reason?: string
+  ): Promise<ConsumerInvoiceCancellationResponse> {
+    validateCompanyId(companyId);
+    validateInvoiceId(invoiceId);
+    const params: Record<string, string> = {};
+    if (reason !== undefined) params.reason = reason;
+    const response = await this.http.delete<ConsumerInvoiceCancellationResponse>(
+      `${this.basePath(companyId)}/${invoiceId}${buildQueryString(params)}`
+    );
+    return response.data;
+  }
+
+  /**
+   * List the items of an NFC-e, with cursor pagination (`limit`/`startingAfter`).
+   * The response carries `hasMore`.
+   */
   async getItems(
     companyId: string,
     invoiceId: string,
-    environment?: ConsumerInvoiceEnvironment
-  ): Promise<NfeInvoiceItemsResponse> {
+    options?: ConsumerInvoicePageOptions
+  ): Promise<ConsumerInvoiceItemsResponse> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
-    const response = await this.http.get<NfeInvoiceItemsResponse>(
+    const response = await this.http.get<ConsumerInvoiceItemsResponse>(
       `${this.basePath(companyId)}/${invoiceId}/items`,
-      environment ? { environment } : undefined
+      buildPageParams(options)
     );
     return response.data;
   }
 
-  /** List the events of an NFC-e. Pass `environment` if the API requires it. */
+  /**
+   * List the events of an NFC-e, with cursor pagination (`limit`/`startingAfter`).
+   * The response carries `hasMore`.
+   */
   async getEvents(
     companyId: string,
     invoiceId: string,
-    environment?: ConsumerInvoiceEnvironment
-  ): Promise<NfeProductInvoiceEventsResponse> {
+    options?: ConsumerInvoicePageOptions
+  ): Promise<ConsumerInvoiceEventsResponse> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
-    const response = await this.http.get<NfeProductInvoiceEventsResponse>(
+    const response = await this.http.get<ConsumerInvoiceEventsResponse>(
       `${this.basePath(companyId)}/${invoiceId}/events`,
-      environment ? { environment } : undefined
+      buildPageParams(options)
     );
     return response.data;
   }
 
-  /** Download the DANFE-NFC-e PDF. Pass `environment` if the API requires it. */
+  /**
+   * Get the DANFE-NFC-e PDF link.
+   *
+   * @param force - Force regeneration of the document (spec `force` query param).
+   *
+   * A API devolve `{ uri }` — URL temporaria para o arquivo, nao o binario. O
+   * header `Accept` nao altera a resposta. Verificado ao vivo em 2026-09-01
+   * (tests/fixtures/live-contracts/consumer-invoice-download.json).
+   *
+   * Atencao: o envelope difere das rotas de ENTRADA, que usam `publicTemporaryUri`.
+   */
   async downloadPdf(
     companyId: string,
     invoiceId: string,
-    environment?: ConsumerInvoiceEnvironment
-  ): Promise<Buffer> {
+    force?: boolean
+  ): Promise<ConsumerInvoiceFileResource> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
-    const response = await this.http.get<Buffer>(
+    const response = await this.http.get<ConsumerInvoiceFileResource>(
       `${this.basePath(companyId)}/${invoiceId}/pdf`,
-      environment ? { environment } : undefined,
-      { Accept: 'application/pdf' }
+      force === undefined ? undefined : { force }
     );
     return response.data;
   }
 
-  /** Download the NFC-e XML. Pass `environment` if the API requires it. */
+  /**
+   * Get the NFC-e XML link.
+   *
+   * A API devolve `{ uri }` — URL temporaria para o arquivo, nao o binario. O
+   * header `Accept` nao altera a resposta. Verificado ao vivo em 2026-09-01
+   * (tests/fixtures/live-contracts/consumer-invoice-download.json).
+   *
+   * Atencao: o envelope difere das rotas de ENTRADA, que usam `publicTemporaryUri`.
+   */
   async downloadXml(
     companyId: string,
-    invoiceId: string,
-    environment?: ConsumerInvoiceEnvironment
-  ): Promise<Buffer> {
+    invoiceId: string
+  ): Promise<ConsumerInvoiceFileResource> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
-    const response = await this.http.get<Buffer>(
-      `${this.basePath(companyId)}/${invoiceId}/xml`,
-      environment ? { environment } : undefined,
-      { Accept: 'application/xml' }
+    const response = await this.http.get<ConsumerInvoiceFileResource>(
+      `${this.basePath(companyId)}/${invoiceId}/xml`
     );
     return response.data;
   }
 
-  /** Download the rejection XML for a rejected NFC-e. Pass `environment` if required. */
+  /**
+   * Get the rejection XML link for a rejected NFC-e.
+   *
+   * A API devolve `{ uri }` — URL temporaria para o arquivo, nao o binario. O
+   * header `Accept` nao altera a resposta. Verificado ao vivo em 2026-09-01
+   * (tests/fixtures/live-contracts/consumer-invoice-download.json).
+   *
+   * Atencao: o envelope difere das rotas de ENTRADA, que usam `publicTemporaryUri`.
+   */
   async downloadRejectionXml(
     companyId: string,
-    invoiceId: string,
-    environment?: ConsumerInvoiceEnvironment
-  ): Promise<Buffer> {
+    invoiceId: string
+  ): Promise<ConsumerInvoiceFileResource> {
     validateCompanyId(companyId);
     validateInvoiceId(invoiceId);
-    const response = await this.http.get<Buffer>(
-      `${this.basePath(companyId)}/${invoiceId}/xml/rejection`,
-      environment ? { environment } : undefined,
-      { Accept: 'application/xml' }
+    const response = await this.http.get<ConsumerInvoiceFileResource>(
+      `${this.basePath(companyId)}/${invoiceId}/xml/rejection`
     );
     return response.data;
   }

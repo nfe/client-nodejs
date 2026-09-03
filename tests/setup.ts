@@ -3,7 +3,18 @@
  * Configures vitest environment and provides test utilities
  */
 
+import { config as loadDotenv } from 'dotenv';
 import type { Webhook, WebhookEvent } from '../src/core/types.js';
+
+// Carrega o .env do repositório para que NFE_API_KEY / NFE_COMPANY_ID cheguem à
+// suíte de integração sem export manual. Sem isso ela pulava SEMPRE, inclusive na
+// máquina de quem tem credencial — e as assertions apodreciam sem ninguém ver.
+//
+// `dotenv` NÃO sobrescreve variável já presente no ambiente, então export manual e
+// CI continuam vencendo o arquivo. E o guard de integração
+// (tests/integration/setup.ts) segue exigindo `!isCI || RUN_INTEGRATION_TESTS=true`:
+// isto habilita a suíte localmente, não em CI.
+loadDotenv();
 
 // Suppress unhandled rejection warnings from async polling tests
 process.on('unhandledRejection', (reason: any) => {

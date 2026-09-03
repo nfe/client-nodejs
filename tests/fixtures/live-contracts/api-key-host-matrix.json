@@ -1,0 +1,14 @@
+{
+  "probe": "⑧ qual chave cada host aceita",
+  "capturedOn": "2026-09-01",
+  "note": "As duas chaves sao COMPLEMENTARES, nao alternativas. getCteHttpClient() usa a chave DATA num host FISCAL — 8 resources afetados.",
+  "matrix": [
+    { "host": "api.nfse.io",            "pathShape": "/tax-codes/operation-code",                      "mainKey": 200, "dataKey": 403 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies/{id}/consumerinvoices",            "mainKey": 200, "dataKey": 403 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies/{id}/inbound/productinvoices",     "mainKey": 404, "dataKey": 403, "note": "404 = empresa sem captura; o 403 e que e falha de auth" },
+    { "host": "nfe.api.nfe.io",         "pathShape": "/v3/productinvoices/serpro/{accessKey}.xml",     "mainKey": 403, "dataKey": 400 },
+    { "host": "legalentity.api.nfe.io", "pathShape": "/v1/legalentities/basicInfo/{taxNumber}",        "mainKey": 403, "dataKey": 200 },
+    { "host": "address.api.nfe.io",     "pathShape": "/v2/addresses/{postalCode}",                     "mainKey": 403, "dataKey": 200 }
+  ],
+  "affectedResources": ["productInvoices", "transportationInvoices", "inboundProductInvoices", "municipalTaxes", "certificates", "stateTaxes", "taxCalculation", "companies (lado v2)"]
+}

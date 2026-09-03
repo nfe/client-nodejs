@@ -5,6 +5,300 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+## [6.0.0] - 2026-09-03
+
+> **Major de correção de contrato.** Nada aqui é funcionalidade nova: são bugs provados por
+> sonda ao vivo contra a API real (2026-09-01 a 09-03), a maioria em métodos que **nunca
+> puderam funcionar**. Em nenhum deles a especificação era a culpada — o SDK é que estava
+> errado. Evidência versionada em `tests/fixtures/live-contracts/`.
+>
+> **É major porque nove pontos da superfície pública mudam de tipo ou de assinatura.** Na
+> prática, quase ninguém precisa mexer: as quebras são em superfícies que já estavam
+> quebradas — métodos que só lançavam 404, retornos que vinham `undefined`, tipos que
+> mentiam sobre o que continham. O roteiro está no
+> [`MIGRATION.md`](./MIGRATION.md#v5--v6).
+>
+> Como esta rodada foi conduzida, porque explica o volume: contrato de API se decide na
+> OpenAPI **e** em sonda contra a API real, nunca por inferência. Dois métodos que o
+> diagnóstico anterior dava como quebrados **não estavam** — a amostra é que era a exceção.
+
+### Corrigido — identidade do SDK e documentação
+
+- **Toda requisição do SDK mentia sobre quem era.** `src/core/http/client.ts` fixava
+  `packageVersion = '3.0.0'` com um `// TODO: Read from package.json`, e o User-Agent saía
+  como `@nfe-io/sdk@3.0.0` — nome de pacote que **não existe** (o publicado é `nfe-io`) e
+  versão três majors atrás. Medido nos logs de gateway, 30 dias:
+
+  ```
+  93.995 requisições | 23 variantes de User-Agent | 5 majors de Node
+                     | 1 única versão de SDK reportada
+  ```
+
+  As 23 variantes diferem só no Node e na plataforma. O User-Agent é o único sinal de
+  adoção que a plataforma tem, e não trazia informação nenhuma sobre a versão. A partir
+  desta release dá para medir quem migrou.
+
+  O valor também divergia em quatro lugares: `3.0.0` no User-Agent, `5.1.0` em
+  `PACKAGE_VERSION` e em `VERSION`, `5.2.0` no `package.json`. E `PACKAGE_NAME` — constante
+  **pública** — dizia `@nfe-io/sdk`.
+
+  Agora há fonte única: `src/version.ts`, gerado do `package.json` por
+  `scripts/generate-version.ts` (ligado ao `npm run generate`). Nenhum literal de versão
+  sobrou em `src/`, e `tests/unit/version.test.ts` falha se algum voltar — a geração é a
+  conveniência, o teste é a garantia.
+
+  Nove exemplos de JSDoc mandavam `import { NfeClient } from '@nfe-io/sdk'`. Corrigidos;
+  a skill publicada não precisa mais avisar que o JSDoc mente.
+
+- **A documentação ensinava o wiring de credencial que a API recusa.**
+  `docs/multi-host-routing.md` dizia que `productInvoices`, `productInvoicesRtc`,
+  `stateTaxes`, `municipalTaxes`, `certificates`, `transportationInvoices` e
+  `inboundProductInvoices` usavam a chave **de dados** em `api.nfse.io`. É host **fiscal**:
+  responde `403` à chave de dados. Era o mesmo defeito corrigido no roteamento interno em
+  `b50bb74`, ainda ensinado como se fosse o certo — quem seguisse a tabela reintroduzia o
+  bug na própria aplicação. A tabela também omitia `taxCalculation` e o lado v2 de
+  `companies`.
+
+  A nota de fallback deixou de sugerir que as chaves são alternativas: elas são
+  **complementares**, e cada uma responde `403` no território da outra.
+
+- **Dois exemplos copiáveis não compilavam.** O README documentava
+  `addresses.lookupByTerm()` e `addresses.search()`, removidos na v5. A skill publicada
+  chamava `uploadCertificate(companyId, certBuffer, 'password')`, mas a assinatura recebe um
+  objeto. Ambos corrigidos, e `tests/unit/docs-drift.test.ts` passa a falhar quando qualquer
+  documento cita método que não existe no código — README, `docs/` e a skill.
+
+  A verificação casa **nome de método**, não assinatura: conferir assinatura exigiria
+  compilar cada exemplo. Mesmo assim pega os dois casos desta rodada.
+
+  A skill também recebeu as correções de contrato de 01–02/09: rotas não servidas
+  (`consumerInvoiceQuery`, `municipalTaxes.getSeries`/`updatePrefecture`), o
+  `invoiceId` obrigatório nos downloads de NFS-e, e o envelope real do status de certificado.
+
+- **Um teste existente travava o bug no lugar.** `tests/unit/http-client.test.ts` afirmava
+  que o User-Agent continha `@nfe-io/sdk` — quem consertasse o nome quebrava a suíte.
+  Corrigido para afirmar o nome real.
+
+### Corrigido — métodos públicos que não alcançavam a API
+
+> Sete métodos públicos foram diagnosticados como quebrados em julho. Reprovando um a um
+> com sonda ao vivo, **dois não estavam** — o diagnóstico anterior generalizou a partir de
+> uma amostra. A correção do registro está junto das correções de código.
+
+- **`healthCheck()` respondia `error` sempre.** Enviava `pageCount: 1`, e
+  `GET /v1/companies?pageCount=1` responde `400 "pageCount must be between 1 and 50"` — o
+  limite inferior do servidor está um a mais do que a própria mensagem diz. Agora omite o
+  parâmetro (a rota sem query responde `200`), em vez de carregar um número mágico
+  contornando defeito alheio. O off-by-one vai para o time de API.
+
+- **`companies.getCertificateStatus()` lia uma forma que a API nunca devolveu.** Esperava
+  `{hasCertificate, expiresOn, isValid}`; a resposta é
+  `{certificates: [{providerType, resolution, taxPayerId, thumbprint, taxId, subject,
+  validUntil, modifiedOn, status}]}`. Nenhum dos três campos existe, então o retorno era
+  `{hasCertificate: undefined}` e os derivados nunca eram calculados. Isso derrubava em
+  cascata `checkCertificateExpiration()`, `getCompaniesWithCertificates()` e
+  `getCompaniesWithExpiringCertificates()` — quatro métodos públicos.
+
+  O resumo mantém `expiresOn` em vez de renomear para `validUntil`: é o mesmo nome que a
+  API usa quando o certificado vem embutido na empresa. Os itens crus ficam expostos em
+  `certificates`, para quem precisa de `thumbprint` ou `subject`.
+
+  Empresa sem certificado responde `200` com `certificates: []`, não `404`.
+
+- **As duas varreduras de certificado por conta deixaram de fazer N+1.**
+  `getCompaniesWithCertificates()` e `getCompaniesWithExpiringCertificates()` chamavam
+  `getCertificateStatus()` uma vez por empresa, em série. Enquanto o método estava
+  quebrado isso era invisível; consertado, uma conta com 500 empresas faria 500
+  requisições sequenciais por chamada.
+
+  A sonda dispensou o pool de concorrência: `GET /v1/companies` **já devolve**
+  `certificate` em todo item (`{thumbprint, modifiedOn, expiresOn, status}`). As duas
+  passam a ler daí. Medido: as duas varreduras juntas, sobre a conta inteira, em 9,8s.
+
+- **⚠️ BREAKING — `serviceInvoices.downloadPdf()` / `downloadXml()` exigem o `invoiceId`.**
+  O parâmetro era opcional e a documentação prometia um ZIP com todas as notas. A rota não
+  existe: `/serviceinvoices/pdf` responde `404 "service invoice with id (pdf) was not
+  found"`, porque o servidor casa a rota `/{id}` e lê `pdf` como identificador. Não está
+  na spec `nf-servico-v1` nem no `nfeio-docs`. Nota de migração em `MIGRATION.md`.
+
+- **O erro da API parava de chegar ao chamador.** `extractErrorMessage` só lia
+  `message`/`error`/`detail`/`details`. A plataforma usa quatro envelopes:
+
+  | envelope | onde |
+  |---|---|
+  | `"pageCount must be between 1 and 50"` | string JSON crua |
+  | `{"code":40001,"message":"..."}` | campo `message` |
+  | `{"errors":[{"message":"access key is not valid"}]}` | hosts de consulta |
+  | `{"title":"...","errors":{"file":["The File field is required."]}}` | ProblemDetails/ModelState |
+
+  Nos dois últimos a mensagem era descartada e o chamador recebia `HTTP 400 error` —
+  literalmente o status que ele já tinha. Foi assim que `The File field is required.` ficou
+  invisível enquanto o upload de certificado não funcionava.
+
+- **`Accept` dos downloads por chave de acesso.** `productInvoiceQuery.downloadPdf/Xml`
+  mandavam só o tipo binário; no caminho de erro o servidor não tem formatter para PDF e
+  responde `406` com corpo vazio. Com `Accept: application/pdf, application/json;q=0.9` o
+  caminho feliz não muda (mesmo status, mesmo `content-type`, mesmos bytes) e o erro chega
+  legível.
+
+  Correção de registro: **esses métodos não estavam quebrados.** O `406` medido em julho
+  veio de uma chave de acesso inexistente; com chave real a resposta sempre foi `200`
+  com `%PDF-1.4`.
+
+### Deprecado — rotas que a plataforma não serve
+
+Quatro métodos apontam para rotas declaradas na OpenAPI que **não são roteadas** em
+produção: `municipalTaxes.getSeries()`, `municipalTaxes.updatePrefecture()`,
+`consumerInvoiceQuery.retrieve()` e `consumerInvoiceQuery.downloadXml()`.
+
+A distinção foi feita comparando com um path inventado no mesmo host — `404` de corpo
+vazio, sem `content-type`, byte a byte igual — e confirmada de forma independente: rota
+servida responde `401` **sem credencial**; estas respondem `404` sem credencial, ou seja, o
+middleware de autenticação nem chega a rodar. Noventa dias de log de gateway não têm um
+único `200` em `consumerinvoices/coupon`.
+
+Os métodos continuam emitindo a requisição — só o `404` passa a explicar que a rota não é
+servida, preservando a classe do erro. Se a rota subir, o `200` passa intacto.
+
+### Corrigido — registro, não código
+
+**`legalPeople` e `naturalPeople` nunca estiveram quebrados.** Os 14 métodos foram
+registrados como "400 em toda chamada"; a sonda tinha usado a empresa do `.env`, cujo id
+tem 32 caracteres. A rota valida o `company_id` como `ObjectId` de 24 hexadecimais. Sobre
+50 empresas da mesma conta: 30 com id de 24 hex respondem `200`, 19 com id de 32
+caracteres respondem `400 "company id is not valid"`. Um id de 24 hex sintético responde
+`404 "Company not found."` — o validador de formato passa e a busca é que falha.
+
+É limite do servidor: não há conversão possível entre os formatos, e validar localmente só
+antecipa a mesma recusa com mensagem pior. Documentado no JSDoc dos dois recursos, com
+teste de integração afirmando as duas metades. Pendência aberta com o time de API.
+
+### Manutenção
+
+- **O portão de publicação passou a poder reprovar.** `.github/workflows/publish.yml`
+  marcava o passo de testes com `continue-on-error: true`, e um bloco logo abaixo
+  justificava por escrito: *"expected for integration tests without API credentials"*.
+
+  A justificativa era falsa. Sem credencial a suíte dá **41 passed | 4 skipped, exit 0** —
+  os testes de integração **pulam**, não falham; o guard `shouldRunIntegrationTests()`
+  cuida disso desde sempre. Ou seja: o `continue-on-error` protegia contra um modo de
+  falha inexistente e, em troca, deixava passar todos os reais. Os três bugs de contrato
+  corrigidos nesta mesma versão saíram por esse portão.
+
+  Agora `publish.yml` roda testes, `lint`, `typecheck` e `test:types` antes do build, e
+  qualquer um deles reprova a publicação. O `test:types` também entrou no `ci.yml`: eram
+  18 assertions — incluindo os guards de alinhamento de contrato — que **nunca executavam**.
+
+- **A suíte de integração voltou a ser executável.** `dotenv` era devDependency e nada
+  carregava o `.env`, então `NFE_API_KEY` chegava vazia e a integração pulava sempre,
+  inclusive na máquina de quem tinha credencial. Com o `.env` carregado em `tests/setup.ts`,
+  a execução local passou de **742 para 779 testes** — 37 que nunca haviam rodado.
+
+  Três assertions de `errors.integration.test.ts` afirmavam `Array.isArray(companies)`
+  contra um `ListResponse` (`{ data, page }`), e uma quarta lia `companies.length`
+  (`undefined`). Eram de antes da migração para `ListResponse` e nunca falharam porque
+  nunca rodaram. Corrigidas.
+
+  O guard não mudou: em CI a integração continua pulando sem `RUN_INTEGRATION_TESTS=true`.
+  Credencial de conta compartilhada não vai para runner.
+
+- **`validate:spec` passa a detectar drift entre cópias da mesma seção.** 30 dos 131
+  endpoints das specs são declarados em mais de um arquivo (companies, certificates,
+  statetaxes, webhooks) e as cópias divergem — algo que o `SOURCES.json` não pegava,
+  porque ele compara repo × docs e este drift é *entre* specs do mesmo lado.
+
+  O `SOURCES.json` ganhou `sharedSections`, declarando a fonte canônica de cada grupo,
+  e o `validate:spec` agora compara as cópias contra ela **campo a campo**, classificando
+  em `type-mismatch` e `enum-mismatch` (falham o build), `enum-subset` (aviso, a cópia
+  está atrasada) e presença de campo (informativo). Diferença de prosa ou de forma
+  (`$ref` × inline) não conta.
+
+  As 116 divergências existentes entram como baseline declarada, cada uma com motivo e
+  referência à pendência upstream — e uma entrada que deixe de reproduzir é reportada
+  como obsoleta, para a baseline não virar tapete. O que falha o build é drift **novo**.
+
+  O `discoverSpecs()` do validador também passou a aceitar `.json`: `contribuintes-v2.json`
+  — canônica das seções de companies — nunca tinha sido validado.
+
+  Sem efeito em runtime, tipos gerados ou API pública: `dist/index.d.ts` sai byte-idêntico.
+
+### Corrigido
+
+- **Credencial errada em nove recursos fiscais.** As duas chaves da plataforma são
+  **complementares, não intercambiáveis** — cada uma responde `403` nos hosts da
+  outra família. O cliente HTTP de `api.nfse.io` resolvia a **chave de dados** num
+  host **fiscal**, afetando `productInvoices`, `productInvoicesRtc`,
+  `transportationInvoices`, `inboundProductInvoices`, `municipalTaxes`,
+  `certificates`, `stateTaxes`, `taxCalculation` e o lado v2 de `companies`.
+
+  Esses recursos só funcionavam por acidente: quem configurava **apenas** `apiKey`
+  caía no fallback `dataApiKey → apiKey` e nunca via o problema. Quem configurava
+  `dataApiKey` — o que a documentação recomenda para consultas — tomava `403`.
+
+  **Como migrar:** se você usa `dataApiKey`, nada a fazer — os nove recursos passam
+  a funcionar. Se você configurava **somente** `dataApiKey` e acessava algum deles,
+  agora é preciso informar também `apiKey`: o acesso lança `ConfigurationError` na
+  hora, em vez de falhar com `403` na chamada.
+
+  O mapa de qual chave vale em qual host está documentado em
+  `NfeConfig.apiKey` / `NfeConfig.dataApiKey`.
+
+- **NFC-e: parâmetros da spec não expostos e contrato de download divergente.**
+
+  - `cancel()` aceita `reason` (query definida pela spec) e devolve
+    `ConsumerInvoiceCancellationResponse` em vez da nota.
+  - `getItems()` / `getEvents()` aceitam paginação cursor (`limit`/`startingAfter`)
+    e devolvem envelopes **próprios**, com `hasMore`. O de eventos deixa de reusar
+    o tipo do recurso de produto, que tem outra forma.
+  - `downloadPdf()` aceita `force`. Os três downloads passam a devolver
+    `ConsumerInvoiceFileResource` (`{ uri }`) em vez de `Buffer`: a API devolve
+    JSON com URL e **ignora o header `Accept`**. O retorno anterior já era este
+    objeto se passando por `Buffer` — nenhum chamador correto quebra.
+  - `retrieve()`, `getItems()` e `getEvents()` param de enviar `environment`, que
+    a spec não define nessas rotas.
+
+  **Como migrar:** baixe a URL devolvida pelos downloads.
+
+  ```typescript
+  const res = await nfe.consumerInvoices.downloadPdf(companyId, invoiceId);
+  const bytes = await fetch(res.uri!).then((r) => r.arrayBuffer());
+  ```
+
+  Atenção: o envelope da NFC-e usa `uri`; o das rotas de entrada usa
+  `publicTemporaryUri`. São tipos distintos de propósito.
+
+  `list()` **continua exigindo** `environment`: a API responde
+  `400 environment has to be production or test` sem ele. A spec marca o parâmetro
+  como opcional e está errada.
+
+- **Downloads de documentos de entrada (CT-e e NF-e Distribuição) devolviam objeto
+  tipado como texto.** As rotas `/inbound/{chave}/xml`, `/pdf` e
+  `/inbound/{chave}/events/{evento}/xml` respondem com `{ publicTemporaryUri }` —
+  uma URL pré-assinada e temporária. **Binário nunca trafega nessas rotas** e o
+  header `Accept` não altera a resposta.
+
+  Os cinco métodos (`inboundProductInvoices.getXml`, `.getPdf`, `.getEventXml`,
+  `transportationInvoices.downloadXml`, `.downloadEventXml`) passam a devolver o
+  novo tipo `InboundFileResource` em vez de `string`.
+
+  **Como migrar:** baixe a URL devolvida.
+
+  ```typescript
+  const res = await nfe.inboundProductInvoices.getPdf(companyId, accessKey);
+  const bytes = await fetch(res.publicTemporaryUri!).then((r) => r.arrayBuffer());
+  ```
+
+  Nenhum chamador correto quebra: o retorno anterior já era este objeto se passando
+  por `string`. O envelope é **diferente** do de NFC-e/NF-e produto, que usa `uri` —
+  por isso o tipo é separado de `NfeFileResource`.
+
+- **`companies.uploadCertificate()` nunca funcionou.** O campo multipart era enviado
+  como `certificate`; a API faz binding de `file` e respondia
+  `400 {"errors":{"file":["The File field is required."]}}` — ou seja, o método não
+  tinha como completar. A assinatura pública não mudou.
+
 ## [5.2.0] - 2026-07-13
 
 > Correção do contrato de paginação de `companies` contra a API real, provado

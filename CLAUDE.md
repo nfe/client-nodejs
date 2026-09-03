@@ -44,7 +44,9 @@ Coverage thresholds: 80% for branches, functions, lines, and statements. Test se
 
 ### OpenAPI Pipeline
 
-Specs live in `openapi/spec/*.yaml`. The generation script (`scripts/generate-types.ts`) produces typed interfaces in `src/generated/`. The build pipeline always validates and regenerates before compiling.
+Specs live in `openapi/spec/*.yaml` (and `*.json`). The generation script (`scripts/generate-types.ts`) produces typed interfaces in `src/generated/`. The build pipeline always validates and regenerates before compiling.
+
+**Shared sections across specs.** 30 of the 131 endpoints are declared in more than one spec (companies, certificates, statetaxes, webhooks), and the copies disagree. `openapi/spec/SOURCES.json` declares the canonical source per group in `sharedSections`; `npm run validate:spec` compares each copy against it field by field (`scripts/cross-spec-check.ts`) and fails on `type-mismatch` / `enum-mismatch`, warns on `enum-subset`. Known divergences live in `knownDivergences` with a reason and an upstream reference — a baseline entry that stops reproducing is reported as stale, so it does not become permanent. See `src/generated/README.md` for how to declare a new group and what to do when the check fires.
 
 ### Key Patterns
 

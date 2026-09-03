@@ -15,6 +15,12 @@ export const INTEGRATION_TEST_CONFIG = {
   // API key from environment variable (filter out empty strings)
   apiKey: process.env.NFE_API_KEY?.trim() || process.env.NFE_TEST_API_KEY?.trim() || '',
 
+  // Chave de DADOS: os hosts de consulta (nfe.api.nfe.io, legalentity,
+  // naturalperson, address) recusam a chave fiscal com 403 — as duas são
+  // complementares, não alternativas. Sem ela, o SDK cai no fallback para
+  // `apiKey`, que nesses hosts não passa.
+  dataApiKey: process.env.NFE_DATA_API_KEY?.trim() || '',
+
   // Timeout for integration tests (longer than unit tests)
   timeout: 30000, // 30 seconds
 
@@ -58,10 +64,18 @@ export function createIntegrationClient(): NfeClient {
 
   return new NfeClient({
     apiKey: INTEGRATION_TEST_CONFIG.apiKey,
+    ...(INTEGRATION_TEST_CONFIG.dataApiKey
+      ? { dataApiKey: INTEGRATION_TEST_CONFIG.dataApiKey }
+      : {}),
     environment: INTEGRATION_TEST_CONFIG.environment,
     timeout: INTEGRATION_TEST_CONFIG.timeout,
     retryConfig: INTEGRATION_TEST_CONFIG.retryConfig,
   });
+}
+
+/** Há credencial para os hosts de consulta? Sem ela, esses testes não têm o que afirmar. */
+export function skipIfNoDataApiKey(): boolean {
+  return skipIfNoApiKey() || INTEGRATION_TEST_CONFIG.dataApiKey.length === 0;
 }
 
 // Test data helpers for integration tests

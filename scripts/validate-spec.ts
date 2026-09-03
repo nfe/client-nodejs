@@ -16,6 +16,7 @@
 import { readdir, readFile } from 'fs/promises';
 import { join, basename, resolve } from 'path';
 import { parse as parseYaml } from 'yaml';
+import { analyze, type CrossSpecReport } from './cross-spec-check.js';
 
 // ============================================================================
 // Configuration
@@ -81,13 +82,19 @@ async function main(): Promise<void> {
       printResult(result);
     }
 
+    // Seções compartilhadas entre specs: só faz sentido comparar depois que cada
+    // arquivo passou pela validação individual.
+    const crossSpec = await analyze();
+    printCrossSpec(crossSpec);
+
     printSummary(results);
 
     // Exit with error if any validation failed
     const hasErrors = results.some(r => !r.valid);
     const hasWarnings = results.some(r => r.warnings.length > 0);
+    const crossSpecFailed = crossSpec.divergences.length > 0 || crossSpec.undeclared.length > 0;
 
-    if (hasErrors || (STRICT_MODE && hasWarnings)) {
+    if (hasErrors || crossSpecFailed || (STRICT_MODE && hasWarnings)) {
       process.exit(1);
     }
 
@@ -101,9 +108,19 @@ async function main(): Promise<void> {
 // Discovery
 // ============================================================================
 
+/** Arquivos de `openapi/spec/` que não são specs. */
+const NON_SPEC_FILES = new Set(['SOURCES.json']);
+
 async function discoverSpecs(): Promise<string[]> {
   const files = await readdir(SPEC_DIR);
-  return files.filter(file => file.endsWith('.yaml') || file.endsWith('.yml'));
+  // `.json` entra junto: `contribuintes-v2.json` é a canônica das seções de
+  // companies/certificates/statetaxes e ficava de fora da validação enquanto o
+  // filtro era só YAML — enquanto o generate-types.ts já a processava.
+  return files.filter(
+    file =>
+      !NON_SPEC_FILES.has(file) &&
+      (file.endsWith('.yaml') || file.endsWith('.yml') || file.endsWith('.json'))
+  );
 }
 
 // ============================================================================
@@ -275,6 +292,46 @@ function printResult(result: ValidationResult): void {
         console.log(`       💡 ${warning.suggestion}`);
       }
     }
+  }
+
+  console.log('');
+}
+
+function printCrossSpec(report: CrossSpecReport): void {
+  console.log('─'.repeat(50));
+  console.log('Seções compartilhadas entre specs:');
+
+  const agreed = Object.entries(report.agreedFields);
+  for (const [group, count] of agreed) {
+    console.log(`  ${group}: ${count} campos concordam com a canônica`);
+  }
+
+  if (report.baselined.length > 0) {
+    const byClass = new Map<string, number>();
+    for (const d of report.baselined) byClass.set(d.class, (byClass.get(d.class) ?? 0) + 1);
+    const summary = [...byClass].map(([k, v]) => `${v} ${k}`).join(', ');
+    console.log(`  ℹ️  ${report.baselined.length} divergência(s) já declarada(s) em knownDivergences (${summary})`);
+  }
+
+  for (const stale of report.staleBaseline) {
+    console.log(`  ⚠️  Baseline obsoleta: ${stale.group} / ${stale.class} / ${stale.fields.join(', ')}`);
+    console.log(`       A divergência não reproduz mais — remover a entrada de knownDivergences.`);
+  }
+
+  for (const item of report.undeclared) {
+    console.log(`  ❌ Path compartilhado não declarado: ${item.path}`);
+    console.log(`       Presente em: ${item.specs.join(', ')}`);
+    console.log(`       💡 Declare a canônica do grupo em SOURCES.json > sharedSections`);
+  }
+
+  for (const d of report.divergences) {
+    console.log(`  ❌ ${d.class}: ${d.path} — campo \`${d.field}\``);
+    console.log(`       ${d.canonicalSpec} (canônica): ${d.canonicalValue}`);
+    console.log(`       ${d.duplicateSpec}: ${d.duplicateValue}`);
+  }
+
+  if (report.divergences.length === 0 && report.undeclared.length === 0) {
+    console.log('  ✓ Nenhuma divergência nova entre cópias');
   }
 
   console.log('');

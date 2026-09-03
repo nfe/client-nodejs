@@ -8,7 +8,7 @@
 
 **SDK Oficial NFE.io para Node.js 22+** - SDK TypeScript moderno para emissão de notas fiscais de serviço eletrônicas (NFS-e).
 
-> ✨ **Versão 5** - TypeScript nativo, zero dependências em runtime e API moderna async/await. Inclui emissão RTC (Reforma Tributária), NFC-e, inscrições municipais, certificados, notificações e webhooks de conta. Veja a [migração v4 → v5](MIGRATION.md#v4--v5).
+> ✨ **Versão 6** - TypeScript nativo, zero dependências em runtime e API moderna async/await. Major de **correção de contrato**: nove pontos da superfície pública mudaram de tipo ou assinatura, todos em métodos que já não funcionavam. Veja a [migração v5 → v6](MIGRATION.md#v5--v6).
 
 ## 📋 Índice
 
@@ -222,13 +222,9 @@ await nfe.serviceInvoices.sendEmail(empresaId, notaFiscalId, {
   emails: ['cliente@example.com', 'financeiro@example.com'],
 });
 
-// Baixar PDF (single ou bulk)
+// Baixar PDF
 const pdfBuffer = await nfe.serviceInvoices.downloadPdf(empresaId, notaFiscalId);
 fs.writeFileSync('nota.pdf', pdfBuffer);
-
-// Baixar todas as notas como ZIP
-const zipBuffer = await nfe.serviceInvoices.downloadPdf(empresaId);
-fs.writeFileSync('todas-notas.zip', zipBuffer);
 
 // Baixar XML
 const xmlBuffer = await nfe.serviceInvoices.downloadXml(empresaId, notaFiscalId);
@@ -248,7 +244,6 @@ console.log(`✅ ${notas.length} notas fiscais criadas em lote`);
 
 - ⏱️ **Polling Automático**: `createAndWait()` lida automaticamente com processamento assíncrono
 - 📦 **Criação em Lote**: `createBatch()` cria múltiplas notas com controle de concorrência
-- 📥 **Downloads Bulk**: Baixe todas as notas como ZIP (PDF ou XML)
 - 🔍 **Verificação de Status**: `getStatus()` verifica se nota completou processamento
 - 🎯 **Discriminated Unions**: TypeScript detecta automaticamente tipo de resposta (201 vs 202)
 
@@ -369,28 +364,24 @@ const ehValido = nfe.webhooks.validateSignature(
 
 #### 📍 Endereços (`nfe.addresses`)
 
-Consultar endereços brasileiros por CEP ou termo de busca:
+Consultar endereço brasileiro por CEP:
 
 ```typescript
-// Buscar endereço por CEP
 const endereco = await nfe.addresses.lookupByPostalCode('01310-100');
-console.log(endereco.street);   // 'Avenida Paulista'
+console.log(endereco.street);    // 'Avenida Paulista'
 console.log(endereco.city.name); // 'São Paulo'
 console.log(endereco.state);     // 'SP'
-
-// Buscar por termo (nome de rua, bairro, etc.)
-const resultado = await nfe.addresses.lookupByTerm('Paulista');
-for (const end of resultado.addresses) {
-  console.log(`${end.postalCode}: ${end.street}, ${end.city.name}`);
-}
-
-// Buscar com filtro OData
-const filtrado = await nfe.addresses.search({
-  filter: "city.name eq 'São Paulo'"
-});
 ```
 
-> **Nota:** A API de Endereços usa um host separado (`address.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
+> **Busca por termo não existe.** `lookupByTerm()` e `search()` foram **removidos na
+> v5**: as rotas `/v2/addresses` e `/v2/addresses/{termo}` respondem `404` no host real,
+> então os métodos só lançavam `NotFoundError`. Consulta por CEP é a única disponível.
+> Detalhes em [`MIGRATION.md`](./MIGRATION.md#2-addressessearch-e-addresseslookupbyterm-foram-removidos).
+
+> **Nota:** A API de Endereços usa um host separado (`address.api.nfe.io`) e a chave **de
+> dados**. As duas chaves são complementares — a principal responde `403` aqui. O SDK
+> aplica fallback de `dataApiKey` para `apiKey` como conveniência de quem tem uma chave só
+> com os dois escopos; ver [roteamento multi-host](./docs/multi-host-routing.md).
 
 #### 🚚 Notas de Transporte - CT-e (`nfe.transportationInvoices`)
 

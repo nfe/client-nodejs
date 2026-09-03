@@ -8,25 +8,28 @@ description: Baixe DANFE/PDF e XML como Buffer, individualmente ou em ZIP por em
 
 # Downloads (PDF/XML)
 
-Os métodos de download retornam um **`Buffer`** com os bytes do arquivo. Passar
-o `invoiceId` baixa a nota individual; **omitir** o `invoiceId` baixa um **ZIP**
-com todas as notas da empresa (quando o recurso suporta).
+Os métodos de download retornam um **`Buffer`** com os bytes do arquivo, sempre
+de uma nota identificada — o `invoiceId` é obrigatório.
 
 ```typescript
 import { writeFileSync } from 'node:fs';
 
-// PDF individual
+// PDF
 const pdf = await nfe.serviceInvoices.downloadPdf(companyId, invoiceId);
 writeFileSync('nota.pdf', pdf);
 
-// XML individual
+// XML
 const xml = await nfe.serviceInvoices.downloadXml(companyId, invoiceId);
 writeFileSync('nota.xml', xml);
-
-// ZIP de todas as notas da empresa (sem invoiceId)
-const zip = await nfe.serviceInvoices.downloadPdf(companyId);
-writeFileSync('notas.zip', zip);
 ```
+
+> **Não existe download em lote por empresa.** Até a versão 5.2.0 o `invoiceId`
+> era opcional e a documentação prometia um ZIP com todas as notas. A rota não
+> existe: `/serviceinvoices/pdf` responde
+> `404 "service invoice with id (pdf) was not found"`, porque o servidor casa a
+> rota `/{id}` e trata `pdf` como identificador. Medido em 2026-09-02; a rota
+> também não está na spec `nf-servico-v1`. Para baixar várias notas, itere sobre
+> os ids.
 
 ## Disponibilidade por estado
 

@@ -276,6 +276,77 @@ it.skip('should include Basic Auth header', async () => {
   });
 
   describe('Error Handling', () => {
+    /**
+     * Os quatro envelopes de erro que a plataforma realmente usa, medidos ao vivo
+     * em 2026-09-02 (o de ModelState em tests/fixtures/live-contracts/).
+     *
+     * Só os dois primeiros eram lidos. Nos outros dois a mensagem real era jogada
+     * fora e o chamador recebia `HTTP 400 error` -- o status que ele já tinha.
+     */
+    describe('mensagem de erro por envelope', () => {
+      const casos: Array<[string, unknown, string]> = [
+        [
+          'string JSON crua (api.nfe.io)',
+          'pageCount must be between 1 and 50',
+          'pageCount must be between 1 and 50',
+        ],
+        [
+          'campo message',
+          { code: 40001, message: 'environment has to be production or test' },
+          'environment has to be production or test',
+        ],
+        [
+          'lista errors[{message}] (hosts de consulta)',
+          { errors: [{ message: 'access key is not valid' }] },
+          'access key is not valid',
+        ],
+        [
+          'ModelState errors{campo:[msg]} (upload de certificado)',
+          {
+            title: 'One or more validation errors occurred.',
+            status: 400,
+            errors: { file: ['The File field is required.'] },
+          },
+          'file: The File field is required.',
+        ],
+        [
+          'ProblemDetails sem errors',
+          { title: 'An error occurred while processing your request.', status: 500 },
+          'An error occurred while processing your request.',
+        ],
+      ];
+
+      it.each(casos)('%s', async (_nome, corpo, esperado) => {
+        fetchMock.mockResolvedValue(createMockErrorResponse(400, 'Bad Request', corpo));
+
+        await expect(httpClient.get('/test')).rejects.toThrow(esperado);
+      });
+
+      it('sem nada aproveitável, cai para o status', async () => {
+        fetchMock.mockResolvedValue(createMockErrorResponse(400, 'Bad Request', { foo: 1 }));
+
+        await expect(httpClient.get('/test')).rejects.toThrow('HTTP 400 error');
+      });
+
+      it('lista errors vazia não vira mensagem vazia', async () => {
+        fetchMock.mockResolvedValue(createMockErrorResponse(400, 'Bad Request', { errors: [] }));
+
+        await expect(httpClient.get('/test')).rejects.toThrow('HTTP 400 error');
+      });
+
+      it('junta várias mensagens', async () => {
+        fetchMock.mockResolvedValue(
+          createMockErrorResponse(400, 'Bad Request', {
+            errors: { name: ['obrigatório'], email: ['inválido', 'muito longo'] },
+          })
+        );
+
+        await expect(httpClient.get('/test')).rejects.toThrow(
+          'name: obrigatório; email: inválido, muito longo'
+        );
+      });
+    });
+
     it('should throw ValidationError on 400', async () => {
       fetchMock.mockResolvedValue(
         createMockErrorResponse(400, 'Bad Request', {
@@ -590,7 +661,13 @@ it.skip('should include Basic Auth header', async () => {
       await httpClient.get('/test');
 
       const userAgent = fetchMock.mock.calls[0][1].headers['User-Agent'];
-      expect(userAgent).toContain('@nfe-io/sdk');
+      // O nome e a versao vem de src/version.ts, gerado do package.json.
+      // Ate 2026-09-02 esta assercao exigia '@nfe-io/sdk' -- pacote que NAO existe.
+      // O teste travava o bug no lugar: quem consertasse o User-Agent quebrava a
+      // suite. A conferencia completa (nome, versao, Node, plataforma) esta em
+      // tests/unit/version.test.ts.
+      expect(userAgent).toContain('nfe-io@');
+      expect(userAgent).not.toContain('@nfe-io/sdk');
       expect(userAgent).toContain('node/');
     });
 

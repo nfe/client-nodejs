@@ -202,6 +202,16 @@ describe('OpenAPI Type Generation', () => {
         return;
       }
 
+      // ⚠️ EFEITO COLATERAL CONHECIDO: este teste roda a geração de verdade, que
+      // reescreve o carimbo `Last updated` / `Last generated` de 11 arquivos de
+      // src/generated/. Rodar a suíte deixa a árvore suja com ~22 linhas de diff sem
+      // nenhuma mudança de tipo — e isso já varreu arquivos para dentro de um commit.
+      // Antes de commitar depois de rodar testes: `git checkout -- src/generated/`.
+      //
+      // A correção (gerar para diretório temporário, ou tirar o carimbo do arquivo)
+      // mexe no pipeline de geração e pertence à change `sync-openapi-specs-from-docs`,
+      // não ao portão de release.
+
       let output = '';
       expect(() => {
         output = execSync('npm run generate', {

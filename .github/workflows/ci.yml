@@ -43,6 +43,10 @@ jobs:
       - name: Run type checking
         run: npm run typecheck
 
+      # Guards de alinhamento de contrato: quebram quando um contrato pinado muda.
+      - name: Run type-level tests
+        run: npm run test:types
+
       - name: Run tests
         run: npm test -- --run --reporter=verbose
 

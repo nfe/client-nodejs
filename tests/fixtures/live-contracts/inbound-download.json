@@ -1,0 +1,24 @@
+{
+  "probe": "② entrada /xml e /pdf",
+  "capturedOn": "2026-09-01",
+  "note": "Nao existe binario nesta rota. Envelope DIFERENTE do NFC-e: publicTemporaryUri, nao uri.",
+  "requests": [
+    { "method": "GET", "pathShape": "/v2/companies/{companyId}/inbound/{accessKey}/xml", "accept": "application/json" },
+    { "method": "GET", "pathShape": "/v2/companies/{companyId}/inbound/{accessKey}/xml", "accept": "application/xml" },
+    { "method": "GET", "pathShape": "/v2/companies/{companyId}/inbound/{accessKey}/pdf", "accept": "application/json" },
+    { "method": "GET", "pathShape": "/v2/companies/{companyId}/inbound/{accessKey}/pdf", "accept": "application/pdf" }
+  ],
+  "response": {
+    "status": 200,
+    "headers": { "content-type": "application/json; charset=utf-8" },
+    "bodyLabel": "json",
+    "first16Hex": "7b 22 70 75 62 6c 69 63 54 65 6d 70 6f 72 61 72",
+    "body": { "publicTemporaryUri": "https://example.invalid/storage/synthetic-inbound.xml?sig=SYNTHETIC" }
+  },
+  "sdkToday": { "declaredReturn": "Promise<string>", "actualTypeof": "object", "isBuffer": false, "keys": ["publicTemporaryUri"] },
+  "withDataApiKeyConfigured": {
+    "status": 403, "headers": {}, "bodyLabel": "vazio",
+    "sdkError": "ValidationError: Access forbidden",
+    "note": "Bug de wiring: o resource usa a chave DATA num host fiscal."
+  }
+}

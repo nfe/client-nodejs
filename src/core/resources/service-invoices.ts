@@ -468,40 +468,31 @@ export class ServiceInvoicesResource {
    * (Issued, Cancelled) before the PDF is available.
    *
    * @param companyId - Company ID (GUID)
-   * @param invoiceId - Invoice ID (GUID), or omit for bulk download
+   * @param invoiceId - Invoice ID (GUID) — obrigatório
    * @returns PDF data as Buffer
    * @throws {NotFoundError} If the invoice or PDF is not found/not ready
    * @throws {AuthenticationError} If API key is invalid
    *
    * @example
    * ```typescript
-   * // Download single invoice PDF
    * const pdf = await nfe.serviceInvoices.downloadPdf(companyId, invoiceId);
    * fs.writeFileSync('invoice.pdf', pdf);
-   *
-   * // Download all company invoices as ZIP
-   * const zipPdf = await nfe.serviceInvoices.downloadPdf(companyId);
-   * fs.writeFileSync('invoices.zip', zipPdf);
    * ```
    *
    * @remarks
    * - PDF is only available after invoice reaches terminal state (Issued/Cancelled)
    * - Returns 404 if PDF is not yet ready - use polling or check flowStatus first
-   * - Bulk download returns ZIP file containing all PDFs for the company
    * - Large files may consume significant memory - consider streaming for production use
+   *
+   * Não existe download em lote por empresa. Até 2026-09-02 `invoiceId` era
+   * opcional e o ramo sem id montava `/serviceinvoices/pdf`, que o servidor casa
+   * com a rota `/{id}` e trata como identificador literal:
+   * `404 "service invoice with id (pdf) was not found"`. A rota não está na spec
+   * `nf-servico-v1` nem no `nfeio-docs` — nunca houve caminho válido.
    */
-  async downloadPdf(companyId: string, invoiceId?: string): Promise<Buffer> {
-    let path: string;
-
-    if (invoiceId) {
-      path = `/companies/${companyId}/serviceinvoices/${invoiceId}/pdf`;
-    } else {
-      // Bulk download for company (returns ZIP)
-      path = `/companies/${companyId}/serviceinvoices/pdf`;
-    }
-
+  async downloadPdf(companyId: string, invoiceId: string): Promise<Buffer> {
     const response = await this.http.get<Buffer>(
-      path,
+      `/companies/${companyId}/serviceinvoices/${invoiceId}/pdf`,
       undefined,
       { Accept: 'application/pdf' }
     );
@@ -516,41 +507,30 @@ export class ServiceInvoicesResource {
    * (Issued, Cancelled) before the XML is available.
    *
    * @param companyId - Company ID (GUID)
-   * @param invoiceId - Invoice ID (GUID), or omit for bulk download
+   * @param invoiceId - Invoice ID (GUID) — obrigatório
    * @returns XML data as Buffer
    * @throws {NotFoundError} If the invoice or XML is not found/not ready
    * @throws {AuthenticationError} If API key is invalid
    *
    * @example
    * ```typescript
-   * // Download single invoice XML
    * const xml = await nfe.serviceInvoices.downloadXml(companyId, invoiceId);
    * fs.writeFileSync('invoice.xml', xml);
    * console.log(xml.toString('utf-8')); // View as string
-   *
-   * // Download all company invoices as ZIP
-   * const zipXml = await nfe.serviceInvoices.downloadXml(companyId);
-   * fs.writeFileSync('invoices-xml.zip', zipXml);
    * ```
    *
    * @remarks
    * - XML is only available after invoice reaches terminal state (Issued/Cancelled)
    * - Returns 404 if XML is not yet ready - use polling or check flowStatus first
-   * - Bulk download returns ZIP file containing all XMLs for the company
    * - Buffer can be converted to string with `.toString('utf-8')` if needed
+   *
+   * Não existe download em lote por empresa — mesmo motivo do
+   * {@link ServiceInvoicesResource.downloadPdf}: `/serviceinvoices/xml` responde
+   * `404 "service invoice with id (xml) was not found"`.
    */
-  async downloadXml(companyId: string, invoiceId?: string): Promise<Buffer> {
-    let path: string;
-
-    if (invoiceId) {
-      path = `/companies/${companyId}/serviceinvoices/${invoiceId}/xml`;
-    } else {
-      // Bulk download for company (returns ZIP)
-      path = `/companies/${companyId}/serviceinvoices/xml`;
-    }
-
+  async downloadXml(companyId: string, invoiceId: string): Promise<Buffer> {
     const response = await this.http.get<Buffer>(
-      path,
+      `/companies/${companyId}/serviceinvoices/${invoiceId}/xml`,
       undefined,
       { Accept: 'application/xml' }
     );

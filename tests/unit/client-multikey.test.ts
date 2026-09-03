@@ -2,9 +2,16 @@
  * Unit tests for multi-API key functionality
  * Tests lazy getter validation and API key fallback chain
  *
- * API key architecture:
- * - apiKey: for fiscal document operations (NFS-e, Companies, etc.)
- * - dataApiKey: for all data/query services (Addresses, CT-e, CNPJ, CPF)
+ * API key architecture (verified live 2026-09-01 — the two keys are complementary,
+ * each rejected with 403 on the other family's hosts):
+ * - apiKey: every FISCAL host — api.nfe.io and api.nfse.io. Includes the inbound
+ *   CT-e / NF-e distribution resources, which live on api.nfse.io despite reading
+ *   like lookups.
+ * - dataApiKey: the LOOKUP hosts only — address, legalentity, naturalperson,
+ *   nfe.api.nfe.io (invoice query).
+ *
+ * Which key reaches the wire is asserted in client-api-key-wiring.test.ts; this
+ * file covers the fallback chain and lazy-getter validation.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -149,23 +156,9 @@ describe('NfeClient Multi-API Key Support', () => {
     });
   });
 
-  describe('API key fallback chain for data services (CT-e)', () => {
-    it('should use dataApiKey from config', () => {
-      const client = new NfeClient({ dataApiKey: 'data-key' });
-
-      expect(() => client.transportationInvoices).not.toThrow();
-    });
-
-    it('should fall back to apiKey from config', () => {
+  describe('API key chain for inbound CT-e (FISCAL host api.nfse.io)', () => {
+    it('should use apiKey from config', () => {
       const client = new NfeClient({ apiKey: 'main-key' });
-
-      // Should use main apiKey for CTE when dataApiKey not specified
-      expect(() => client.transportationInvoices).not.toThrow();
-    });
-
-    it('should fall back to NFE_DATA_API_KEY environment variable', () => {
-      process.env.NFE_DATA_API_KEY = 'env-data-key';
-      const client = new NfeClient({});
 
       expect(() => client.transportationInvoices).not.toThrow();
     });
@@ -177,55 +170,52 @@ describe('NfeClient Multi-API Key Support', () => {
       expect(() => client.transportationInvoices).not.toThrow();
     });
 
-    it('should prefer dataApiKey over apiKey', () => {
-      const client = new NfeClient({
-        apiKey: 'main-key',
-        dataApiKey: 'data-key',
-      });
+    it('should NOT accept dataApiKey alone (fiscal host rejects the data key)', () => {
+      const client = new NfeClient({ dataApiKey: 'data-key' });
 
-      expect(() => client.transportationInvoices).not.toThrow();
-      const config = client.getConfig();
-      expect(config.dataApiKey).toBe('data-key');
+      expect(() => client.transportationInvoices).toThrow(ConfigurationError);
+      expect(() => client.transportationInvoices).toThrow(/API key required/);
     });
 
-    it('should prefer config keys over environment variables', () => {
+    it('should NOT accept NFE_DATA_API_KEY alone', () => {
       process.env.NFE_DATA_API_KEY = 'env-data-key';
-      process.env.NFE_API_KEY = 'env-main-key';
+      const client = new NfeClient({});
 
-      const client = new NfeClient({ dataApiKey: 'config-data-key' });
+      expect(() => client.transportationInvoices).toThrow(ConfigurationError);
+    });
+
+    it('should ignore dataApiKey when both are set', () => {
+      const client = new NfeClient({ apiKey: 'main-key', dataApiKey: 'data-key' });
 
       expect(() => client.transportationInvoices).not.toThrow();
-      const config = client.getConfig();
-      expect(config.dataApiKey).toBe('config-data-key');
     });
 
     it('should throw ConfigurationError when accessing transportationInvoices without any apiKey', () => {
       const client = new NfeClient({});
 
       expect(() => client.transportationInvoices).toThrow(ConfigurationError);
-      expect(() => client.transportationInvoices).toThrow(/dataApiKey|apiKey/);
+      expect(() => client.transportationInvoices).toThrow(/API key required/);
     });
   });
 
-  describe('both data services resolve same key', () => {
-    it('should use the same dataApiKey for both addresses and transportationInvoices', () => {
+  describe('lookup services share the data key', () => {
+    it('should use the same dataApiKey for addresses and the lookup resources', () => {
       const client = new NfeClient({ dataApiKey: 'shared-data-key' });
 
-      // Both should work with the same key
       expect(() => client.addresses).not.toThrow();
-      expect(() => client.transportationInvoices).not.toThrow();
+      expect(() => client.legalEntityLookup).not.toThrow();
+      expect(() => client.naturalPersonLookup).not.toThrow();
 
-      // Verify config has the shared key
       const config = client.getConfig();
       expect(config.dataApiKey).toBe('shared-data-key');
     });
 
-    it('should use NFE_DATA_API_KEY env var for both addresses and transportationInvoices', () => {
+    it('should use NFE_DATA_API_KEY env var for the lookup resources', () => {
       process.env.NFE_DATA_API_KEY = 'env-shared-key';
       const client = new NfeClient({});
 
       expect(() => client.addresses).not.toThrow();
-      expect(() => client.transportationInvoices).not.toThrow();
+      expect(() => client.legalEntityLookup).not.toThrow();
     });
   });
 
@@ -233,13 +223,15 @@ describe('NfeClient Multi-API Key Support', () => {
     it('should allow using only data services with dataApiKey (no apiKey)', () => {
       const client = new NfeClient({ dataApiKey: 'data-only-key' });
 
-      // Data services should work
+      // Lookup services should work
       expect(() => client.addresses).not.toThrow();
-      expect(() => client.transportationInvoices).not.toThrow();
+      expect(() => client.legalEntityLookup).not.toThrow();
 
-      // Fiscal resources should throw
+      // Fiscal resources should throw — including the inbound ones on api.nfse.io
       expect(() => client.serviceInvoices).toThrow(ConfigurationError);
       expect(() => client.companies).toThrow(ConfigurationError);
+      expect(() => client.transportationInvoices).toThrow(ConfigurationError);
+      expect(() => client.inboundProductInvoices).toThrow(ConfigurationError);
     });
 
     it('should allow using only main resources with apiKey (no dataApiKey)', () => {
@@ -293,7 +285,7 @@ describe('NfeClient Multi-API Key Support', () => {
     });
 
     it('should cache transportationInvoices resource', () => {
-      const client = new NfeClient({ dataApiKey: 'test-key' });
+      const client = new NfeClient({ apiKey: 'test-key' });
 
       const transportationInvoices1 = client.transportationInvoices;
       const transportationInvoices2 = client.transportationInvoices;
@@ -314,17 +306,17 @@ describe('NfeClient Multi-API Key Support', () => {
       expect(serviceInvoices1).not.toBe(serviceInvoices2);
     });
 
-    it('should clear data service cache on updateConfig with dataApiKey', () => {
+    it('should clear lookup cache on updateConfig with dataApiKey', () => {
       const client = new NfeClient({ dataApiKey: 'initial-key' });
 
-      const transportationInvoices1 = client.transportationInvoices;
+      const addressesBefore = client.addresses;
 
       client.updateConfig({ dataApiKey: 'new-key' });
 
-      const transportationInvoices2 = client.transportationInvoices;
+      const addressesAfter = client.addresses;
 
       // Resource should be a new instance
-      expect(transportationInvoices1).not.toBe(transportationInvoices2);
+      expect(addressesBefore).not.toBe(addressesAfter);
     });
   });
 
@@ -345,7 +337,7 @@ describe('NfeClient Multi-API Key Support', () => {
       );
     });
 
-    it('should have descriptive error for missing data API key (transportationInvoices)', () => {
+    it('should have descriptive error for missing main API key (transportationInvoices)', () => {
       const client = new NfeClient({});
 
       expect(() => client.transportationInvoices).toThrow(

@@ -18,8 +18,20 @@ captura de CT-e e consulta documentos por chave de acesso.
 | `enable(companyId, data)` / `disable(companyId)` | Habilita/desabilita a captura de CT-e. | settings |
 | `getSettings(companyId)` | Configuração atual. | settings |
 | `retrieve(companyId, accessKey)` | Consulta um CT-e por chave. | dados do CT-e |
-| `downloadXml(companyId, accessKey)` | XML do CT-e. | XML |
-| `getEvent(companyId, ...)` / `downloadEventXml(companyId, ...)` | Eventos do CT-e. | evento / XML |
+| `downloadXml(companyId, accessKey)` | XML do CT-e. | `{ publicTemporaryUri }` |
+| `getEvent(companyId, ...)` / `downloadEventXml(companyId, ...)` | Eventos do CT-e. | evento / `{ publicTemporaryUri }` |
+
+:::info Downloads devolvem uma URL, não o arquivo
+As rotas de entrada (`/inbound/{chave}/xml` e `/pdf`) respondem com um objeto
+`{ publicTemporaryUri }` — uma URL pré-assinada e temporária. Binário não trafega
+nessas rotas e o header `Accept` não altera a resposta; baixar a URL é
+responsabilidade do chamador.
+
+```typescript
+const res = await nfe.transportationInvoices.downloadXml(companyId, accessKey);
+const xml = await fetch(res.publicTemporaryUri!).then((r) => r.text());
+```
+:::
 
 ## Exemplo
 

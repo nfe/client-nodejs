@@ -10,6 +10,7 @@ import type {
   InboundInvoiceMetadata,
   InboundProductInvoiceMetadata,
   InboundSettings,
+  InboundFileResource,
   EnableInboundOptions,
   ManifestEventType
 } from '../types.js';
@@ -407,26 +408,28 @@ export class InboundProductInvoicesResource {
    *
    * Gets the XML content of an inbound document.
    *
+   * A resposta e um objeto com `publicTemporaryUri` — URL pre-assinada e temporaria.
+   * Binario NAO trafega nesta rota e o `Accept` nao altera a resposta; baixar a URL
+   * fica a cargo do chamador. Verificado ao vivo em 2026-09-01
+   * (tests/fixtures/live-contracts/inbound-download.json).
+   *
    * @param companyId - The company ID that received the document
    * @param accessKey - The 44-digit access key
-   * @returns Promise with the XML content as a string
+   * @returns Promise com o file-resource (`publicTemporaryUri`)
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the document is not found
    *
    * @example
    * ```typescript
-   * const xml = await nfe.inboundProductInvoices.getXml(
-   *   'company-id',
-   *   '35240112345678000190550010000001231234567890'
-   * );
-   * fs.writeFileSync('nfe.xml', xml);
+   * const res = await nfe.inboundProductInvoices.getXml(companyId, accessKey);
+   * const doc = await fetch(res.publicTemporaryUri!).then((r) => r.text());
    * ```
    */
-  async getXml(companyId: string, accessKey: string): Promise<string> {
+  async getXml(companyId: string, accessKey: string): Promise<InboundFileResource> {
     validateCompanyId(companyId);
     validateAccessKey(accessKey);
 
-    const response = await this.http.get<string>(
+    const response = await this.http.get<InboundFileResource>(
       `/v2/companies/${companyId}/inbound/${accessKey.trim()}/xml`
     );
 
@@ -438,6 +441,11 @@ export class InboundProductInvoicesResource {
    *
    * Gets the XML content of an event associated with an inbound document.
    *
+   * A resposta e um objeto com `publicTemporaryUri` — URL pre-assinada e temporaria.
+   * Binario NAO trafega nesta rota e o `Accept` nao altera a resposta; baixar a URL
+   * fica a cargo do chamador. Verificado ao vivo em 2026-09-01
+   * (tests/fixtures/live-contracts/inbound-download.json).
+   *
    * @param companyId - The company ID that received the document
    * @param accessKey - The 44-digit access key of the parent document
    * @param eventKey - The event key
@@ -447,24 +455,20 @@ export class InboundProductInvoicesResource {
    *
    * @example
    * ```typescript
-   * const xml = await nfe.inboundProductInvoices.getEventXml(
-   *   'company-id',
-   *   '35240112345678000190550010000001231234567890',
-   *   'event-key-123'
-   * );
-   * fs.writeFileSync('nfe-event.xml', xml);
+   * const res = await nfe.inboundProductInvoices.getEventXml(companyId, accessKey, eventKey);
+   * const doc = await fetch(res.publicTemporaryUri!).then((r) => r.text());
    * ```
    */
   async getEventXml(
     companyId: string,
     accessKey: string,
     eventKey: string
-  ): Promise<string> {
+  ): Promise<InboundFileResource> {
     validateCompanyId(companyId);
     validateAccessKey(accessKey);
     validateEventKey(eventKey);
 
-    const response = await this.http.get<string>(
+    const response = await this.http.get<InboundFileResource>(
       `/v2/companies/${companyId}/inbound/${accessKey.trim()}/events/${eventKey.trim()}/xml`
     );
 
@@ -476,26 +480,28 @@ export class InboundProductInvoicesResource {
    *
    * Gets the PDF content of an NF-e document.
    *
+   * A resposta e um objeto com `publicTemporaryUri` — URL pre-assinada e temporaria.
+   * Binario NAO trafega nesta rota e o `Accept` nao altera a resposta; baixar a URL
+   * fica a cargo do chamador. Verificado ao vivo em 2026-09-01
+   * (tests/fixtures/live-contracts/inbound-download.json).
+   *
    * @param companyId - The company ID that received the document
    * @param accessKey - The 44-digit access key
-   * @returns Promise with the PDF content as a string
+   * @returns Promise com o file-resource (`publicTemporaryUri`)
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the document is not found
    *
    * @example
    * ```typescript
-   * const pdf = await nfe.inboundProductInvoices.getPdf(
-   *   'company-id',
-   *   '35240112345678000190550010000001231234567890'
-   * );
-   * fs.writeFileSync('nfe.pdf', pdf);
+   * const res = await nfe.inboundProductInvoices.getPdf(companyId, accessKey);
+   * const bytes = await fetch(res.publicTemporaryUri!).then((r) => r.arrayBuffer());
    * ```
    */
-  async getPdf(companyId: string, accessKey: string): Promise<string> {
+  async getPdf(companyId: string, accessKey: string): Promise<InboundFileResource> {
     validateCompanyId(companyId);
     validateAccessKey(accessKey);
 
-    const response = await this.http.get<string>(
+    const response = await this.http.get<InboundFileResource>(
       `/v2/companies/${companyId}/inbound/${accessKey.trim()}/pdf`
     );
 

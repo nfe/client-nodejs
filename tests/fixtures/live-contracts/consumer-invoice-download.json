@@ -1,0 +1,18 @@
+{
+  "probe": "① NFC-e /pdf e /xml",
+  "capturedOn": "2026-09-01",
+  "note": "Accept e ignorado: pdf, xml e json devolvem o mesmo FileResource JSON.",
+  "requests": [
+    { "method": "GET", "pathShape": "/v2/companies/{companyId}/consumerinvoices/{invoiceId}/pdf", "accept": "application/pdf" },
+    { "method": "GET", "pathShape": "/v2/companies/{companyId}/consumerinvoices/{invoiceId}/pdf", "accept": "application/json" },
+    { "method": "GET", "pathShape": "/v2/companies/{companyId}/consumerinvoices/{invoiceId}/xml", "accept": "application/xml" }
+  ],
+  "response": {
+    "status": 200,
+    "headers": { "content-type": "application/json; charset=utf-8" },
+    "bodyLabel": "json",
+    "first16Hex": "7b 22 75 72 69 22 3a 22 68 74 74 70 73 3a 2f 2f",
+    "body": { "uri": "https://example.invalid/storage/synthetic-consumer-invoice.pdf?sig=SYNTHETIC" }
+  },
+  "sdkToday": { "declaredReturn": "Promise<Buffer>", "actualTypeof": "object", "isBuffer": false, "keys": ["uri"] }
+}

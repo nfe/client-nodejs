@@ -203,24 +203,13 @@ describe('ServiceInvoicesResource', () => {
       expect(result).toEqual(mockPdfData);
     });
 
-    it('should download PDF for all invoices when invoiceId is not provided', async () => {
-      const mockPdfData = Buffer.from('Bulk PDF content');
-      const mockResponse: HttpResponse<any> = {
-        data: mockPdfData,
-        status: 200,
-        headers: { 'content-type': 'application/pdf' },
-      };
-      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
-
-      const result = await serviceInvoices.downloadPdf(TEST_COMPANY_ID);
-
-      expect(mockHttpClient.get).toHaveBeenCalledWith(
-        `/companies/${TEST_COMPANY_ID}/serviceinvoices/pdf`,
-        undefined,
-        { Accept: 'application/pdf' }
-      );
-      expect(result).toEqual(mockPdfData);
-    });
+    // O download em lote por empresa NAO existe. `/serviceinvoices/pdf` responde
+    // 404 "service invoice with id (pdf) was not found" -- o servidor casa a rota
+    // `/{id}` e trata `pdf` como identificador. Nao esta na spec nf-servico-v1 nem
+    // no nfeio-docs. O teste que existia aqui afirmava o caminho montado, nunca
+    // que a API o servisse, e por isso passou verde por meses.
+    //
+    // `invoiceId` agora e obrigatorio: quem chamar sem ele nao compila.
   });
 
   describe('downloadXml', () => {
@@ -243,24 +232,8 @@ describe('ServiceInvoicesResource', () => {
       expect(result).toEqual(mockXmlData);
     });
 
-    it('should download XML for all invoices when invoiceId is not provided', async () => {
-      const mockXmlData = '<xml>Bulk invoice data</xml>';
-      const mockResponse: HttpResponse<any> = {
-        data: mockXmlData,
-        status: 200,
-        headers: { 'content-type': 'application/xml' },
-      };
-      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
-
-      const result = await serviceInvoices.downloadXml(TEST_COMPANY_ID);
-
-      expect(mockHttpClient.get).toHaveBeenCalledWith(
-        `/companies/${TEST_COMPANY_ID}/serviceinvoices/xml`,
-        undefined,
-        { Accept: 'application/xml' }
-      );
-      expect(result).toEqual(mockXmlData);
-    });
+    // Mesma medicao do downloadPdf: `/serviceinvoices/xml` responde
+    // 404 "service invoice with id (xml) was not found".
   });
 
   describe('error handling', () => {

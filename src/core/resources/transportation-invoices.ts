@@ -9,7 +9,8 @@ import type { HttpClient } from '../http/client.js';
 import type {
   TransportationInvoiceInboundSettings,
   TransportationInvoiceMetadata,
-  EnableTransportationInvoiceOptions
+  EnableTransportationInvoiceOptions,
+  InboundFileResource
 } from '../types.js';
 import { ValidationError } from '../errors/index.js';
 
@@ -262,31 +263,32 @@ export class TransportationInvoicesResource {
    *
    * Gets the XML content of a CT-e document.
    *
+   *
+   * A resposta e um objeto com `publicTemporaryUri` — URL pre-assinada e temporaria.
+   * Binario NAO trafega nesta rota e o `Accept` nao altera a resposta; baixar a URL
+   * fica a cargo do chamador. Verificado ao vivo em 2026-09-01
+   * (tests/fixtures/live-contracts/inbound-download.json).
+   *
    * @param companyId - The company ID that received the CT-e
    * @param accessKey - The 44-digit CT-e access key
-   * @returns Promise with the XML content as a string
+   * @returns Promise com o file-resource (`publicTemporaryUri`)
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the CT-e is not found
    *
    * @example
    * ```typescript
-   * const xml = await nfe.transportationInvoices.downloadXml(
+   * const res = await nfe.transportationInvoices.downloadXml(
    *   'company-id',
    *   '35240112345678000190570010000001231234567890'
    * );
-   *
-   * // Save to file
-   * fs.writeFileSync('cte.xml', xml);
-   *
-   * // Or parse with an XML library
-   * const parsed = parseXml(xml);
+   * const xml = await fetch(res.publicTemporaryUri!).then((r) => r.text());
    * ```
    */
-  async downloadXml(companyId: string, accessKey: string): Promise<string> {
+  async downloadXml(companyId: string, accessKey: string): Promise<InboundFileResource> {
     validateCompanyId(companyId);
     validateAccessKey(accessKey);
 
-    const response = await this.http.get<string>(
+    const response = await this.http.get<InboundFileResource>(
       `/v2/companies/${companyId}/inbound/${accessKey.trim()}/xml`
     );
 
@@ -346,25 +348,30 @@ export class TransportationInvoicesResource {
    * @param companyId - The company ID that received the CT-e
    * @param accessKey - The 44-digit CT-e access key
    * @param eventKey - The event key
-   * @returns Promise with the event XML content as a string
+   * @returns Promise com o file-resource (`publicTemporaryUri`)
    * @throws {ValidationError} If any parameter is invalid
    * @throws {NotFoundError} If the event is not found
    *
    * @example
    * ```typescript
-   * const xml = await nfe.transportationInvoices.downloadEventXml(
+   * const res = await nfe.transportationInvoices.downloadEventXml(
    *   'company-id',
    *   '35240112345678000190570010000001231234567890',
    *   'event-key-123'
    * );
-   * fs.writeFileSync('cte-event.xml', xml);
+   * const xml = await fetch(res.publicTemporaryUri!).then((r) => r.text());
    * ```
+   *
+   * A resposta e um objeto com `publicTemporaryUri` — URL pre-assinada e temporaria.
+   * Binario NAO trafega nesta rota e o `Accept` nao altera a resposta; baixar a URL
+   * fica a cargo do chamador. Verificado ao vivo em 2026-09-01
+   * (tests/fixtures/live-contracts/inbound-download.json).
    */
   async downloadEventXml(
     companyId: string,
     accessKey: string,
     eventKey: string
-  ): Promise<string> {
+  ): Promise<InboundFileResource> {
     validateCompanyId(companyId);
     validateAccessKey(accessKey);
 
@@ -372,7 +379,7 @@ export class TransportationInvoicesResource {
       throw new ValidationError('Event key is required');
     }
 
-    const response = await this.http.get<string>(
+    const response = await this.http.get<InboundFileResource>(
       `/v2/companies/${companyId}/inbound/${accessKey.trim()}/events/${eventKey.trim()}/xml`
     );
 

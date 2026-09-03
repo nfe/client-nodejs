@@ -1,0 +1,120 @@
+{
+  "probe": "metodos publicos que nao alcancam a API",
+  "capturedOn": "2026-09-02",
+  "hosts": ["api.nfe.io", "nfe.api.nfe.io"],
+  "note": "Dados sensiveis redigidos. Chaves de acesso e ids de empresa reais NAO entram no repositorio: os valores abaixo sao sinteticos ou marcados como <redigido>.",
+
+  "metodoDeDiscriminacao": {
+    "rotaServidaVsNaoServida": "Comparar com um path inventado no mesmo host. 404 de corpo vazio, sem content-type, byte a byte igual ao do path inventado, e roteamento -- nao 'nao encontrado'.",
+    "confirmacaoIndependente": "Rota servida responde 401 SEM credencial; rota nao servida responde 404 sem credencial, porque o middleware de autenticacao nem chega a rodar.",
+    "metodoQuebradoVsEntradaInvalida": "Repetir com dado que existe de verdade. Um 4xx sobre entrada invalida nao prova nada sobre o metodo."
+  },
+
+  "healthCheck": {
+    "pathShape": "/v1/companies",
+    "porPageCount": {
+      "1": { "status": 400, "body": "pageCount must be between 1 and 50" },
+      "2": { "status": 200 },
+      "5": { "status": 200 },
+      "(sem query)": { "status": 200 }
+    },
+    "conclusao": "O limite inferior do servidor esta um a mais do que a propria mensagem diz. O SDK passa a omitir o parametro."
+  },
+
+  "certificado": {
+    "pathShape": "/v1/companies/{companyId}/certificate",
+    "status": 200,
+    "headers": { "content-type": "application/json; charset=utf-8" },
+    "chavesDeTopo": ["certificates"],
+    "chavesDoItem": ["providerType", "resolution", "taxPayerId", "thumbprint", "taxId", "subject", "validUntil", "modifiedOn", "status"],
+    "camposQueOSdkLiaEQueNaoExistem": ["hasCertificate", "expiresOn", "isValid"],
+    "amostraRedigida": {
+      "providerType": "Pfx",
+      "resolution": { "status": "Resolved" },
+      "taxPayerId": "<redigido>",
+      "thumbprint": "<redigido>",
+      "taxId": "<redigido>",
+      "subject": "<redigido>",
+      "validUntil": "2026-11-03T16:18:00Z",
+      "modifiedOn": "2026-09-01T02:55:33.418Z",
+      "status": "Active"
+    },
+    "semCertificado": { "status": 200, "body": { "certificates": [] }, "note": "Nao e 404. 9 de 12 empresas sondadas estao nesse caso." },
+    "certificadoNaListagem": {
+      "pathShape": "/v1/companies?pageCount=50",
+      "note": "TODOS os 50 itens da primeira pagina trazem `certificate`. E por isso que a varredura por conta nao precisa de uma requisicao por empresa.",
+      "forma": ["thumbprint", "modifiedOn", "expiresOn", "status"],
+      "atencao": "O mesmo dado se chama `expiresOn` aqui e `validUntil` no endpoint de certificado."
+    }
+  },
+
+  "downloadEmLoteNfse": {
+    "pathShape": "/v1/companies/{companyId}/serviceinvoices/pdf",
+    "status": 404,
+    "body": "service invoice with id (pdf) was not found",
+    "conclusao": "O servidor casa a rota /{id} e le `pdf` como identificador. A rota em lote nao existe -- nem na spec nf-servico-v1, nem no nfeio-docs."
+  },
+
+  "downloadPorChaveDeAcesso": {
+    "pathShape": "/v2/productinvoices/{accessKey}.pdf",
+    "host": "nfe.api.nfe.io",
+    "note": "O metodo NAO estava quebrado. O 406 registrado em julho veio de chave inexistente.",
+    "porAccept": {
+      "application/pdf": {
+        "chaveExistente": { "status": 200, "contentType": "application/pdf", "bytes": 7623, "magic": "%PDF-1.4" },
+        "chaveInexistente": { "status": 406, "contentType": null, "bytes": 0 }
+      },
+      "application/pdf, application/json;q=0.9": {
+        "chaveExistente": { "status": 200, "contentType": "application/pdf", "bytes": 7623, "magic": "%PDF-1.4" },
+        "chaveInexistente": { "status": 400, "contentType": "application/json; charset=utf-8", "body": { "errors": [{ "message": "access key is not valid" }] } }
+      }
+    },
+    "conclusao": "O binario continua em primeiro, entao o caminho feliz nao muda (mesmos bytes). O JSON de segunda escolha existe so para o caminho de erro."
+  },
+
+  "envelopesDeErro": {
+    "note": "Quatro formas distintas. O extrator do SDK so lia as duas primeiras.",
+    "stringJsonCrua": { "exemplo": "pageCount must be between 1 and 50", "onde": "api.nfe.io, maioria das rotas" },
+    "campoMessage": { "exemplo": { "code": 40001, "message": "environment has to be production or test" } },
+    "listaErrors": { "exemplo": { "errors": [{ "message": "access key is not valid" }] }, "onde": "hosts de consulta" },
+    "modelState": { "exemplo": { "title": "One or more validation errors occurred.", "status": 400, "errors": { "file": ["The File field is required."] } }, "onde": "upload de certificado" }
+  },
+
+  "rotasNaoServidas": {
+    "controle": {
+      "pathInventado": { "pathShape": "/v9/rota-inventada/xyz", "host": "nfe.api.nfe.io", "status": 404, "contentType": null, "bytes": 0 },
+      "rotaServidaSemCredencial": { "pathShape": "/v2/productinvoices/{accessKey}", "status": 401, "bytes": 0 }
+    },
+    "consumerInvoiceQuery": {
+      "pathShapes": ["/v1/consumerinvoices/coupon/{accessKey}", "/v1/consumerinvoices/coupon/{accessKey}.xml"],
+      "host": "nfe.api.nfe.io",
+      "declaradaEm": ["openapi/spec/consulta-nf-consumidor.yaml", "nfeio-docs/static/api/consumer-invoice.json"],
+      "porCredencial": {
+        "chaveMain": { "status": 404, "bytes": 0 },
+        "chaveData": { "status": 404, "bytes": 0 },
+        "semCredencial": { "status": 404, "bytes": 0 }
+      },
+      "variantesTestadas": ["/v1/consumerinvoices/{chave}", "/v2/consumerinvoices/coupon/{chave}", "/v2/consumerinvoices/{chave}", "/v1/taxcoupons/{chave}", "/v1/consumerinvoices/coupons/{chave}"],
+      "todasAsVariantes": 404,
+      "logDeGateway": "90 dias sem um unico 200 em consumerinvoices/coupon",
+      "conclusao": "Rota nao roteada. O 404 sem credencial e a prova: o middleware de autenticacao nem chega a rodar."
+    },
+    "municipalTaxes": {
+      "registroPai": { "pathShape": "/v2/companies/{companyId}/municipaltaxes/{mtid}", "status": 200, "chavesDeTopo": ["municipalTax"] },
+      "series": { "pathShape": "/v2/companies/{companyId}/municipaltaxes/{mtid}/series/{serie}", "status": 404, "contentType": null, "bytes": 0, "seriesTestadas": ["o rpsSerialNumber do proprio registro", "1", "A"] },
+      "updatePrefecture": { "pathShape": "/v2/companies/{companyId}/municipaltaxes/{mtid}/updateprefecture", "verbo": "PATCH", "status": 404 },
+      "subRotaInventada": { "pathShape": "/v2/companies/{companyId}/municipaltaxes/{mtid}/rota-inventada", "status": 404, "contentType": null, "bytes": 0 }
+    }
+  },
+
+  "peopleFormatoDoId": {
+    "pathShapes": ["/v1/companies/{companyId}/legalpeople", "/v1/companies/{companyId}/naturalpeople"],
+    "note": "Os 14 metodos NAO estavam quebrados. O 400 registrado em julho veio da empresa do .env, de id com 32 caracteres.",
+    "sobre50EmpresasDaMesmaConta": {
+      "idObjectId24Hex": { "quantidade": 30, "status": 200, "chavesDeTopo": ["legalPeople"] },
+      "id32Caracteres": { "quantidade": 19, "status": 400, "body": "company id is not valid" },
+      "outro24NaoHex": { "quantidade": 1 }
+    },
+    "id24HexSintetico": { "status": 404, "body": "Company not found.", "conclusao": "O validador de FORMATO passa; a busca e que falha. Logo, a restricao e de formato de id, nao rota morta." }
+  }
+}

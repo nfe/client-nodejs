@@ -35,3 +35,49 @@ To modify types, edit the OpenAPI specs and regenerate:
 
 - `*.ts` - Type definitions from each OpenAPI spec
 - `index.ts` - Unified exports with namespace organization
+
+## Seções compartilhadas entre specs
+
+Várias seções (companies, certificates, statetaxes, webhooks) são declaradas em mais de
+uma spec — 30 dos 131 endpoints. As cópias **divergem**, e o `npm run validate:spec`
+compara cada uma contra a canônica declarada em `openapi/spec/SOURCES.json`
+(`sharedSections`), campo a campo.
+
+O check classifica a divergência em quatro:
+
+| classe | o que é | efeito |
+|---|---|---|
+| `type-mismatch` | mesmo campo, `type` diferente | **falha o build** |
+| `enum-mismatch` | mesmo tipo, enums que se contradizem | **falha o build** |
+| `enum-subset` | enum da cópia contido no da canônica (cópia atrasada) | aviso |
+| `field-only-in` | campo declarado só de um lado | informativo |
+
+Diferença de prosa (`description`, `summary`, `operationId`) ou de forma (`$ref` versus
+inline, `content: {}` versus ausente) **não** é divergência.
+
+### Quando o check acusa
+
+- **`type-mismatch` / `enum-mismatch` novo** — uma sync trouxe drift. Não silencie: veja
+  qual cópia bate com a API real (sonda ao vivo, nunca inferência) e registre a pendência
+  upstream.
+- **Path compartilhado não declarado** — uma spec passou a declarar um endpoint que já
+  existia em outra. Escolha a canônica e adicione o grupo em `sharedSections`.
+- **Baseline obsoleta** — a divergência foi corrigida upstream. Remova a entrada de
+  `knownDivergences`; ela cumpriu o papel.
+
+### Declarando um grupo novo
+
+```jsonc
+"sharedSections": {
+  "X-nome-do-grupo": {
+    "canonical": "spec-que-manda.yaml",   // fonte de verdade dos tipos
+    "duplicatedIn": ["copia-a.yaml"],     // quem repete a seção
+    "rationale": "por que esta é a canônica — evidência, não preferência",
+    "paths": ["GET /v2/coisas/{}"]        // normalizado: params viram {}, minúsculas
+  }
+}
+```
+
+A canônica se escolhe por evidência (superset, tipo confirmado no fio), não por ser a
+maior ou a mais usada. Overload deliberado — mesmo path com contratos diferentes, como
+legado × RTC — vai em `ignoredOverloads`, não em `sharedSections`.

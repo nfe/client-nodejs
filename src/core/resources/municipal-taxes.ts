@@ -15,6 +15,7 @@ import type {
   MunicipalTaxListResponse,
 } from '../types.js';
 import { ValidationError } from '../errors/index.js';
+import { withUnservedRouteNote } from '../utils/unserved-route.js';
 
 function validateCompanyId(companyId: string): void {
   if (!companyId || companyId.trim() === '') {
@@ -86,6 +87,12 @@ export class MunicipalTaxesResource {
   /**
    * Update the prefecture (city hall) credentials/integration for a municipal tax
    * registration. Uses HTTP PATCH (`.../updateprefecture`).
+   *
+   * @deprecated A plataforma **não serve** esta rota. Ela está declarada na spec
+   * `contribuintes-v2` e responde `404` — o mesmo `404` de corpo vazio que uma
+   * sub-rota inventada no mesmo host devolve (medido em 2026-09-02, com um
+   * `municipal_tax_id` cujo registro pai responde `200`). O método continua
+   * emitindo a requisição: se a rota subir, o resultado passa sem alteração.
    */
   async updatePrefecture(
     companyId: string,
@@ -94,14 +101,26 @@ export class MunicipalTaxesResource {
   ): Promise<MunicipalTax> {
     validateCompanyId(companyId);
     validateMunicipalTaxId(municipalTaxId);
-    const response = await this.http.patch<MunicipalTax>(
-      `${this.basePath(companyId)}/${municipalTaxId}/updateprefecture`,
-      { municipalTax: data }
+    const response = await withUnservedRouteNote(
+      'PATCH /v2/companies/{company_id}/municipaltaxes/{municipal_tax_id}/updateprefecture',
+      () =>
+        this.http.patch<MunicipalTax>(
+          `${this.basePath(companyId)}/${municipalTaxId}/updateprefecture`,
+          { municipalTax: data }
+        )
     );
     return response.data;
   }
 
-  /** Look up an RPS series for a municipal tax registration. */
+  /**
+   * Look up an RPS series for a municipal tax registration.
+   *
+   * @deprecated A plataforma **não serve** esta rota — mesma medição de
+   * {@link MunicipalTaxesResource.updatePrefecture}. Testado com toda série
+   * plausível, inclusive a que o próprio registro declara em `rpsSerialNumber`:
+   * `404` de corpo vazio, sem `content-type`, idêntico ao de uma sub-rota
+   * inventada. O método continua emitindo a requisição.
+   */
   async getSeries(
     companyId: string,
     municipalTaxId: string,
@@ -112,8 +131,12 @@ export class MunicipalTaxesResource {
     if (!serie || serie.trim() === '') {
       throw new ValidationError('Serie is required');
     }
-    const response = await this.http.get<Record<string, unknown>>(
-      `${this.basePath(companyId)}/${municipalTaxId}/series/${serie}`
+    const response = await withUnservedRouteNote(
+      'GET /v2/companies/{company_id}/municipaltaxes/{municipal_tax_id}/series/{serie}',
+      () =>
+        this.http.get<Record<string, unknown>>(
+          `${this.basePath(companyId)}/${municipalTaxId}/series/${serie}`
+        )
     );
     return response.data;
   }

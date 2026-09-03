@@ -13,6 +13,7 @@ import {
   RateLimitError,
   NfeError
 } from '../errors/index.js';
+import { PACKAGE_NAME, VERSION } from '../../version.js';
 
 // Simple type declarations for runtime APIs
 declare const fetch: any;
@@ -254,6 +255,22 @@ export class HttpClient {
     throw ErrorFactory.fromHttpResponse(response.status, errorData, message);
   }
 
+  /**
+   * Extrai a mensagem de erro do corpo devolvido pela API.
+   *
+   * A plataforma usa QUATRO envelopes distintos, todos medidos ao vivo em
+   * 2026-09-02 (e o de ModelState capturado em `tests/fixtures/live-contracts/`):
+   *
+   *   "pageCount must be between 1 and 50"                    string JSON crua
+   *   {"code":40001,"message":"environment has to be ..."}    campo `message`
+   *   {"errors":[{"message":"access key is not valid"}]}      lista (hosts de consulta)
+   *   {"title":"...","errors":{"file":["The File field ..."]}} ProblemDetails/ModelState
+   *
+   * Só os dois primeiros eram tratados. Nos outros dois a mensagem real era
+   * descartada e o chamador recebia `HTTP 400 error` — literalmente o status que
+   * ele já tinha. Foi assim que o campo errado no upload de certificado
+   * (`The File field is required.`) ficou invisível por meses.
+   */
   private extractErrorMessage(data: unknown, status: number): string {
     if (typeof data === 'object' && data !== null) {
       const errorObj = data as Record<string, unknown>;
@@ -263,6 +280,12 @@ export class HttpClient {
       if (typeof errorObj.error === 'string') return errorObj.error;
       if (typeof errorObj.detail === 'string') return errorObj.detail;
       if (typeof errorObj.details === 'string') return errorObj.details;
+
+      const fromErrors = this.extractFromErrorsField(errorObj.errors);
+      if (fromErrors) return fromErrors;
+
+      // ProblemDetails sem detalhe por campo: `title` é o que sobra.
+      if (typeof errorObj.title === 'string') return errorObj.title;
     }
 
     if (typeof data === 'string') {
@@ -270,6 +293,43 @@ export class HttpClient {
     }
 
     return `HTTP ${status} error`;
+  }
+
+  /**
+   * Lê o campo `errors`, que vem em duas formas conforme o serviço:
+   * lista de `{message}` (hosts de consulta) ou mapa `campo -> string[]`
+   * (ModelState do ASP.NET).
+   */
+  private extractFromErrorsField(errors: unknown): string | undefined {
+    if (!errors || typeof errors !== 'object') return undefined;
+
+    if (Array.isArray(errors)) {
+      const messages = errors
+        .map(item => {
+          if (typeof item === 'string') return item;
+          if (item && typeof item === 'object') {
+            const message = (item as Record<string, unknown>).message;
+            if (typeof message === 'string') return message;
+          }
+          return undefined;
+        })
+        .filter((m): m is string => Boolean(m));
+
+      return messages.length > 0 ? messages.join('; ') : undefined;
+    }
+
+    // ModelState: { campo: ["mensagem", ...] }
+    const parts: string[] = [];
+    for (const [field, value] of Object.entries(errors as Record<string, unknown>)) {
+      const messages = Array.isArray(value)
+        ? value.filter((v): v is string => typeof v === 'string')
+        : typeof value === 'string'
+          ? [value]
+          : [];
+      if (messages.length > 0) parts.push(`${field}: ${messages.join(', ')}`);
+    }
+
+    return parts.length > 0 ? parts.join('; ') : undefined;
   }
 
   // --------------------------------------------------------------------------
@@ -335,14 +395,21 @@ export class HttpClient {
     return typeof FormData !== 'undefined' && data instanceof FormData;
   }
 
+  /**
+   * Identificação do SDK no fio.
+   *
+   * Nome e versão vêm de `src/version.ts`, gerado do `package.json` — NÃO fixar
+   * literal aqui. Até 2026-09-02 esta função devolvia `@nfe-io/sdk@3.0.0`: nome de
+   * pacote que não existe (o publicado é `nfe-io`) e versão três majors atrás.
+   * Nos 30 dias anteriores, 93.995 requisições chegaram ao gateway com esse valor,
+   * em 23 variantes de User-Agent e 5 majors de Node — e nenhuma informação sobre
+   * a versão do SDK. Era o único sinal de adoção que a plataforma tinha.
+   */
   private getUserAgent(): string {
     const nodeVersion = process.version;
     const platform = process.platform;
 
-    // Try to get package version (will be undefined in development)
-    const packageVersion = '3.0.0'; // TODO: Read from package.json
-
-    return `@nfe-io/sdk@${packageVersion} node/${nodeVersion} (${platform})`;
+    return `${PACKAGE_NAME}@${VERSION} node/${nodeVersion} (${platform})`;
   }
 
   private extractHeaders(response: any): Record<string, string> {

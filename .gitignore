@@ -149,6 +149,10 @@ results/
 .env.production
 *.local
 
+# Probes de contrato contra a API viva: carregam ids de empresa, formato da
+# conta e sequencia de chamadas. Repositorio publico -- nunca commitar.
+scripts/probes/
+
 # ----------------------------------------------------------------------------
 # TypeScript
 # ----------------------------------------------------------------------------

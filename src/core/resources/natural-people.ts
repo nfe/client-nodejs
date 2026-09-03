@@ -1,6 +1,25 @@
 /**
  * NaturalPeople Resource
  * Manages natural persons (pessoas físicas) scoped by company
+ *
+ * ## Restrição de formato do `company_id`
+ *
+ * Estas rotas aceitam **somente** `company_id` no formato `ObjectId` de 24
+ * hexadecimais. Empresa cujo id tem 32 caracteres recebe
+ * `400 "company id is not valid"` em toda chamada — a rota valida o id como
+ * `ObjectId` antes de qualquer coisa.
+ *
+ * É **limite do servidor**, não do SDK: não há conversão possível entre os dois
+ * formatos, e validar localmente só antecipa a mesma recusa com mensagem pior.
+ * Medido em 2026-09-02 sobre 50 empresas da mesma conta:
+ *
+ *   30 empresas com id de 24 hex   -> 200
+ *   19 empresas com id de 32 chars -> 400 "company id is not valid"
+ *
+ * Um id de 24 hex sintético (inexistente) responde `404 "Company not found."`,
+ * ou seja: o validador de formato passa e a busca é que falha. Empresas criadas
+ * depois da mudança de formato de id ficaram inalcançáveis por estas rotas.
+ * Pendência aberta com o time de API.
  */
 
 import type { HttpClient } from '../http/client.js';

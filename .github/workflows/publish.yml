@@ -31,25 +31,81 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
+      # A tag da release e a versao do package.json precisam concordar ANTES de
+      # qualquer coisa cara rodar. Ate 2026-09-03 este passo so LIA a versao para
+      # uma saida -- publicar a release `v6.0.0` com o package.json em `5.2.0`
+      # passaria por aqui sem reclamar. O `npm publish` acabaria falhando por
+      # versao ja publicada, mas por acidente, e depois de todo o build.
+      #
+      # Vale para os dois gatilhos: `release: created` traz a tag em
+      # `github.event.release.tag_name`; `workflow_dispatch` traz em `inputs.tag`.
+      - name: Check tag matches package.json version
+        id: package-version
+        # A tag NAO entra no script via `${{ }}`: interpolacao de template e
+        # substituida ANTES do bash parsear, entao um valor com metacaractere
+        # vira comando. Nao e teorico -- `git check-ref-format` aceita `;`,
+        # `$(...)`, crase, `&&` e `|` em nome de tag, e o `inputs.tag` do
+        # workflow_dispatch nao valida nada. Este job tem `id-token: write` e
+        # NPM_TOKEN: injecao aqui exfiltra a credencial que publica o pacote.
+        # Passando por `env:`, o valor chega como dado e o bash nunca o reparseia.
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="${RELEASE_TAG:-$INPUT_TAG}"
+          TAG_VERSION="${TAG#v}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "📦 package.json: $VERSION"
+          echo "🏷️  tag:          $TAG (versao: $TAG_VERSION)"
+
+          if [ -z "$TAG" ]; then
+            echo "❌ Nao foi possivel resolver a tag desta publicacao."
+            exit 1
+          fi
+
+          # Formato exigido antes de qualquer comparacao: defesa em profundidade
+          # contra valor hostil, e pega tag digitada errada de graca.
+          if ! printf '%s' "$TAG" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "❌ Tag fora do formato esperado (vX.Y.Z ou X.Y.Z, com pre-release opcional)."
+            exit 1
+          fi
+
+          if [ "$VERSION" != "$TAG_VERSION" ]; then
+            echo ""
+            echo "❌ A tag e a versao do package.json nao concordam."
+            echo "   tag:          $TAG        (versao $TAG_VERSION)"
+            echo "   package.json: $VERSION"
+            echo ""
+            echo "   Publicar assim mandaria $VERSION para o npm sob o nome de $TAG_VERSION."
+            echo "   Ajuste o package.json e refaca a tag, ou crie a release com a tag certa."
+            exit 1
+          fi
+
+          echo "✅ tag e package.json concordam em $VERSION"
+
       - name: Install dependencies
         run: npm ci
 
+      # Sem NFE_API_KEY a suite de integracao PULA (guard em
+      # tests/integration/setup.ts) e a unitaria passa: 41 passed | 4 skipped,
+      # exit 0. Falha aqui e falha de verdade, e barra a publicacao.
       - name: Run tests
-        id: tests
-        continue-on-error: true
         run: npm test -- --run
         env:
           NFE_API_KEY: ""
 
-      - name: Test Results Summary
-        if: steps.tests.outcome == 'failure'
-        run: |
-          echo "⚠️ Some tests failed, but continuing with publish" >> $GITHUB_STEP_SUMMARY
-          echo "This is expected for integration tests without API credentials" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+      - name: Run linter
+        run: npm run lint
 
       - name: Run type checking
         run: npm run typecheck
+
+      # Guards de alinhamento de contrato (tests/types/*.test-d.ts). Existem para
+      # quebrar quando um contrato pinado muda; sem este passo, nunca executam.
+      - name: Run type-level tests
+        run: npm run test:types
 
       - name: Build package
         run: npm run build
@@ -63,13 +119,6 @@ jobs:
           echo ""
           echo "✅ All build artifacts present"
 
-      - name: Check package.json version
-        id: package-version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Package version: $VERSION"
-
       - name: Publish to NPM (dry-run)
         run: npm publish --dry-run
         env:
@@ -81,20 +130,22 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release Summary
+        # Mesma razao do passo de checagem: valor por `env:`, nunca interpolado
+        # direto no script.
+        env:
+          PUBLISHED_VERSION: ${{ steps.package-version.outputs.version }}
         run: |
-          echo "### 🎉 Published to NPM" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Package:** nfe-io@${{ steps.package-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**NPM:** https://www.npmjs.com/package/nfe-io/v/${{ steps.package-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Install:**" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "npm install nfe-io@${{ steps.package-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.tests.outcome }}" == "failure" ]; then
-            echo "⚠️ **Note:** Some tests failed during CI (expected for integration tests)" >> $GITHUB_STEP_SUMMARY
-          fi
+          {
+            echo "### 🎉 Published to NPM"
+            echo ""
+            echo "**Package:** nfe-io@${PUBLISHED_VERSION}"
+            echo "**NPM:** https://www.npmjs.com/package/nfe-io/v/${PUBLISHED_VERSION}"
+            echo ""
+            echo "**Install:**"
+            echo '```bash'
+            echo "npm install nfe-io@${PUBLISHED_VERSION}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Comment on related issues/PRs
         if: github.event_name == 'release'

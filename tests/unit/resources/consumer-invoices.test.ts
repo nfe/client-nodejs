@@ -49,8 +49,19 @@ describe('ConsumerInvoicesResource', () => {
     await resource.cancel(companyId, invoiceId);
 
     expect(http.get).toHaveBeenCalledWith(base, { environment: 'Test' });
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}`, undefined);
+    // retrieve nao envia query: a rota nao define nenhum parametro (spec + probe).
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}`);
     expect(http.delete).toHaveBeenCalledWith(`${base}/${invoiceId}`);
+  });
+
+  it('cancel forwards the reason query param defined by the spec', async () => {
+    http.delete.mockResolvedValue({ status: 204, headers: {}, data: {} });
+
+    await resource.cancel(companyId, invoiceId, 'digitacao incorreta');
+
+    expect(http.delete).toHaveBeenCalledWith(
+      `${base}/${invoiceId}?reason=digitacao%20incorreta`
+    );
   });
 
   it('list requires environment', async () => {
@@ -67,30 +78,56 @@ describe('ConsumerInvoicesResource', () => {
     expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/events`, undefined);
   });
 
-  it('downloads send the right Accept and path (pdf/xml/rejection)', async () => {
-    http.get.mockResolvedValue({ status: 200, headers: {}, data: Buffer.from('x') });
+  it('downloads devolvem file-resource e nao mandam Accept', async () => {
+    // A API devolve { uri } e ignora o Accept (probe 2026-09-01).
+    const file = { uri: 'https://example.invalid/s/doc?sig=SYNTHETIC' };
+    http.get.mockResolvedValue({ status: 200, headers: {}, data: file });
 
-    await resource.downloadPdf(companyId, invoiceId);
-    await resource.downloadXml(companyId, invoiceId);
-    await resource.downloadRejectionXml(companyId, invoiceId);
+    const pdf = await resource.downloadPdf(companyId, invoiceId);
+    const xml = await resource.downloadXml(companyId, invoiceId);
+    const rej = await resource.downloadRejectionXml(companyId, invoiceId);
 
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/pdf`, undefined, { Accept: 'application/pdf' });
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/xml`, undefined, { Accept: 'application/xml' });
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/xml/rejection`, undefined, { Accept: 'application/xml' });
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/pdf`, undefined);
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/xml`);
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/xml/rejection`);
+
+    for (const r of [pdf, xml, rej]) {
+      expect(r).toEqual(file);
+      expect(Buffer.isBuffer(r)).toBe(false);
+    }
   });
 
-  it('forwards environment on reads/downloads when provided', async () => {
+  it('downloadPdf forwards the force query param defined by the spec', async () => {
+    http.get.mockResolvedValue({ status: 200, headers: {}, data: { uri: 'x' } });
+
+    await resource.downloadPdf(companyId, invoiceId, true);
+
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/pdf`, { force: true });
+  });
+
+  it('items / events forward cursor pagination', async () => {
+    http.get.mockResolvedValue({ status: 200, headers: {}, data: { hasMore: false } });
+
+    await resource.getItems(companyId, invoiceId, { limit: 5, startingAfter: 10 });
+    await resource.getEvents(companyId, invoiceId, { limit: 2 });
+
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/items`, {
+      limit: 5,
+      startingAfter: 10,
+    });
+    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/events`, { limit: 2 });
+  });
+
+  it('nao envia environment onde a spec nao define (retrieve/items/events)', async () => {
     http.get.mockResolvedValue({ status: 200, headers: {}, data: {} });
 
-    await resource.retrieve(companyId, invoiceId, 'Test');
-    await resource.getItems(companyId, invoiceId, 'Test');
-    await resource.getEvents(companyId, invoiceId, 'Test');
-    await resource.downloadPdf(companyId, invoiceId, 'Test');
+    await resource.retrieve(companyId, invoiceId);
+    await resource.getItems(companyId, invoiceId);
+    await resource.getEvents(companyId, invoiceId);
 
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}`, { environment: 'Test' });
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/items`, { environment: 'Test' });
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/events`, { environment: 'Test' });
-    expect(http.get).toHaveBeenCalledWith(`${base}/${invoiceId}/pdf`, { environment: 'Test' }, { Accept: 'application/pdf' });
+    for (const call of http.get.mock.calls) {
+      expect(JSON.stringify(call[1] ?? {})).not.toContain('environment');
+    }
   });
 
   it('list forwards optional filters (startingAfter/endingBefore/limit/q)', async () => {

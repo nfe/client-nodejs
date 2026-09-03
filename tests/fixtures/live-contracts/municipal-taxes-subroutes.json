@@ -1,0 +1,12 @@
+{
+  "probe": "⑥ updateprefecture / series",
+  "capturedOn": "2026-09-01",
+  "note": "Registro pai resolve 200, mas as duas sub-rotas 404 — suspeita de rotas mortas. Nenhuma escrita ocorreu.",
+  "results": [
+    { "method": "GET",   "pathShape": "/v2/companies/{id}/municipaltaxes/{mtId}",                  "status": 200 },
+    { "method": "PATCH", "pathShape": "/v2/companies/{id}/municipaltaxes/{mtId}/updateprefecture", "requestBody": null,                  "status": 404, "bodyBytes": 0 },
+    { "method": "PATCH", "pathShape": "/v2/companies/{id}/municipaltaxes/{mtId}/updateprefecture", "requestBody": {},                    "status": 404, "bodyBytes": 0 },
+    { "method": "PATCH", "pathShape": "/v2/companies/{id}/municipaltaxes/{mtId}/updateprefecture", "requestBody": { "municipalTax": {} }, "status": 404, "bodyBytes": 0, "note": "envelope que o SDK envia" },
+    { "method": "GET",   "pathShape": "/v2/companies/{id}/municipaltaxes/{mtId}/series/{serie}",   "status": 404, "bodyBytes": 0 }
+  ]
+}
