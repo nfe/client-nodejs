@@ -9,6 +9,9 @@ import type {
   CompanyResourceItem,
   CompanyV2ListOptions,
   CompanyV2ListResponse,
+  CertificateMetadataResourceItem,
+  CertificatesMetadataResource,
+  CompanyCertificateV1,
   ListResponse,
   PaginationOptions
 } from '../types.js';
@@ -19,6 +22,89 @@ import { CertificateValidator } from '../utils/certificate-validator.js';
 // Page size for listAll/listIterator: the API caps GET /companies at
 // pageCount 50 (values above 50 — and also 1 — are rejected with a 400).
 const AUTO_PAGINATION_PAGE_SIZE = 50;
+
+/**
+ * Resumo do certificado de uma empresa.
+ *
+ * `expiresOn` / `isValid` / os dois derivados descrevem o certificado preferido
+ * (ver {@link CompaniesResource.getCertificateStatus}); `certificates` traz os itens
+ * como a API devolveu, para quem precisar de `thumbprint`, `subject` ou decidir
+ * por outro critério.
+ */
+export interface CertificateStatusSummary {
+  /** Há ao menos um certificado instalado. */
+  hasCertificate: boolean;
+  /** Vencimento do certificado preferido (o `validUntil` da API). */
+  expiresOn?: string;
+  /** O certificado preferido está com `status: 'Active'`. */
+  isValid?: boolean;
+  /** Dias até o vencimento — negativo se já venceu. */
+  daysUntilExpiration?: number;
+  /** Vence dentro do limite padrão do {@link CertificateValidator} (30 dias). */
+  isExpiringSoon?: boolean;
+  /** Itens como a API os devolveu. Vazio quando não há certificado. */
+  certificates: readonly CertificateMetadataResourceItem[];
+}
+
+/**
+ * Escolhe o certificado que o resumo descreve: um ativo, o de vencimento mais
+ * distante; sem nenhum ativo, o de vencimento mais distante entre todos.
+ */
+function pickPreferredCertificate(
+  certificates: readonly CertificateMetadataResourceItem[]
+): CertificateMetadataResourceItem | undefined {
+  if (certificates.length === 0) return undefined;
+
+  const byLatestExpiry = (
+    a: CertificateMetadataResourceItem,
+    b: CertificateMetadataResourceItem
+  ): number => new Date(b.validUntil ?? 0).getTime() - new Date(a.validUntil ?? 0).getTime();
+
+  const active = certificates.filter(c => c.status === 'Active');
+  const pool = active.length > 0 ? active : certificates;
+  return [...pool].sort(byLatestExpiry)[0];
+}
+
+/** Monta o resumo a partir dos itens de `/v1/companies/{id}/certificate`. */
+function summarizeCertificates(
+  certificates: readonly CertificateMetadataResourceItem[]
+): CertificateStatusSummary {
+  const preferred = pickPreferredCertificate(certificates);
+
+  if (!preferred) {
+    return { hasCertificate: false, certificates };
+  }
+
+  const summary: CertificateStatusSummary = {
+    hasCertificate: true,
+    isValid: preferred.status === 'Active',
+    certificates,
+  };
+
+  // `validUntil` é obrigatório na spec, mas o SDK não decide por ela: sem data,
+  // devolve o que dá para afirmar em vez de emitir um `Invalid Date`.
+  if (preferred.validUntil) {
+    const expirationDate = new Date(preferred.validUntil);
+    summary.expiresOn = preferred.validUntil;
+    summary.daysUntilExpiration = CertificateValidator.getDaysUntilExpiration(expirationDate);
+    summary.isExpiringSoon = CertificateValidator.isExpiringSoon(expirationDate);
+  }
+
+  return summary;
+}
+
+/**
+ * Lê o certificado que o item da listagem de empresas v1 já traz.
+ *
+ * Existe para que a varredura por conta não faça uma requisição por empresa: numa
+ * conta com centenas de empresas isso é indistinguível de travamento. O campo vem
+ * em todo item de `GET /v1/companies` (medido em 2026-09-02).
+ */
+function readListedCertificate(company: Company): CompanyCertificateV1 | undefined {
+  const certificate = (company as { certificate?: unknown }).certificate;
+  if (!certificate || typeof certificate !== 'object') return undefined;
+  return certificate as CompanyCertificateV1;
+}
 
 // ============================================================================
 // Validation Helpers
@@ -573,6 +659,23 @@ export class CompaniesResource {
    * @returns Certificate status with expiration info
    * @throws {NotFoundError} If company doesn't exist
    *
+   * @remarks
+   * `GET /v1/companies/{id}/certificate` responde `{ certificates: [...] }`, com
+   * `validUntil` e `status` em cada item — NÃO `{hasCertificate, expiresOn, isValid}`,
+   * que era o que este método lia antes de 2026-09-02 (e por isso devolvia
+   * `undefined` em tudo, silenciosamente). Empresa sem certificado responde
+   * **200 com `certificates: []`**, não 404.
+   *
+   * O campo de vencimento na superfície do SDK se chama `expiresOn` — o mesmo nome
+   * que a API usa quando o certificado vem embutido no item da listagem de empresas
+   * ({@link CompanyCertificateV1}). No endpoint de certificado ele se chama
+   * `validUntil`; a normalização acontece aqui.
+   *
+   * Quando há mais de um certificado, o resumo descreve o preferido: um com
+   * `status: 'Active'` e, entre os ativos, o de vencimento mais distante. Se nenhum
+   * for ativo, o de vencimento mais distante entre todos. Isso é convenção do SDK,
+   * não contrato da API — use `certificates` para decidir de outro jeito.
+   *
    * @example
    * ```typescript
    * const status = await nfe.companies.getCertificateStatus('company-123');
@@ -584,41 +687,18 @@ export class CompaniesResource {
    *   if (status.isExpiringSoon) {
    *     console.warn('Certificate is expiring soon!');
    *   }
+   *
+   *   // Dado que o resumo não expõe: thumbprint, subject, providerType...
+   *   console.log(status.certificates[0]?.thumbprint);
    * }
    * ```
    */
-  async getCertificateStatus(companyId: string): Promise<{
-    hasCertificate: boolean;
-    expiresOn?: string;
-    isValid?: boolean;
-    daysUntilExpiration?: number;
-    isExpiringSoon?: boolean;
-    details?: any;
-  }> {
+  async getCertificateStatus(companyId: string): Promise<CertificateStatusSummary> {
     const path = `/companies/${companyId}/certificate`;
-    const response = await this.http.get<{
-      hasCertificate: boolean;
-      expiresOn?: string;
-      isValid?: boolean;
-      details?: any;
-    }>(path);
+    const response = await this.http.get<CertificatesMetadataResource>(path);
 
-    const status = response.data;
-
-    // Calculate days until expiration if available
-    if (status.hasCertificate && status.expiresOn) {
-      const expirationDate = new Date(status.expiresOn);
-      const daysUntilExpiration = CertificateValidator.getDaysUntilExpiration(expirationDate);
-      const isExpiringSoon = CertificateValidator.isExpiringSoon(expirationDate);
-
-      return {
-        ...status,
-        daysUntilExpiration,
-        isExpiringSoon
-      };
-    }
-
-    return status;
+    const certificates = response.data?.certificates ?? [];
+    return summarizeCertificates(certificates);
   }
 
   /**
@@ -779,22 +859,11 @@ export class CompaniesResource {
   async getCompaniesWithCertificates(): Promise<Company[]> {
     const companies = await this.listAll();
 
-    const companiesWithCerts: Company[] = [];
-
-    // Check certificate status for each company
-    for (const company of companies) {
-      try {
-        const certStatus = await this.getCertificateStatus(company.id!);
-        if (certStatus.hasCertificate && certStatus.isValid) {
-          companiesWithCerts.push(company);
-        }
-      } catch {
-        // Skip companies where we can't check certificate status
-        continue;
-      }
-    }
-
-    return companiesWithCerts;
+    // Sem requisição por empresa: `GET /v1/companies` já devolve `certificate` em
+    // cada item. A versão anterior chamava getCertificateStatus() em série sobre a
+    // conta inteira — numa conta com centenas de empresas, centenas de idas à rede
+    // por chamada.
+    return companies.filter(company => readListedCertificate(company)?.status === 'Active');
   }
 
   /**
@@ -815,21 +884,15 @@ export class CompaniesResource {
   async getCompaniesWithExpiringCertificates(thresholdDays: number = 30): Promise<Company[]> {
     const companies = await this.listAll();
 
-    const expiringCompanies: Company[] = [];
+    // Mesmo motivo de getCompaniesWithCertificates: o vencimento já vem na listagem,
+    // no campo `expiresOn` do certificado embutido.
+    return companies.filter(company => {
+      const expiresOn = readListedCertificate(company)?.expiresOn;
+      if (!expiresOn) return false;
 
-    for (const company of companies) {
-      try {
-        const warning = await this.checkCertificateExpiration(company.id!, thresholdDays);
-        if (warning) {
-          expiringCompanies.push(company);
-        }
-      } catch {
-        // Skip companies where we can't check certificate
-        continue;
-      }
-    }
-
-    return expiringCompanies;
+      const daysRemaining = CertificateValidator.getDaysUntilExpiration(new Date(expiresOn));
+      return daysRemaining >= 0 && daysRemaining < thresholdDays;
+    });
   }
 
   // --------------------------------------------------------------------------

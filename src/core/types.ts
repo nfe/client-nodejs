@@ -604,6 +604,27 @@ export interface CompanyV2ListResponse {
   hasMore: boolean;
 }
 
+/**
+ * Certificado embutido no item da listagem de empresas v1.
+ *
+ * `GET /v1/companies` devolve este objeto em CADA item — medido em 2026-09-02
+ * nos 50 itens da primeira página. É por isso que a varredura de certificados
+ * por conta não precisa de uma requisição por empresa.
+ *
+ * Atenção ao nome do campo de vencimento: aqui é `expiresOn`; no endpoint
+ * `/v1/companies/{id}/certificate` o mesmo dado se chama `validUntil`.
+ */
+export type CompanyCertificateV1 =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CompanyCertificateV1'];
+
+/** Item de certificado devolvido por `/v1/companies/{id}/certificate`. */
+export type CertificateMetadataResourceItem =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CertificateMetadataResourceItem'];
+
+/** Situação do certificado: `None` | `Active` | `Inactive` | `Overdue` | `Pending`. */
+export type CertificateStatus =
+  ContribuintesComponents['schemas']['DFeTech.TaxPayers.Domain.Entities.CertificateStatus'];
+
 /** Digital certificate metadata (real, spec-backed). */
 export type CertificateMetadataResource =
   ContribuintesComponents['schemas']['DFeTech.TaxPayers.Resources.CertificateMetadataResource'];

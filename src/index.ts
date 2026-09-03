@@ -346,6 +346,9 @@ export type {
   ConsumerInvoiceListResponse,
   ConsumerInvoiceDisablementData,
   CertificatesMetadataResource,
+  CertificateMetadataResourceItem,
+  CertificateStatus,
+  CompanyCertificateV1,
 } from './core/types.js';
 
 /**
