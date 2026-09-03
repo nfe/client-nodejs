@@ -23,6 +23,25 @@ export const NFE_QUERY_API_BASE_URL = 'https://nfe.api.nfe.io';
 /** Regex pattern for valid access key (44 numeric digits) */
 const ACCESS_KEY_PATTERN = /^\d{44}$/;
 
+/**
+ * `Accept` dos downloads por chave de acesso.
+ *
+ * O tipo binário vem primeiro, então o caminho feliz não muda: sucesso continua
+ * respondendo `200` com o mesmo `content-type` e os mesmos bytes. O
+ * `application/json` de segunda escolha existe para o caminho de ERRO — sem ele,
+ * o servidor não tem formatter de erro para PDF e responde **406 com corpo
+ * vazio**, apagando a mensagem real. Medido em 2026-09-02:
+ *
+ *   .pdf + "application/pdf"                          -> chave real: 200 %PDF-1.4
+ *                                                        chave inexistente: 406, corpo vazio
+ *   .pdf + "application/pdf, application/json;q=0.9"  -> chave real: 200 %PDF-1.4 (mesmos bytes)
+ *                                                        chave inexistente: 400 {"errors":[{"message":"access key is not valid"}]}
+ */
+const ACCEPT_PDF = 'application/pdf, application/json;q=0.9';
+
+/** Idem para XML. Aqui já havia formatter de erro XML; vale por consistência. */
+const ACCEPT_XML = 'application/xml, application/json;q=0.9';
+
 // ============================================================================
 // Validation Helpers
 // ============================================================================
@@ -131,7 +150,7 @@ export class ProductInvoiceQueryResource {
     validateAccessKey(accessKey);
     const response = await this.http.getBuffer(
       `/v2/productinvoices/${accessKey.trim()}.pdf`,
-      'application/pdf'
+      ACCEPT_PDF
     );
     return response.data;
   }
@@ -157,7 +176,7 @@ export class ProductInvoiceQueryResource {
     validateAccessKey(accessKey);
     const response = await this.http.getBuffer(
       `/v2/productinvoices/${accessKey.trim()}.xml`,
-      'application/xml'
+      ACCEPT_XML
     );
     return response.data;
   }

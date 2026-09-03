@@ -176,7 +176,7 @@ describe('ProductInvoiceQueryResource', () => {
       expect(result).toEqual(pdfContent);
       expect(mockHttpClient.getBuffer).toHaveBeenCalledWith(
         `/v2/productinvoices/${validAccessKey}.pdf`,
-        'application/pdf'
+        'application/pdf, application/json;q=0.9'
       );
     });
 
@@ -192,7 +192,7 @@ describe('ProductInvoiceQueryResource', () => {
 
       expect(mockHttpClient.getBuffer).toHaveBeenCalledWith(
         `/v2/productinvoices/${validAccessKey}.pdf`,
-        'application/pdf'
+        'application/pdf, application/json;q=0.9'
       );
     });
 
@@ -225,7 +225,7 @@ describe('ProductInvoiceQueryResource', () => {
       expect(result).toEqual(xmlContent);
       expect(mockHttpClient.getBuffer).toHaveBeenCalledWith(
         `/v2/productinvoices/${validAccessKey}.xml`,
-        'application/xml'
+        'application/xml, application/json;q=0.9'
       );
     });
 
@@ -241,7 +241,7 @@ describe('ProductInvoiceQueryResource', () => {
 
       expect(mockHttpClient.getBuffer).toHaveBeenCalledWith(
         `/v2/productinvoices/${validAccessKey}.xml`,
-        'application/xml'
+        'application/xml, application/json;q=0.9'
       );
     });
 
