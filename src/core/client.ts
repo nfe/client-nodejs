@@ -1395,6 +1395,10 @@ export class NfeClient {
    * Performs a simple API request to verify connectivity and authentication.
    * Useful for debugging connection issues or validating client configuration.
    *
+   * Issues `GET /v1/companies` with no query string — the smallest request the
+   * API accepts on this route. See the implementation note before you add a
+   * pagination parameter here.
+   *
    * @example
    * ```typescript
    * const health = await nfe.healthCheck();
@@ -1422,8 +1426,14 @@ export class NfeClient {
    */
   public async healthCheck(): Promise<{ status: 'ok' | 'error', details?: any }> {
     try {
-      // Try to make a simple request (get companies list with pageCount=1)
-      await this.getMainHttpClient().get('/companies', { pageCount: 1 });
+      // Requisicao minima que a API aceita: `GET /v1/companies` sem query.
+      //
+      // NAO reintroduzir `pageCount`. `pageCount=1` responde
+      // 400 "pageCount must be between 1 and 50" -- o limite inferior do servidor
+      // esta um a mais do que a propria mensagem diz (medido em 2026-09-02).
+      // Enquanto isso nao for corrigido upstream, qualquer valor aqui seria um
+      // numero magico contornando defeito alheio; a rota sem query responde 200.
+      await this.getMainHttpClient().get('/companies');
       return { status: 'ok' };
     } catch (error) {
       return {
