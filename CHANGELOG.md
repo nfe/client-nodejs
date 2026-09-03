@@ -7,9 +7,103 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não lançado]
 
-> Quatro bugs de contrato provados por sonda ao vivo contra a API real (2026-09-01).
+> Bugs de contrato provados por sonda ao vivo contra a API real (2026-09-01 e 2026-09-02).
 > Em nenhum deles a especificação era a culpada: o SDK é que estava errado.
 > Evidência versionada em `tests/fixtures/live-contracts/`.
+
+### Corrigido — métodos públicos que não alcançavam a API
+
+> Sete métodos públicos foram diagnosticados como quebrados em julho. Reprovando um a um
+> com sonda ao vivo, **dois não estavam** — o diagnóstico anterior generalizou a partir de
+> uma amostra. A correção do registro está junto das correções de código.
+
+- **`healthCheck()` respondia `error` sempre.** Enviava `pageCount: 1`, e
+  `GET /v1/companies?pageCount=1` responde `400 "pageCount must be between 1 and 50"` — o
+  limite inferior do servidor está um a mais do que a própria mensagem diz. Agora omite o
+  parâmetro (a rota sem query responde `200`), em vez de carregar um número mágico
+  contornando defeito alheio. O off-by-one vai para o time de API.
+
+- **`companies.getCertificateStatus()` lia uma forma que a API nunca devolveu.** Esperava
+  `{hasCertificate, expiresOn, isValid}`; a resposta é
+  `{certificates: [{providerType, resolution, taxPayerId, thumbprint, taxId, subject,
+  validUntil, modifiedOn, status}]}`. Nenhum dos três campos existe, então o retorno era
+  `{hasCertificate: undefined}` e os derivados nunca eram calculados. Isso derrubava em
+  cascata `checkCertificateExpiration()`, `getCompaniesWithCertificates()` e
+  `getCompaniesWithExpiringCertificates()` — quatro métodos públicos.
+
+  O resumo mantém `expiresOn` em vez de renomear para `validUntil`: é o mesmo nome que a
+  API usa quando o certificado vem embutido na empresa. Os itens crus ficam expostos em
+  `certificates`, para quem precisa de `thumbprint` ou `subject`.
+
+  Empresa sem certificado responde `200` com `certificates: []`, não `404`.
+
+- **As duas varreduras de certificado por conta deixaram de fazer N+1.**
+  `getCompaniesWithCertificates()` e `getCompaniesWithExpiringCertificates()` chamavam
+  `getCertificateStatus()` uma vez por empresa, em série. Enquanto o método estava
+  quebrado isso era invisível; consertado, uma conta com 500 empresas faria 500
+  requisições sequenciais por chamada.
+
+  A sonda dispensou o pool de concorrência: `GET /v1/companies` **já devolve**
+  `certificate` em todo item (`{thumbprint, modifiedOn, expiresOn, status}`). As duas
+  passam a ler daí. Medido: as duas varreduras juntas, sobre a conta inteira, em 9,8s.
+
+- **⚠️ BREAKING — `serviceInvoices.downloadPdf()` / `downloadXml()` exigem o `invoiceId`.**
+  O parâmetro era opcional e a documentação prometia um ZIP com todas as notas. A rota não
+  existe: `/serviceinvoices/pdf` responde `404 "service invoice with id (pdf) was not
+  found"`, porque o servidor casa a rota `/{id}` e lê `pdf` como identificador. Não está
+  na spec `nf-servico-v1` nem no `nfeio-docs`. Nota de migração em `MIGRATION.md`.
+
+- **O erro da API parava de chegar ao chamador.** `extractErrorMessage` só lia
+  `message`/`error`/`detail`/`details`. A plataforma usa quatro envelopes:
+
+  | envelope | onde |
+  |---|---|
+  | `"pageCount must be between 1 and 50"` | string JSON crua |
+  | `{"code":40001,"message":"..."}` | campo `message` |
+  | `{"errors":[{"message":"access key is not valid"}]}` | hosts de consulta |
+  | `{"title":"...","errors":{"file":["The File field is required."]}}` | ProblemDetails/ModelState |
+
+  Nos dois últimos a mensagem era descartada e o chamador recebia `HTTP 400 error` —
+  literalmente o status que ele já tinha. Foi assim que `The File field is required.` ficou
+  invisível enquanto o upload de certificado não funcionava.
+
+- **`Accept` dos downloads por chave de acesso.** `productInvoiceQuery.downloadPdf/Xml`
+  mandavam só o tipo binário; no caminho de erro o servidor não tem formatter para PDF e
+  responde `406` com corpo vazio. Com `Accept: application/pdf, application/json;q=0.9` o
+  caminho feliz não muda (mesmo status, mesmo `content-type`, mesmos bytes) e o erro chega
+  legível.
+
+  Correção de registro: **esses métodos não estavam quebrados.** O `406` medido em julho
+  veio de uma chave de acesso inexistente; com chave real a resposta sempre foi `200`
+  com `%PDF-1.4`.
+
+### Deprecado — rotas que a plataforma não serve
+
+Quatro métodos apontam para rotas declaradas na OpenAPI que **não são roteadas** em
+produção: `municipalTaxes.getSeries()`, `municipalTaxes.updatePrefecture()`,
+`consumerInvoiceQuery.retrieve()` e `consumerInvoiceQuery.downloadXml()`.
+
+A distinção foi feita comparando com um path inventado no mesmo host — `404` de corpo
+vazio, sem `content-type`, byte a byte igual — e confirmada de forma independente: rota
+servida responde `401` **sem credencial**; estas respondem `404` sem credencial, ou seja, o
+middleware de autenticação nem chega a rodar. Noventa dias de log de gateway não têm um
+único `200` em `consumerinvoices/coupon`.
+
+Os métodos continuam emitindo a requisição — só o `404` passa a explicar que a rota não é
+servida, preservando a classe do erro. Se a rota subir, o `200` passa intacto.
+
+### Corrigido — registro, não código
+
+**`legalPeople` e `naturalPeople` nunca estiveram quebrados.** Os 14 métodos foram
+registrados como "400 em toda chamada"; a sonda tinha usado a empresa do `.env`, cujo id
+tem 32 caracteres. A rota valida o `company_id` como `ObjectId` de 24 hexadecimais. Sobre
+50 empresas da mesma conta: 30 com id de 24 hex respondem `200`, 19 com id de 32
+caracteres respondem `400 "company id is not valid"`. Um id de 24 hex sintético responde
+`404 "Company not found."` — o validador de formato passa e a busca é que falha.
+
+É limite do servidor: não há conversão possível entre os formatos, e validar localmente só
+antecipa a mesma recusa com mensagem pior. Documentado no JSDoc dos dois recursos, com
+teste de integração afirmando as duas metades. Pendência aberta com o time de API.
 
 ### Manutenção
 
