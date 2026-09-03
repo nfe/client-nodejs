@@ -13,6 +13,7 @@ import {
   RateLimitError,
   NfeError
 } from '../errors/index.js';
+import { PACKAGE_NAME, VERSION } from '../../version.js';
 
 // Simple type declarations for runtime APIs
 declare const fetch: any;
@@ -394,14 +395,21 @@ export class HttpClient {
     return typeof FormData !== 'undefined' && data instanceof FormData;
   }
 
+  /**
+   * Identificação do SDK no fio.
+   *
+   * Nome e versão vêm de `src/version.ts`, gerado do `package.json` — NÃO fixar
+   * literal aqui. Até 2026-09-02 esta função devolvia `@nfe-io/sdk@3.0.0`: nome de
+   * pacote que não existe (o publicado é `nfe-io`) e versão três majors atrás.
+   * Nos 30 dias anteriores, 93.995 requisições chegaram ao gateway com esse valor,
+   * em 23 variantes de User-Agent e 5 majors de Node — e nenhuma informação sobre
+   * a versão do SDK. Era o único sinal de adoção que a plataforma tinha.
+   */
   private getUserAgent(): string {
     const nodeVersion = process.version;
     const platform = process.platform;
 
-    // Try to get package version (will be undefined in development)
-    const packageVersion = '3.0.0'; // TODO: Read from package.json
-
-    return `@nfe-io/sdk@${packageVersion} node/${nodeVersion} (${platform})`;
+    return `${PACKAGE_NAME}@${VERSION} node/${nodeVersion} (${platform})`;
   }
 
   private extractHeaders(response: any): Record<string, string> {

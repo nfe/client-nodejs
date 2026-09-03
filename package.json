@@ -59,7 +59,7 @@
   ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "generate": "tsx scripts/generate-types.ts",
+    "generate": "tsx scripts/generate-types.ts && npm run generate:version",
     "generate:watch": "tsx watch scripts/generate-types.ts",
     "validate:spec": "tsx scripts/validate-spec.ts",
     "build": "npm run generate && npm run clean && npm run typecheck && tsdown",
@@ -81,7 +81,8 @@
     "examples:test": "node examples/test-connection.js",
     "prepublishOnly": "npm run build",
     "prepublish:test": "npm run build && npm test -- --run",
-    "release": "npm run build && npm test -- --run && npm publish"
+    "release": "npm run build && npm test -- --run && npm publish",
+    "generate:version": "tsx scripts/generate-version.ts"
   },
   "devDependencies": {
     "@types/node": "^22.19.21",

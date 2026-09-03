@@ -11,6 +11,63 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 > Em nenhum deles a especificação era a culpada: o SDK é que estava errado.
 > Evidência versionada em `tests/fixtures/live-contracts/`.
 
+### Corrigido — identidade do SDK e documentação
+
+- **Toda requisição do SDK mentia sobre quem era.** `src/core/http/client.ts` fixava
+  `packageVersion = '3.0.0'` com um `// TODO: Read from package.json`, e o User-Agent saía
+  como `@nfe-io/sdk@3.0.0` — nome de pacote que **não existe** (o publicado é `nfe-io`) e
+  versão três majors atrás. Medido nos logs de gateway, 30 dias:
+
+  ```
+  93.995 requisições | 23 variantes de User-Agent | 5 majors de Node
+                     | 1 única versão de SDK reportada
+  ```
+
+  As 23 variantes diferem só no Node e na plataforma. O User-Agent é o único sinal de
+  adoção que a plataforma tem, e não trazia informação nenhuma sobre a versão. A partir
+  desta release dá para medir quem migrou.
+
+  O valor também divergia em quatro lugares: `3.0.0` no User-Agent, `5.1.0` em
+  `PACKAGE_VERSION` e em `VERSION`, `5.2.0` no `package.json`. E `PACKAGE_NAME` — constante
+  **pública** — dizia `@nfe-io/sdk`.
+
+  Agora há fonte única: `src/version.ts`, gerado do `package.json` por
+  `scripts/generate-version.ts` (ligado ao `npm run generate`). Nenhum literal de versão
+  sobrou em `src/`, e `tests/unit/version.test.ts` falha se algum voltar — a geração é a
+  conveniência, o teste é a garantia.
+
+  Nove exemplos de JSDoc mandavam `import { NfeClient } from '@nfe-io/sdk'`. Corrigidos;
+  a skill publicada não precisa mais avisar que o JSDoc mente.
+
+- **A documentação ensinava o wiring de credencial que a API recusa.**
+  `docs/multi-host-routing.md` dizia que `productInvoices`, `productInvoicesRtc`,
+  `stateTaxes`, `municipalTaxes`, `certificates`, `transportationInvoices` e
+  `inboundProductInvoices` usavam a chave **de dados** em `api.nfse.io`. É host **fiscal**:
+  responde `403` à chave de dados. Era o mesmo defeito corrigido no roteamento interno em
+  `b50bb74`, ainda ensinado como se fosse o certo — quem seguisse a tabela reintroduzia o
+  bug na própria aplicação. A tabela também omitia `taxCalculation` e o lado v2 de
+  `companies`.
+
+  A nota de fallback deixou de sugerir que as chaves são alternativas: elas são
+  **complementares**, e cada uma responde `403` no território da outra.
+
+- **Dois exemplos copiáveis não compilavam.** O README documentava
+  `addresses.lookupByTerm()` e `addresses.search()`, removidos na v5. A skill publicada
+  chamava `uploadCertificate(companyId, certBuffer, 'password')`, mas a assinatura recebe um
+  objeto. Ambos corrigidos, e `tests/unit/docs-drift.test.ts` passa a falhar quando qualquer
+  documento cita método que não existe no código — README, `docs/` e a skill.
+
+  A verificação casa **nome de método**, não assinatura: conferir assinatura exigiria
+  compilar cada exemplo. Mesmo assim pega os dois casos desta rodada.
+
+  A skill também recebeu as correções de contrato de 01–02/09: rotas não servidas
+  (`consumerInvoiceQuery`, `municipalTaxes.getSeries`/`updatePrefecture`), o
+  `invoiceId` obrigatório nos downloads de NFS-e, e o envelope real do status de certificado.
+
+- **Um teste existente travava o bug no lugar.** `tests/unit/http-client.test.ts` afirmava
+  que o User-Agent continha `@nfe-io/sdk` — quem consertasse o nome quebrava a suíte.
+  Corrigido para afirmar o nome real.
+
 ### Corrigido — métodos públicos que não alcançavam a API
 
 > Sete métodos públicos foram diagnosticados como quebrados em julho. Reprovando um a um

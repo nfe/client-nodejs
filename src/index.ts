@@ -7,7 +7,7 @@
  *
  * @example Basic Usage
  * ```typescript
- * import { NfeClient } from '@nfe-io/sdk';
+ * import { NfeClient } from 'nfe-io';
  *
  * const nfe = new NfeClient({
  *   apiKey: 'your-api-key',
@@ -31,7 +31,7 @@
  * });
  * ```
  *
- * @module @nfe-io/sdk
+ * @module nfe-io
  * @version 5.1.0
  * @author NFE.io
  * @license MIT
@@ -439,7 +439,7 @@ export { CertificateValidator } from './core/utils/certificate-validator.js';
  *
  * @example
  * ```typescript
- * import { TransportationInvoicesResource } from '@nfe-io/sdk';
+ * import { TransportationInvoicesResource } from 'nfe-io';
  *
  * // For advanced usage when extending the SDK
  * class CustomCteResource extends TransportationInvoicesResource {
@@ -480,29 +480,30 @@ export type {
  *
  * @example ES Modules
  * ```typescript
- * import { NfeClient } from '@nfe-io/sdk';
+ * import { NfeClient } from 'nfe-io';
  * const nfe = new NfeClient({ apiKey: 'xxx' });
  * ```
  *
  * @example ES Modules (default import)
  * ```typescript
- * import nfeFactory from '@nfe-io/sdk';
+ * import nfeFactory from 'nfe-io';
  * const nfe = nfeFactory({ apiKey: 'xxx' });
  * ```
  *
  * @example CommonJS
  * ```javascript
- * const { NfeClient } = require('@nfe-io/sdk');
+ * const { NfeClient } = require('nfe-io');
  * const nfe = new NfeClient({ apiKey: 'xxx' });
  * ```
  *
  * @example CommonJS (default require)
  * ```javascript
- * const nfeFactory = require('@nfe-io/sdk').default;
+ * const nfeFactory = require('nfe-io').default;
  * const nfe = nfeFactory({ apiKey: 'xxx' });
  * ```
  */
 import nfeFactory from './core/client.js';
+import { PACKAGE_NAME as PKG_NAME, VERSION as PKG_VERSION } from './version.js';
 export default nfeFactory;
 
 // ============================================================================
@@ -511,15 +512,24 @@ export default nfeFactory;
 
 /**
  * NPM package name
+ *
+ * Vem de `src/version.ts`, gerado do `package.json`. Até 2026-09-02 esta constante
+ * dizia `@nfe-io/sdk` — pacote que não existe; o publicado é `nfe-io`.
+ *
  * @constant
  */
-export const PACKAGE_NAME = '@nfe-io/sdk';
+export const PACKAGE_NAME = PKG_NAME;
 
 /**
  * Current SDK version
+ *
+ * Vem da mesma fonte. NÃO fixar literal: até 2026-09-02 esta constante dizia
+ * `5.1.0`, `VERSION` dizia o mesmo, o `package.json` dizia `5.2.0` e o User-Agent
+ * dizia `3.0.0` — quatro valores para uma informação só.
+ *
  * @constant
  */
-export const PACKAGE_VERSION = '5.1.0';
+export const PACKAGE_VERSION = PKG_VERSION;
 
 /**
  * NFE.io API version supported by this SDK

@@ -661,7 +661,13 @@ it.skip('should include Basic Auth header', async () => {
       await httpClient.get('/test');
 
       const userAgent = fetchMock.mock.calls[0][1].headers['User-Agent'];
-      expect(userAgent).toContain('@nfe-io/sdk');
+      // O nome e a versao vem de src/version.ts, gerado do package.json.
+      // Ate 2026-09-02 esta assercao exigia '@nfe-io/sdk' -- pacote que NAO existe.
+      // O teste travava o bug no lugar: quem consertasse o User-Agent quebrava a
+      // suite. A conferencia completa (nome, versao, Node, plataforma) esta em
+      // tests/unit/version.test.ts.
+      expect(userAgent).toContain('nfe-io@');
+      expect(userAgent).not.toContain('@nfe-io/sdk');
       expect(userAgent).toContain('node/');
     });
 

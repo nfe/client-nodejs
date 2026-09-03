@@ -9,7 +9,7 @@ This skill enables you to write correct, production-ready code using the NFE.io 
 
 ## Package & Import
 
-The npm package name is **`nfe-io`** (not `@nfe-io/sdk` despite what JSDoc comments say).
+The npm package name is **`nfe-io`**. (Until 2026-09-02 the JSDoc examples imported from `@nfe-io/sdk`, a package that does not exist; corrected at the source.)
 
 ```typescript
 // ESM (recommended)
@@ -43,7 +43,17 @@ const nfe = new NfeClient({
 });
 ```
 
-**Dual API keys**: Some data-service resources (addresses, CNPJ/CPF lookups, tax calculation) can use a separate `dataApiKey`. If not set, they fall back to `apiKey`.
+**Two complementary API keys** — not alternatives. Each answers **403** in the other's territory:
+
+- **`apiKey`** (main) → FISCAL hosts: `api.nfe.io`, `api.nfse.io`. Covers every emission
+  resource plus `certificates`, `municipalTaxes`, `stateTaxes`, `taxCodes` and
+  `taxCalculation`.
+- **`dataApiKey`** → LOOKUP hosts: `nfe.api.nfe.io`, `legalentity`, `naturalperson`,
+  `address`. Covers `addresses`, `legalEntityLookup`, `naturalPersonLookup`,
+  `productInvoiceQuery` and `consumerInvoiceQuery`.
+
+The SDK falls back from `dataApiKey` to `apiKey` when the former is absent — a convenience
+for accounts holding one key with both scopes, **not** a sign that one replaces the other.
 
 ```typescript
 const nfe = new NfeClient({
@@ -77,14 +87,14 @@ All resources are lazy-initialized via property getters on `NfeClient`. No resou
 | `nfe.productInvoicesRtc` | NF-e/NFC-e RTC | api.nfse.io | Company | create (webhook-driven; IBS/CBS/IS) |
 | `nfe.consumerInvoices` | NFC-e Consumer Invoices | api.nfse.io | Company | create (webhook-driven), list (requer environment), retrieve, cancel, getItems, getEvents, downloadPdf/Xml/Rejection, disable |
 | `nfe.stateTaxes` | State Tax (IE) | api.nfse.io | Company | CRUD, switchAuthorizer (pré-requisito p/ NF-e) |
-| `nfe.municipalTaxes` | Municipal Tax (IM) | api.nfse.io | Company | CRUD, updatePrefecture, getSeries (pré-requisito p/ NFS-e) |
+| `nfe.municipalTaxes` | Municipal Tax (IM) | api.nfse.io | Company | CRUD (pré-requisito p/ NFS-e). ⚠️ `updatePrefecture` e `getSeries` estão **depreciados**: a plataforma não serve essas rotas |
 | `nfe.certificates` | Certificates (por thumbprint) | api.nfse.io | Company | list, getByThumbprint, deleteByThumbprint (+ variantes v1) |
 | `nfe.taxCalculation` | Tax Engine | api.nfse.io | Tenant | calculate (ICMS, PIS, COFINS, IPI, II) |
 | `nfe.taxCodes` | Tax Code Reference | api.nfse.io | Global | listOperationCodes, listAcquisitionPurposes, listIssuer/RecipientTaxProfiles |
 | `nfe.transportationInvoices` | CT-e Transport | api.nfse.io | Company | enable/disable, retrieve, downloadXml |
 | `nfe.inboundProductInvoices` | Inbound NF-e | api.nfse.io | Company | enableAutoFetch, getDetails, downloadXml/Pdf, manifest |
 | `nfe.productInvoiceQuery` | NF-e Query (SEFAZ) | nfe.api.nfe.io | Global | retrieve, downloadPdf/Xml, listEvents |
-| `nfe.consumerInvoiceQuery` | CFe-SAT Query | nfe.api.nfe.io | Global | retrieve, downloadXml |
+| `nfe.consumerInvoiceQuery` | CFe-SAT Query | nfe.api.nfe.io | Global | ⚠️ **depreciado** — a plataforma não serve `/v1/consumerinvoices/coupon`; ambos os métodos respondem 404 |
 | `nfe.legalEntityLookup` | CNPJ Lookup | legalentity.api.nfe.io | Global | getBasicInfo, getStateTaxInfo, getStateTaxForInvoice |
 | `nfe.naturalPersonLookup` | CPF Lookup | naturalperson.api.nfe.io | Global | getStatus |
 
@@ -278,17 +288,28 @@ import { CertificateValidator } from 'nfe-io';
 
 const certBuffer = readFileSync('certificate.pfx');
 
-// Validate before uploading
+// Validate before uploading (local pre-flight: format only)
 const validation = await CertificateValidator.validate(certBuffer, 'password');
 if (validation.valid) {
-  await nfe.companies.uploadCertificate(companyId, certBuffer, 'password');
+  // NOTE: the second argument is an OBJECT, not positional args.
+  await nfe.companies.uploadCertificate(companyId, {
+    file: certBuffer,
+    password: 'password',
+    filename: 'certificate.pfx',
+  });
 }
 
 // Check certificate status
 const status = await nfe.companies.getCertificateStatus(companyId);
-console.log('Expires:', status.expiresOn);
+console.log('Has certificate:', status.hasCertificate);
+console.log('Expires:', status.expiresOn);        // from the API's `validUntil`
+console.log('Active:', status.isValid);           // status === 'Active'
+console.log('Raw items:', status.certificates);   // thumbprint, subject, providerType...
 
-// Find companies with expiring certificates
+// A company with no certificate answers 200 with `certificates: []`, NOT 404.
+
+// Find companies with expiring certificates — reads the `certificate` object the
+// company listing already returns; no per-company request.
 const expiring = await nfe.companies.getCompaniesWithExpiringCertificates(30); // 30 days
 ```
 
@@ -353,7 +374,18 @@ on the live API — fetch the real list with `await nfe.webhooks.fetchEventTypes
 
 11. **Correction letters**: `sendCorrectionLetter()` text must be 15-1000 characters, no accents or special characters.
 
-12. **Product invoice PDF**: `productInvoices.downloadPdf()` returns `NfeFileResource` (object with `uri`), not a `Buffer`. Use `productInvoiceQuery.downloadPdf(accessKey)` for a raw Buffer.
+12. **Routes declared in the spec that the platform does not serve** (measured 2026-09-02):
+    `consumerInvoiceQuery.retrieve()/downloadXml()`, `municipalTaxes.getSeries()` and
+    `municipalTaxes.updatePrefecture()`. They are `@deprecated`; on `404` the SDK raises a
+    `NotFoundError` whose message says the route is not served, so you do not mistake it for
+    "no such record". The request still goes out — if the route comes back, the `200` passes
+    through untouched.
+
+13. **Service invoice downloads require the invoice id.** `downloadPdf(companyId)` and
+    `downloadXml(companyId)` used to accept an omitted id and promised a ZIP with every
+    invoice. That route never existed. `invoiceId` is now required.
+
+14. **Product invoice PDF**: `productInvoices.downloadPdf()` returns `NfeFileResource` (object with `uri`), not a `Buffer`. Use `productInvoiceQuery.downloadPdf(accessKey)` for a raw Buffer.
 
 ## Decision Tree: "I want to..."
 
@@ -363,7 +395,7 @@ on the live API — fetch the real list with `await nfe.webhooks.fetchEventTypes
 | Issue a product invoice (NF-e) | `nfe.productInvoices.create(companyId, data)` + webhook |
 | Issue NF-e with specific state tax | `nfe.productInvoices.createWithStateTax(companyId, stateTaxId, data)` |
 | Query existing NF-e by access key | `nfe.productInvoiceQuery.retrieve(accessKey)` |
-| Query CFe-SAT coupon by access key | `nfe.consumerInvoiceQuery.retrieve(accessKey)` |
+| Query CFe-SAT coupon by access key | ⚠️ indisponível — a rota não é servida (`nfe.consumerInvoiceQuery.retrieve()` está depreciado) |
 | Receive inbound NF-e automatically | `nfe.inboundProductInvoices.enableAutoFetch(companyId)` |
 | Receive inbound CT-e automatically | `nfe.transportationInvoices.enable(companyId)` |
 | Look up CNPJ (company info) | `nfe.legalEntityLookup.getBasicInfo(cnpj)` |

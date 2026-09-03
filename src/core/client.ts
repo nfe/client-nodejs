@@ -5,7 +5,7 @@
  * Core client class for interacting with the NFE.io API v1.
  * Provides a modern TypeScript interface with zero runtime dependencies.
  *
- * @module @nfe-io/sdk/client
+ * @module nfe-io/client
  * @author NFE.io
  * @license MIT
  */
@@ -48,6 +48,7 @@ import {
   LEGAL_ENTITY_API_BASE_URL,
   NATURAL_PERSON_API_BASE_URL
 } from './resources/index.js';
+import { VERSION as PKG_VERSION } from '../version.js';
 
 // ============================================================================
 // Constants
@@ -82,7 +83,7 @@ export { NATURAL_PERSON_API_BASE_URL } from './resources/index.js';
  *
  * @example Basic Usage
  * ```typescript
- * import { NfeClient } from '@nfe-io/sdk';
+ * import { NfeClient } from 'nfe-io';
  *
  * const nfe = new NfeClient({
  *   apiKey: 'your-api-key',
@@ -1550,13 +1551,13 @@ export function createNfeClient(apiKey: string | NfeConfig): NfeClient {
  *
  * @example ES Modules
  * ```typescript
- * import nfe from '@nfe-io/sdk';
+ * import nfe from 'nfe-io';
  * const client = nfe('your-api-key');
  * ```
  *
  * @example CommonJS
  * ```javascript
- * const nfe = require('@nfe-io/sdk').default;
+ * const nfe = require('nfe-io').default;
  * const client = nfe('your-api-key');
  * ```
  */
@@ -1570,9 +1571,13 @@ export default function nfe(apiKey: string | NfeConfig): NfeClient {
 
 /**
  * Current SDK version
+ *
+ * Vem de `src/version.ts`, gerado do `package.json` — ver a nota em
+ * `PACKAGE_VERSION` (`src/index.ts`) sobre por que não se fixa literal aqui.
+ *
  * @constant
  */
-export const VERSION = '5.1.0';
+export const VERSION = PKG_VERSION;
 
 /**
  * Supported Node.js version range (semver format)

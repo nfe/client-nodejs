@@ -17,25 +17,35 @@ precisa fornecer as chaves na configuração.
 
 | Host | Chave | Recursos |
 |---|---|---|
-| `api.nfe.io/v1` | principal | `serviceInvoices`, `serviceInvoicesRtc`, `companies`, `legalPeople`, `naturalPeople`, `notifications` |
-| `api.nfe.io/v2` | principal | `webhooks` (nível de **conta**) |
-| `api.nfse.io` | principal | `consumerInvoices` (NFC-e), `taxCodes` |
-| `api.nfse.io` | dados | `productInvoices`, `productInvoicesRtc`, `stateTaxes`, `municipalTaxes`, `certificates`, `transportationInvoices`, `inboundProductInvoices` |
-| `address.api.nfe.io/v2` | dados | `addresses` |
-| `legalentity.api.nfe.io` | dados | `legalEntityLookup` (CNPJ) |
-| `naturalperson.api.nfe.io` | dados | `naturalPersonLookup` (CPF) |
-| `nfe.api.nfe.io` | dados | `productInvoiceQuery`, `consumerInvoiceQuery` |
+| `api.nfe.io/v1` | **principal** | `serviceInvoices`, `serviceInvoicesRtc`, `companies` (v1), `legalPeople`, `naturalPeople`, `notifications` |
+| `api.nfe.io/v2` | **principal** | `webhooks` (nível de **conta**) |
+| `api.nfse.io` | **principal** | `certificates`, `companies` (lado v2), `consumerInvoices` (NFC-e), `inboundProductInvoices`, `municipalTaxes`, `productInvoices`, `productInvoicesRtc`, `stateTaxes`, `taxCalculation`, `taxCodes`, `transportationInvoices` |
+| `address.api.nfe.io/v2` | **dados** | `addresses` |
+| `legalentity.api.nfe.io` | **dados** | `legalEntityLookup` (CNPJ) |
+| `naturalperson.api.nfe.io` | **dados** | `naturalPersonLookup` (CPF) |
+| `nfe.api.nfe.io` | **dados** | `productInvoiceQuery`, `consumerInvoiceQuery` |
 
-:::info Fallback de chave
-`dataApiKey` faz fallback para `apiKey` quando não informada. Se você usa **uma
-só chave** com todos os escopos, basta configurar `apiKey`.
+:::danger As duas chaves são complementares, não alternativas
+Cada chave responde **`403` no território da outra**. Não existe "a chave que
+serve para tudo": os hosts **fiscais** (`api.nfe.io`, `api.nfse.io`) só aceitam a
+principal, e os de **consulta** (`nfe.api.nfe.io`, `legalentity`, `naturalperson`,
+`address`) só aceitam a de dados.
+
+O SDK aplica um fallback de `dataApiKey` para `apiKey` quando a de dados não é
+informada. Isso é uma conveniência para quem tem uma chave só com os dois escopos
+— **não** significa que uma substitua a outra. Se você configurar apenas
+`dataApiKey`, os recursos fiscais lançam `ConfigurationError` na hora, em vez de
+falhar com `403` na chamada.
 :::
 
-:::warning Contas com chaves separadas
-Se sua conta usa chaves **distintas** para dados e emissão, garanta que a chave
-principal tenha acesso aos produtos de emissão/consulta que você vai usar
-(NFС-e, tax-codes e emissão usam a chave principal). Uma chave sem escopo
-retorna `403`.
+:::warning Correção em 2026-09-02
+Até esta data a tabela acima dizia que `productInvoices`, `productInvoicesRtc`,
+`stateTaxes`, `municipalTaxes`, `certificates`, `transportationInvoices` e
+`inboundProductInvoices` usavam a chave **de dados** em `api.nfse.io`. Estava
+errado: `api.nfse.io` é host fiscal e responde `403` à chave de dados. Era o
+mesmo defeito que o SDK carregava no roteamento interno, corrigido antes desta
+página. Se você replicou o mapa antigo na sua aplicação, ajuste. Histórico em
+[`MIGRATION.md`](https://github.com/nfe/client-nodejs/blob/master/MIGRATION.md).
 :::
 
 ## Por que isso importa
