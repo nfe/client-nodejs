@@ -8,7 +8,7 @@
 
 **SDK Oficial NFE.io para Node.js 22+** - SDK TypeScript moderno para emissão de notas fiscais de serviço eletrônicas (NFS-e).
 
-> ✨ **Versão 5** - TypeScript nativo, zero dependências em runtime e API moderna async/await. Inclui emissão RTC (Reforma Tributária), NFC-e, inscrições municipais, certificados, notificações e webhooks de conta. Veja a [migração v4 → v5](MIGRATION.md#v4--v5).
+> ✨ **Versão 6** - TypeScript nativo, zero dependências em runtime e API moderna async/await. Major de **correção de contrato**: nove pontos da superfície pública mudaram de tipo ou assinatura, todos em métodos que já não funcionavam. Veja a [migração v5 → v6](MIGRATION.md#v5--v6).
 
 ## 📋 Índice
 

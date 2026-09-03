@@ -7,6 +7,7 @@
 // Resource classes
 export { ServiceInvoicesResource, createServiceInvoicesResource } from './service-invoices.js';
 export { CompaniesResource, createCompaniesResource } from './companies.js';
+export type { CertificateStatusSummary } from './companies.js';
 export { LegalPeopleResource } from './legal-people.js';
 export { NaturalPeopleResource } from './natural-people.js';
 export { WebhooksResource } from './webhooks.js';
@@ -25,5 +26,6 @@ export { ServiceInvoicesRtcResource, createServiceInvoicesRtcResource } from './
 export { ProductInvoicesRtcResource, createProductInvoicesRtcResource } from './product-invoices-rtc.js';
 export { MunicipalTaxesResource, createMunicipalTaxesResource } from './municipal-taxes.js';
 export { ConsumerInvoicesResource, createConsumerInvoicesResource } from './consumer-invoices.js';
+export type { ConsumerInvoicePageOptions } from './consumer-invoices.js';
 export { CertificatesResource, createCertificatesResource } from './certificates.js';
 export { NotificationsResource, createNotificationsResource } from './notifications.js';

@@ -459,7 +459,14 @@ export { ConsumerInvoicesResource } from './core/resources/consumer-invoices.js'
 export type {
   ConsumerInvoiceListOptions,
   ConsumerInvoiceEnvironment,
+  // Parâmetro de `getItems`/`getEvents`: aparecia na assinatura pública sem ser
+  // importável, então o chamador não conseguia nomear o próprio argumento.
+  ConsumerInvoicePageOptions,
 } from './core/resources/consumer-invoices.js';
+
+// Retorno de `companies.getCertificateStatus()`. Mesmo motivo: estava na
+// assinatura pública e fora da lista de exports.
+export type { CertificateStatusSummary } from './core/resources/companies.js';
 export { CertificatesResource } from './core/resources/certificates.js';
 export { NotificationsResource } from './core/resources/notifications.js';
 export type { Notification, NotificationListResponse } from './core/resources/notifications.js';

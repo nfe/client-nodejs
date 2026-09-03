@@ -7,9 +7,22 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não lançado]
 
-> Bugs de contrato provados por sonda ao vivo contra a API real (2026-09-01 e 2026-09-02).
-> Em nenhum deles a especificação era a culpada: o SDK é que estava errado.
-> Evidência versionada em `tests/fixtures/live-contracts/`.
+## [6.0.0] - 2026-09-03
+
+> **Major de correção de contrato.** Nada aqui é funcionalidade nova: são bugs provados por
+> sonda ao vivo contra a API real (2026-09-01 a 09-03), a maioria em métodos que **nunca
+> puderam funcionar**. Em nenhum deles a especificação era a culpada — o SDK é que estava
+> errado. Evidência versionada em `tests/fixtures/live-contracts/`.
+>
+> **É major porque nove pontos da superfície pública mudam de tipo ou de assinatura.** Na
+> prática, quase ninguém precisa mexer: as quebras são em superfícies que já estavam
+> quebradas — métodos que só lançavam 404, retornos que vinham `undefined`, tipos que
+> mentiam sobre o que continham. O roteiro está no
+> [`MIGRATION.md`](./MIGRATION.md#v5--v6).
+>
+> Como esta rodada foi conduzida, porque explica o volume: contrato de API se decide na
+> OpenAPI **e** em sonda contra a API real, nunca por inferência. Dois métodos que o
+> diagnóstico anterior dava como quebrados **não estavam** — a amostra é que era a exceção.
 
 ### Corrigido — identidade do SDK e documentação
 

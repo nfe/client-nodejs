@@ -1,31 +1,130 @@
 # Guia de Migração
 
-## Não lançado (próxima major)
+## v5 → v6
 
-Quebras já no `master` e ainda não publicadas. As demais mudanças desta faixa estão no
-`CHANGELOG.md`, em `[Não lançado]`, cada uma com sua nota de migração — esta seção guarda
-as que mudam **assinatura**, porque só elas quebram em tempo de compilação.
+A v6 é uma **major de correção de contrato**. Não há funcionalidade nova: são bugs provados
+por sonda ao vivo contra a API real, a maioria em métodos que **nunca puderam funcionar**.
 
-### `serviceInvoices.downloadPdf()` / `downloadXml()` exigem o `invoiceId`
+```bash
+npm install nfe-io@^6
+```
+
+> **A maioria dos projetos não precisa mudar nada.** As quebras são em superfícies que já
+> estavam quebradas: métodos que só respondiam 404, retornos que vinham `undefined`, tipos
+> que mentiam sobre o que continham. Se o seu código passava por elas, ele já não
+> funcionava — só falhava em silêncio.
+
+### 1. ⚠️ `serviceInvoices.downloadPdf()` / `downloadXml()` exigem o `invoiceId`
+
+**A única quebra que interrompe a compilação de código que funcionava.**
 
 O parâmetro era opcional e a documentação prometia um ZIP com todas as notas da empresa
-quando ele fosse omitido. **A rota não existe.** `/serviceinvoices/pdf` responde
-`404 "service invoice with id (pdf) was not found"` — o servidor casa a rota `/{id}` e
-lê `pdf` como identificador. Medido em 2026-09-02; a rota também não está na spec
-`nf-servico-v1` nem no `nfeio-docs`.
+quando ele fosse omitido. A rota não existe: `/serviceinvoices/pdf` responde
+`404 "service invoice with id (pdf) was not found"` — o servidor casa a rota `/{id}` e lê
+`pdf` como identificador.
 
 ```ts
-// Antes — compilava e sempre lançava NotFoundError em runtime
+// Antes — compilava e sempre lançava NotFoundError
 const zip = await nfe.serviceInvoices.downloadPdf(empresaId);
 
 // Agora — não compila. Para várias notas, itere sobre os ids:
 for (const nota of notas) {
   const pdf = await nfe.serviceInvoices.downloadPdf(empresaId, nota.id);
-  fs.writeFileSync(`nota-${nota.number}.pdf`, pdf);
 }
 ```
 
-O download por nota não muda.
+### 2. Downloads de documentos de entrada devolvem objeto tipado, não `string`
+
+`inboundProductInvoices.getXml/getPdf/getEventXml` e
+`transportationInvoices.downloadXml/downloadEventXml` declaravam `Promise<string>`. A API
+responde `{ publicTemporaryUri }` — uma URL pré-assinada. **Binário nunca trafegou nessas
+rotas**, então o retorno anterior já era este objeto se passando por `string`.
+
+```ts
+const res = await nfe.inboundProductInvoices.getPdf(empresaId, chaveAcesso);
+const bytes = await fetch(res.publicTemporaryUri!).then(r => r.arrayBuffer());
+```
+
+Tipo: `InboundFileResource`.
+
+### 3. Downloads de NFC-e devolvem `ConsumerInvoiceFileResource`
+
+`consumerInvoices.downloadPdf/downloadXml/downloadRejectionXml` devolviam `Buffer` (ou
+`NfeFileResource`). A API devolve JSON com URL e **ignora o header `Accept`**.
+
+```ts
+const res = await nfe.consumerInvoices.downloadPdf(empresaId, notaId);
+const bytes = await fetch(res.uri!).then(r => r.arrayBuffer());
+```
+
+⚠️ O envelope da NFC-e usa **`uri`**; o das rotas de entrada usa **`publicTemporaryUri`**.
+São dois envelopes distintos na mesma plataforma — por isso dois tipos.
+
+O terceiro parâmetro dos downloads deixou de ser `environment` e passou a ser `force`.
+
+### 4. `consumerInvoices.getItems()` / `getEvents()` mudaram parâmetro e retorno
+
+O terceiro argumento era `environment?`, que a spec não define nessas rotas. Agora é
+`options?: ConsumerInvoicePageOptions` (paginação cursor: `limit`, `startingAfter`), e cada
+método devolve seu envelope próprio, com `hasMore` — o de eventos deixou de reusar o tipo do
+recurso de produto, que tem outra forma.
+
+`cancel()` passou a devolver `ConsumerInvoiceCancellationResponse` em vez da nota, e aceita
+`reason`.
+
+`list()` **continua exigindo** `environment`: a API responde
+`400 environment has to be production or test` sem ele.
+
+### 5. `companies.getCertificateStatus()` devolve `CertificateStatusSummary`
+
+O método lia `{hasCertificate, expiresOn, isValid}` — **nenhum dos três existe** na resposta.
+A API devolve `{ certificates: [...] }`, com `validUntil` e `status` em cada item. O retorno
+era `{hasCertificate: undefined}` para toda empresa, e derrubava em cascata
+`checkCertificateExpiration()`, `getCompaniesWithCertificates()` e
+`getCompaniesWithExpiringCertificates()`.
+
+Os nomes públicos ficaram: `hasCertificate`, `expiresOn`, `isValid`, `daysUntilExpiration`,
+`isExpiringSoon` — agora preenchidos de verdade. **Novo:** `certificates`, com os itens crus
+(`thumbprint`, `subject`, `providerType`). **Saiu:** `details`, que nunca era populado.
+
+Empresa sem certificado responde `200` com lista vazia, não `404`.
+
+### 6. A chave de dados não serve mais nos hosts fiscais
+
+As duas chaves são **complementares**: cada uma responde `403` no território da outra. Nove
+recursos de `api.nfse.io` resolviam a chave **de dados** num host **fiscal** e só funcionavam
+por acidente, via o fallback `dataApiKey → apiKey`.
+
+**Como migrar:** se você usa `dataApiKey`, nada a fazer — os nove passam a funcionar. Se você
+configurava **somente** `dataApiKey`, agora é preciso informar também `apiKey`: o acesso
+lança `ConfigurationError` na hora, em vez de falhar com `403` na chamada.
+
+### 7. `PACKAGE_NAME` passou a ser `'nfe-io'`
+
+A constante pública dizia `'@nfe-io/sdk'` — pacote que não existe. O User-Agent do SDK
+carregava o mesmo nome, com a versão fixa `3.0.0`. Ambos agora derivam do `package.json`.
+
+Se você comparava `PACKAGE_NAME` com uma string literal, ajuste.
+
+### Depreciados — rotas que a plataforma não serve
+
+Continuam existindo e emitindo a requisição; ao receber `404`, o erro passa a **dizer** que a
+rota não é servida, em vez de parecer "não há esse dado":
+
+| método | rota |
+|---|---|
+| `consumerInvoiceQuery.retrieve()` / `.downloadXml()` | `/v1/consumerinvoices/coupon/{chave}` |
+| `municipalTaxes.getSeries()` | `.../municipaltaxes/{id}/series/{serie}` |
+| `municipalTaxes.updatePrefecture()` | `.../municipaltaxes/{id}/updateprefecture` |
+
+Se a rota voltar a ser servida, o `200` passa sem alteração e nada precisa ser desfeito.
+
+### Restrição que não é do SDK
+
+`legalPeople` e `naturalPeople` aceitam **apenas** `company_id` no formato `ObjectId` de 24
+hexadecimais. Empresa com id de 32 caracteres recebe `400 "company id is not valid"`. É
+limite do servidor — não há conversão possível, e o SDK não tem como contorná-lo. Está
+documentado no JSDoc dos dois recursos.
 
 ---
 
