@@ -1101,7 +1101,11 @@ Contribuições são bem-vindas! Por favor, veja [CONTRIBUTING.md](./CONTRIBUTIN
 
 ## 📄 Licença
 
-MIT © [NFE.io](https://nfe.io)
+O código deste SDK é distribuído sob a licença [MIT](./LICENSE).
+Copyright (c) 2026 NFE.IO HUB SERVICOS DE TECNOLOGIA LTDA.
+
+A licença cobre o SDK, não a API: o uso da API da NFE.io segue o contrato da sua conta
+([Termos de Serviço](https://p.nfe.io/pt-br/termos-de-servico)).
 
 ## 🆘 Suporte
 

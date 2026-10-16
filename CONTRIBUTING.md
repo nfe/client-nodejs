@@ -281,7 +281,7 @@ import { HttpClient } from 'nfe-io/dist/core/http/client';
 
 ## 📜 Licença
 
-Ao contribuir, você concorda que suas contribuições serão licenciadas sob a mesma licença do projeto (MIT).
+Ao contribuir, você concorda que suas contribuições serão licenciadas sob a mesma licença do projeto, a MIT, cujo texto está em [LICENSE](./LICENSE). Não há CLA: a contribuição entra sob a mesma licença com que o projeto é distribuído.
 
 ---
 
