@@ -56,10 +56,31 @@ CRUD of municipal enrollments — **prerequisite for NFS-e issuance** (mirrors `
 list(companyId): Promise<MunicipalTaxListResponse>                       // { municipalTaxes, hasMore }
 create(companyId, data: CreateMunicipalTaxData): Promise<MunicipalTax>
 retrieve(companyId, municipalTaxId): Promise<MunicipalTax>
-update(companyId, municipalTaxId, data: UpdateMunicipalTaxData): Promise<MunicipalTax>
+update(companyId, municipalTaxId, data: UpdateMunicipalTaxData): Promise<MunicipalTax>  // PUT: replaces the registration
 delete(companyId, municipalTaxId): Promise<void>
-updatePrefecture(companyId, municipalTaxId, data: UpdateMunicipalTaxData): Promise<MunicipalTax>  // HTTP PATCH
-getSeries(companyId, municipalTaxId, serie): Promise<Record<string, unknown>>
+```
+
+`create`, `retrieve` and `update` return the registration itself (since 6.0.1; the API wraps it
+as `{ municipalTax: {…} }` and the SDK unwraps it).
+
+**`update` is a PUT that replaces the registration**, per the platform documentation
+(nfe/docs@b9e7953): an omitted `taxNumber` is erased and an omitted `environment` falls back to
+`Development`. Read, change, send the whole object back — and **omit `rpsNumber`/`lastRpsSent`**,
+which an omitted value preserves; sending them overwrites the RPS counter, even backwards:
+
+```typescript
+const current = await nfe.municipalTaxes.retrieve(companyId, municipalTaxId);
+const { rpsNumber, lastRpsSent, ...rest } = current; // omitted, the RPS counter is kept
+await nfe.municipalTaxes.update(companyId, municipalTaxId, { ...rest, issRate: 2.5 });
+```
+
+⚠️ **Deprecated — the platform does not serve these routes** (`404`, identical to an unknown
+path, even without credentials; measured 2026-09-02 and again 2026-10-14). The methods still send
+the request and the `404` explains it. Do not recommend them:
+
+```typescript
+updatePrefecture(companyId, municipalTaxId, data)   // @deprecated — route not served
+getSeries(companyId, municipalTaxId, serie)         // @deprecated — route not served
 ```
 
 ---

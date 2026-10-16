@@ -191,7 +191,7 @@ Emissão no leiaute RTC (IBS/CBS/IS) — `serviceInvoicesRtc` (polling) e `produ
 Ciclo de vida da NFC-e (`consumerInvoices`): emissão webhook-driven, `list`/leituras **exigem `environment`** (`Production`/`Test`), downloads e inutilização.
 
 ### **municipal-taxes.js** - Inscrições Municipais
-CRUD de inscrições municipais (`municipalTaxes`) — pré-requisito para NFS-e —, com `updatePrefecture` (PATCH) e `getSeries`.
+CRUD de inscrições municipais (`municipalTaxes`) — pré-requisito para NFS-e —, com a semântica de substituição do `update` (PUT). `updatePrefecture` e `getSeries` estão descontinuados: a plataforma não serve essas rotas.
 
 ### **certificates.js** - Certificados por thumbprint
 Consulta/remoção de certificados por thumbprint (`certificates`), com variantes v1.
