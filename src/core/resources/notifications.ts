@@ -8,6 +8,7 @@
 
 import type { HttpClient } from '../http/client.js';
 import { ValidationError } from '../errors/index.js';
+import { unwrapEnvelope } from '../utils/envelope.js';
 
 /** A company notification (minimal, spec has no named schema). */
 export interface Notification {
@@ -47,14 +48,19 @@ export class NotificationsResource {
     return response.data;
   }
 
-  /** Retrieve a notification by id. */
+  /**
+   * Retrieve a notification by id.
+   *
+   * The API answers `{ "notification": {…} }` (measured 2026-10-15); this returns the
+   * notification itself.
+   */
   async retrieve(companyId: string, notificationId: string): Promise<Notification> {
     validateCompanyId(companyId);
     validateNotificationId(notificationId);
-    const response = await this.http.get<Notification>(
+    const response = await this.http.get<unknown>(
       `${this.basePath(companyId)}/${notificationId}`
     );
-    return response.data;
+    return unwrapEnvelope<Notification>(response.data, 'notification');
   }
 
   /** Delete a notification. */

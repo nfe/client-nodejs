@@ -1,0 +1,38 @@
+{
+  "probe": "envelopes de propriedade unica nas respostas",
+  "capturedOn": "2026-10-15",
+  "note": "Corpo sintetico; as chaves do envelope vem de respostas reais, e as chaves internas usadas aqui foram vistas no fio (stateTax traz series, array, nao serie). Os registros de pessoas da conta do time tem dado pessoal e nao entram aqui.",
+  "fixedInThisRelease": [
+    {
+      "method": "municipalTaxes.retrieve",
+      "request": "GET /v2/companies/{companyId}/municipaltaxes/{municipalTaxId}",
+      "host": "api.nfse.io",
+      "response": { "status": 200, "envelopeKey": "municipalTax", "body": { "municipalTax": { "id": "synthetic-mt-id", "taxNumber": "000000", "rpsSerialNumber": "IO" } } },
+      "sdkBefore": "devolvia o envelope com o tipo MunicipalTax; resultado.id era undefined",
+      "alsoDeclaredBySpec": ["POST /municipaltaxes", "PUT /municipaltaxes/{id}"],
+      "postAndPutProbed": false
+    },
+    {
+      "method": "stateTaxes.retrieve",
+      "request": "GET /v2/companies/{companyId}/statetaxes/{stateTaxId}",
+      "host": "api.nfse.io",
+      "response": { "status": 200, "envelopeKey": "stateTax", "body": { "stateTax": { "id": "synthetic-st-id", "companyId": "synthetic-company-id", "series": [1] } } },
+      "sampling": "11 de 12 inscricoes da conta do time responderam 200 com envelope; 1 respondeu 503 (ProblemDetails), problema daquele registro",
+      "sdkBefore": "devolvia o envelope com o tipo NfeStateTax; resultado.id era undefined",
+      "alsoDeclaredBySpec": ["POST /statetaxes", "PUT /statetaxes/{id}"],
+      "postAndPutProbed": false
+    },
+    {
+      "method": "notifications.retrieve",
+      "request": "GET /v1/companies/{companyId}/notifications/{notificationId}",
+      "host": "api.nfe.io",
+      "response": { "status": 200, "envelopeKey": "notification", "body": { "notification": { "id": "synthetic-notification-id", "filters": [] } } },
+      "sdkBefore": "devolvia o envelope; o tipo tem assinatura de indice e o compilador nao acusava resultado.id"
+    }
+  ],
+  "sdkAlreadyRightSpecWrong": [
+    { "method": "legalPeople.list", "request": "GET /v1/companies/{companyId}/legalpeople", "wireEnvelope": "{ legalPeople: [...] }", "spec": "nf-servico-v1 declara um objeto unico, sem envelope" },
+    { "method": "naturalPeople.retrieve", "request": "GET /v1/companies/{companyId}/naturalpeople/{id}", "wireEnvelope": "{ naturalPeople: {...} }", "spec": "nf-servico-v1 declara a entidade direta" },
+    { "method": "addresses.lookupByPostalCode", "request": "GET /v2/addresses/{postalCode}", "wireEnvelope": "{ address: {...} }", "spec": "consulta-endereco declara { addresses: [...] }; upstream nfe/docs#240" }
+  ]
+}

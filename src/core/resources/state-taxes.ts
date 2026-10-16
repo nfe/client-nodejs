@@ -15,6 +15,7 @@ import type {
   NfeStateTaxListOptions,
 } from '../types.js';
 import { ValidationError } from '../errors/index.js';
+import { unwrapEnvelope } from '../utils/envelope.js';
 
 // ============================================================================
 // Validation Helpers
@@ -164,11 +165,11 @@ export class StateTaxesResource {
     data: NfeStateTaxCreateData,
   ): Promise<NfeStateTax> {
     validateCompanyId(companyId);
-    const response = await this.http.post<NfeStateTax>(
+    const response = await this.http.post<unknown>(
       this.basePath(companyId),
       { stateTax: data },
     );
-    return response.data;
+    return unwrapEnvelope<NfeStateTax>(response.data, 'stateTax');
   }
 
   // --------------------------------------------------------------------------
@@ -177,6 +178,9 @@ export class StateTaxesResource {
 
   /**
    * Retrieve a specific state tax registration by ID.
+   *
+   * The API answers `{ "stateTax": {…} }` (measured 2026-10-15); this returns the
+   * registration itself.
    *
    * @param companyId - The company ID
    * @param stateTaxId - The state tax ID
@@ -196,10 +200,10 @@ export class StateTaxesResource {
   ): Promise<NfeStateTax> {
     validateCompanyId(companyId);
     validateStateTaxId(stateTaxId);
-    const response = await this.http.get<NfeStateTax>(
+    const response = await this.http.get<unknown>(
       `${this.basePath(companyId)}/${stateTaxId}`,
     );
-    return response.data;
+    return unwrapEnvelope<NfeStateTax>(response.data, 'stateTax');
   }
 
   // --------------------------------------------------------------------------
@@ -231,11 +235,11 @@ export class StateTaxesResource {
   ): Promise<NfeStateTax> {
     validateCompanyId(companyId);
     validateStateTaxId(stateTaxId);
-    const response = await this.http.put<NfeStateTax>(
+    const response = await this.http.put<unknown>(
       `${this.basePath(companyId)}/${stateTaxId}`,
       { stateTax: data },
     );
-    return response.data;
+    return unwrapEnvelope<NfeStateTax>(response.data, 'stateTax');
   }
 
   // --------------------------------------------------------------------------
