@@ -1,6 +1,6 @@
 ---
 name: nfeio-node-sdk
-description: "NFE.io Node.js SDK integration expert (package: nfe-io). MUST trigger when: code imports 'nfe-io' or references NfeClient; user mentions NFE.io, NFS-e, NF-e, CT-e, CF-e, CFe-SAT, nota fiscal, nota fiscal eletronica, Brazilian invoice, fiscal document, electronic invoice Brazil, CNPJ lookup, CPF lookup, service invoice, product invoice, transportation invoice, consumer invoice, tax calculation Brazilian taxes, SEFAZ, NFE API, emissao de nota, consulta CNPJ, consulta CPF, consulta CEP; user works with Brazilian electronic fiscal documents, tax documents, or Brazilian tax compliance; any file contains 'nfe-io' in package.json or import statements; user mentions polling for invoice status, invoice async processing, or certificate management for Brazilian fiscal documents. Covers all 16 SDK resources, async invoice processing with polling, discriminated union responses, error hierarchy, certificate management, webhook signature validation, address lookup (CEP), legal entity and natural person lookups, tax calculation engine, and pagination patterns. Use this skill even if the user doesn't explicitly name the SDK -- if they're building anything related to Brazilian fiscal document automation in Node.js/TypeScript, this skill applies."
+description: "NFE.io Node.js SDK integration expert (package: nfe-io). MUST trigger when: code imports 'nfe-io' or references NfeClient; user mentions NFE.io, NFS-e, NF-e, CT-e, CF-e, CFe-SAT, nota fiscal, nota fiscal eletronica, Brazilian invoice, fiscal document, electronic invoice Brazil, CNPJ lookup, CPF lookup, service invoice, product invoice, transportation invoice, consumer invoice, tax calculation Brazilian taxes, SEFAZ, NFE API, emissao de nota, consulta CNPJ, consulta CPF, consulta CEP; user works with Brazilian electronic fiscal documents, tax documents, or Brazilian tax compliance; any file contains 'nfe-io' in package.json or import statements; user mentions polling for invoice status, invoice async processing, or certificate management for Brazilian fiscal documents. Covers all 22 SDK resources, async invoice processing with polling, discriminated union responses, error hierarchy, certificate management, webhook signature validation, address lookup (CEP), legal entity and natural person lookups, tax calculation engine, and pagination patterns. Use this skill even if the user doesn't explicitly name the SDK -- if they're building anything related to Brazilian fiscal document automation in Node.js/TypeScript, this skill applies."
 ---
 
 # NFE.io Node.js SDK Integration Guide
@@ -265,22 +265,29 @@ for await (const company of nfe.companies.listIterator()) {
 
 ## Core Pattern: File Downloads
 
-PDF and XML downloads return `Buffer` objects for most resources:
+Downloads differ by resource. Only service invoices and the NF-e query by access key return the
+bytes:
 
 ```typescript
 import { writeFileSync } from 'node:fs';
 
-// Service invoice downloads return Buffer
+// Service invoice downloads return Buffer (invoiceId is required)
 const pdf = await nfe.serviceInvoices.downloadPdf(companyId, invoiceId);
 const xml = await nfe.serviceInvoices.downloadXml(companyId, invoiceId);
 writeFileSync('invoice.pdf', pdf);
 writeFileSync('invoice.xml', xml);
 
-// Query resources also return Buffer
+// The NF-e query by access key also returns Buffer
 const danfe = await nfe.productInvoiceQuery.downloadPdf(accessKey);
 ```
 
-**Exception**: `productInvoices.downloadPdf()` returns `NfeFileResource` (with a `uri` field), not a raw Buffer. Use the URI to fetch the file separately.
+The others return a URI, and fetching the file is up to the caller:
+
+- `productInvoices.download*` → `NfeFileResource` (`{ uri }`);
+- `consumerInvoices.download*` → `ConsumerInvoiceFileResource` (`{ uri }`);
+- `inboundProductInvoices.getXml/getPdf/getEventXml` and
+  `transportationInvoices.downloadXml/downloadEventXml` → `InboundFileResource`
+  (`{ publicTemporaryUri }`, pre-signed and time-limited).
 
 ## Core Pattern: Certificates
 
@@ -368,7 +375,7 @@ on the live API — fetch the real list with `await nfe.webhooks.fetchEventTypes
 
 6. **Method is `companies.remove()`** not `companies.delete()` — avoids JS reserved keyword conflict.
 
-7. **Data services need API key**: Resources on non-main hosts (addresses, lookups, tax calculation) use `dataApiKey` with `apiKey` as fallback. Ensure at least one is set.
+7. **Data services need the data key**: resources on the lookup hosts (addresses, CNPJ/CPF lookups, NF-e query by access key) use `dataApiKey`, with `apiKey` as fallback. Tax calculation and tax codes live on the fiscal host `api.nfse.io` and use the main `apiKey`: the data key gets 403 there.
 
 8. **Different pagination**: Service invoices use offset (`pageIndex`/`pageCount`), product invoices use cursor (`startingAfter`/`endingBefore`/`limit`).
 
@@ -415,7 +422,7 @@ on the live API — fetch the real list with `await nfe.webhooks.fetchEventTypes
 | Cancel a product invoice | `nfe.productInvoices.cancel(companyId, invoiceId)` |
 | Download DANFE PDF | `nfe.serviceInvoices.downloadPdf(companyId, id)` or `nfe.productInvoiceQuery.downloadPdf(accessKey)` |
 | Send invoice by email | `nfe.serviceInvoices.sendEmail(companyId, invoiceId)` |
-| Issue correction letter (CC-e) | `nfe.productInvoices.sendCorrectionLetter(companyId, id, data)` |
+| Issue correction letter (CC-e) | `nfe.productInvoices.sendCorrectionLetter(companyId, id, reason)` |
 
 ## Reference Files
 

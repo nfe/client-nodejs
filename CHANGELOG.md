@@ -92,6 +92,23 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   da API segue o contrato da conta. `tests/unit/license.test.ts` compara o SPDX declarado com o
   texto do arquivo e confere o arquivo no tarball.
 
+- **A skill publicada ensinava assinaturas de antes da 6.0.0.** Comparada ao código, ela tinha
+  32 métodos com parâmetro, retorno ou nome errado, quase todos de quebras da 6.0.0 que não
+  chegaram a ela:
+  - downloads de `productInvoices`, `consumerInvoices`, `inboundProductInvoices` e
+    `transportationInvoices` descritos como `Buffer` ou string, quando devolvem um recurso com
+    URI;
+  - `productInvoices.sendCorrectionLetter`, `disable` e `disableRange`; o `cancel`, os
+    downloads e o `getStatus` de NFS-e; as leituras de NFC-e com um `environment` que não existe
+    mais;
+  - `transportationInvoices.retrieveEvent`, que não existe: o método é `getEvent`.
+
+  Também estavam errados o CRUD de webhook por empresa, que aparecia como funcional numa tabela,
+  o pitfall de chaves, que dizia que o cálculo de tributos usa a chave de dados, e o tipo
+  `NfeStateTax`. Tudo foi conferido contra o código: os usos que a skill ensina agora compilam em
+  modo estrito, e os que ela ensinava antes não compilam. Entraram também as notas desta release
+  (distribuição no plural, envelopes).
+
 ### Corrigido — registro, não código
 
 **A regra de chaves da 6.0.0 vale por rota, não por host.** A entrada 6.0.0 diz que as
