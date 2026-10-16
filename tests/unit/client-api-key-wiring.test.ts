@@ -1,9 +1,11 @@
 /**
  * Qual chave sai no fio, por família de host.
  *
- * As duas chaves da plataforma são COMPLEMENTARES, não alternativas — cada uma
- * responde 403 no território da outra (probe ao vivo 2026-09-01, evidência em
- * tests/fixtures/live-contracts/api-key-host-matrix.json):
+ * As duas chaves da plataforma são COMPLEMENTARES, não alternativas. A regra é
+ * por rota (probe ao vivo 2026-10-14, evidência em
+ * tests/fixtures/live-contracts/api-key-route-matrix.json): a chave de dados é
+ * recusada (403) nas rotas de documento fiscal e a principal nos hosts de
+ * consulta. Algumas rotas de cadastro aceitam as duas; o SDK não depende disso.
  *
  *   api.nfse.io / api.nfe.io  (fiscal)   → apiKey
  *   nfe.api.nfe.io, legalentity, naturalperson, address (consulta) → dataApiKey

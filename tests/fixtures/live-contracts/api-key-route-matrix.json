@@ -1,0 +1,27 @@
+{
+  "probe": "qual chave cada ROTA aceita (refaz e amplia api-key-host-matrix.json)",
+  "capturedOn": "2026-10-14",
+  "note": "A fronteira entre as chaves e por rota, nao por host. A chave de dados e recusada (403) nas rotas de documento fiscal e aceita nas rotas de cadastro da conta; a principal e recusada nos hosts de consulta. O SDK envia a principal a todo recurso de api.nfe.io e api.nfse.io e nao depende da aceitacao da chave de dados no cadastro, que nao e contrato documentado (pergunta aberta ao time de API).",
+  "correctsRecordOf": "api-key-host-matrix.json (2026-09-01) mediu so rotas de documento fiscal em api.nfse.io e generalizou para o host.",
+  "matrix": [
+    { "host": "api.nfse.io",            "pathShape": "/tax-codes/operation-code",                       "kind": "documento fiscal", "mainKey": 200, "dataKey": 403 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies/{id}/consumerinvoices",             "kind": "documento fiscal", "mainKey": 200, "dataKey": 403 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies/{id}/productinvoices",              "kind": "documento fiscal", "mainKey": 200, "dataKey": 403 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies/{id}/inbound/productinvoices",      "kind": "documento fiscal", "mainKey": 404, "dataKey": 403, "note": "404 = empresa sem captura configurada; a 403 da chave de dados e que e recusa de autenticacao" },
+    { "host": "api.nfse.io",            "pathShape": "POST /tax-rules/{tenantId}/engine/calculate",     "kind": "documento fiscal", "mainKey": 403, "dataKey": 403, "capturedOn": "2026-10-16",
+      "note": "Com a principal, 403 de aplicacao em ProblemDetails ('Authorization account does not match tenant id': o tenant usado era um id de empresa). Com a de dados, 403 de corpo vazio, recusa do gateway, como nas demais rotas de documento." },
+    { "host": "api.nfe.io",             "pathShape": "/v1/companies/{id}/serviceinvoices",              "kind": "documento fiscal", "mainKey": 200, "dataKey": 403 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies/{id}",                              "kind": "cadastro",         "mainKey": 200, "dataKey": 200 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies?limit=1",                           "kind": "cadastro",         "mainKey": 200, "dataKey": 200 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies/{id}/municipaltaxes",               "kind": "cadastro",         "mainKey": 200, "dataKey": 200 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies/{id}/statetaxes",                   "kind": "cadastro",         "mainKey": 200, "dataKey": 200 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/companies/{id}/certificates",                 "kind": "cadastro",         "mainKey": 200, "dataKey": 200 },
+    { "host": "api.nfse.io",            "pathShape": "/v2/webhooks",                                    "kind": "cadastro",         "mainKey": 200, "dataKey": 200 },
+    { "host": "api.nfe.io",             "pathShape": "/v2/webhooks",                                    "kind": "cadastro",         "mainKey": 200, "dataKey": 200 },
+    { "host": "api.nfe.io",             "pathShape": "/v1/companies?pageCount=2",                       "kind": "cadastro",         "mainKey": 200, "dataKey": 200 },
+    { "host": "legalentity.api.nfe.io", "pathShape": "/v1/legalentities/basicInfo/{taxNumber}",         "kind": "consulta",         "mainKey": 403, "dataKey": 200 },
+    { "host": "address.api.nfe.io",     "pathShape": "/v2/addresses/{postalCode}",                      "kind": "consulta",         "mainKey": 403, "dataKey": 200 },
+    { "host": "nfe.api.nfe.io",         "pathShape": "/v3/productinvoices/serpro/{accessKey}.xml",      "kind": "consulta",         "mainKey": 403, "dataKey": 406, "note": "406 com chave de acesso sintetica: a autenticacao passou" }
+  ],
+  "keysAreDistinct": "as duas chaves do .env da sonda tem valores diferentes (comparadas por hash, sem expor valor)"
+}

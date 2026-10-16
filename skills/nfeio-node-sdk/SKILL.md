@@ -43,7 +43,11 @@ const nfe = new NfeClient({
 });
 ```
 
-**Two complementary API keys** — not alternatives. Each answers **403** in the other's territory:
+**Two complementary API keys** — not alternatives. Measured route by route (2026-10-14): the data
+key is rejected (**403**) on fiscal-document routes (NF-e, NFC-e, NFS-e, inbound documents,
+tax codes and calculation), and the main key is rejected (**403**) on the lookup hosts. Some
+account-registry routes also accept the data key; that is not a documented contract and the SDK
+does not rely on it.
 
 - **`apiKey`** (main) → FISCAL hosts: `api.nfe.io`, `api.nfse.io`. Covers every emission
   resource plus `certificates`, `municipalTaxes`, `stateTaxes`, `taxCodes` and
