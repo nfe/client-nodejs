@@ -7,6 +7,115 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não lançado]
 
+## [6.0.1] - 2026-10-16
+
+> **Patch de contrato e de documentação.** Dois bugs de código, provados por sonda ao vivo
+> contra a API real (2026-10-14 a 10-16), e uma rodada de correções na documentação, que
+> ensinava métodos sem caminho de sucesso e uma regra de chaves imprecisa. Nenhuma
+> assinatura pública muda. Evidência versionada em `tests/fixtures/live-contracts/`.
+
+### Corrigido
+
+- **Quatro métodos da distribuição de NF-e chamavam uma rota que não existe.**
+  `inboundProductInvoices.getProductInvoiceDetails`, `getProductInvoiceEventDetails`,
+  `getJson` e `reprocessWebhook` montavam `/inbound/productinvoice/` (singular). A plataforma
+  serve só o plural, `/inbound/productinvoices/`. Medido em 2026-10-14: o singular responde
+  `404` de corpo vazio mesmo sem credencial, igual a um path inventado; o plural responde
+  `401` sem credencial, e `200` com ela nos dois métodos de leitura sondados
+  (`getProductInvoiceDetails` e `getJson`). A spec local `consulta-nfe-distribuicao-v1.yaml` ainda
+  diz singular; o upstream corrigiu em `nfe/docs@51d8816`. Cinco testes unitários afirmavam o
+  path errado e foram corrigidos junto.
+
+  O bug era latente. Em 30 dias de log de gateway (2026-09-14 a 10-14), o plural teve 28.543
+  respostas `200` e o singular, 9 respostas `404`, nenhuma com User-Agent do SDK. Evidência em
+  `inbound-distribution-routes.json`.
+
+- **`municipalTaxes`, `stateTaxes` e `notifications` devolviam o envelope no lugar da
+  entidade.** A API responde `{ "municipalTax": {…} }`, `{ "stateTax": {…} }` e
+  `{ "notification": {…} }`, e o SDK repassava o corpo tipado como a entidade: `resultado.id`
+  era `undefined`, sem erro de compilação. Agora `create`, `retrieve` e `update` de
+  `municipalTaxes` e `stateTaxes`, e `notifications.retrieve`, devolvem a entidade.
+
+  O envelope foi medido no `retrieve` dos três em 2026-10-15. O `create` e o `update` não
+  foram sondados, porque exigiriam escrever num registro real; seguem a spec, que declara o
+  mesmo envelope. O desembrulho é defensivo: se a API responder a entidade direta, ela chega
+  intacta.
+
+  **Migração:** quem contornava o bug lendo `(resultado as any).municipalTax` (ou `.stateTax`,
+  `.notification`) passa a receber `undefined` nessa leitura. Use o resultado direto. Código
+  que precisa rodar nas duas versões pode ler `(resultado as any).municipalTax ?? resultado`.
+
+  Evidência em `response-envelopes.json`, que registra também três casos em que o SDK já
+  estava certo e a spec erra: `legalPeople.list`, `naturalPeople.retrieve` e
+  `addresses.lookupByPostalCode`.
+
+### Documentação
+
+- **`municipalTaxes.update` é um PUT que substitui a inscrição, e nada avisava.** Pela
+  documentação da plataforma (`nfe/docs@b9e7953`), omitir `taxNumber` apaga o número da
+  inscrição, e omitir `environment` volta para `Development`. `rpsNumber` e `lastRpsSent` são a
+  exceção: omitidos, preservam o contador de RPS; enviados, sobrescrevem o contador, inclusive
+  para trás. O JSDoc, `docs/recursos/municipal-taxes.md` e a skill agora mostram o roteiro: ler
+  com `retrieve`, alterar e reenviar sem os dois campos do contador. O SDK não sondou isso,
+  porque exigiria escrever sobre uma inscrição real.
+
+- **A documentação ensinava como funcionais métodos que só respondem `404`.**
+  `municipalTaxes.getSeries()`/`updatePrefecture()` e
+  `consumerInvoiceQuery.retrieve()`/`downloadXml()` estão `@deprecated` desde a 6.0.0, porque
+  a plataforma não serve as rotas. Mesmo assim, `docs/recursos/`, o README, `docs/API.md`, a
+  skill e os exemplos ainda os mostravam como caminho de uso; agora aparecem como
+  descontinuados. O exemplo de webhook por empresa do README passou ao webhook de conta
+  (`createAccountWebhook`), e a seção v2 → v3 do `MIGRATION.md` ganhou o aviso de que os
+  métodos por empresa estão descontinuados.
+
+  `tests/unit/docs-drift.test.ts` passa a falhar quando um documento cita, sem aviso por
+  perto, um método `@deprecated` por rota não servida. O conjunto sai do código, não de uma
+  lista mantida à mão: entram os métodos com `@deprecated`, inclusive no nível da classe,
+  menos as depreciações funcionais declaradas com motivo (`companies.list`,
+  `webhooks.getAvailableEvents`).
+
+- **Links quebrados (issue #47).** O README apontava para
+  `docs/MIGRATION-TO-GENERATED-TYPES.md`, e a entrada 3.0 deste CHANGELOG para
+  `RELEASE_NOTES_v3.md`; nenhum dos dois existe, e ambos passam ao `MIGRATION.md`.
+  `docs/API.md` e `docs/EXTENDING.md` linkavam arquivos fora de `docs/` (`../src/core/types.ts`,
+  `../CONTRIBUTING.md`, `../LICENSE`), que quebram no portal, onde `docs/` é espelhado sozinho;
+  passam a URLs absolutas do repositório. O `docs-drift.test.ts` agora confere os links
+  relativos de README, `MIGRATION.md`, CHANGELOG, `docs/**` e `skills/**`: o arquivo precisa
+  existir e, em `docs/**`, o link não pode sair de `docs/`.
+
+- **Arquivo de licença (issue #47).** O repositório nunca teve um: o MIT existia só no campo
+  `license` do `package.json`, e a API do GitHub reportava o repositório como sem licença.
+  Entra o `LICENSE` com o texto MIT e a linha
+  `Copyright (c) 2026 NFE.IO HUB SERVICOS DE TECNOLOGIA LTDA`. O README, os cabeçalhos de
+  `src/` e o banner do bundle citam o mesmo titular. O banner usa `/*! … */`, que os
+  minificadores preservam quando a aplicação re-empacota o SDK. A licença cobre o SDK; o uso
+  da API segue o contrato da conta. `tests/unit/license.test.ts` compara o SPDX declarado com o
+  texto do arquivo e confere o arquivo no tarball.
+
+### Corrigido — registro, não código
+
+**A regra de chaves da 6.0.0 vale por rota, não por host.** A entrada 6.0.0 diz que as
+duas chaves "são complementares, e cada uma responde `403` no território da outra". Isso
+generalizava uma sonda de 2026-09-01 que só testou rotas de documento fiscal em
+`api.nfse.io`. A matriz foi refeita em 2026-10-14 sobre 16 rotas:
+
+- a chave de dados é recusada (`403`) nas rotas de documento fiscal: tax-codes, NF-e, NFC-e,
+  distribuição, NFS-e v1 e, medido em 2026-10-16, o cálculo de tributos;
+- a chave principal é recusada (`403`) nos hosts de consulta medidos: CNPJ, CEP e NF-e por
+  chave de acesso;
+- na leitura, as rotas de cadastro da conta aceitam as duas: empresas (lista na v1, item e
+  lista na v2), inscrições municipais e estaduais, certificados, e webhooks nos dois hosts. A
+  escrita com a chave de dados não foi testada.
+
+O SDK não tinha bug: ele envia a chave principal a todo recurso de `api.nfe.io` e
+`api.nfse.io`, e ela funciona em todas essas rotas. A aceitação da chave de dados no cadastro
+não é contrato documentado, e o SDK não depende dela. README, `MIGRATION.md`,
+`docs/multi-host-routing.md`, a skill e os JSDoc agora descrevem a regra por rota.
+
+Evidência em `api-key-route-matrix.json`. O fixture de 2026-09-01 continua como registro
+histórico, com `supersededBy` apontando para o novo, e a entrada 6.0.0 abaixo não foi
+reescrita.
+
 ## [6.0.0] - 2026-09-03
 
 > **Major de correção de contrato.** Nada aqui é funcionalidade nova: são bugs provados por
