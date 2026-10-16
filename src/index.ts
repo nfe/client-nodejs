@@ -32,7 +32,6 @@
  * ```
  *
  * @module nfe-io
- * @version 5.1.0
  * @author NFE.io
  * @license MIT
  * @copyright 2026 NFE.IO HUB SERVICOS DE TECNOLOGIA LTDA

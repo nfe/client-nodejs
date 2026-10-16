@@ -116,6 +116,15 @@ Evidência em `api-key-route-matrix.json`. O fixture de 2026-09-01 continua como
 histórico, com `supersededBy` apontando para o novo, e a entrada 6.0.0 abaixo não foi
 reescrita.
 
+### Manutenção
+
+- **O `package-lock.json` estava na 5.2.0**, porque a 6.0.0 só atualizou o `package.json`.
+  Agora acompanha a versão, e `tests/unit/version.test.ts` falha se os dois divergirem.
+- **O cabeçalho de `src/index.ts` ainda dizia `@version 5.1.0`.** A tag saiu, porque a versão
+  vive só em `src/version.ts`, e o `version.test.ts` passa a recusar `@version X.Y.Z` em
+  `src/`. A varredura de literais continua ignorando comentários, que citam versões antigas
+  como histórico.
+
 ## [6.0.0] - 2026-09-03
 
 > **Major de correção de contrato.** Nada aqui é funcionalidade nova: são bugs provados por
