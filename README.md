@@ -1081,7 +1081,7 @@ npm run build
 
 **Nota**: Arquivos gerados não devem ser editados manualmente. Edite as specs OpenAPI e regenere.
 
-Para orientações de migração, veja [docs/MIGRATION-TO-GENERATED-TYPES.md](./docs/MIGRATION-TO-GENERATED-TYPES.md).
+Para orientações de migração, veja [MIGRATION.md](./MIGRATION.md).
 
 ### Verificação de Tipos
 

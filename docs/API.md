@@ -2241,7 +2241,7 @@ interface LegalEntityStateTaxForInvoice {
 }
 ```
 
-> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+> See [src/core/types.ts](https://github.com/nfe/client-nodejs/blob/master/src/core/types.ts) for the complete type definitions.
 
 ---
 
@@ -2302,7 +2302,7 @@ interface NaturalPersonStatusResponse {
 }
 ```
 
-> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+> See [src/core/types.ts](https://github.com/nfe/client-nodejs/blob/master/src/core/types.ts) for the complete type definitions.
 
 ---
 
@@ -2384,7 +2384,7 @@ interface CalculateResponse {
 }
 ```
 
-> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions including all tax component interfaces (TaxIcms, TaxPis, TaxCofins, TaxIpi, TaxIi, TaxIcmsUfDest).
+> See [src/core/types.ts](https://github.com/nfe/client-nodejs/blob/master/src/core/types.ts) for the complete type definitions including all tax component interfaces (TaxIcms, TaxPis, TaxCofins, TaxIpi, TaxIi, TaxIcmsUfDest).
 
 ---
 
@@ -2450,7 +2450,7 @@ interface TaxCodeListOptions {
 }
 ```
 
-> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+> See [src/core/types.ts](https://github.com/nfe/client-nodejs/blob/master/src/core/types.ts) for the complete type definitions.
 
 ---
 
@@ -2705,7 +2705,7 @@ interface NfeStateTax {
 }
 ```
 
-> See [src/core/types.ts](../src/core/types.ts) for the complete type definitions.
+> See [src/core/types.ts](https://github.com/nfe/client-nodejs/blob/master/src/core/types.ts) for the complete type definitions.
 
 ---
 
@@ -3014,7 +3014,7 @@ const invoice: ServiceInvoice = await nfe.serviceInvoices.retrieve(
 
 ## Extension Development
 
-The SDK is designed to be extensible. See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidance on:
+The SDK is designed to be extensible. See [CONTRIBUTING.md](https://github.com/nfe/client-nodejs/blob/master/CONTRIBUTING.md) for guidance on:
 
 - Creating MCP (Model Context Protocol) integrations
 - Building n8n workflow nodes
@@ -3055,4 +3055,4 @@ class ExtendedNfeClient extends NfeClient {
 
 ## License
 
-MIT License - see [LICENSE](../LICENSE) for details
+MIT License - see [LICENSE](https://github.com/nfe/client-nodejs/blob/master/LICENSE) for details

@@ -1168,7 +1168,7 @@ Todos os métodos mantêm a mesma assinatura básica, mas agora retornam Promise
 
 Para migrar da v2 para v3, consulte:
 - **Guia completo:** [MIGRATION.md](./MIGRATION.md)
-- **Release notes:** [RELEASE_NOTES_v3.md](./RELEASE_NOTES_v3.md)
+- **Release notes:** [Guia de migração v2 → v3](./MIGRATION.md#guia-de-migração-v2--v3)
 
 **Checklist rápido:**
 1. ✅ Atualizar Node.js para >= 18.0.0

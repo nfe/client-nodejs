@@ -884,7 +884,7 @@ export class PlatformXAdapter extends BaseAdapter {
 ## Additional Resources
 
 - [Core SDK API Reference](./API.md)
-- [Contributing Guidelines](../CONTRIBUTING.md)
+- [Contributing Guidelines](https://github.com/nfe/client-nodejs/blob/master/CONTRIBUTING.md)
 - [NFE.io API Documentation](https://nfe.io/docs)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 

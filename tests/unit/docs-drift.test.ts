@@ -22,7 +22,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 
 /** Superfície pública: tudo que os resources e o cliente declaram. */
 function superficiePublica(): string {
@@ -252,5 +252,66 @@ describe('métodos sem caminho de sucesso × documentação', () => {
       semAviso,
       `Documentação ensina método sem caminho de sucesso sem avisar:\n  ${semAviso.join('\n  ')}`
     ).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Links relativos
+// ---------------------------------------------------------------------------
+
+/**
+ * Link relativo precisa apontar para arquivo que existe.
+ *
+ * Em 2026-09-04 a issue #47 apontou três: `README.md` → `docs/MIGRATION-TO-GENERATED-TYPES.md`,
+ * `CHANGELOG.md` → `RELEASE_NOTES_v3.md` e `docs/API.md` → `../LICENSE`, que nunca existiu.
+ *
+ * `docs/` é espelhado no portal (`nfeio-docs`), onde a árvore em volta é outra: um link
+ * relativo que sai de `docs/` funciona no GitHub e quebra no portal. Por isso, em `docs/**`,
+ * resolver para fora de `docs/` também falha — para o README ou o LICENSE, use URL absoluta.
+ *
+ * LIMITE: âncoras (`#secao`) não são validadas. Validá-las exigiria reproduzir os
+ * algoritmos de slug do GitHub e do Docusaurus, que diferem.
+ */
+function linksQuebrados(arquivo: string, texto: string): string[] {
+  const problemas: string[] = [];
+  let dentroDeCodigo = false;
+  texto.split('\n').forEach((linha, i) => {
+    if (/^\s*```/.test(linha)) dentroDeCodigo = !dentroDeCodigo;
+    if (dentroDeCodigo) return;
+    for (const m of linha.matchAll(/!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
+      const alvo = m[1]!;
+      if (/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(alvo)) continue; // URL, âncora pura ou rota do site
+      const caminho = decodeURI(alvo.split('#')[0]!.split('?')[0]!);
+      if (caminho === '') continue;
+      const resolvido = join(dirname(arquivo), caminho);
+      if (!existsSync(resolvido)) {
+        problemas.push(`${arquivo}:${i + 1}: ${alvo} (não existe)`);
+      } else if (arquivo.startsWith('docs/') && !resolvido.startsWith('docs/')) {
+        problemas.push(`${arquivo}:${i + 1}: ${alvo} (sai de docs/; quebra no portal)`);
+      }
+    }
+  });
+  return problemas;
+}
+
+describe('links relativos da documentação', () => {
+  it('apontam para arquivos que existem', () => {
+    const arquivos = [
+      'README.md',
+      'MIGRATION.md',
+      'CHANGELOG.md',
+      ...listarRecursivo('docs', ['.md']),
+      ...listarRecursivo('skills', ['.md']),
+    ].filter(existsSync);
+
+    const quebrados = arquivos.flatMap(a => linksQuebrados(a, readFileSync(a, 'utf8')));
+
+    expect(quebrados, `Links quebrados:\n  ${quebrados.join('\n  ')}`).toEqual([]);
+  });
+
+  it('a verificação pega de verdade um link quebrado e um que sai de docs/', () => {
+    expect(linksQuebrados('README.md', '[x](./NAO-EXISTE.md)')).toHaveLength(1);
+    expect(linksQuebrados('docs/API.md', '[x](../README.md)')).toHaveLength(1);
+    expect(linksQuebrados('README.md', '[x](https://example.com) [y](#ancora)')).toHaveLength(0);
   });
 });
