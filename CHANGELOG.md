@@ -124,6 +124,12 @@ reescrita.
   vive só em `src/version.ts`, e o `version.test.ts` passa a recusar `@version X.Y.Z` em
   `src/`. A varredura de literais continua ignorando comentários, que citam versões antigas
   como histórico.
+- **Os testes de integração de `companies` que criam, alteram ou apagam empresas passam a
+  exigir `NFE_ALLOW_ACCOUNT_WRITES=true`.** Fora da CI, o `npm test` roda também a integração
+  sempre que há chave no `.env`, e cada rodada deixava sete empresas na conta: o
+  `companies.remove` responde com sucesso, mas a empresa continua lá, com status `Inactive`
+  (medido em 2026-10-16). Sem a variável, rodam só o `404` de empresa inexistente e a recusa
+  de corpo inválido, que não gravam nada. Ligue a variável só com uma conta descartável.
 
 ## [6.0.0] - 2026-09-03
 
