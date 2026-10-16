@@ -115,10 +115,15 @@ Lists fiscal events for the invoice (cancellations, correction letters, manifest
 Access via `nfe.consumerInvoiceQuery`. Global scope.
 Queries CFe-SAT (Cupom Fiscal Eletronico) data from SEFAZ.
 
-### retrieve(accessKey): Promise<TaxCoupon>
+> ⚠️ **Deprecated — the platform does not serve these routes.** `/v1/consumerinvoices/coupon/{key}`
+> and `.xml` answer `404` identical to an unknown path, even without credentials (measured
+> 2026-09-02); 90 days of gateway logs have no `200`. The methods still send the request and the
+> `404` explains it. Do not recommend them; the shapes below are kept for reference only.
+
+### retrieve(accessKey): Promise<TaxCoupon> — deprecated, route not served
 
 ```typescript
-const coupon = await nfe.consumerInvoiceQuery.retrieve(accessKey);
+const coupon = await nfe.consumerInvoiceQuery.retrieve(accessKey); // @deprecated — 404, route not served
 ```
 
 **TaxCoupon** contains:
@@ -135,9 +140,9 @@ type CouponStatus = 'Unknown' | 'Authorized' | 'Canceled';
 type CouponTaxRegime = 'National_Simple' | 'National_Simple_Brute' | 'Normal_Regime';
 ```
 
-### downloadXml(accessKey): Promise<Buffer>
+### downloadXml(accessKey): Promise<Buffer> — deprecated, route not served
 
-Downloads CFe XML as raw `Buffer`.
+Would download the CFe XML as a raw `Buffer`; the route answers `404` (see the warning above).
 
 ---
 

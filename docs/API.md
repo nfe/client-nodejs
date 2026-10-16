@@ -2034,58 +2034,23 @@ for (const event of result.events ?? []) {
 
 ---
 
-### Consumer Invoice Query (Consulta CFe-SAT)
+### Consumer Invoice Query (Consulta CFe-SAT) — deprecated
 
 **Resource:** `nfe.consumerInvoiceQuery`
 
-Query CFe-SAT (Cupom Fiscal Eletrônico) consumer invoices by access key. This is a read-only resource that does not require company scope.
+> ⚠️ **Deprecated — the platform does not serve these routes.** `/v1/consumerinvoices/coupon/{key}`
+> and `.xml` are declared in the OpenAPI spec but answer `404`, identical to an unknown path,
+> even without credentials (measured 2026-09-02); 90 days of gateway logs have no `200`. Both
+> methods are marked `@deprecated`: they still send the request, and the `404` explains that the
+> route is not served. There is no replacement in the API today.
 
-> **Note:** This resource uses a separate API host (`nfe.api.nfe.io`). You can configure a specific API key with `dataApiKey`, or the SDK will use `apiKey` as fallback.
+#### `retrieve(accessKey: string): Promise<TaxCoupon>` — deprecated
 
-#### `retrieve(accessKey: string): Promise<TaxCoupon>`
+Would retrieve the CFe-SAT coupon by access key. The route answers `404` (see above).
 
-Retrieve full CFe-SAT coupon details by access key.
+#### `downloadXml(accessKey: string): Promise<Buffer>` — deprecated
 
-```typescript
-const coupon = await nfe.consumerInvoiceQuery.retrieve(
-  '35240112345678000190590000000012341234567890'
-);
-console.log(coupon.currentStatus); // 'Authorized'
-console.log(coupon.issuer?.name);
-console.log(coupon.totals?.couponAmount);
-```
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `accessKey` | `string` | Yes | 44-digit numeric access key (Chave de Acesso) |
-
-**Returns:** `TaxCoupon` — Full coupon details including issuer, buyer, items, totals, and payment.
-
-**Throws:**
-- `ValidationError` if access key format is invalid
-- `NotFoundError` if no coupon matches the access key (HTTP 404)
-- `AuthenticationError` if API key is invalid (HTTP 401)
-
-#### `downloadXml(accessKey: string): Promise<Buffer>`
-
-Download the raw CFe XML for a consumer invoice.
-
-```typescript
-const xmlBuffer = await nfe.consumerInvoiceQuery.downloadXml(
-  '35240112345678000190590000000012341234567890'
-);
-fs.writeFileSync('cfe.xml', xmlBuffer);
-```
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `accessKey` | `string` | Yes | 44-digit numeric access key |
-
-**Returns:** `Buffer` containing the XML binary content.
+Would download the raw CFe XML. The route answers `404` (see above).
 
 ---
 

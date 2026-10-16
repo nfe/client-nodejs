@@ -593,6 +593,11 @@ await nfe.naturalPeople.delete('company-id', 'person-id');
 ### Webhooks
 
 ```javascript
+// ⚠️ Desde a v5.1, os métodos de webhook por empresa estão descontinuados (@deprecated):
+// a rota /v1/companies/{id}/webhooks responde 404. Use os métodos por conta —
+// createAccountWebhook, listAccountWebhooks, retrieveAccountWebhook, updateAccountWebhook
+// e deleteAccountWebhook. O bloco abaixo fica como registro histórico da v3.
+
 // v2
 nfe.webhooks.create(webhookData, callback);
 nfe.webhooks.list(callback);
