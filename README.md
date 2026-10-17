@@ -1,4 +1,4 @@
-# NFE.io SDK para Node.js (v5)
+# NFE.io SDK para Node.js (v6)
 
 [![npm version](https://img.shields.io/npm/v/nfe-io.svg)](https://www.npmjs.com/package/nfe-io)
 [![Node.js Version](https://img.shields.io/node/v/nfe-io.svg)](https://nodejs.org)
@@ -14,6 +14,7 @@
 
 - [Recursos](#-recursos)
 - [Instalação](#-instalação)
+- [Versões suportadas](#-versões-suportadas)
 - [Início Rápido](#-início-rápido)
 - [Skill para Agentes de IA](#-skill-para-agentes-de-ia)
 - [Documentação](#-documentação)
@@ -55,6 +56,25 @@ ou
 ```bash
 pnpm add nfe-io
 ```
+
+## 📅 Versões suportadas
+
+| Versão | Node.js | Situação | O que recebe |
+|--------|---------|----------|--------------|
+| **6.x** | 22+ | Suportada | Correções e novidades |
+| **3.2.1** | 18 e 20 | Manutenção até 31/03/2027 | Só correções críticas de segurança |
+| 4.x e 5.x | 22+ | Depreciada no npm | Nada. Atualize para a 6.x: [migração v5 → v6](MIGRATION.md#v5--v6) |
+| 3.0.2 a 3.2.0 | 18+ | Depreciada no npm | Nada. `validateSignature()` rejeita toda assinatura legítima de webhook. Use a 3.2.1 ou a 6.x |
+| 2.0.0 e anteriores | 12+ | Depreciada no npm | Nada. O recurso de webhooks chama `/v1/hooks`, que a API não serve mais (`404`). Veja a [migração da v2](#-migração-da-v2) |
+
+Depreciar não remove a versão do npm nem quebra quem já a instalou. O `npm install` passa a
+mostrar um aviso com o motivo e a versão de destino. Para saber qual versão o seu projeto usa,
+rode `npm ls nfe-io`.
+
+A 3.2.1 é a última versão que roda em Node.js 18 e 20, que já estão fora de suporte (abril de
+2025 e abril de 2026). Em 31/03/2027 ela também será depreciada. Para continuar recebendo
+correções, atualize para Node.js 22 e para a 6.x, começando pela
+[migração v3 → v4](MIGRATION.md#v3--v4).
 
 ## 🚀 Início Rápido
 
