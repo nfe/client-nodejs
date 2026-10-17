@@ -19,7 +19,7 @@ uma empresa (tomadores/clientes PF).
 | `create(companyId, data)` | Cria uma PF. | `NaturalPerson` |
 | `retrieve(companyId, personId)` / `update(...)` / `delete(...)` | CRUD. | `NaturalPerson` / `void` |
 | `createBatch(companyId, data)` | Criação em lote. | resultado do lote |
-| `findByTaxNumber(companyId, cpf)` | Busca por CPF. | `NaturalPerson` |
+| `findByTaxNumber(companyId, cpf)` | Busca por CPF. | `NaturalPerson \| undefined` |
 
 ## Exemplo
 

@@ -19,7 +19,7 @@ uma empresa (tomadores/clientes PJ).
 | `create(companyId, data)` | Cria uma PJ. | `LegalPerson` |
 | `retrieve(companyId, personId)` / `update(...)` / `delete(...)` | CRUD. | `LegalPerson` / `void` |
 | `createBatch(companyId, data)` | Criação em lote. | resultado do lote |
-| `findByTaxNumber(companyId, cnpj)` | Busca por CNPJ. | `LegalPerson` |
+| `findByTaxNumber(companyId, cnpj)` | Busca por CNPJ. | `LegalPerson \| undefined` |
 
 ## Exemplo
 

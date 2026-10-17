@@ -1,5 +1,10 @@
 # Extending the NFE.io SDK
 
+> ⚠️ **Legacy guide (v3), not maintained.** Written for the 3.x SDK. The extension patterns may
+> still apply, but class names, signatures and examples are not checked against the current
+> code. For the current API, see the [resource pages](./README.md) and the type declarations
+> shipped with the package (`dist/index.d.ts`).
+
 Guide for extending the NFE.io SDK with custom functionality, adapters, and integrations.
 
 ## Table of Contents

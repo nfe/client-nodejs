@@ -3,24 +3,27 @@ title: Downloads de PDF e XML no SDK Node.js da NFE.io
 sidebar_label: Downloads (PDF/XML)
 sidebar_position: 6
 slug: downloads-pdf-xml
-description: Baixe DANFE/PDF e XML como Buffer, individualmente ou em ZIP por empresa, com o Accept correto.
+description: Baixe DANFE/PDF e XML de uma nota identificada, em bytes (Buffer) ou por link, conforme o recurso.
 ---
 
 # Downloads (PDF/XML)
 
-Os métodos de download retornam um **`Buffer`** com os bytes do arquivo, sempre
-de uma nota identificada — o `invoiceId` é obrigatório.
+O formato do retorno depende do recurso. A NFS-e e a consulta de NF-e por chave devolvem os
+**bytes** do arquivo (`Buffer`); os demais devolvem um **link** para ele, e baixá-lo fica com a
+aplicação. Em todos, o download é de uma nota identificada.
 
 ```typescript
 import { writeFileSync } from 'node:fs';
 
-// PDF
+// NFS-e: bytes
 const pdf = await nfe.serviceInvoices.downloadPdf(companyId, invoiceId);
 writeFileSync('nota.pdf', pdf);
 
-// XML
 const xml = await nfe.serviceInvoices.downloadXml(companyId, invoiceId);
 writeFileSync('nota.xml', xml);
+
+// NF-e: link para o arquivo
+const { uri } = await nfe.productInvoices.downloadPdf(companyId, productInvoiceId);
 ```
 
 > **Não existe download em lote por empresa.** Até a versão 5.2.0 o `invoiceId`
@@ -37,20 +40,24 @@ O PDF/XML só existe após a nota atingir um **estado terminal**
 (`Issued`/`Cancelled`). Antes disso, o download pode retornar `404` — use
 [polling ou webhooks](./async-and-polling.md) para aguardar a emissão.
 
-## Outros downloads
+## Por recurso
 
-| Recurso | Métodos |
-|---|---|
-| `serviceInvoices` | `downloadPdf`, `downloadXml` |
-| `serviceInvoicesRtc` | `downloadCancellationXml` (XML do evento de cancelamento) |
-| `consumerInvoices` (NFC-e) | `downloadPdf`, `downloadXml`, `downloadRejectionXml` (aceitam `environment`) |
-| `productInvoices` | `downloadPdf`, `downloadXml` |
-| `productInvoiceQuery` / `consumerInvoiceQuery` | `downloadPdf`/`downloadXml` por chave de acesso |
+| Recurso | Métodos | Retorno |
+|---|---|---|
+| `serviceInvoices` | `downloadPdf`, `downloadXml` | `Buffer` |
+| `serviceInvoicesRtc` | `downloadCancellationXml` (XML do evento de cancelamento) | `Buffer` |
+| `productInvoices` | `downloadPdf` (`force?`), `downloadXml`, `downloadRejectionXml`, `downloadEpecXml`, `downloadCorrectionLetterPdf`, `downloadCorrectionLetterXml` | `NfeFileResource` (`{ uri }`) |
+| `consumerInvoices` (NFC-e) | `downloadPdf` (`force?`), `downloadXml`, `downloadRejectionXml` | `ConsumerInvoiceFileResource` (`{ uri }`) |
+| `inboundProductInvoices` | `getXml`, `getPdf`, `getEventXml` | `InboundFileResource` (`{ publicTemporaryUri }`) |
+| `transportationInvoices` | `downloadXml`, `downloadEventXml` | `InboundFileResource` (`{ publicTemporaryUri }`) |
+| `productInvoiceQuery` | `downloadPdf`, `downloadXml`, por chave de acesso | `Buffer` |
 
-:::tip Streaming para arquivos grandes
-Os métodos carregam o arquivo inteiro em memória (`Buffer`). Para lotes grandes
-(ZIP da empresa), considere baixar fora do horário de pico e persistir em disco
-logo após o retorno.
+O `publicTemporaryUri` é um link pré-assinado e temporário. A consulta de cupom CFe-SAT
+(`consumerInvoiceQuery`) está descontinuada: a plataforma não serve a rota.
+
+:::tip Memória
+Os métodos que devolvem `Buffer` carregam o arquivo inteiro em memória. Para muitas notas,
+baixe uma a uma e grave em disco logo após cada retorno.
 :::
 
 ## Próximos passos

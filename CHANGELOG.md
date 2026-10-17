@@ -7,6 +7,15 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não lançado]
 
+### Documentação
+
+- **As páginas de `docs/` que o portal espelha foram conferidas contra o código.** Havia
+  assinaturas e retornos de antes da 6.0.0 nas páginas de NF-e, NFS-e, inscrição estadual,
+  consulta de CNPJ e pessoas, e em `downloads.md`, que ainda prometia "Buffer sempre" e "ZIP por
+  empresa". Também foram corrigidos exemplos que não compilavam em modo estrito. `docs/API.md`,
+  `docs/EXTENDING.md` e `docs/EXTENSIBILITY_SUMMARY.md` são da v3 e ganharam aviso de legado no
+  topo, sem reescrever o conteúdo.
+
 ## [6.0.1] - 2026-10-16
 
 > **Patch de contrato e de documentação.** Dois bugs de código, provados por sonda ao vivo

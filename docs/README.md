@@ -59,7 +59,7 @@ O fluxo completo (retorno discriminado + polling) está em
 - [Emissão assíncrona e polling](./async-and-polling.md) — retorno discriminado e `createAndWait`.
 - [Roteamento multi-host / multi-chave](./multi-host-routing.md) — quais recursos usam qual host e chave.
 - [Paginação](./pagination.md) — listas page-style e cursor.
-- [Downloads (PDF/XML)](./downloads.md) — bytes binários e ZIPs.
+- [Downloads (PDF/XML)](./downloads.md) — bytes (`Buffer`) ou link, conforme o recurso.
 - [Webhooks](./webhooks.md) — assinatura, eventos e webhooks de conta.
 - [Erros](./errors.md) — hierarquia de erros e type guards.
 - [Emissão RTC (Reforma Tributária)](./rtc-emission.md) — leiautes IBS/CBS/IS.

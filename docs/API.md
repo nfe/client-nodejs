@@ -1,5 +1,12 @@
 # NFE.io SDK v3 - API Reference
 
+> ⚠️ **Legacy reference (v3), not maintained.** This file was written for the 3.x SDK and is no
+> longer checked against the code. Several sections (service invoice `list`, `cancel` and
+> `sendEmail`, certificates, downloads) describe signatures and return types that changed in v5
+> and v6. The maintained reference is the [resource pages](./README.md) (Portuguese), the
+> [published skill](https://github.com/nfe/client-nodejs/tree/master/skills/nfeio-node-sdk) and the
+> type declarations shipped with the package (`dist/index.d.ts`), which editors show on hover.
+
 Complete API reference for the NFE.io Node.js SDK v3.
 
 ## Table of Contents

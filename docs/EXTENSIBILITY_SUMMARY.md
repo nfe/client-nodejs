@@ -1,5 +1,10 @@
 # NFE.io SDK v3 - Extensibility & Documentation Summary
 
+> ⚠️ **Documento legado (v3), não mantido.** Resumo de trabalho da época da 3.x, guardado como
+> registro histórico. Para a API atual, veja o [índice da documentação](./README.md), a
+> [skill publicada](https://github.com/nfe/client-nodejs/tree/master/skills/nfeio-node-sdk) e os
+> tipos que acompanham o pacote (`dist/index.d.ts`).
+
 ## ✅ Completed: JSDoc Documentation & API Reference
 
 ### 1. Comprehensive JSDoc Documentation
