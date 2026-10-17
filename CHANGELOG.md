@@ -9,6 +9,10 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ### Documentação
 
+- **O README ganhou a tabela de versões suportadas.** Ela diz o que cada faixa recebe, por que
+  as antigas foram depreciadas e até quando vale a 3.2.1, a última para Node.js 18 e 20
+  (31/03/2027). O título do README, que ainda dizia v5, passa a dizer v6.
+
 - **As páginas de `docs/` que o portal espelha foram conferidas contra o código.** Havia
   assinaturas e retornos de antes da 6.0.0 nas páginas de NF-e, NFS-e, inscrição estadual,
   consulta de CNPJ e pessoas, e em `downloads.md`, que ainda prometia "Buffer sempre" e "ZIP por
@@ -117,6 +121,34 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   `NfeStateTax`. Tudo foi conferido contra o código: os usos que a skill ensina agora compilam em
   modo estrito, e os que ela ensinava antes não compilam. Entraram também as notas desta release
   (distribuição no plural, envelopes).
+
+### Depreciado — registro, não código
+
+**As versões anteriores à 6.0.0, exceto a 3.2.1, foram depreciadas no npm em 2026-10-17.**
+Nada muda no pacote publicado: quem já instalou continua funcionando, e o `npm install` dessas
+versões passa a mostrar o motivo e a versão de destino.
+
+| Faixa | Motivo dado na mensagem |
+|---|---|
+| `<3.0.0` | SDK legado. O recurso de webhooks chama `/v1/hooks`, que responde `404` de corpo vazio, igual a um path inventado (medido em 2026-10-16). `/v1/companies` responde `401` sem credencial |
+| `>=3.0.0 <3.2.1` | `validateSignature()` rejeita toda assinatura legítima de webhook, corrigido na 3.2.1 |
+| `>=4.0.0 <6.0.0` | Métodos públicos que nunca alcançaram a API, corrigidos na 6.0.0 |
+
+A 3.2.1 fica de fora porque é a única versão para Node.js 18 e 20. Ela recebe só correção crítica
+de segurança e será depreciada em 31/03/2027. A 6.0.0 também fica de fora: o bug corrigido na
+6.0.1 era latente, sem tráfego do SDK na rota errada.
+
+Uso medido antes de depreciar, em 30 dias de log de gateway (2026-09-16 a 10-16):
+
+- **147.138 requisições** com `@nfe-io/sdk@3.0.0`, o User-Agent fixo das versões 3.x a 5.x. O
+  log não separa essas versões entre si. O Node.js do User-Agent ajuda pouco: 18 ou 20 sugere
+  3.x, mas o npm não impede instalar a 6.x em Node 20, e há tráfego assim;
+- **1.040 requisições** com `nfe-io@6.0.x`;
+- **213 requisições** com `Nfe-io/v1 NodeBindings/2.0.0`, todas em emissão de NFS-e. Nenhuma
+  chamou `/v1/hooks`.
+
+Mais de 99% do tráfego do SDK ainda vem de versões anteriores à 6. As contas que usam a 2.0.0
+ou Node 18/20 foram identificadas para o suporte avisar, fora deste repositório.
 
 ### Corrigido — registro, não código
 
