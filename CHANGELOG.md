@@ -9,6 +9,10 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ### Documentação
 
+- **O README ganhou a tabela de versões suportadas.** Ela diz que só a 6.x recebe correções e
+  por que cada faixa anterior foi depreciada. O título do README, que ainda dizia v5, passa a
+  dizer v6.
+
 - **As páginas de `docs/` que o portal espelha foram conferidas contra o código.** Havia
   assinaturas e retornos de antes da 6.0.0 nas páginas de NF-e, NFS-e, inscrição estadual,
   consulta de CNPJ e pessoas, e em `downloads.md`, que ainda prometia "Buffer sempre" e "ZIP por
@@ -117,6 +121,35 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   `NfeStateTax`. Tudo foi conferido contra o código: os usos que a skill ensina agora compilam em
   modo estrito, e os que ela ensinava antes não compilam. Entraram também as notas desta release
   (distribuição no plural, envelopes).
+
+### Depreciado — registro, não código
+
+**Todas as versões anteriores à 6.0.0 foram depreciadas no npm em 2026-10-17.** Nada muda no
+pacote publicado: quem já instalou continua funcionando, e o `npm install` dessas versões passa
+a mostrar o motivo e a versão de destino.
+
+| Faixa | Motivo dado na mensagem |
+|---|---|
+| `<3.0.0` | Não verifica o certificado TLS: `lib/BaseResource.js` passa `rejectUnauthorized: false` e `strictSSL: false` (conferido nas tarballs da 1.0.0 e da 2.0.0). O recurso de webhooks também chama `/v1/hooks`, que responde `404` de corpo vazio, igual a um path inventado, enquanto `/v1/companies` responde `401` sem credencial (medido em 2026-10-16) |
+| `>=3.0.0 <3.2.1` | `validateSignature()` rejeita toda assinatura legítima de webhook, corrigido na 3.2.1 |
+| `3.2.1` | Última versão para Node.js 18 e 20, ambos fora de suporte, e sem as correções da 6.x |
+| `>=4.0.0 <6.0.0` | Métodos públicos que nunca alcançaram a API, corrigidos na 6.0.0 |
+
+A 3.2.1 entra apesar de ser a única versão para Node.js 18 e 20: tem os mesmos métodos quebrados
+da 4.x e da 5.x, e o Node.js dela já está fora de suporte. A 6.0.0 fica de fora: o bug corrigido
+na 6.0.1 era latente, sem tráfego do SDK na rota errada.
+
+Uso medido antes de depreciar, em 30 dias de log de gateway (2026-09-16 a 10-16):
+
+- **147.138 requisições** com `@nfe-io/sdk@3.0.0`, o User-Agent fixo das versões 3.x a 5.x. O
+  log não separa essas versões entre si. O Node.js do User-Agent ajuda pouco: 18 ou 20 sugere
+  3.x, mas o npm não impede instalar a 6.x em Node 20, e há tráfego assim;
+- **1.040 requisições** com `nfe-io@6.0.x`;
+- **213 requisições** com `Nfe-io/v1 NodeBindings/2.0.0`, todas em emissão de NFS-e. Nenhuma
+  chamou `/v1/hooks`.
+
+Mais de 99% do tráfego do SDK ainda vem de versões anteriores à 6. As contas que usam a 2.0.0
+ou Node 18/20 foram identificadas para o suporte avisar, fora deste repositório.
 
 ### Corrigido — registro, não código
 
