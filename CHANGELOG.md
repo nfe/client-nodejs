@@ -1356,9 +1356,17 @@ SDK JavaScript legado com API baseada em callbacks.
 
 ## Links
 
-[Unreleased]: https://github.com/nfe/client-nodejs/compare/v5.2.0...HEAD
+[Não lançado]: https://github.com/nfe/client-nodejs/compare/v6.0.1...HEAD
+[6.0.1]: https://github.com/nfe/client-nodejs/compare/v6.0.0...v6.0.1
+[6.0.0]: https://github.com/nfe/client-nodejs/compare/v5.2.0...v6.0.0
 [5.2.0]: https://github.com/nfe/client-nodejs/compare/v5.1.0...v5.2.0
 [5.1.0]: https://github.com/nfe/client-nodejs/compare/v5.0.0...v5.1.0
 [5.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v5.0.0
-[3.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v3.0.0
-[2.0.0]: https://github.com/nfe/client-nodejs/releases/tag/v2.0.0
+[4.0.0]: https://github.com/nfe/client-nodejs/compare/v3.2.1...v4.0.0
+[3.2.1]: https://github.com/nfe/client-nodejs/compare/v3.2.0...v3.2.1
+[3.2.0]: https://github.com/nfe/client-nodejs/compare/v3.1.0...v3.2.0
+[3.1.0]: https://github.com/nfe/client-nodejs/compare/v3.0.2...v3.1.0
+[3.0.2]: https://github.com/nfe/client-nodejs/compare/3.0.1...v3.0.2
+[3.0.1]: https://github.com/nfe/client-nodejs/compare/3.0.0...3.0.1
+[3.0.0]: https://github.com/nfe/client-nodejs/releases/tag/3.0.0
+[2.0.0]: https://www.npmjs.com/package/nfe-io/v/2.0.0
