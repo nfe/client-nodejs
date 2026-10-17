@@ -9,9 +9,9 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ### Documentação
 
-- **O README ganhou a tabela de versões suportadas.** Ela diz o que cada faixa recebe, por que
-  as antigas foram depreciadas e até quando vale a 3.2.1, a última para Node.js 18 e 20
-  (31/03/2027). O título do README, que ainda dizia v5, passa a dizer v6.
+- **O README ganhou a tabela de versões suportadas.** Ela diz que só a 6.x recebe correções e
+  por que cada faixa anterior foi depreciada. O título do README, que ainda dizia v5, passa a
+  dizer v6.
 
 - **As páginas de `docs/` que o portal espelha foram conferidas contra o código.** Havia
   assinaturas e retornos de antes da 6.0.0 nas páginas de NF-e, NFS-e, inscrição estadual,
@@ -124,19 +124,20 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ### Depreciado — registro, não código
 
-**As versões anteriores à 6.0.0, exceto a 3.2.1, foram depreciadas no npm em 2026-10-17.**
-Nada muda no pacote publicado: quem já instalou continua funcionando, e o `npm install` dessas
-versões passa a mostrar o motivo e a versão de destino.
+**Todas as versões anteriores à 6.0.0 foram depreciadas no npm em 2026-10-17.** Nada muda no
+pacote publicado: quem já instalou continua funcionando, e o `npm install` dessas versões passa
+a mostrar o motivo e a versão de destino.
 
 | Faixa | Motivo dado na mensagem |
 |---|---|
-| `<3.0.0` | SDK legado. O recurso de webhooks chama `/v1/hooks`, que responde `404` de corpo vazio, igual a um path inventado (medido em 2026-10-16). `/v1/companies` responde `401` sem credencial |
+| `<3.0.0` | Não verifica o certificado TLS: `lib/BaseResource.js` passa `rejectUnauthorized: false` e `strictSSL: false` (conferido nas tarballs da 1.0.0 e da 2.0.0). O recurso de webhooks também chama `/v1/hooks`, que responde `404` de corpo vazio, igual a um path inventado, enquanto `/v1/companies` responde `401` sem credencial (medido em 2026-10-16) |
 | `>=3.0.0 <3.2.1` | `validateSignature()` rejeita toda assinatura legítima de webhook, corrigido na 3.2.1 |
+| `3.2.1` | Última versão para Node.js 18 e 20, ambos fora de suporte, e sem as correções da 6.x |
 | `>=4.0.0 <6.0.0` | Métodos públicos que nunca alcançaram a API, corrigidos na 6.0.0 |
 
-A 3.2.1 fica de fora porque é a única versão para Node.js 18 e 20. Ela recebe só correção crítica
-de segurança e será depreciada em 31/03/2027. A 6.0.0 também fica de fora: o bug corrigido na
-6.0.1 era latente, sem tráfego do SDK na rota errada.
+A 3.2.1 entra apesar de ser a única versão para Node.js 18 e 20: tem os mesmos métodos quebrados
+da 4.x e da 5.x, e o Node.js dela já está fora de suporte. A 6.0.0 fica de fora: o bug corrigido
+na 6.0.1 era latente, sem tráfego do SDK na rota errada.
 
 Uso medido antes de depreciar, em 30 dias de log de gateway (2026-09-16 a 10-16):
 
