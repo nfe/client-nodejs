@@ -4,6 +4,8 @@ sidebar_label: Códigos de tributos
 sidebar_position: 16
 slug: codigos-de-tributos
 description: Liste códigos de operação, finalidade de aquisição e perfis fiscais com nfe.taxCodes (host api.nfse.io, chave principal).
+tags: [nodejs, impostos, catalogo, referencia]
+integration: [sdk]
 ---
 
 # Códigos auxiliares (tax codes)

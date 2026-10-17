@@ -1,3 +1,10 @@
+---
+tags: [nodejs, referencia]
+integration: [sdk]
+status: deprecated
+superseded_by: /docs/desenvolvedores/bibliotecas/node
+---
+
 # NFE.io SDK v3 - API Reference
 
 > ⚠️ **Legacy reference (v3), not maintained.** This file was written for the 3.x SDK and is no

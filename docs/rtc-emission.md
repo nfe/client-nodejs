@@ -4,6 +4,8 @@ sidebar_label: Emissão RTC
 sidebar_position: 9
 slug: emissao-rtc
 description: Emita NFS-e e NF-e/NFC-e no leiaute RTC (IBS/CBS/IS). O RTC é selecionado pelo payload, no mesmo endpoint da emissão atual.
+tags: [nodejs, nfse, nfe, nfce, rtc, reforma-tributaria, emissao, referencia]
+integration: [sdk]
 ---
 
 # Emissão RTC (Reforma Tributária do Consumo)

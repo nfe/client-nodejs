@@ -4,6 +4,8 @@ sidebar_label: Webhooks
 sidebar_position: 9
 slug: recurso-webhooks
 description: Métodos de webhooks por conta, verificação de assinatura e lista de eventos ao vivo com nfe.webhooks.
+tags: [nodejs, webhook, referencia]
+integration: [sdk]
 ---
 
 # Webhooks (recurso)

@@ -4,6 +4,8 @@ sidebar_label: NFC-e (consumidor)
 sidebar_position: 3
 slug: nfc-e
 description: Emita e gerencie NFC-e com nfe.consumerInvoices no host api.nfse.io — emissão webhook-driven e environment obrigatório na listagem/leituras.
+tags: [nodejs, nfce, emissao, referencia]
+integration: [sdk]
 ---
 
 # NFC-e (notas de consumidor)

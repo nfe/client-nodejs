@@ -4,6 +4,8 @@ sidebar_label: Endereços (CEP)
 sidebar_position: 11
 slug: consulta-cep
 description: Consulte endereços por CEP com nfe.addresses (host address.api.nfe.io). Suporta apenas lookup por CEP; retorna um Address único.
+tags: [nodejs, consulta, referencia]
+integration: [sdk]
 ---
 
 # Consulta de endereço (CEP)

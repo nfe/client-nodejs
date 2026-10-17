@@ -73,3 +73,12 @@ Dual format via tsdown (Rolldown): ESM (`dist/index.js`) + CommonJS (`dist/index
 - Run `npm run generate` after modifying any OpenAPI spec in `openapi/spec/`
 - Typecheck and tests must pass before commits (`npm run typecheck && npm test -- --run`)
 - The CHANGELOG is written in Portuguese
+- `docs/` is mirrored to the public documentation portal
+  (<https://nfe.io/docs/desenvolvedores/bibliotecas/node/>; `README.md` becomes the index page;
+  `EXTENDING.md` and `EXTENSIBILITY_SUMMARY.md` stay here). Keep the machine frontmatter the portal
+  uses as search facets on every page:
+  - `tags` with `nodejs`, the page type, the fiscal document and the subject;
+  - `integration: [sdk]`;
+  - `status: deprecated` for pages out of circulation.
+
+  Sync with a three-way merge, never by copying over: the portal edits these pages too.

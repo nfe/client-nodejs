@@ -4,6 +4,8 @@ sidebar_label: Inscrições municipais
 sidebar_position: 5
 slug: inscricoes-municipais
 description: CRUD de inscrições municipais (pré-requisito da NFS-e) com nfe.municipalTaxes, incluindo a semântica de substituição do update (PUT).
+tags: [nodejs, nfse, inscricao-municipal, referencia]
+integration: [sdk]
 ---
 
 # Inscrições municipais

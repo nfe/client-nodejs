@@ -4,6 +4,8 @@ sidebar_label: Notificações
 sidebar_position: 8
 slug: notificacoes
 description: Liste, consulte, remova e envie por e-mail as notificações da empresa com nfe.notifications (host api.nfe.io).
+tags: [nodejs, notificacao, referencia]
+integration: [sdk]
 ---
 
 # Notificações

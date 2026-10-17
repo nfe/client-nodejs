@@ -4,6 +4,8 @@ sidebar_label: Inscrições estaduais
 sidebar_position: 6
 slug: inscricoes-estaduais
 description: CRUD de inscrições estaduais (pré-requisito da NF-e) com nfe.stateTaxes, incluindo troca de autorizador (switchAuthorizer).
+tags: [nodejs, nfe, inscricao-estadual, referencia]
+integration: [sdk]
 ---
 
 # Inscrições estaduais

@@ -4,6 +4,8 @@ sidebar_label: RTC
 sidebar_position: 10
 slug: recursos-rtc
 description: Recursos de emissão no leiaute RTC — serviceInvoicesRtc (NFS-e) e productInvoicesRtc (NF-e/NFC-e).
+tags: [nodejs, nfse, nfe, nfce, rtc, reforma-tributaria, emissao, referencia]
+integration: [sdk]
 ---
 
 # RTC (recursos)

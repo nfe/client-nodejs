@@ -4,6 +4,8 @@ sidebar_label: CT-e (transporte)
 sidebar_position: 18
 slug: cte-transporte
 description: Habilite e consulte CT-e por chave de acesso com nfe.transportationInvoices (host api.nfse.io).
+tags: [nodejs, cte, inbound, referencia]
+integration: [sdk]
 ---
 
 # CT-e (conhecimento de transporte)

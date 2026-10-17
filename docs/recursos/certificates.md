@@ -4,6 +4,8 @@ sidebar_label: Certificados
 sidebar_position: 7
 slug: certificados
 description: Consulta e remoção de certificados digitais por thumbprint com nfe.certificates (host api.nfse.io), com variantes v1.
+tags: [nodejs, certificado, referencia]
+integration: [sdk]
 ---
 
 # Certificados (por thumbprint)
