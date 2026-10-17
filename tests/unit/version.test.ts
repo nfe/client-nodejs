@@ -19,7 +19,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, sep } from 'node:path';
 import { PACKAGE_NAME, PACKAGE_VERSION, VERSION } from '../../src/index.js';
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as {
@@ -39,6 +40,30 @@ describe('identidade do pacote', () => {
   it('VERSION concorda com PACKAGE_VERSION — uma informação, um valor', () => {
     expect(VERSION).toBe(pkg.version);
     expect(VERSION).toBe(PACKAGE_VERSION);
+  });
+
+  it('o package-lock.json acompanha o package.json', () => {
+    // A 6.0.0 subiu só o package.json, e o lockfile ficou em 5.2.0 até a 6.0.1.
+    const lock = JSON.parse(readFileSync('package-lock.json', 'utf8')) as {
+      name: string;
+      version: string;
+      packages: Record<string, { name?: string; version?: string }>;
+    };
+    expect(lock.name).toBe(pkg.name);
+    expect(lock.version).toBe(pkg.version);
+    expect(lock.packages['']?.version).toBe(pkg.version);
+  });
+
+  it('nenhuma tag @version fixa a versão num comentário de src/', () => {
+    // A varredura de literais abaixo ignora comentários, porque as notas históricas
+    // citam versões antigas. Uma tag `@version` não é nota: declara a versão, e
+    // apodrece — o cabeçalho de src/index.ts disse `@version 5.1.0` até a 6.0.1.
+    // src/generated/ fica fora: é gerado da spec, e uma versão ali seria a da API.
+    const arquivos = (readdirSync('src', { recursive: true, encoding: 'utf8' }) as string[])
+      .filter(a => a.endsWith('.ts') && a.split(sep)[0] !== 'generated')
+      .map(a => join('src', a));
+    const comTag = arquivos.filter(a => /@version\s+\d+\.\d+\.\d+/.test(readFileSync(a, 'utf8')));
+    expect(comTag).toEqual([]);
   });
 
   it('nenhum literal de versão sobrou em src/', () => {

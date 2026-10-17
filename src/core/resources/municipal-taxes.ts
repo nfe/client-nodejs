@@ -16,6 +16,7 @@ import type {
 } from '../types.js';
 import { ValidationError } from '../errors/index.js';
 import { withUnservedRouteNote } from '../utils/unserved-route.js';
+import { unwrapEnvelope } from '../utils/envelope.js';
 
 function validateCompanyId(companyId: string): void {
   if (!companyId || companyId.trim() === '') {
@@ -46,23 +47,48 @@ export class MunicipalTaxesResource {
   /** Create a municipal tax registration (wrapped as `{ municipalTax }`). */
   async create(companyId: string, data: CreateMunicipalTaxData): Promise<MunicipalTax> {
     validateCompanyId(companyId);
-    const response = await this.http.post<MunicipalTax>(this.basePath(companyId), {
+    const response = await this.http.post<unknown>(this.basePath(companyId), {
       municipalTax: data,
     });
-    return response.data;
+    return unwrapEnvelope<MunicipalTax>(response.data, 'municipalTax');
   }
 
-  /** Retrieve a municipal tax registration by id. */
+  /**
+   * Retrieve a municipal tax registration by id.
+   *
+   * The API answers `{ "municipalTax": {…} }` (measured 2026-10-15); this returns the
+   * registration itself.
+   */
   async retrieve(companyId: string, municipalTaxId: string): Promise<MunicipalTax> {
     validateCompanyId(companyId);
     validateMunicipalTaxId(municipalTaxId);
-    const response = await this.http.get<MunicipalTax>(
+    const response = await this.http.get<unknown>(
       `${this.basePath(companyId)}/${municipalTaxId}`
     );
-    return response.data;
+    return unwrapEnvelope<MunicipalTax>(response.data, 'municipalTax');
   }
 
-  /** Update a municipal tax registration. */
+  /**
+   * Update a municipal tax registration.
+   *
+   * **This is a PUT that replaces the registration, not a partial update.** Per the platform
+   * documentation (nfe/docs@b9e7953, 2026-10-14), an omitted `taxNumber` is erased and an
+   * omitted `environment` falls back to `Development`; other omitted fields are not guaranteed to
+   * keep their value. Read the registration, change what you need and send the whole object back.
+   *
+   * `rpsNumber` and `lastRpsSent` are the exception: omitted, they keep the series' RPS counter.
+   * A value you send overwrites the counter, even backwards, so resending the number you read
+   * before an emission repeats RPS numbers. Omit both unless you mean to move the counter.
+   *
+   * The SDK did not measure this itself: it would require writing over a real registration.
+   *
+   * @example
+   * ```typescript
+   * const current = await nfe.municipalTaxes.retrieve(companyId, municipalTaxId);
+   * const { rpsNumber, lastRpsSent, ...rest } = current; // omitted, the RPS counter is kept
+   * await nfe.municipalTaxes.update(companyId, municipalTaxId, { ...rest, issRate: 2.5 });
+   * ```
+   */
   async update(
     companyId: string,
     municipalTaxId: string,
@@ -70,11 +96,11 @@ export class MunicipalTaxesResource {
   ): Promise<MunicipalTax> {
     validateCompanyId(companyId);
     validateMunicipalTaxId(municipalTaxId);
-    const response = await this.http.put<MunicipalTax>(
+    const response = await this.http.put<unknown>(
       `${this.basePath(companyId)}/${municipalTaxId}`,
       { municipalTax: data }
     );
-    return response.data;
+    return unwrapEnvelope<MunicipalTax>(response.data, 'municipalTax');
   }
 
   /** Delete a municipal tax registration. */

@@ -11,8 +11,13 @@ import {
   cleanupTestCompany,
   logTestInfo,
   INTEGRATION_TEST_CONFIG,
+  ALLOW_ACCOUNT_WRITES,
 } from './setup.js';
 import { NfeClient } from '../../src/core/client.js';
+
+// Criar, alterar ou apagar empresa mexe na conta inteira, que costuma ser compartilhada:
+// esses testes só rodam com NFE_ALLOW_ACCOUNT_WRITES=true (ver setup.ts).
+const itEscreveNaConta = it.skipIf(!ALLOW_ACCOUNT_WRITES);
 
 // Integration tests should skip unless explicitly enabled
 describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
@@ -34,7 +39,7 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     createdCompanyIds.length = 0;
   });
 
-  it('should create a company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
+  itEscreveNaConta('should create a company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     const companyData = {
       ...TEST_COMPANY_DATA,
       name: `Test Company ${Date.now()}`,
@@ -52,7 +57,7 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     logTestInfo('Company created', { id: company.id });
   });
 
-  it('should retrieve a company by id', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
+  itEscreveNaConta('should retrieve a company by id', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create company first
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -70,7 +75,7 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     expect(retrieved.name).toBe(companyData.name);
   });
 
-  it('should list companies', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
+  itEscreveNaConta('should list companies', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create at least one company
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -94,7 +99,7 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     expect(hasCompanies).toBe(true);
   });
 
-  it('should update a company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
+  itEscreveNaConta('should update a company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create company first
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -115,7 +120,7 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     expect(updated.name).toBe(updatedName);
   });
 
-  it('should delete a company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
+  itEscreveNaConta('should delete a company', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create company first
     const companyData = {
       ...TEST_COMPANY_DATA,
@@ -127,9 +132,9 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     logTestInfo('Deleting company', { id: created.id });
     await client.companies.remove(created.id);
 
-    // NOTE: API may return 204 but company might still be retrievable immediately after
-    // This is expected behavior in Development environment (eventual consistency)
-    // In Production, deletion would be immediate
+    // O remove responde com sucesso, mas a empresa não some: horas depois ela continua
+    // respondendo 200 em v1 e v2, com status Inactive (medido em 2026-10-16). Não é
+    // consistência eventual.
 
     // Remove from cleanup list since delete was called
     const index = createdCompanyIds.indexOf(created.id);
@@ -159,7 +164,7 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     ).rejects.toThrow();
   });
 
-  it('should allow duplicate federalTaxNumber', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
+  itEscreveNaConta('should allow duplicate federalTaxNumber', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create first company
     const companyData = {
       ...TEST_COMPANY_DATA,

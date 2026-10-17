@@ -91,9 +91,12 @@ Empresa sem certificado responde `200` com lista vazia, não `404`.
 
 ### 6. A chave de dados não serve mais nos hosts fiscais
 
-As duas chaves são **complementares**: cada uma responde `403` no território da outra. Nove
-recursos de `api.nfse.io` resolviam a chave **de dados** num host **fiscal** e só funcionavam
-por acidente, via o fallback `dataApiKey → apiKey`.
+As duas chaves são **complementares**: a principal vale em `api.nfe.io` e `api.nfse.io`, e a de
+dados, nos hosts de consulta. Nove recursos de `api.nfse.io` resolviam a chave **de dados**, que as
+rotas de documento fiscal desse host recusam com `403`; eles só funcionavam por acidente, via o
+fallback `dataApiKey → apiKey`. A v6 passou a enviar a principal a todos eles. (Correção de
+2026-10-14: algumas rotas de cadastro da conta também aceitam a chave de dados, mas isso não é
+contrato documentado, e o SDK não depende disso.)
 
 **Como migrar:** se você usa `dataApiKey`, nada a fazer — os nove passam a funcionar. Se você
 configurava **somente** `dataApiKey`, agora é preciso informar também `apiKey`: o acesso
@@ -593,6 +596,11 @@ await nfe.naturalPeople.delete('company-id', 'person-id');
 ### Webhooks
 
 ```javascript
+// ⚠️ Desde a v5.1, os métodos de webhook por empresa estão descontinuados (@deprecated):
+// a rota /v1/companies/{id}/webhooks responde 404. Use os métodos por conta —
+// createAccountWebhook, listAccountWebhooks, retrieveAccountWebhook, updateAccountWebhook
+// e deleteAccountWebhook. O bloco abaixo fica como registro histórico da v3.
+
 // v2
 nfe.webhooks.create(webhookData, callback);
 nfe.webhooks.list(callback);

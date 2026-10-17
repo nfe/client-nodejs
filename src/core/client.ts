@@ -8,6 +8,7 @@
  * @module nfe-io/client
  * @author NFE.io
  * @license MIT
+ * @copyright 2026 NFE.IO HUB SERVICOS DE TECNOLOGIA LTDA
  */
 
 import type {
@@ -223,6 +224,9 @@ export class NfeClient {
    * - CRUD operations for companies
    * - Upload digital certificates (PFX/P12)
    * - Batch operations
+   *
+   * Uses the main `apiKey` on both of its hosts: `api.nfe.io` (v1) and the
+   * fiscal host `api.nfse.io` (the v2 side).
    *
    * @see {@link CompaniesResource}
    * @throws {ConfigurationError} If API key is not configured
@@ -686,7 +690,7 @@ export class NfeClient {
    * NF-e product invoice issuance — list, create, retrieve, update, and delete.
    *
    * **Note:** This resource uses the api.nfse.io host.
-   * Uses the main `apiKey` — `api.nfse.io` is a FISCAL host and rejects the data key with 403.
+   * Uses the main `apiKey` (fiscal host `api.nfse.io`).
    *
    * @see {@link StateTaxesResource}
    * @throws {ConfigurationError} If no main API key is configured (apiKey)
@@ -731,7 +735,8 @@ export class NfeClient {
 
   /**
    * Municipal Taxes resource — CRUD for company municipal tax registrations
-   * (Inscrições Municipais), prerequisite for NFS-e issuance. Uses api.nfse.io.
+   * (Inscrições Municipais), prerequisite for NFS-e issuance.
+   * Uses the main `apiKey` (fiscal host `api.nfse.io`).
    */
   get municipalTaxes(): MunicipalTaxesResource {
     if (!this._municipalTaxes) {
@@ -754,8 +759,9 @@ export class NfeClient {
 
   /**
    * Certificates resource — manage company digital certificates (retrieve/delete
-   * by thumbprint, list) via the contribuintes-v2 API on api.nfse.io. Complements
-   * the legacy `companies.uploadCertificate` (which targets the api.nfe.io host).
+   * by thumbprint, list) via the contribuintes-v2 API. Complements the legacy
+   * `companies.uploadCertificate` (which targets the api.nfe.io host).
+   * Uses the main `apiKey` (fiscal host `api.nfse.io`).
    */
   get certificates(): CertificatesResource {
     if (!this._certificates) {
@@ -907,10 +913,12 @@ export class NfeClient {
    * Get or create the HTTP client for `api.nfse.io` — the FISCAL host.
    *
    * Every resource on this host uses the MAIN api key. The two platform keys are
-   * complementary, not interchangeable: the data key is rejected with 403 here,
-   * and the main key is rejected with 403 on the lookup hosts
-   * (`nfe.api.nfe.io`, `legalentity`, `naturalperson`, `address`).
-   * Verified live on 2026-09-01 — see tests/fixtures/live-contracts/api-key-host-matrix.json.
+   * complementary, not interchangeable: the data key is rejected with 403 on this
+   * host's fiscal-document routes, and the main key is rejected with 403 on the
+   * lookup hosts (`nfe.api.nfe.io`, `legalentity`, `naturalperson`, `address`).
+   * Some account-registry routes here also accept the data key; that is not a
+   * documented contract, so the SDK does not rely on it.
+   * Measured route by route on 2026-10-14 — see tests/fixtures/live-contracts/api-key-route-matrix.json.
    *
    * @throws {ConfigurationError} If no main API key is configured
    */

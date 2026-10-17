@@ -310,8 +310,12 @@ export class InboundProductInvoicesResource {
     validateCompanyId(companyId);
     validateAccessKey(accessKey);
 
+    // Plural `/inbound/productinvoices/` here and in the three methods below, as the platform
+    // serves it. The singular form answers 404 with an empty body even without credentials, like an
+    // invented path (measured 2026-10-14). The local spec consulta-nfe-distribuicao-v1.yaml
+    // (vintage b487823) still says singular; upstream fixed it in nfe/docs@51d8816.
     const response = await this.http.get<InboundProductInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/productinvoice/${accessKey.trim()}`
+      `/v2/companies/${companyId}/inbound/productinvoices/${accessKey.trim()}`
     );
 
     return response.data;
@@ -393,7 +397,7 @@ export class InboundProductInvoicesResource {
     validateEventKey(eventKey);
 
     const response = await this.http.get<InboundProductInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/productinvoice/${accessKey.trim()}/events/${eventKey.trim()}`
+      `/v2/companies/${companyId}/inbound/productinvoices/${accessKey.trim()}/events/${eventKey.trim()}`
     );
 
     return response.data;
@@ -537,7 +541,7 @@ export class InboundProductInvoicesResource {
     validateAccessKey(accessKey);
 
     const response = await this.http.get<InboundInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/productinvoice/${accessKey.trim()}/json`
+      `/v2/companies/${companyId}/inbound/productinvoices/${accessKey.trim()}/json`
     );
 
     return response.data;
@@ -636,7 +640,7 @@ export class InboundProductInvoicesResource {
     validateAccessKeyOrNsu(accessKeyOrNsu);
 
     const response = await this.http.post<InboundProductInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/productinvoice/${accessKeyOrNsu.trim()}/processwebhook`
+      `/v2/companies/${companyId}/inbound/productinvoices/${accessKeyOrNsu.trim()}/processwebhook`
     );
 
     return response.data;

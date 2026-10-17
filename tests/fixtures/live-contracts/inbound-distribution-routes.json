@@ -1,0 +1,42 @@
+{
+  "probe": "distribuicao de NF-e: /inbound/productinvoice (singular) x /inbound/productinvoices (plural)",
+  "capturedOn": "2026-10-14",
+  "host": "api.nfse.io",
+  "note": "Os quatro metodos (getProductInvoiceDetails, getProductInvoiceEventDetails, getJson, reprocessWebhook) usavam o singular, que a plataforma nao serve. A spec local consulta-nfe-distribuicao-v1.yaml (vintage b487823) ainda diz singular; o upstream corrigiu para o plural em nfe/docs@51d8816, 'alinhado ao contrato real'.",
+  "metodoDeDiscriminacao": "Rota nao servida responde 404 de corpo vazio inclusive sem credencial, igual a um path inventado; rota servida responde 401 sem credencial. POST processwebhook so foi exercido sem credencial: com credencial dispararia webhook de empresa alheia.",
+  "cases": [
+    { "method": "GET",  "pathShape": "/v2/companies/{companyId}/inbound/productinvoice/{accessKey}",                         "credential": "main", "status": 404, "headers": {}, "bodyLength": 0 },
+    { "method": "GET",  "pathShape": "/v2/companies/{companyId}/inbound/productinvoice/{accessKey}/json",                    "credential": "main", "status": 404, "headers": {}, "bodyLength": 0 },
+    { "method": "GET",  "pathShape": "/v2/companies/{companyId}/inbound/productinvoice/{accessKey}",                         "credential": "none", "status": 404, "headers": {}, "bodyLength": 0 },
+    { "method": "GET",  "pathShape": "/v2/companies/{companyId}/inbound/productinvoice/{accessKey}/events/{eventKey}",       "credential": "none", "status": 404, "headers": {}, "bodyLength": 0 },
+    { "method": "POST", "pathShape": "/v2/companies/{companyId}/inbound/productinvoice/{accessKey}/processwebhook",          "credential": "none", "status": 404, "headers": {}, "bodyLength": 0 },
+    { "method": "GET",  "pathShape": "/v2/companies/{companyId}/inbound/productinvoices/{accessKey}",                        "credential": "main", "status": 200,
+      "headers": { "content-type": "application/json; charset=utf-8" },
+      "bodyKeys": ["accessKey", "createdOn", "parentAccessKey", "company", "issuer", "buyer", "transportation", "links"] },
+    { "method": "GET",  "pathShape": "/v2/companies/{companyId}/inbound/productinvoices/{accessKey}/json",                   "credential": "main", "status": 200,
+      "headers": { "content-type": "application/json; charset=utf-8" },
+      "bodyKeys": ["nfeProc"] },
+    { "method": "GET",  "pathShape": "/v2/companies/{companyId}/inbound/productinvoices/{accessKey}",                        "credential": "none", "status": 401, "headers": {}, "bodyLength": 0 },
+    { "method": "GET",  "pathShape": "/v2/companies/{companyId}/inbound/productinvoices/{accessKey}/events/{eventKey}",      "credential": "none", "status": 401, "headers": {}, "bodyLength": 0 },
+    { "method": "POST", "pathShape": "/v2/companies/{companyId}/inbound/productinvoices/{accessKey}/processwebhook",         "credential": "none", "status": 401, "headers": {}, "bodyLength": 0 },
+    { "method": "GET",  "pathShape": "/v2/companies/{companyId}/inbound/productinvoicez/{accessKey}",                        "credential": "none", "status": 404, "headers": {}, "bodyLength": 0, "note": "controle: path inventado" }
+  ],
+  "syntheticBodyExample": {
+    "accessKey": "00000000000000000000550000000000000000000000",
+    "createdOn": "2026-01-01T00:00:00Z",
+    "parentAccessKey": null,
+    "company": { "id": "synthetic-company-id" },
+    "issuer": { "federalTaxNumber": 0, "name": "EMITENTE SINTETICO" },
+    "buyer": { "federalTaxNumber": 0, "name": "DESTINATARIO SINTETICO" },
+    "transportation": {},
+    "links": {}
+  },
+  "gatewayLog30d": {
+    "window": "2026-09-14 a 2026-10-14",
+    "pluralStatus200": 28543,
+    "singularStatus404": 9,
+    "singularFromSdkUserAgent": 0,
+    "note": "O bug era latente: nenhuma requisicao com User-Agent do SDK bateu no singular em 30 dias."
+  },
+  "upstream": "nfe/docs@51d8816 (2026-09-23); origem: nfe/dfetech-distribution-api#444 e #445"
+}

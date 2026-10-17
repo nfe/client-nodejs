@@ -278,7 +278,7 @@ describe('InboundProductInvoicesResource', () => {
 
       expect(result).toEqual(mockProductMetadata);
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        `/v2/companies/${testCompanyId}/inbound/productinvoice/${validAccessKey}`
+        `/v2/companies/${testCompanyId}/inbound/productinvoices/${validAccessKey}`
       );
     });
   });
@@ -322,7 +322,7 @@ describe('InboundProductInvoicesResource', () => {
       await resource.getProductInvoiceEventDetails(testCompanyId, validAccessKey, testEventKey);
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        `/v2/companies/${testCompanyId}/inbound/productinvoice/${validAccessKey}/events/${testEventKey}`
+        `/v2/companies/${testCompanyId}/inbound/productinvoices/${validAccessKey}/events/${testEventKey}`
       );
     });
   });
@@ -406,7 +406,7 @@ describe('InboundProductInvoicesResource', () => {
       await resource.getJson(testCompanyId, validAccessKey);
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        `/v2/companies/${testCompanyId}/inbound/productinvoice/${validAccessKey}/json`
+        `/v2/companies/${testCompanyId}/inbound/productinvoices/${validAccessKey}/json`
       );
     });
   });
@@ -483,7 +483,7 @@ describe('InboundProductInvoicesResource', () => {
       await resource.reprocessWebhook(testCompanyId, validAccessKey);
 
       expect(mockHttpClient.post).toHaveBeenCalledWith(
-        `/v2/companies/${testCompanyId}/inbound/productinvoice/${validAccessKey}/processwebhook`
+        `/v2/companies/${testCompanyId}/inbound/productinvoices/${validAccessKey}/processwebhook`
       );
     });
 
@@ -498,7 +498,7 @@ describe('InboundProductInvoicesResource', () => {
       await resource.reprocessWebhook(testCompanyId, '12345');
 
       expect(mockHttpClient.post).toHaveBeenCalledWith(
-        `/v2/companies/${testCompanyId}/inbound/productinvoice/12345/processwebhook`
+        `/v2/companies/${testCompanyId}/inbound/productinvoices/12345/processwebhook`
       );
     });
 

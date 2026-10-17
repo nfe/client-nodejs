@@ -30,10 +30,14 @@ export interface NfeConfig {
    * Covers address (CEP), legal entity (CNPJ), natural person (CPF) and the
    * product/consumer invoice *query* resources.
    *
-   * **The two keys are NOT interchangeable.** Each is rejected with HTTP 403 on
-   * the other family's hosts — verified live on 2026-09-01, see
-   * `tests/fixtures/live-contracts/api-key-host-matrix.json`. Setting this key
-   * does not affect any fiscal resource.
+   * **The two keys are NOT interchangeable.** The SDK sends the main key to every
+   * resource on `api.nfe.io` and `api.nfse.io`, and this key to the lookup hosts.
+   * Measured route by route on 2026-10-14 (see
+   * `tests/fixtures/live-contracts/api-key-route-matrix.json`): this key is rejected
+   * with HTTP 403 on fiscal-document routes, and the main key is rejected on the
+   * lookup hosts. Some account-registry routes also accept this key; that is not a
+   * documented contract and the SDK does not rely on it. Setting this key does not
+   * affect any fiscal resource.
    *
    * Optional: falls back to {@link NfeConfig.apiKey} when omitted. Note the
    * fallback is one-way — a client configured with ONLY `dataApiKey` cannot

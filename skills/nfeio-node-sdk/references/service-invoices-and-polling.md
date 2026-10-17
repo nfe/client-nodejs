@@ -95,27 +95,35 @@ Returns `{ data: ServiceInvoiceData[], totalCount: number, page: PageInfo }`.
 
 Get a single invoice by ID.
 
-### cancel(companyId, invoiceId): Promise<ServiceInvoiceData>
+### cancel(companyId, invoiceId): Promise<CancelInvoiceResponse>
 
-Cancel an issued invoice. May return async (some municipalities process cancellation asynchronously).
+Cancels an issued invoice. Cancellation is normally asynchronous: the API replies `202 + Location`
+and the invoice moves through `WaitingSendCancel` → `Cancelled`. The result is a discriminated
+union, `{ status: 'immediate', invoice }` or `{ status: 'async', response }`. Use
+`cancelAndWait()` to poll until it settles.
 
 ### sendEmail(companyId, invoiceId): Promise<SendEmailResponse>
 
 Send invoice to borrower's email. Returns `{ sent: boolean, message?: string }`.
 
-### downloadPdf(companyId, invoiceId?): Promise<Buffer>
+### downloadPdf(companyId, invoiceId): Promise<Buffer>
 
-Download DANFE PDF. If `invoiceId` is omitted, downloads a ZIP of all invoices for the company.
+Downloads the invoice PDF. Only available once the invoice reaches a terminal state
+(Issued/Cancelled); before that the API answers 404.
 
-### downloadXml(companyId, invoiceId?): Promise<Buffer>
+### downloadXml(companyId, invoiceId): Promise<Buffer>
 
-Download RPS XML. Same ZIP behavior when `invoiceId` is omitted.
+Downloads the NFS-e XML.
 
-### getStatus(companyId, invoiceId): Promise<StatusResponse>
+There is no batch download: `invoiceId` is required since 6.0.0. The old branch without an id
+called a route the server does not have.
 
-Returns `{ flowStatus: FlowStatus, invoice: ServiceInvoiceData, isComplete: boolean, isFailed: boolean }`.
+### getStatus(companyId, invoiceId): Promise<{ status: FlowStatus; invoice: ServiceInvoiceData; isComplete: boolean; isFailed: boolean }>
 
-### createBatch(companyId, invoices, options?): Promise<Array<...>>
+`status` is the invoice's `flowStatus`. `isComplete` is true in a terminal state, and `isFailed`
+for `IssueFailed`/`CancelFailed`.
+
+### createBatch(companyId, invoices, options?): Promise<Array<CreateInvoiceResponse | ServiceInvoiceData>>
 
 Batch creation with optional concurrency control:
 ```typescript
@@ -281,36 +289,27 @@ interface NaturalPerson {
 
 ## WebhooksResource
 
-Access via `nfe.webhooks`. Company-scoped.
+Access via `nfe.webhooks`.
 
-```typescript
-interface Webhook {
-  id?: string;
-  url: string;
-  events: WebhookEvent[];
-  active?: boolean;
-  secret?: string;
-  createdOn?: string;
-  modifiedOn?: string;
-}
-
-type WebhookEvent =
-  | 'invoice.created'
-  | 'invoice.issued'
-  | 'invoice.cancelled'
-  | 'invoice.failed';
-```
+> ⚠️ **The company-scoped methods are deprecated: the platform does not serve the route.**
+> `list`, `create`, `retrieve`, `update`, `delete` and `test` call `/v1/companies/{id}/webhooks`,
+> which answers 404 (deprecated since v5.1, confirmed on three accounts). Use the account-scoped
+> methods (`createAccountWebhook`, `listAccountWebhooks`, `retrieveAccountWebhook`,
+> `updateAccountWebhook`, `deleteAccountWebhook`, `deleteAllAccountWebhooks`,
+> `pingAccountWebhook`), documented in `references/rtc-nfce-and-account-resources.md`. The
+> `Webhook` and `WebhookEvent` types describe shapes the API rejects: use `AccountWebhook` and
+> `WebhookEventType` (e.g. `'service_invoice.issued_successfully'`).
 
 | Method | Signature |
 |--------|-----------|
-| `list` | `(companyId): Promise<ListResponse<Webhook>>` |
-| `create` | `(companyId, data): Promise<Webhook>` |
-| `retrieve` | `(companyId, webhookId): Promise<Webhook>` |
-| `update` | `(companyId, webhookId, data): Promise<Webhook>` |
-| `delete` | `(companyId, webhookId): Promise<void>` |
+| `list` | `(companyId): Promise<ListResponse<Webhook>>`: deprecated, route not served |
+| `create` | `(companyId, data): Promise<Webhook>`: deprecated, route not served |
+| `retrieve` | `(companyId, webhookId): Promise<Webhook>`: deprecated, route not served |
+| `update` | `(companyId, webhookId, data): Promise<Webhook>`: deprecated, route not served |
+| `delete` | `(companyId, webhookId): Promise<void>`: deprecated, route not served |
+| `test` | `(companyId, webhookId): Promise<{ success: boolean; message?: string }>`: deprecated, route not served |
 | `validateSignature` | `(payload: Buffer \| string, signature: string \| string[] \| undefined, secret): boolean` |
-| `test` | `(companyId, webhookId): Promise<{ success: boolean }>` |
-| `getAvailableEvents` | `(): WebhookEvent[]` |
+| `getAvailableEvents` | `(): WebhookEvent[]`: deprecated, a fixed list that drifts; use `fetchEventTypes()` |
 
 ### Webhook Signature Validation
 

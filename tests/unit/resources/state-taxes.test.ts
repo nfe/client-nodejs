@@ -111,8 +111,9 @@ describe('StateTaxesResource', () => {
     } as NfeStateTaxCreateData;
 
     it('should create a state tax registration', async () => {
-      const httpResponse: HttpResponse<NfeStateTax> = {
-        data: mockStateTax,
+      // The API wraps the entity: { "stateTax": {…} } (spec contribuintes-v2; GET measured 2026-10-15)
+      const httpResponse: HttpResponse<{ stateTax: NfeStateTax }> = {
+        data: { stateTax: mockStateTax },
         status: 201,
         headers: {},
       };
@@ -138,8 +139,9 @@ describe('StateTaxesResource', () => {
 
   describe('retrieve', () => {
     it('should retrieve a state tax by ID', async () => {
-      const httpResponse: HttpResponse<NfeStateTax> = {
-        data: mockStateTax,
+      // Wire shape measured 2026-10-15: 200 { "stateTax": {…} }
+      const httpResponse: HttpResponse<{ stateTax: NfeStateTax }> = {
+        data: { stateTax: mockStateTax },
         status: 200,
         headers: {},
       };
@@ -148,9 +150,18 @@ describe('StateTaxesResource', () => {
       const result = await resource.retrieve(companyId, stateTaxId);
 
       expect(result).toEqual(mockStateTax);
+      expect(result.id).toBe(stateTaxId);
       expect(mockHttpClient.get).toHaveBeenCalledWith(
         `/v2/companies/${companyId}/statetaxes/${stateTaxId}`,
       );
+    });
+
+    it('should also accept the bare entity (defensive unwrap)', async () => {
+      mockHttpClient.get.mockResolvedValue({ data: mockStateTax, status: 200, headers: {} });
+
+      const result = await resource.retrieve(companyId, stateTaxId);
+
+      expect(result).toEqual(mockStateTax);
     });
 
     it('should throw ValidationError when stateTaxId is empty', async () => {
@@ -174,8 +185,8 @@ describe('StateTaxesResource', () => {
 
     it('should update a state tax registration', async () => {
       const updatedTax = { ...mockStateTax, serie: 2, environmentType: 'test' as const };
-      const httpResponse: HttpResponse<NfeStateTax> = {
-        data: updatedTax,
+      const httpResponse: HttpResponse<{ stateTax: NfeStateTax }> = {
+        data: { stateTax: updatedTax },
         status: 200,
         headers: {},
       };

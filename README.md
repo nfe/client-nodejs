@@ -646,27 +646,13 @@ for (const event of result.events ?? []) {
 
 > **Nota:** A API de Consulta NF-e usa um host separado (`nfe.api.nfe.io`). Você pode configurar uma chave API específica com `dataApiKey`, ou o SDK usará `apiKey` como fallback.
 
-#### 🧾 Consulta de Cupom Fiscal Eletrônico - CFe-SAT (`nfe.consumerInvoiceQuery`)
+#### 🧾 Consulta de Cupom Fiscal Eletrônico - CFe-SAT (`nfe.consumerInvoiceQuery`) — descontinuado
 
-Consultar CFe-SAT (Cupom Fiscal Eletrônico) por chave de acesso. Recurso somente leitura sem necessidade de escopo de empresa:
-
-```typescript
-// Consultar dados completos do cupom fiscal
-const coupon = await nfe.consumerInvoiceQuery.retrieve(
-  '35240112345678000190590000000012341234567890'
-);
-console.log('Status:', coupon.currentStatus);   // 'Authorized'
-console.log('Emissor:', coupon.issuer?.name);
-console.log('Valor:', coupon.totals?.couponAmount);
-
-// Baixar XML do CFe
-const xml = await nfe.consumerInvoiceQuery.downloadXml(
-  '35240112345678000190590000000012341234567890'
-);
-fs.writeFileSync('cfe.xml', xml);
-```
-
-> **Nota:** A API de Consulta CFe-SAT usa o mesmo host (`nfe.api.nfe.io`) e chave de API que a consulta de NF-e.
+> ⚠️ **Descontinuado: a plataforma não serve estas rotas.** `/v1/consumerinvoices/coupon/{chave}`
+> e `.xml` estão declaradas na OpenAPI, mas respondem `404` igual ao de um caminho
+> inexistente, inclusive sem credencial (medido em 2026-09-02). Os métodos `retrieve()` e
+> `downloadXml()` estão marcados `@deprecated`: continuam emitindo a requisição, e o `404`
+> vem com essa explicação. Não há substituto na API hoje.
 
 #### 🏢 Consulta CNPJ / Pessoa Jurídica (`nfe.legalEntityLookup`)
 
@@ -969,39 +955,37 @@ emitirNotaFiscal().catch(console.error);
 ### Configuração de Webhook
 
 ```typescript
-// Configurar webhook para receber eventos de notas fiscais
-const webhook = await nfe.webhooks.create(empresaId, {
-  url: 'https://meuapp.com.br/api/webhooks/nfe',
-  events: [
-    'invoice.issued',
-    'invoice.cancelled',
-    'invoice.error'
-  ],
-  active: true
+// Webhooks são por conta (/v2/webhooks), sem companyId. Na criação, a NFE.io faz um
+// ping na `uri`: o endpoint precisa estar no ar e responder 2xx.
+const webhook = await nfe.webhooks.createAccountWebhook({
+  uri: 'https://meuapp.com.br/api/webhooks/nfe',
+  contentType: 'json',
+  secret: process.env.WEBHOOK_SECRET!, // 32 a 64 caracteres
+  filters: ['service_invoice.issued_successfully', 'service_invoice.cancelled_successfully'],
 });
 
-// No seu endpoint de webhook (capture o corpo cru: app.use(express.raw({ type: '*/*' })))
-app.post('/api/webhooks/nfe', (req, res) => {
-  const assinatura = req.headers['x-hub-signature']; // header correto (HMAC-SHA1), não 'x-nfe-signature'
+// No endpoint, valide a assinatura sobre o corpo bruto (Buffer), não sobre o JSON parseado
+app.post('/api/webhooks/nfe', express.raw({ type: '*/*' }), (req, res) => {
   const ehValido = nfe.webhooks.validateSignature(
-    req.body,
-    assinatura,
+    req.body,                       // Buffer bruto
+    req.headers['x-hub-signature'], // HMAC-SHA1
     process.env.WEBHOOK_SECRET
   );
-  
+
   if (!ehValido) {
     return res.status(401).send('Assinatura inválida');
   }
-  
-  const { event, data } = req.body;
-  
-  if (event === 'invoice.issued') {
-    console.log('Nota fiscal emitida:', data.id);
-  }
-  
+
+  const evento = JSON.parse(req.body.toString('utf8'));
+  // ... processe o evento
+
   res.status(200).send('OK');
 });
 ```
+
+> Os métodos de webhook por empresa (`webhooks.list/create/retrieve/update/delete/test`
+> com `companyId`) estão descontinuados: a rota `/v1/companies/{id}/webhooks` responde
+> `404`. Use os métodos por conta acima. Lista de eventos ao vivo: `nfe.webhooks.fetchEventTypes()`.
 
 ### Criação de Notas Fiscais em Lote
 
@@ -1097,7 +1081,7 @@ npm run build
 
 **Nota**: Arquivos gerados não devem ser editados manualmente. Edite as specs OpenAPI e regenere.
 
-Para orientações de migração, veja [docs/MIGRATION-TO-GENERATED-TYPES.md](./docs/MIGRATION-TO-GENERATED-TYPES.md).
+Para orientações de migração, veja [MIGRATION.md](./MIGRATION.md).
 
 ### Verificação de Tipos
 
@@ -1117,7 +1101,11 @@ Contribuições são bem-vindas! Por favor, veja [CONTRIBUTING.md](./CONTRIBUTIN
 
 ## 📄 Licença
 
-MIT © [NFE.io](https://nfe.io)
+O código deste SDK é distribuído sob a licença [MIT](./LICENSE).
+Copyright (c) 2026 NFE.IO HUB SERVICOS DE TECNOLOGIA LTDA.
+
+A licença cobre o SDK, não a API: o uso da API da NFE.io segue o contrato da sua conta
+([Termos de Serviço](https://p.nfe.io/pt-br/termos-de-servico)).
 
 ## 🆘 Suporte
 

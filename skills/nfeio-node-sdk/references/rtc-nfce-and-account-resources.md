@@ -1,6 +1,6 @@
 # RTC, NFC-e & Account Resources (v5)
 
-New resources introduced in v5. Signatures are current as of v5.0.0.
+New resources introduced in v5. Signatures checked against the SDK code of v6.0.1.
 
 ## RTC — Reforma Tributária do Consumo
 
@@ -29,21 +29,22 @@ create(companyId, data: ProductInvoiceRtcRequest): Promise<NfeProductInvoiceIssu
 ## `nfe.consumerInvoices` — NFC-e (api.nfse.io · Company)
 
 Webhook-driven emission (202 = enqueued; completion via webhook). **`environment`
-(`'Production' | 'Test'`) is required on `list`** and accepted (optional) on the reads.
+(`'Production' | 'Test'`) is required on `list`**; the reads by id do not take it.
 
 ```typescript
 create(companyId, data: ConsumerInvoiceData): Promise<ConsumerInvoice>          // webhook-driven
 list(companyId, options: ConsumerInvoiceListOptions): Promise<ConsumerInvoiceListResponse>  // options.environment REQUIRED
-retrieve(companyId, invoiceId, environment?): Promise<ConsumerInvoice>
-cancel(companyId, invoiceId): Promise<ConsumerInvoice>
-getItems(companyId, invoiceId, environment?): Promise<NfeInvoiceItemsResponse>
-getEvents(companyId, invoiceId, environment?): Promise<NfeProductInvoiceEventsResponse>
-downloadPdf(companyId, invoiceId, environment?): Promise<Buffer>                 // DANFE-NFC-e
-downloadXml(companyId, invoiceId, environment?): Promise<Buffer>
-downloadRejectionXml(companyId, invoiceId, environment?): Promise<Buffer>
+retrieve(companyId, invoiceId): Promise<ConsumerInvoice>
+cancel(companyId, invoiceId, reason?): Promise<ConsumerInvoiceCancellationResponse>
+getItems(companyId, invoiceId, options?: ConsumerInvoicePageOptions): Promise<ConsumerInvoiceItemsResponse>
+getEvents(companyId, invoiceId, options?: ConsumerInvoicePageOptions): Promise<ConsumerInvoiceEventsResponse>
+downloadPdf(companyId, invoiceId, force?): Promise<ConsumerInvoiceFileResource>  // DANFE-NFC-e, { uri }
+downloadXml(companyId, invoiceId): Promise<ConsumerInvoiceFileResource>          // { uri }
+downloadRejectionXml(companyId, invoiceId): Promise<ConsumerInvoiceFileResource>
 disable(companyId, data: ConsumerInvoiceDisablementData): Promise<NfeDisablementResource>  // inutilização
 ```
 `ConsumerInvoiceListOptions = { environment: 'Production' | 'Test'; startingAfter?; endingBefore?; limit?; q? }`.
+`ConsumerInvoicePageOptions = { limit?: number; startingAfter?: number }`.
 Distinct from `nfe.consumerInvoiceQuery` (read-only CFe-SAT coupon lookup).
 
 ---
@@ -56,10 +57,31 @@ CRUD of municipal enrollments — **prerequisite for NFS-e issuance** (mirrors `
 list(companyId): Promise<MunicipalTaxListResponse>                       // { municipalTaxes, hasMore }
 create(companyId, data: CreateMunicipalTaxData): Promise<MunicipalTax>
 retrieve(companyId, municipalTaxId): Promise<MunicipalTax>
-update(companyId, municipalTaxId, data: UpdateMunicipalTaxData): Promise<MunicipalTax>
+update(companyId, municipalTaxId, data: UpdateMunicipalTaxData): Promise<MunicipalTax>  // PUT: replaces the registration
 delete(companyId, municipalTaxId): Promise<void>
-updatePrefecture(companyId, municipalTaxId, data: UpdateMunicipalTaxData): Promise<MunicipalTax>  // HTTP PATCH
-getSeries(companyId, municipalTaxId, serie): Promise<Record<string, unknown>>
+```
+
+`create`, `retrieve` and `update` return the registration itself (since 6.0.1; the API wraps it
+as `{ municipalTax: {…} }` and the SDK unwraps it).
+
+**`update` is a PUT that replaces the registration**, per the platform documentation
+(nfe/docs@b9e7953): an omitted `taxNumber` is erased and an omitted `environment` falls back to
+`Development`. Read, change, send the whole object back — and **omit `rpsNumber`/`lastRpsSent`**,
+which an omitted value preserves; sending them overwrites the RPS counter, even backwards:
+
+```typescript
+const current = await nfe.municipalTaxes.retrieve(companyId, municipalTaxId);
+const { rpsNumber, lastRpsSent, ...rest } = current; // omitted, the RPS counter is kept
+await nfe.municipalTaxes.update(companyId, municipalTaxId, { ...rest, issRate: 2.5 });
+```
+
+⚠️ **Deprecated — the platform does not serve these routes** (`404`, identical to an unknown
+path, even without credentials; measured 2026-09-02 and again 2026-10-14). The methods still send
+the request and the `404` explains it. Do not recommend them:
+
+```typescript
+updatePrefecture(companyId, municipalTaxId, data)   // @deprecated — route not served
+getSeries(companyId, municipalTaxId, serie)         // @deprecated — route not served
 ```
 
 ---
@@ -70,7 +92,7 @@ getSeries(companyId, municipalTaxId, serie): Promise<Record<string, unknown>>
 list(companyId): Promise<CertificatesMetadataResource>                   // { certificates }
 getByThumbprint(companyId, thumbprint): Promise<CertificateMetadataResource>
 deleteByThumbprint(companyId, thumbprint): Promise<void>
-getByThumbprintV1(companyId, thumbprint): Promise<...>                   // variantes v1
+getByThumbprintV1(companyId, thumbprint): Promise<CertificateMetadataResource>  // variante v1
 deleteByThumbprintV1(companyId, thumbprint): Promise<void>
 ```
 Complements the legacy `companies.uploadCertificate` (upload lives on api.nfe.io).
@@ -81,7 +103,7 @@ Complements the legacy `companies.uploadCertificate` (upload lives on api.nfe.io
 
 ```typescript
 list(companyId): Promise<NotificationListResponse>                       // { notifications }
-retrieve(companyId, notificationId): Promise<Notification>
+retrieve(companyId, notificationId): Promise<Notification>                // the notification itself since 6.0.1 (the API wraps it in { notification })
 delete(companyId, notificationId): Promise<void>
 sendEmail(companyId, data?): Promise<void>
 ```

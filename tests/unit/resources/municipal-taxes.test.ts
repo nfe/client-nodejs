@@ -33,26 +33,37 @@ describe('MunicipalTaxesResource', () => {
     expect(http.get).toHaveBeenCalledWith(base);
   });
 
-  it('create POSTs wrapped as { municipalTax }', async () => {
-    http.post.mockResolvedValue({ data: { id }, status: 201, headers: {} });
+  // The API wraps the entity: { "municipalTax": {…} }. GET by id measured on 2026-10-15;
+  // POST/PUT per the contribuintes-v2 spec (not probed: they would write).
+  it('create POSTs wrapped as { municipalTax } and returns the entity', async () => {
+    http.post.mockResolvedValue({ data: { municipalTax: { id } }, status: 201, headers: {} });
     const data = { taxNumber: '123' } as unknown as CreateMunicipalTaxData;
-    await resource.create(companyId, data);
+    const result = await resource.create(companyId, data);
     expect(http.post).toHaveBeenCalledWith(base, { municipalTax: data });
+    expect(result).toEqual({ id });
   });
 
-  it('retrieve/update/delete hit /{id}', async () => {
-    http.get.mockResolvedValue({ data: { id }, status: 200, headers: {} });
-    http.put.mockResolvedValue({ data: { id }, status: 200, headers: {} });
+  it('retrieve/update/delete hit /{id} and return the entity, not the envelope', async () => {
+    http.get.mockResolvedValue({ data: { municipalTax: { id } }, status: 200, headers: {} });
+    http.put.mockResolvedValue({ data: { municipalTax: { id } }, status: 200, headers: {} });
     http.delete.mockResolvedValue({ data: undefined, status: 204, headers: {} });
     const upd = { issRate: 5 } as unknown as UpdateMunicipalTaxData;
 
-    await resource.retrieve(companyId, id);
-    await resource.update(companyId, id, upd);
+    const retrieved = await resource.retrieve(companyId, id);
+    const updated = await resource.update(companyId, id, upd);
     await resource.delete(companyId, id);
 
     expect(http.get).toHaveBeenCalledWith(`${base}/${id}`);
     expect(http.put).toHaveBeenCalledWith(`${base}/${id}`, { municipalTax: upd });
     expect(http.delete).toHaveBeenCalledWith(`${base}/${id}`);
+    expect(retrieved.id).toBe(id);
+    expect(updated.id).toBe(id);
+  });
+
+  it('also accepts the bare entity (defensive unwrap)', async () => {
+    http.get.mockResolvedValue({ data: { id }, status: 200, headers: {} });
+    const result = await resource.retrieve(companyId, id);
+    expect(result).toEqual({ id });
   });
 
   it('updatePrefecture uses PATCH on .../updateprefecture', async () => {

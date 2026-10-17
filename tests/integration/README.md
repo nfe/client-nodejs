@@ -7,7 +7,11 @@ These tests validate the NFE.io SDK against the **real API** (development or pro
 - **Real API calls**: These tests make actual HTTP requests to NFE.io API
 - **API key required**: You must provide valid credentials
 - **Costs may apply**: Depending on your NFE.io plan, API calls might incur costs
-- **Cleanup**: Tests attempt to cleanup resources, but failures might leave data
+- **Cleanup**: `companies.remove` answers with success but the company stays in the account with
+  status `Inactive` (measured 2026-10-16), so the company write tests leave data behind. They
+  are opt-in for that reason (`NFE_ALLOW_ACCOUNT_WRITES`)
+- **`npm test` runs them too**: outside CI, the full suite includes these tests whenever an API
+  key is set in `.env`
 
 ## 🔧 Setup
 
@@ -29,6 +33,11 @@ export NFE_TEST_ENVIRONMENT="development"  # or "production"
 
 # Optional: Enable integration tests in CI
 export RUN_INTEGRATION_TESTS="true"
+
+# Optional: allow tests that create, update or delete companies in the account.
+# Only with an account of your own that you can throw away -- never with a key
+# shared by a team, since those writes touch everyone's data.
+export NFE_ALLOW_ACCOUNT_WRITES="true"
 
 # Optional: Debug logging
 export DEBUG_INTEGRATION_TESTS="true"
@@ -66,12 +75,13 @@ npm run test:integration -- --coverage
 - Client factory
 
 ### `companies.integration.test.ts`
-- CRUD operations for Companies
+- CRUD operations for Companies, including duplicate CNPJ: **skipped unless
+  `NFE_ALLOW_ACCOUNT_WRITES=true`**, because they create and delete companies in the account
 - Certificate upload (skipped - requires PFX file)
-- Validation error handling
-- Duplicate detection
+- Validation error handling (runs by default: the API rejects the body, nothing is written)
+- 404 for a non-existent company (runs by default)
 
-**Tests**: 8 tests (1 skipped)
+**Tests**: 9 tests: 6 need `NFE_ALLOW_ACCOUNT_WRITES=true`, 2 run by default, 1 always skipped
 
 ### `service-invoices.integration.test.ts`
 - Complete invoice workflow
@@ -156,7 +166,8 @@ it.skip('test that requires special setup', async () => {
 ## 🧹 Cleanup
 
 Tests automatically cleanup created resources:
-- Companies are deleted after tests
+- Companies get `companies.remove` after tests, but the API keeps them in the account with
+  status `Inactive`
 - Invoices are cancelled after tests
 - Errors during cleanup are logged but don't fail tests
 

@@ -94,6 +94,20 @@ describe('NotificationsResource', () => {
     expect(http.post).toHaveBeenCalledWith(`${base}/email`, { to: 'x@y.z' });
   });
 
+  it('retrieve returns the notification, not the { notification } envelope', async () => {
+    // Wire shape measured on 2026-10-15: 200 { "notification": {…} }
+    http.get.mockResolvedValue({
+      status: 200,
+      headers: {},
+      data: { notification: { id: 'n1', filters: ['service_invoice.issued'] } },
+    });
+
+    const result = await res.retrieve(companyId, 'n1');
+
+    expect(result).toEqual({ id: 'n1', filters: ['service_invoice.issued'] });
+    expect(result.id).toBe('n1');
+  });
+
   it('validates inputs', async () => {
     await expect(res.retrieve(companyId, '')).rejects.toBeInstanceOf(ValidationError);
     await expect(res.list('')).rejects.toBeInstanceOf(ValidationError);

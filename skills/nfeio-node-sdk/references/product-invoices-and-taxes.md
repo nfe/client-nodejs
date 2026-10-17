@@ -8,7 +8,7 @@ Access via `nfe.productInvoices`. Company-scoped.
 
 **Important**: All product invoice operations are **always async** (return 202). There is NO `createAndWait()`. Completion is notified via **webhooks**.
 
-### create(companyId, data): Promise<NfeProductInvoice>
+### create(companyId, data): Promise<NfeProductInvoiceIssueData>
 
 Issues a product invoice. Returns immediately with 202 status. The invoice will be processed asynchronously and the result delivered via webhook.
 
@@ -55,7 +55,7 @@ Issues a product invoice. Returns immediately with 202 status. The invoice will 
 }
 ```
 
-### createWithStateTax(companyId, stateTaxId, data): Promise<NfeProductInvoice>
+### createWithStateTax(companyId, stateTaxId, data): Promise<NfeProductInvoiceIssueData>
 
 Same as `create()` but uses a specific state tax registration (IE) for issuance. Use when company has multiple IEs across states.
 
@@ -85,71 +85,87 @@ Cancels invoice. Always async (204 response). Reason string is optional.
 
 ### listEvents(companyId, invoiceId, options?): Promise<NfeProductInvoiceEventsResponse>
 
-### downloadPdf(companyId, invoiceId): Promise<Buffer>
+### downloadPdf(companyId, invoiceId, force?): Promise<NfeFileResource>
 
-Returns the DANFE PDF as a raw Buffer.
+Returns `{ uri }` for the DANFE PDF, not the bytes: fetch the file from the URI. `force: true`
+regenerates the PDF regardless of the invoice's `flowStatus`.
 
-### downloadXml(companyId, invoiceId): Promise<Buffer>
+### downloadXml(companyId, invoiceId): Promise<NfeFileResource>
 
-Returns the NF-e XML.
+`{ uri }` for the NF-e XML.
 
-### downloadRejectionXml(companyId, invoiceId): Promise<Buffer>
+### downloadRejectionXml(companyId, invoiceId): Promise<NfeFileResource>
 
-XML for rejected invoices.
+`{ uri }` for the XML of a rejected invoice.
 
-### downloadEpecXml(companyId, invoiceId): Promise<Buffer>
+### downloadEpecXml(companyId, invoiceId): Promise<NfeFileResource>
 
-XML for EPEC contingency mode.
+`{ uri }` for the XML in EPEC contingency mode.
 
-### sendCorrectionLetter(companyId, invoiceId, data): Promise<NfeProductInvoice>
+### sendCorrectionLetter(companyId, invoiceId, reason): Promise<NfeRequestCancellationResource>
 
-Issues a Carta de Correao Eletrnica (CC-e):
+Issues a Carta de Correção Eletrônica (CC-e). Processing is asynchronous. `reason` is a plain
+string with 15 to 1,000 characters, without accents or special characters:
 
 ```typescript
-await nfe.productInvoices.sendCorrectionLetter(companyId, invoiceId, {
-  correctionText: 'Correction description here',
-  // Must be 15-1000 characters
-  // No accents or special characters allowed
-});
+await nfe.productInvoices.sendCorrectionLetter(
+  companyId,
+  invoiceId,
+  'Correcao do endereco de entrega do destinatario',
+);
 ```
 
-### disable(companyId, data): Promise<NfeProductInvoice>
+### disable(companyId, invoiceId, reason?): Promise<NfeRequestCancellationResource>
 
-Inutilizao (disablement) of invoice number. Prevents specific numbers from being used.
+Inutilização (disablement) of a specific invoice, by ID. Processing is asynchronous; `reason` is
+optional.
+
+### disableRange(companyId, data): Promise<NfeDisablementResource>
+
+Disables a range of invoice numbers. To disable a single number, use the same `beginNumber` and
+`lastNumber`.
 
 ```typescript
 interface NfeDisablementData {
-  stateTaxId: string;
-  environment: NfeEnvironmentType;
-  invoiceSeries: number;
-  invoiceNumberStart: number;
-  invoiceNumberEnd: number;
-  reason: string;
+  environment: NfeEnvironmentType;  // 'None' | 'Production' | 'Test'
+  serie: number;
+  state: NfeStateCode;              // 'SP', 'RJ', ...
+  beginNumber: number;
+  lastNumber: number;
+  reason?: string;
 }
 ```
 
-### disableRange(companyId, data): Promise<NfeProductInvoice>
-
-Disable a range of invoice numbers at once.
-
 ---
 
-## StateTaxesResource (Inscrio Estadual)
+## StateTaxesResource (Inscrição Estadual)
 
 Access via `nfe.stateTaxes`. Company-scoped. **Prerequisite for NF-e issuance.**
 
 ```typescript
+// As declared by the SDK; every field is optional.
 interface NfeStateTax {
-  id: string;
-  type: NfeStateTaxType;                  // 'nFe' | 'nFce' | 'cTe'
-  state: NfeStateTaxStateCode;
-  taxNumber: string;                       // IE number
-  environment: NfeStateTaxEnvironmentType; // 'Production' | 'Test'
-  status: NfeStateTaxStatus;
-  specialTaxRegime?: NfeSpecialTaxRegime;
+  id?: string;
+  companyId?: string;
+  accountId?: string;
+  code?: NfeStateTaxStateCode;                    // the state
+  environmentType?: NfeStateTaxEnvironmentType;   // 'none' | 'production' | 'test'
+  taxNumber?: string;                             // IE number
+  serie?: number;
+  number?: number;
+  series?: number[];                              // all series of this registration
+  status?: NfeStateTaxStatus;                     // 'inactive' | 'none' | 'active'
+  type?: NfeStateTaxType;                         // 'default' | 'nFe' | 'nFCe'
+  specialTaxRegime?: NfeStateTaxSpecialTaxRegime;
   securityCredential?: NfeSecurityCredential;
+  batchId?: number;
+  createdOn?: string;
+  modifiedOn?: string;
 }
 ```
+
+The enum values follow the spec's casing (state codes such as `'sP'`), which is questioned
+upstream in nfe/docs#338.
 
 | Method | Signature |
 |--------|-----------|
@@ -158,6 +174,14 @@ interface NfeStateTax {
 | `retrieve` | `(companyId, stateTaxId): Promise<NfeStateTax>` |
 | `update` | `(companyId, stateTaxId, data): Promise<NfeStateTax>` |
 | `delete` | `(companyId, stateTaxId): Promise<void>` |
+
+`create`, `retrieve` and `update` return the registration itself since 6.0.1. The API wraps it in
+`{ stateTax: {…} }`; up to 6.0.0 the SDK returned that envelope typed as `NfeStateTax`, so
+`result.id` was `undefined`.
+
+`update` sends a PUT. For state taxes it is not documented whether omitted fields keep their
+value (the municipal-tax PUT replaces the registration). The safe pattern is to `retrieve`,
+change what you need and send the whole object back.
 
 Uses cursor-based pagination like product invoices.
 
@@ -253,7 +277,7 @@ Uses CT-e API host (`api.nfse.io`).
 
 ### enable(companyId, options?): Promise<TransportationInvoiceInboundSettings>
 
-Enable automatic CT-e fetch via SEFAZ Distribuio DFe:
+Enable automatic CT-e fetch via SEFAZ Distribuição DFe:
 
 ```typescript
 await nfe.transportationInvoices.enable(companyId, {
@@ -270,11 +294,14 @@ await nfe.transportationInvoices.enable(companyId, {
 
 Get CT-e metadata by 44-digit access key.
 
-### retrieveEvent(companyId, accessKey): Promise<TransportationInvoiceMetadata>
+### getEvent(companyId, accessKey, eventKey): Promise<TransportationInvoiceMetadata>
 
-### downloadXml(companyId, accessKey): Promise<Buffer>
+### downloadXml(companyId, accessKey): Promise<InboundFileResource>
 
-### downloadEventXml(companyId, accessKey): Promise<Buffer>
+### downloadEventXml(companyId, accessKey, eventKey): Promise<InboundFileResource>
+
+Both downloads return `{ publicTemporaryUri }`, a pre-signed, time-limited URI; downloading the
+file is up to the caller.
 
 ---
 
@@ -283,7 +310,7 @@ Get CT-e metadata by 44-digit access key.
 Access via `nfe.inboundProductInvoices`. Company-scoped.
 Uses CT-e API host (`api.nfse.io`).
 
-### enableAutoFetch(companyId, options?): Promise<InboundSettings>
+### enableAutoFetch(companyId, options): Promise<InboundSettings>
 
 ```typescript
 interface EnableInboundOptions {
@@ -301,31 +328,41 @@ interface EnableInboundOptions {
 
 ### Document Access Methods
 
-| Method | Input | Returns |
-|--------|-------|---------|
-| `getDetails(companyId, accessKey)` | 44-digit key | Generic metadata |
-| `getProductInvoiceDetails(companyId, accessKey)` | 44-digit key | Product invoice metadata |
-| `getEventDetails(companyId, accessKey)` | 44-digit key | Event metadata |
-| `getProductInvoiceEventDetails(companyId, accessKey)` | 44-digit key | Product invoice event metadata |
-| `getXml(companyId, accessKey)` | 44-digit key | XML string |
-| `getEventXml(companyId, accessKey)` | 44-digit key | Event XML string |
-| `getPdf(companyId, accessKey)` | 44-digit key | PDF string (base64) |
-| `getJson(companyId, accessKey, format?)` | 44-digit key | JSON string |
+`accessKey` is the 44-digit key; `eventKey` identifies an event of that document.
 
-### manifest(companyId, accessKey, eventType): Promise<InboundInvoiceMetadata>
+| Method | Returns |
+|--------|---------|
+| `getDetails(companyId, accessKey)` | `InboundInvoiceMetadata` |
+| `getProductInvoiceDetails(companyId, accessKey)` | `InboundProductInvoiceMetadata` |
+| `getEventDetails(companyId, accessKey, eventKey)` | `InboundInvoiceMetadata` |
+| `getProductInvoiceEventDetails(companyId, accessKey, eventKey)` | `InboundProductInvoiceMetadata` |
+| `getXml(companyId, accessKey)` | `InboundFileResource` |
+| `getEventXml(companyId, accessKey, eventKey)` | `InboundFileResource` |
+| `getPdf(companyId, accessKey)` | `InboundFileResource` |
+| `getJson(companyId, accessKey)` | `InboundInvoiceMetadata` |
 
-Send Manifestao do Destinatrio:
+`InboundFileResource` is `{ publicTemporaryUri }`, a pre-signed, time-limited URI: the XML and the
+PDF never travel in the response, and downloading them is up to the caller.
+
+`getProductInvoiceDetails`, `getProductInvoiceEventDetails`, `getJson` and `reprocessWebhook`
+reach the API since 6.0.1. Up to 6.0.0 they called `/inbound/productinvoice/` (singular), which
+the platform does not serve: every call ended in 404.
+
+### manifest(companyId, accessKey, tpEvent?): Promise<string>
+
+Sends the Manifestação do Destinatário. `tpEvent` defaults to `210210`:
 
 ```typescript
 type ManifestEventType =
-  | 210210   // Cincia da Operao (awareness)
-  | 210220   // Confirmao da Operao (confirmation)
-  | 210240;  // Operao No Realizada (not performed)
+  | 210210   // Ciência da Operação (awareness, default)
+  | 210220   // Confirmação da Operação (confirmation)
+  | 210240;  // Operação não Realizada (not performed)
 ```
 
-### reprocessWebhook(companyId, accessKey): Promise<void>
+### reprocessWebhook(companyId, accessKeyOrNsu): Promise<InboundProductInvoiceMetadata>
 
-Resend webhook notification for a specific document.
+Resends the webhook notification for a document, identified by its 44-digit access key or by its
+NSU.
 
 ---
 
@@ -340,13 +377,13 @@ Resend webhook notification for a specific document.
    -> Returns 202 immediately
 
 3. Receive webhook notification
-   invoice.issued / invoice.failed
+   product_invoice.issued_successfully / product_invoice.issued_failed / product_invoice.issued_error
 
-4. Download files
+4. Download files (each returns { uri }; fetch the file from it)
    nfe.productInvoices.downloadPdf(companyId, id)
    nfe.productInvoices.downloadXml(companyId, id)
 
 5. If needed: correction letter or cancellation
-   nfe.productInvoices.sendCorrectionLetter(companyId, id, { correctionText })
+   nfe.productInvoices.sendCorrectionLetter(companyId, id, reason)  // 15-1000 chars, no accents
    nfe.productInvoices.cancel(companyId, id)
 ```

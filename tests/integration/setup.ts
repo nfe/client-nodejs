@@ -78,6 +78,21 @@ export function skipIfNoDataApiKey(): boolean {
   return skipIfNoApiKey() || INTEGRATION_TEST_CONFIG.dataApiKey.length === 0;
 }
 
+/**
+ * Escrita na conta só com opt-in explícito.
+ *
+ * A chave dos testes costuma ser de uma conta compartilhada por várias pessoas, e esta suíte
+ * não roda só no `npm run test:integration`: fora da CI, o `npm test` também a executa sempre
+ * que há chave no `.env`. Cada rodada dos testes de escrita de companies deixava sete empresas
+ * na conta, porque o `companies.remove` responde com sucesso e a empresa continua lá, com
+ * status `Inactive` (medido em 2026-10-16). Sem `NFE_ALLOW_ACCOUNT_WRITES=true`, esses testes
+ * pulam. Ligue a variável só com uma conta sua, descartável.
+ *
+ * Tentativas que a API recusa por validação (corpo inválido) continuam rodando: elas não
+ * gravam nada.
+ */
+export const ALLOW_ACCOUNT_WRITES = process.env.NFE_ALLOW_ACCOUNT_WRITES === 'true';
+
 // Test data helpers for integration tests
 export const TEST_COMPANY_DATA = {
   federalTaxNumber: 11222333000181, // Valid CNPJ with proper check digits

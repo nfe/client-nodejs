@@ -26,25 +26,35 @@ precisa fornecer as chaves na configuração.
 | `nfe.api.nfe.io` | **dados** | `productInvoiceQuery`, `consumerInvoiceQuery` |
 
 :::danger As duas chaves são complementares, não alternativas
-Cada chave responde **`403` no território da outra**. Não existe "a chave que
-serve para tudo": os hosts **fiscais** (`api.nfe.io`, `api.nfse.io`) só aceitam a
-principal, e os de **consulta** (`nfe.api.nfe.io`, `legalentity`, `naturalperson`,
-`address`) só aceitam a de dados.
+A **principal** é a que vale em `api.nfe.io` e `api.nfse.io`, e é a que o SDK envia
+aos recursos desses hosts. A **de dados** vale nos hosts de consulta
+(`nfe.api.nfe.io`, `legalentity`, `naturalperson`, `address`).
+
+Medido em 2026-10-14, rota por rota: a chave de dados é recusada (`403`) nas rotas
+de documento fiscal (NF-e, NFC-e, NFS-e, documentos de entrada e `tax-codes`), e a
+principal é recusada (`403`) nos hosts de consulta. Algumas rotas de cadastro da
+conta também aceitam a chave de dados, mas isso não é contrato documentado, e o SDK
+não depende disso.
 
 O SDK aplica um fallback de `dataApiKey` para `apiKey` quando a de dados não é
 informada. Isso é uma conveniência para quem tem uma chave só com os dois escopos
 — **não** significa que uma substitua a outra. Se você configurar apenas
-`dataApiKey`, os recursos fiscais lançam `ConfigurationError` na hora, em vez de
-falhar com `403` na chamada.
+`dataApiKey`, os recursos de `api.nfe.io` e `api.nfse.io` lançam
+`ConfigurationError` na hora, em vez de arriscar um `403` na chamada.
 :::
 
-:::warning Correção em 2026-09-02
-Até esta data a tabela acima dizia que `productInvoices`, `productInvoicesRtc`,
-`stateTaxes`, `municipalTaxes`, `certificates`, `transportationInvoices` e
-`inboundProductInvoices` usavam a chave **de dados** em `api.nfse.io`. Estava
-errado: `api.nfse.io` é host fiscal e responde `403` à chave de dados. Era o
-mesmo defeito que o SDK carregava no roteamento interno, corrigido antes desta
-página. Se você replicou o mapa antigo na sua aplicação, ajuste. Histórico em
+:::warning Correções de registro
+- **2026-09-02.** Até essa data, a tabela acima dizia que `productInvoices`,
+  `productInvoicesRtc`, `stateTaxes`, `municipalTaxes`, `certificates`,
+  `transportationInvoices` e `inboundProductInvoices` usavam a chave **de dados** em
+  `api.nfse.io`. Estava errado: as rotas de documento fiscal desse host respondem
+  `403` à chave de dados, e o SDK passou a enviar a principal. Se você replicou o
+  mapa antigo na sua aplicação, ajuste.
+- **2026-10-14.** O texto anterior desta nota dizia que cada chave era recusada em todo o
+  host da outra. Isso generalizava para o host inteiro uma medição feita só em rotas de
+  documento fiscal. A regra é por rota, como descrito acima.
+
+Histórico em
 [`MIGRATION.md`](https://github.com/nfe/client-nodejs/blob/master/MIGRATION.md).
 :::
 
