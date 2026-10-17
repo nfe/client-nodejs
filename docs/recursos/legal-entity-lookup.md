@@ -16,16 +16,16 @@ inscrição estadual.
 
 | Método | Descrição | Retorno |
 |---|---|---|
-| `getBasicInfo(cnpj)` | Dados cadastrais (razão social, endereço, CNAE, etc.). | `{ legalEntity }` |
-| `getStateTaxInfo(cnpj)` | Inscrição estadual. | dados de IE |
-| `getStateTaxForInvoice(cnpj, ...)` | IE adequada para emissão. | dados de IE |
-| `getSuggestedStateTaxForInvoice(cnpj, ...)` | IE sugerida para emissão. | dados de IE |
+| `getBasicInfo(cnpj, options?)` | Dados cadastrais (razão social, endereço, CNAE, etc.). | `{ legalEntity }` |
+| `getStateTaxInfo(state, cnpj)` | Inscrição estadual na UF indicada (ex.: `'SP'`). | dados de IE |
+| `getStateTaxForInvoice(state, cnpj)` | IE adequada para emissão. | dados de IE |
+| `getSuggestedStateTaxForInvoice(state, cnpj)` | IE sugerida para emissão. | dados de IE |
 
 ## Exemplo
 
 ```typescript
 const { legalEntity } = await nfe.legalEntityLookup.getBasicInfo('06990590000123');
-console.log(legalEntity.name, legalEntity.address?.city?.name);
+console.log(legalEntity?.name, legalEntity?.address?.city?.name);
 ```
 
 ## Próximos passos

@@ -25,8 +25,8 @@ e-mail e download de PDF/XML.
 | `cancel(companyId, invoiceId)` | Cancela (assíncrono). | `CancelInvoiceResponse` (união discriminada) |
 | `cancelAndWait(companyId, invoiceId, options?)` | Cancela e faz polling até concluir. | `ServiceInvoiceData` |
 | `sendEmail(companyId, invoiceId)` | Reenvia a nota por e-mail ao tomador. | `{ sent, message }` |
-| `downloadPdf(companyId, invoiceId?)` | PDF da nota; sem `invoiceId`, baixa o ZIP da empresa. | `Buffer` |
-| `downloadXml(companyId, invoiceId?)` | XML da nota; sem `invoiceId`, baixa o ZIP da empresa. | `Buffer` |
+| `downloadPdf(companyId, invoiceId)` | PDF da nota. | `Buffer` |
+| `downloadXml(companyId, invoiceId)` | XML da nota. Não há download em lote: `invoiceId` é obrigatório desde a 6.0.0. | `Buffer` |
 
 As opções de `list` são `pageIndex`, `pageCount`, `issuedBegin`, `issuedEnd`,
 `createdBegin`, `createdEnd` e `hasTotals`.
@@ -84,9 +84,8 @@ import { writeFileSync } from 'node:fs';
 const pdf = await nfe.serviceInvoices.downloadPdf(companyId, invoiceId);
 writeFileSync('nota.pdf', pdf);
 
-// ZIP de todas as notas da empresa (sem invoiceId):
-const zip = await nfe.serviceInvoices.downloadXml(companyId);
-writeFileSync('notas-xml.zip', zip);
+const xml = await nfe.serviceInvoices.downloadXml(companyId, invoiceId);
+writeFileSync('nota.xml', xml);
 ```
 
 ## Cancelar e reenviar por e-mail

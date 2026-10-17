@@ -17,15 +17,15 @@ e a conclusão é notificada por [webhook](../webhooks.md) (sem polling).
 | Método | Descrição | Retorno |
 |---|---|---|
 | `create(companyId, data)` | Emite a NF-e (webhook-driven). | `NfeProductInvoiceIssueData` |
-| `createWithStateTax(companyId, data)` | Emite garantindo a inscrição estadual. | `NfeProductInvoiceIssueData` |
+| `createWithStateTax(companyId, stateTaxId, data)` | Emite pela inscrição estadual indicada. | `NfeProductInvoiceIssueData` |
 | `list(companyId, options)` | Lista NF-e. **Requer `environment`** (`Production`/`Test`). | envelope `{ productInvoices, hasMore }` |
 | `retrieve(companyId, invoiceId)` | Consulta por id. | dados da NF-e |
-| `cancel(companyId, invoiceId)` | Cancela a NF-e. | dados da NF-e |
+| `cancel(companyId, invoiceId, reason?)` | Cancela a NF-e (assíncrono). | `NfeRequestCancellationResource` |
 | `listItems` / `listEvents` | Itens e eventos da nota. | respostas específicas |
-| `downloadPdf` / `downloadXml` / `downloadRejectionXml` / `downloadEpecXml` | Downloads (Buffer). | `Buffer` |
-| `sendCorrectionLetter(companyId, id, data)` | Emite carta de correção (CC-e). | evento |
-| `downloadCorrectionLetterPdf` / `downloadCorrectionLetterXml` | Downloads da CC-e. | `Buffer` |
-| `disable` / `disableRange` | Inutilização de numeração. | resultado |
+| `downloadPdf` / `downloadXml` / `downloadRejectionXml` / `downloadEpecXml` | Link do arquivo, não os bytes; `downloadPdf` aceita `force?` para regenerar. | `NfeFileResource` (`{ uri }`) |
+| `sendCorrectionLetter(companyId, invoiceId, reason)` | Emite carta de correção (CC-e). `reason` é texto de 15 a 1.000 caracteres, sem acento. | `NfeRequestCancellationResource` |
+| `downloadCorrectionLetterPdf` / `downloadCorrectionLetterXml` | Link do arquivo da CC-e. | `NfeFileResource` (`{ uri }`) |
+| `disable(companyId, invoiceId, reason?)` / `disableRange(companyId, data)` | Inutilização de uma nota ou de uma faixa de numeração. | `NfeRequestCancellationResource` / `NfeDisablementResource` |
 
 :::warning `environment` obrigatório na listagem
 `list` exige `environment` (`'Production'` ou `'Test'`). Chamar sem o parâmetro
@@ -45,9 +45,12 @@ const invoice = await nfe.productInvoices.create(companyId, {
 ## Carta de correção (CC-e)
 
 ```typescript
-await nfe.productInvoices.sendCorrectionLetter(companyId, invoiceId, {
-  correction: 'Correção da descrição do item 1',
-});
+// texto de 15 a 1.000 caracteres, sem acento
+await nfe.productInvoices.sendCorrectionLetter(
+  companyId,
+  invoiceId,
+  'Correcao da descricao do item 1',
+);
 ```
 
 ## Próximos passos

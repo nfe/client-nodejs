@@ -15,21 +15,22 @@ empresa — **pré-requisito para emissão de NF-e**.
 
 | Método | Descrição | Retorno |
 |---|---|---|
-| `list(companyId)` | Lista as inscrições. | `{ stateTaxes, hasMore }` |
-| `create(companyId, data)` | Cria uma inscrição. | `StateTax` |
-| `retrieve(companyId, stateTaxId)` | Consulta por id. | `StateTax` |
-| `update(companyId, stateTaxId, data)` | Atualiza. | `StateTax` |
+| `list(companyId, options?)` | Lista as inscrições (paginação por cursor). | `{ stateTaxes, hasMore }` |
+| `create(companyId, data)` | Cria uma inscrição. | `NfeStateTax` |
+| `retrieve(companyId, stateTaxId)` | Consulta por id. | `NfeStateTax` |
+| `update(companyId, stateTaxId, data)` | Atualiza. | `NfeStateTax` |
 | `delete(companyId, stateTaxId)` | Remove. | `void` |
-| `switchAuthorizer(companyId, stateTaxId, data?)` | Troca o autorizador NF-e (ex.: SVRS). | `StateTax` |
+| `switchAuthorizer(companyId, stateTaxId, data?)` | Troca o autorizador NF-e (ex.: SVRS). | `NfeStateTax` |
 
 ## Exemplo
 
 ```typescript
 const { stateTaxes = [] } = await nfe.stateTaxes.list(companyId);
 
-await nfe.stateTaxes.switchAuthorizer(companyId, stateTaxes[0].id, {
-  authorizer: 'SVRS',
-});
+const primeira = stateTaxes[0];
+if (primeira?.id) {
+  await nfe.stateTaxes.switchAuthorizer(companyId, primeira.id, { authorizer: 'SVRS' });
+}
 ```
 
 ## Próximos passos
