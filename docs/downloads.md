@@ -4,6 +4,8 @@ sidebar_label: Downloads (PDF/XML)
 sidebar_position: 6
 slug: downloads-pdf-xml
 description: Baixe DANFE/PDF e XML de uma nota identificada, em bytes (Buffer) ou por link, conforme o recurso.
+tags: [nodejs, nfse, nfe, nfce, cte, xml, referencia]
+integration: [sdk]
 ---
 
 # Downloads (PDF/XML)

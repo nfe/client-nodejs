@@ -4,6 +4,8 @@ sidebar_label: Consulta CNPJ
 sidebar_position: 12
 slug: consulta-cnpj
 description: Consulte dados cadastrais e de inscrição estadual por CNPJ com nfe.legalEntityLookup (host legalentity.api.nfe.io).
+tags: [nodejs, consulta, referencia]
+integration: [sdk]
 ---
 
 # Consulta de CNPJ

@@ -4,6 +4,8 @@ sidebar_label: Pessoas físicas
 sidebar_position: 15
 slug: pessoas-fisicas
 description: CRUD de pessoas físicas (tomadores) por empresa com nfe.naturalPeople, incluindo criação em lote e busca por CPF.
+tags: [nodejs, referencia]
+integration: [sdk]
 ---
 
 # Pessoas físicas (tomadores PF)

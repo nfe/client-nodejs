@@ -4,6 +4,8 @@ sidebar_label: Multi-host / multi-chave
 sidebar_position: 4
 slug: multi-host-e-multi-chave
 description: A NFE.io é composta por várias APIs em hosts distintos e duas chaves (principal e de dados). Entenda qual recurso usa qual host e chave.
+tags: [nodejs, autenticacao, referencia]
+integration: [sdk]
 ---
 
 # Roteamento multi-host / multi-chave

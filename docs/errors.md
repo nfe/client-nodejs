@@ -4,6 +4,8 @@ sidebar_label: Erros
 sidebar_position: 8
 slug: erros
 description: Hierarquia de erros (NfeError), type guards, mapeamento de status HTTP e política de retry.
+tags: [nodejs, erro, referencia]
+integration: [sdk]
 ---
 
 # Erros

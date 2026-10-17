@@ -4,6 +4,8 @@ sidebar_label: Consulta NF-e
 sidebar_position: 20
 slug: consulta-nfe
 description: Consulte NF-e por chave de acesso e baixe PDF/XML com nfe.productInvoiceQuery (host nfe.api.nfe.io).
+tags: [nodejs, consulta, nfe, referencia]
+integration: [sdk]
 ---
 
 # Consulta de NF-e por chave (SEFAZ)

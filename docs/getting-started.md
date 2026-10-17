@@ -4,6 +4,8 @@ sidebar_label: Primeiros passos
 sidebar_position: 1
 slug: primeiros-passos
 description: Instale o pacote nfe-io, crie um NfeClient, emita sua primeira NFS-e e acompanhe o processamento com createAndWait/polling.
+tags: [nodejs, nfse, emissao, how-to]
+integration: [sdk]
 ---
 
 # Primeiros passos

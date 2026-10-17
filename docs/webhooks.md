@@ -4,6 +4,8 @@ sidebar_label: Webhooks
 sidebar_position: 7
 slug: webhooks
 description: Verificação de assinatura HMAC-SHA1 (x-hub-signature), webhooks por empresa e por conta, e lista de eventos ao vivo.
+tags: [nodejs, webhook, referencia]
+integration: [sdk]
 ---
 
 # Webhooks

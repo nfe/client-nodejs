@@ -4,6 +4,9 @@ sidebar_label: Consulta CFe-SAT
 sidebar_position: 21
 slug: consulta-cfe-sat
 description: nfe.consumerInvoiceQuery consulta cupons CFe-SAT por chave de acesso — métodos descontinuados, porque a plataforma não serve as rotas.
+tags: [nodejs, consulta, referencia]
+integration: [sdk]
+status: deprecated
 ---
 
 # Consulta de cupom (CFe-SAT)

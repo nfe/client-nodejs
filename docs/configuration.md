@@ -4,6 +4,8 @@ sidebar_label: Configuração
 sidebar_position: 2
 slug: configuracao
 description: Chaves de API (apiKey e dataApiKey), ambiente, timeout, retry e reconfiguração em runtime do NfeClient.
+tags: [nodejs, autenticacao, referencia]
+integration: [sdk]
 ---
 
 # Configuração

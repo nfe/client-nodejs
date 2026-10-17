@@ -4,6 +4,8 @@ sidebar_label: Cálculo de impostos
 sidebar_position: 17
 slug: calculo-de-impostos
 description: Calcule tributos (ICMS, PIS, COFINS, IPI, II) por item com nfe.taxCalculation (host api.nfse.io).
+tags: [nodejs, impostos, referencia]
+integration: [sdk]
 ---
 
 # Cálculo de impostos

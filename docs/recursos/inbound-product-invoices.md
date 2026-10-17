@@ -4,6 +4,8 @@ sidebar_label: NF-e de entrada
 sidebar_position: 19
 slug: nfe-de-entrada
 description: Captura automática de NF-e de entrada (distribuição DF-e) com nfe.inboundProductInvoices (host api.nfse.io).
+tags: [nodejs, nfe, inbound, distribuicao, referencia]
+integration: [sdk]
 ---
 
 # NF-e de entrada (inbound)

@@ -4,6 +4,8 @@ sidebar_label: Paginação
 sidebar_position: 5
 slug: paginacao
 description: Listas page-style com filtros de data, envelopes de resposta por recurso e iteração automática de empresas.
+tags: [nodejs, paginacao, referencia]
+integration: [sdk]
 ---
 
 # Paginação

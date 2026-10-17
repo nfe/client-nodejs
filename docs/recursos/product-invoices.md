@@ -4,6 +4,8 @@ sidebar_label: Notas de produto
 sidebar_position: 2
 slug: notas-fiscais-de-produto
 description: Emita e gerencie NF-e com nfe.productInvoices no host api.nfse.io — emissão webhook-driven, carta de correção, downloads e inutilização.
+tags: [nodejs, nfe, emissao, referencia]
+integration: [sdk]
 ---
 
 # Notas fiscais de produto (NF-e)

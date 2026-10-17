@@ -4,6 +4,8 @@ sidebar_label: Empresas
 sidebar_position: 4
 slug: empresas
 description: CRUD de empresas emitentes, iteração paginada, verificação de existência e gestão de certificados digitais com nfe.companies.
+tags: [nodejs, empresa, referencia]
+integration: [sdk]
 ---
 
 # Empresas (emitentes)

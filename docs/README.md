@@ -9,6 +9,8 @@ layout_type: IntegrationLayout
 heroImage: /docs/img/bibliotecas/nodejs.svg
 ctaLabel: GitHub NFE.io Node.js
 ctaUrl: https://github.com/nfe/client-nodejs
+tags: [nodejs, nfse, nfe, nfce, cte, how-to]
+integration: [sdk]
 ---
 
 # Biblioteca Node.js NFE.io

@@ -4,6 +4,8 @@ sidebar_label: Assíncrono e polling
 sidebar_position: 3
 slug: assincrono-e-polling
 description: Retorno discriminado (202 vs 201), estados de FlowStatus, createAndWait/cancelAndWait e emissão webhook-driven.
+tags: [nodejs, nfse, nfe, nfce, emissao, referencia]
+integration: [sdk]
 ---
 
 # Emissão assíncrona e polling

@@ -4,6 +4,8 @@ sidebar_label: Consulta CPF
 sidebar_position: 13
 slug: consulta-cpf
 description: Consulte a situação cadastral de um CPF com nfe.naturalPersonLookup (host naturalperson.api.nfe.io). Requer data de nascimento.
+tags: [nodejs, consulta, referencia]
+integration: [sdk]
 ---
 
 # Consulta de CPF

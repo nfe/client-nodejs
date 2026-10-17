@@ -4,6 +4,8 @@ sidebar_label: Pessoas jurídicas
 sidebar_position: 14
 slug: pessoas-juridicas
 description: CRUD de pessoas jurídicas (tomadores) por empresa com nfe.legalPeople, incluindo criação em lote e busca por CNPJ.
+tags: [nodejs, referencia]
+integration: [sdk]
 ---
 
 # Pessoas jurídicas (tomadores PJ)
