@@ -499,11 +499,11 @@ await nfe.inboundProductInvoices.manifest(
   '35240112345678000190550010000001231234567890'
 );
 
-// Manifestar com evento específico
+// Confirmar a operação: a Confirmação da Operação é 210200 (o 210220 é Desconhecimento)
 await nfe.inboundProductInvoices.manifest(
   'empresa-id',
   '35240112345678000190550010000001231234567890',
-  210220 // Confirmação da Operação
+  210200
 );
 
 // Consultar evento da NF-e
@@ -534,9 +534,17 @@ await nfe.inboundProductInvoices.reprocessWebhook('empresa-id', '35240...');
 
 | Código | Evento |
 |--------|--------|
+| `210200` | Confirmação da Operação |
 | `210210` | Ciência da Operação (padrão) |
-| `210220` | Confirmação da Operação |
+| `210220` | **Desconhecimento da Operação** |
 | `210240` | Operação não Realizada |
+
+> ⚠️ **`210220` é Desconhecimento da Operação, não Confirmação.** Enviá-lo por engano registra na
+> SEFAZ, em nome do destinatário, uma declaração formal de que a operação não é reconhecida,
+> visível para o emissor e para o fisco. Até a 6.0.1, este README o chamava de Confirmação, o que
+> estava errado. A Confirmação da Operação é `210200`, que o tipo `ManifestEventType` aceita desde
+> a 6.0.2. Segundo a documentação da plataforma, a rota de manifestação responde `400` para
+> `210240`, porque o evento exige justificativa e a rota não tem corpo para enviá-la.
 
 #### 📦 NF-e de Produto - Emissão (`nfe.productInvoices`)
 

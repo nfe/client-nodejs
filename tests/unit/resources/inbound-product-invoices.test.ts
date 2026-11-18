@@ -455,6 +455,18 @@ describe('InboundProductInvoicesResource', () => {
       );
     });
 
+    // Confirmação da Operação é 210200. Até a 6.0.1 o tipo não o aceitava, e a documentação
+    // chamava o 210220 (Desconhecimento) de Confirmação.
+    it('should send manifest with tpEvent=210200 (Confirmação da Operação)', async () => {
+      mockHttpClient.post.mockResolvedValue({ data: 'ok', status: 200, headers: {} });
+
+      await resource.manifest(testCompanyId, validAccessKey, 210200);
+
+      expect(mockHttpClient.post).toHaveBeenCalledWith(
+        `/v2/companies/${testCompanyId}/inbound/${validAccessKey}/manifest?tpEvent=210200`
+      );
+    });
+
     it('should send manifest with explicit tpEvent=210220', async () => {
       const mockResponse: HttpResponse<string> = {
         data: 'ok',

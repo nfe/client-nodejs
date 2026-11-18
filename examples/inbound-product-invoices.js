@@ -156,8 +156,9 @@ async function downloadPdf(companyId, accessKey) {
  */
 async function sendManifest(companyId, accessKey, tpEvent = 210210) {
   const eventNames = {
+    210200: 'Confirmação da Operação',
     210210: 'Ciência da Operação',
-    210220: 'Confirmação da Operação',
+    210220: 'Desconhecimento da Operação (NÃO é Confirmação; a Confirmação é 210200)',
     210240: 'Operação não Realizada',
   };
   const eventName = eventNames[tpEvent] || `Event ${tpEvent}`;

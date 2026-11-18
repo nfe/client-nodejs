@@ -1910,18 +1910,11 @@ await nfe.inboundProductInvoices.manifest(
   '35240112345678000190550010000001231234567890'
 );
 
-// Confirmação da Operação
+// Confirmação da Operação is 210200 (210220 is Desconhecimento)
 await nfe.inboundProductInvoices.manifest(
   'company-id',
   '35240112345678000190550010000001231234567890',
-  210220
-);
-
-// Operação não Realizada
-await nfe.inboundProductInvoices.manifest(
-  'company-id',
-  '35240112345678000190550010000001231234567890',
-  210240
+  210200
 );
 ```
 
@@ -1929,9 +1922,22 @@ await nfe.inboundProductInvoices.manifest(
 
 | Code | Event |
 |------|-------|
+| `210200` | Confirmação da Operação (confirmation — "goods received as described") |
 | `210210` | Ciência da Operação (awareness, default) |
-| `210220` | Confirmação da Operação (confirmation) |
+| `210220` | Desconhecimento da Operação (disowned — "I do not recognize this transaction") |
 | `210240` | Operação não Realizada (operation not performed) |
+
+:::danger Códigos de manifestação: confira antes de enviar
+`210220` é **Desconhecimento da Operação**, não Confirmação. Enviá-lo por engano registra na
+SEFAZ, em nome do destinatário, uma declaração formal de que a operação **não é reconhecida** —
+visível para o emissor e para o fisco, e não reversível pelo mesmo canal. Até a 6.0.1, esta
+documentação o chamava de Confirmação, o que estava errado.
+
+Confirmação da Operação é **`210200`**, que o tipo `ManifestEventType` aceita desde a 6.0.2.
+:::
+
+Segundo a documentação da plataforma, esta rota responde `400` para `210240`: o evento exige
+justificativa, e a rota não tem corpo para enviá-la.
 
 #### `reprocessWebhook(companyId: string, accessKeyOrNsu: string): Promise<InboundProductInvoiceMetadata>`
 

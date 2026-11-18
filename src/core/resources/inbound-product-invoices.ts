@@ -538,9 +538,15 @@ export class InboundProductInvoicesResource {
    * Defaults to "Ciência da Operação" (210210) if no event type is specified.
    *
    * **Event types:**
+   * - `210200` — Confirmação da Operação (confirmation). Accepted by the type since 6.0.2.
    * - `210210` — Ciência da Operação (awareness, default)
-   * - `210220` — Confirmação da Operação (confirmation)
-   * - `210240` — Operação não Realizada (operation not performed)
+   * - `210220` — **Desconhecimento da Operação**: the recipient does NOT recognize the operation.
+   *   It is NOT "Confirmação da Operação", as this documentation said until 6.0.1. Sending it by
+   *   mistake registers at SEFAZ a formal statement that the operation is not recognized,
+   *   visible to the issuer and to the tax authority.
+   * - `210240` — Operação não Realizada (operation not performed). According to the platform
+   *   documentation, this route answers `400` for it: the event requires a justification, and
+   *   this route has no body to carry it.
    *
    * @param companyId - The company ID
    * @param accessKey - The 44-character access key of the NF-e
@@ -556,12 +562,12 @@ export class InboundProductInvoicesResource {
    * );
    * ```
    *
-   * @example Confirm operation
+   * @example Confirm the operation (Confirmação da Operação is 210200, not 210220)
    * ```typescript
    * const result = await nfe.inboundProductInvoices.manifest(
    *   'company-id',
    *   '35240112345678000190550010000001231234567890',
-   *   210220
+   *   210200
    * );
    * ```
    */

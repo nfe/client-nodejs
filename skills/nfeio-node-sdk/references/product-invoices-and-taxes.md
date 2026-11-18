@@ -359,10 +359,21 @@ Sends the Manifestação do Destinatário. `tpEvent` defaults to `210210`:
 
 ```typescript
 type ManifestEventType =
+  | 210200   // Confirmação da Operação (confirmation: "goods received as described"), since 6.0.2
   | 210210   // Ciência da Operação (awareness, default)
-  | 210220   // Confirmação da Operação (confirmation)
+  | 210220   // Desconhecimento da Operação (disowned: "I do not recognize this operation")
   | 210240;  // Operação não Realizada (not performed)
+
+// Confirm an operation
+await nfe.inboundProductInvoices.manifest(companyId, accessKey, 210200);
 ```
+
+**`210220` is NOT Confirmação da Operação.** It is Desconhecimento: sending it by mistake registers
+at SEFAZ, on behalf of the recipient, a formal statement that the operation is not recognized,
+visible to the issuer and to the tax authority. The SDK docs called it "Confirmação" until 6.0.1.
+Confirmação da Operação is `210200`, accepted by `ManifestEventType` since 6.0.2: never send
+`210220` to confirm. According to the platform documentation, this route answers `400` for
+`210240`, because the event requires a justification and the route has no body for it.
 
 ### reprocessWebhook(companyId, accessKeyOrNsu): Promise<InboundProductInvoiceMetadata>
 
