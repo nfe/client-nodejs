@@ -95,7 +95,7 @@ const nfe = new NfeClient({
 
 // Criar uma empresa
 const empresa = await nfe.companies.create({
-  federalTaxNumber: '12345678000190',
+  federalTaxNumber: 11222333000181,
   name: 'Minha Empresa Ltda',
   email: 'empresa@exemplo.com.br',
   taxRegime: 1, // Simples Nacional
@@ -116,7 +116,7 @@ const notaFiscal = await nfe.serviceInvoices.create(empresa.id, {
   servicesAmount: 1000.00,
   borrower: {
     type: 'LegalEntity',
-    federalTaxNumber: 12345678000190,
+    federalTaxNumber: 11222333000181,
     name: 'Empresa Cliente',
     email: 'cliente@exemplo.com.br',
     address: {
@@ -257,7 +257,7 @@ Gerenciar empresas na sua conta:
 // Criar empresa (a API exige name, federalTaxNumber, taxRegime e address)
 const empresa = await nfe.companies.create({
   name: 'Nome da Empresa',
-  federalTaxNumber: 12345678000190,
+  federalTaxNumber: 11222333000181,
   taxRegime: 'SimplesNacional',
   address: {
     state: 'SP',
@@ -302,7 +302,7 @@ Gerenciar pessoas jurídicas (empresas/negócios):
 ```typescript
 // Criar pessoa jurídica
 const pessoa = await nfe.legalPeople.create(empresaId, {
-  federalTaxNumber: '12345678000190',
+  federalTaxNumber: '11222333000181',
   name: 'Nome da Empresa',
   email: 'empresa@exemplo.com.br',
   address: { /* ... */ }
@@ -312,7 +312,7 @@ const pessoa = await nfe.legalPeople.create(empresaId, {
 const pessoas = await nfe.legalPeople.list(empresaId);
 
 // Buscar por CNPJ
-const pessoa = await nfe.legalPeople.findByTaxNumber(empresaId, '12345678000190');
+const pessoa = await nfe.legalPeople.findByTaxNumber(empresaId, '11222333000181');
 ```
 
 #### 👤 Pessoas Físicas (`nfe.naturalPeople`)
@@ -547,7 +547,7 @@ Ciclo completo de gestão de NF-e (Nota Fiscal Eletrônica de Produto) — emiss
 const result = await nfe.productInvoices.create('empresa-id', {
   operationNature: 'Venda de mercadoria',
   operationType: 'Outgoing',
-  buyer: { name: 'Empresa LTDA', federalTaxNumber: 12345678000190 },
+  buyer: { name: 'Empresa LTDA', federalTaxNumber: 11222333000181 },
   items: [{ code: 'PROD-001', description: 'Produto X', quantity: 1, unitAmount: 100 }],
   payment: [{ paymentDetail: [{ method: 'Cash', amount: 100 }] }],
 });
@@ -660,7 +660,7 @@ Consultar dados cadastrais de empresas brasileiras (CNPJ) na Receita Federal e n
 
 ```typescript
 // Consulta básica por CNPJ (aceita com ou sem pontuação)
-const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/0001-81');
 console.log('Razão Social:', result.legalEntity?.name);
 console.log('Nome Fantasia:', result.legalEntity?.tradeName);
 console.log('Status:', result.legalEntity?.status);        // 'Active'
@@ -668,20 +668,20 @@ console.log('Porte:', result.legalEntity?.size);            // 'ME', 'EPP', etc.
 console.log('Cidade:', result.legalEntity?.address?.city?.name);
 
 // Consulta com opções
-const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
+const result = await nfe.legalEntityLookup.getBasicInfo('11222333000181', {
   updateAddress: false,    // Não atualizar endereço via Correios
   updateCityCode: true,    // Atualizar código IBGE da cidade
 });
 
 // Consultar Inscrição Estadual (IE) por estado
-const ieSP = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+const ieSP = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333000181');
 for (const tax of ieSP.legalEntity?.stateTaxes ?? []) {
   console.log(`IE: ${tax.taxNumber} - Status: ${tax.status}`);
   console.log(`  NFe: ${tax.nfe?.status}, CTe: ${tax.cte?.status}`);
 }
 
 // Avaliar IE para emissão de nota fiscal
-const invoice = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '12345678000190');
+const invoice = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '11222333000181');
 for (const tax of invoice.legalEntity?.stateTaxes ?? []) {
   if (tax.status === 'Abled') {
     console.log(`Pode emitir com IE: ${tax.taxNumber}`);
@@ -689,7 +689,7 @@ for (const tax of invoice.legalEntity?.stateTaxes ?? []) {
 }
 
 // Obter melhor IE sugerida para emissão
-const sugestao = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '12345678000190');
+const sugestao = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333000181');
 const melhorIE = sugestao.legalEntity?.stateTaxes?.[0];
 console.log('IE recomendada:', melhorIE?.taxNumber);
 ```
@@ -920,7 +920,7 @@ async function emitirNotaFiscal() {
     servicesAmount: 5000.00,
     borrower: {
       type: 'LegalEntity',
-      federalTaxNumber: 12345678000190,
+      federalTaxNumber: 11222333000181,
       name: 'Cliente Exemplo Ltda',
       email: 'contato@cliente.com.br',
       address: {

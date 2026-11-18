@@ -292,7 +292,7 @@ await nfe.transportationInvoices.enable(companyId, {
 
 ### retrieve(companyId, accessKey): Promise<TransportationInvoiceMetadata>
 
-Get CT-e metadata by 44-digit access key.
+Get CT-e metadata by its 44-character access key. This route (`/inbound/{accessKey}`) still answers `400` for a key with letters (alphanumeric CNPJ issuer); the SDK sends it and raises the API error.
 
 ### getEvent(companyId, accessKey, eventKey): Promise<TransportationInvoiceMetadata>
 
@@ -328,7 +328,12 @@ interface EnableInboundOptions {
 
 ### Document Access Methods
 
-`accessKey` is the 44-digit key; `eventKey` identifies an event of that document.
+`accessKey` is the 44-character key; `eventKey` identifies an event of that document. Positions 7–18
+hold the issuer CNPJ and may contain letters (alphanumeric CNPJ): since 6.0.2 the SDK accepts that
+and sends the key upper case. Measured on 2026-11-18, the `productinvoices` methods
+(`getProductInvoiceDetails`, `getProductInvoiceEventDetails`, `getJson`) accept it; `getDetails`,
+`getEventDetails`, `getXml`, `getEventXml` and `getPdf` use `/inbound/{accessKey}`, which still
+answers `400` ("access key must have 44 digits"), raised as `ValidationError`.
 
 | Method | Returns |
 |--------|---------|
@@ -361,7 +366,7 @@ type ManifestEventType =
 
 ### reprocessWebhook(companyId, accessKeyOrNsu): Promise<InboundProductInvoiceMetadata>
 
-Resends the webhook notification for a document, identified by its 44-digit access key or by its
+Resends the webhook notification for a document, identified by its 44-character access key or by its
 NSU.
 
 ---

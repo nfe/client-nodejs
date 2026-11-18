@@ -365,7 +365,7 @@ on the live API — fetch the real list with `await nfe.webhooks.fetchEventTypes
 
 1. **Import path**: Use `'nfe-io'` not `'@nfe-io/sdk'`. The JSDoc uses `@nfe-io/sdk` but the npm package is `nfe-io`.
 
-2. **`federalTaxNumber` type varies**: For `companies.create()` it's a **number** (`12345678000190`). For `legalPeople`/`naturalPeople` and lookup resources it's a **string** (`'12345678000190'`).
+2. **`federalTaxNumber` type varies**: For `companies.create()` it's a **number** (`11222333000181`). For `legalPeople`/`naturalPeople` and lookup resources it's a **string** (`'11222333000181'`). A CNPJ or CPF that starts with zero loses it as a number (`01234567999885` → `1234567999885`): since 6.0.2 the SDK accepts that short number, as the API does, and `companies.findByTaxNumber` compares by value. Lookups accept the CNPJ with or without punctuation and check the check digits locally.
 
 3. **`serviceInvoices.create()` returns a union**: The return type is `{ status: 'immediate', invoice } | { status: 'async', response }`. Always use `createAndWait()` unless you need manual control.
 
@@ -381,7 +381,9 @@ on the live API — fetch the real list with `await nfe.webhooks.fetchEventTypes
 
 9. **Polling timeout**: Default is 2 minutes. Some municipalities take 3-5 minutes. Set `timeout: 300000` for production use.
 
-10. **Access keys**: Must be exactly 44 numeric digits. Used for query resources and inbound documents.
+10. **Access keys**: 44 characters, used for query resources and inbound documents. Positions 7–18 hold the issuer CNPJ, so they may contain letters when the issuer has an alphanumeric CNPJ; since 6.0.2 the SDK accepts that and sends the key upper case. The API decides per route: inbound `getProductInvoiceDetails`, `getProductInvoiceEventDetails` and `getJson` accept it; `getDetails`, `getXml`, `getPdf`, `getEventDetails`, `getEventXml` and the NF-e query still answer `400` (measured 2026-11-18).
+
+15. **Alphanumeric CNPJ (IN RFB 2.229/2024)**: only the API's v3 family accepts it, and this SDK version calls v1/v2. `legalEntityLookup` sends the letters and the API answers `400` "CNPJ alfanumérico não é suportado nesta versão. Utilize a v3." (a `ValidationError`); `companies.create()`/`update()` reject it locally, because the v1 companies API does not accept it. Detect it with a letter in the first 12 characters. Do not reject the letters F, I, O, U or Q: the Receita Federal accepts all 26.
 
 11. **Correction letters**: `sendCorrectionLetter()` text must be 15-1000 characters, no accents or special characters.
 

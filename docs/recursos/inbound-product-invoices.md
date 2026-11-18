@@ -42,6 +42,18 @@ await nfe.inboundProductInvoices.enableAutoFetch(companyId, { /* config */ });
 const settings = await nfe.inboundProductInvoices.getSettings(companyId);
 ```
 
+:::warning Emitente com CNPJ alfanumérico
+Quando o emitente tem CNPJ alfanumérico (IN RFB 2.229/2024), a chave de acesso tem letras nas
+posições 7 a 18. O SDK aceita esse formato, converte as letras para maiúsculas e deixa cada rota
+da API decidir:
+
+- `getProductInvoiceDetails`, `getProductInvoiceEventDetails` e `getJson` usam
+  `/inbound/productinvoices/{chave}…`, que aceita a chave com letras.
+- `getDetails`, `getEventDetails`, `getXml`, `getPdf` e `getEventXml` usam `/inbound/{chave}…`.
+  Em 18/11/2026, essas rotas ainda respondiam `400` ("access key must have 44 digits") para
+  chave com letras, e o SDK repassa esse erro como `ValidationError`.
+:::
+
 ## Próximos passos
 
 - [CT-e](./transportation-invoices.md)

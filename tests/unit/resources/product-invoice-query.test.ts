@@ -54,12 +54,12 @@ describe('ProductInvoiceQueryResource', () => {
 
     it('should throw ValidationError for non-numeric access key', async () => {
       await expect(resource.retrieve('a'.repeat(44))).rejects.toThrow(ValidationError);
-      await expect(resource.retrieve('a'.repeat(44))).rejects.toThrow(/Expected 44 numeric digits/);
+      await expect(resource.retrieve('a'.repeat(44))).rejects.toThrow(/Expected 44 characters/);
     });
 
     it('should throw ValidationError for too-short access key', async () => {
       await expect(resource.retrieve('12345')).rejects.toThrow(ValidationError);
-      await expect(resource.retrieve('12345')).rejects.toThrow(/Expected 44 numeric digits/);
+      await expect(resource.retrieve('12345')).rejects.toThrow(/Expected 44 characters/);
     });
 
     it('should throw ValidationError for too-long access key', async () => {
@@ -75,6 +75,17 @@ describe('ProductInvoiceQueryResource', () => {
       mockHttpClient.get.mockResolvedValue(mockResponse);
 
       await expect(resource.retrieve(validAccessKey)).resolves.toBeDefined();
+    });
+
+    // A consulta de NF-e v2 responde 400 para chave com letras (medido em 2026-11-18). O SDK não
+    // recusa no cliente: envia a chave normalizada e a mensagem da API chega ao chamador.
+    it('sends an access key with letters in the issuer CNPJ upper case', async () => {
+      const alphaKey = '35260612ABC34501DE35550010000000031100000033';
+      mockHttpClient.get.mockResolvedValue({ data: {}, status: 200, headers: {} });
+
+      await resource.retrieve(alphaKey.toLowerCase());
+
+      expect(mockHttpClient.get).toHaveBeenCalledWith(`/v2/productinvoices/${alphaKey}`);
     });
 
     it('should validate access key on all methods', async () => {

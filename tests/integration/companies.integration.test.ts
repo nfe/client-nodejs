@@ -57,6 +57,34 @@ describe.skipIf(skipIfNoApiKey())('Companies Integration Tests', () => {
     logTestInfo('Company created', { id: company.id });
   });
 
+  // Um CNPJ que começa com zero chega como número curto. Medido em 2026-11-18: a API completa os
+  // zeros (201), grava as 14 posições, devolve o número curto e aceita regravar a empresa com ele.
+  // Até a v6.0.1 o SDK recusava os três passos no cliente. CNPJ sintético 01234567999885: a
+  // consulta de CNPJ confirmou que ele não existe na Receita.
+  itEscreveNaConta(
+    'should create, read back and update a company whose CNPJ starts with zero',
+    { timeout: INTEGRATION_TEST_CONFIG.timeout },
+    async () => {
+      const leadingZeroCnpj = 1234567999885; // 01234567999885
+      const created = await client.companies.create({
+        ...TEST_COMPANY_DATA,
+        name: `Test Company zero a esquerda ${Date.now()}`,
+        federalTaxNumber: leadingZeroCnpj,
+      });
+      createdCompanyIds.push(created.id);
+      expect(created.federalTaxNumber).toBe(leadingZeroCnpj);
+
+      const read = await client.companies.retrieve(created.id);
+      expect(read.federalTaxNumber).toBe(leadingZeroCnpj);
+
+      const updated = await client.companies.update(created.id, {
+        ...read,
+        tradeName: 'Regravada com o numero curto',
+      });
+      expect(updated.federalTaxNumber).toBe(leadingZeroCnpj);
+    }
+  );
+
   itEscreveNaConta('should retrieve a company by id', { timeout: INTEGRATION_TEST_CONFIG.timeout }, async () => {
     // Create company first
     const companyData = {

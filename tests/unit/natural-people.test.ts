@@ -116,6 +116,25 @@ describe('NaturalPeopleResource', () => {
     });
   });
 
+  // A v1 devolve federalTaxNumber como número; um CPF que começa com zero chega sem ele.
+  describe('findByTaxNumber', () => {
+    it('acha o registro numérico pela string com zero à esquerda e máscara', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: {
+          naturalPeople: [
+            createMockNaturalPerson({ id: 'p1', federalTaxNumber: 1234567890 as unknown as string }),
+          ],
+        },
+        status: 200,
+        headers: {},
+      } as any);
+
+      expect((await naturalPeople.findByTaxNumber(TEST_COMPANY_ID, '01234567890'))?.id).toBe('p1');
+      expect((await naturalPeople.findByTaxNumber(TEST_COMPANY_ID, '012.345.678-90'))?.id).toBe('p1');
+      expect(await naturalPeople.findByTaxNumber(TEST_COMPANY_ID, '98765432100')).toBeUndefined();
+    });
+  });
+
   describe('error handling', () => {
     it('should propagate errors from http client', async () => {
       const error = new Error('Network error');

@@ -249,6 +249,17 @@ describe('TransportationInvoicesResource', () => {
       await expect(resource.retrieve(testCompanyId, '')).rejects.toThrow(/Access key is required/);
     });
 
+    // A chave do CT-e traz o CNPJ do emitente nas posições 7 a 20. A rota /inbound/{chave} ainda
+    // recusa letras (400, medido em 2026-11-18 na NF-e); o SDK envia e a API decide.
+    it('sends an access key with letters in the issuer CNPJ upper case', async () => {
+      const alphaKey = '35260612ABC34501DE35570010000000031100000035';
+      mockHttpClient.get.mockResolvedValue({ data: mockMetadata, status: 200, headers: {} });
+
+      await resource.retrieve(testCompanyId, alphaKey.toLowerCase());
+
+      expect(mockHttpClient.get).toHaveBeenCalledWith(`/v2/companies/${testCompanyId}/inbound/${alphaKey}`);
+    });
+
     it('should throw ValidationError for whitespace-only access key', async () => {
       await expect(resource.retrieve(testCompanyId, '   ')).rejects.toThrow(ValidationError);
     });

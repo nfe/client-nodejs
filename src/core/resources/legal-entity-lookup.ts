@@ -20,6 +20,7 @@ import type {
   LegalEntityStateTaxForInvoiceResponse,
 } from '../types.js';
 import { ValidationError } from '../errors/index.js';
+import { requireCnpj } from '../utils/tax-id.js';
 
 // ============================================================================
 // Constants
@@ -41,37 +42,22 @@ const VALID_BRAZILIAN_STATES: ReadonlySet<string> = new Set<string>([
 // ============================================================================
 
 /**
- * Normalizes a federal tax number (CNPJ) by stripping all non-digit characters.
+ * Validates a federal tax number (CNPJ), numeric or alphanumeric (IN RFB 2.229/2024).
  *
- * @param federalTaxNumber - Raw CNPJ string, with or without punctuation
- * @returns Digits-only CNPJ string
- */
-function normalizeFederalTaxNumber(federalTaxNumber: string): string {
-  return federalTaxNumber.replace(/\D/g, '');
-}
-
-/**
- * Validates a federal tax number (CNPJ) format.
- * Strips non-digit characters and checks for exactly 14 digits.
+ * Removes `.`, `/`, `-` and spaces, converts letters to upper case and checks the
+ * format and the check digits. Letters are kept: until 6.0.1 this function stripped
+ * every non-digit character, which corrupted an alphanumeric CNPJ.
+ *
+ * An alphanumeric CNPJ is sent as is. The v2 routes answer `400` with
+ * "CNPJ alfanumérico não é suportado nesta versão. Utilize a v3." (measured on
+ * 2026-11-18), and that message reaches the caller as a `ValidationError`.
  *
  * @param federalTaxNumber - CNPJ string to validate
- * @returns Normalized digits-only CNPJ string
- * @throws {ValidationError} If input is empty or not exactly 14 digits after normalization
+ * @returns Normalized CNPJ, ready for the URL
+ * @throws {ValidationError} If input is empty, out of format or has invalid check digits
  */
 function validateFederalTaxNumber(federalTaxNumber: string | undefined | null): string {
-  if (!federalTaxNumber || federalTaxNumber.trim() === '') {
-    throw new ValidationError('Federal tax number (CNPJ) is required');
-  }
-
-  const normalized = normalizeFederalTaxNumber(federalTaxNumber);
-
-  if (normalized.length !== 14) {
-    throw new ValidationError(
-      `Invalid federal tax number format: "${federalTaxNumber}". Expected 14 digits (e.g., "12345678000190" or "12.345.678/0001-90"), got ${normalized.length} digit(s).`
-    );
-  }
-
-  return normalized;
+  return requireCnpj(federalTaxNumber);
 }
 
 /**
@@ -116,7 +102,7 @@ function validateState(state: string | undefined | null): BrazilianState {
  *
  * @example Basic CNPJ lookup
  * ```typescript
- * const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+ * const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/0001-81');
  * console.log(result.legalEntity?.name);       // 'EMPRESA LTDA'
  * console.log(result.legalEntity?.status);      // 'Active'
  * console.log(result.legalEntity?.address?.city?.name); // 'São Paulo'
@@ -124,7 +110,7 @@ function validateState(state: string | undefined | null): BrazilianState {
  *
  * @example State tax registration lookup
  * ```typescript
- * const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+ * const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333000181');
  * for (const tax of result.legalEntity?.stateTaxes ?? []) {
  *   console.log(`IE: ${tax.taxNumber} - Status: ${tax.status}`);
  * }
@@ -132,7 +118,7 @@ function validateState(state: string | undefined | null): BrazilianState {
  *
  * @example Best IE for invoice issuance
  * ```typescript
- * const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '12345678000190');
+ * const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333000181');
  * const bestIE = result.legalEntity?.stateTaxes?.[0];
  * console.log(`Best IE: ${bestIE?.taxNumber} (${bestIE?.status})`);
  * ```
@@ -156,24 +142,24 @@ export class LegalEntityLookupResource {
    * legal name, trade name, address, phone numbers, economic activities (CNAE),
    * legal nature, partners, registration status, and share capital.
    *
-   * @param federalTaxNumber - CNPJ number, with or without punctuation (e.g., "12345678000190" or "12.345.678/0001-90")
+   * @param federalTaxNumber - CNPJ number, with or without punctuation (e.g., "11222333000181", "11.222.333/0001-81" or the alphanumeric "12.ABC.345/01DE-35")
    * @param options - Optional lookup configuration
    * @returns Promise with company basic information
-   * @throws {ValidationError} If CNPJ format is invalid (not 14 digits)
+   * @throws {ValidationError} If the CNPJ is out of format (12 letters or digits + 2 check digits) or has invalid check digits
    * @throws {NotFoundError} If no company found for the given CNPJ
    * @throws {AuthenticationError} If API key is invalid or missing
    *
    * @example
    * ```typescript
    * // Simple lookup
-   * const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190');
+   * const result = await nfe.legalEntityLookup.getBasicInfo('11222333000181');
    * console.log(result.legalEntity?.name);
    *
    * // With formatted CNPJ
-   * const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+   * const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/0001-81');
    *
    * // Disable address update from postal service
-   * const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
+   * const result = await nfe.legalEntityLookup.getBasicInfo('11222333000181', {
    *   updateAddress: false,
    *   updateCityCode: true
    * });
@@ -217,7 +203,7 @@ export class LegalEntityLookupResource {
    *
    * @example
    * ```typescript
-   * const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+   * const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333000181');
    * console.log(result.legalEntity?.taxRegime);  // 'SimplesNacional'
    *
    * for (const tax of result.legalEntity?.stateTaxes ?? []) {
@@ -256,7 +242,7 @@ export class LegalEntityLookupResource {
    *
    * @example
    * ```typescript
-   * const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '12345678000190');
+   * const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '11222333000181');
    * for (const tax of result.legalEntity?.stateTaxes ?? []) {
    *   if (tax.status === 'Abled') {
    *     console.log(`Can issue invoices with IE: ${tax.taxNumber}`);
@@ -297,7 +283,7 @@ export class LegalEntityLookupResource {
    *
    * @example
    * ```typescript
-   * const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '12345678000190');
+   * const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333000181');
    * const bestIE = result.legalEntity?.stateTaxes?.[0];
    * if (bestIE) {
    *   console.log(`Recommended IE: ${bestIE.taxNumber} (${bestIE.status})`);

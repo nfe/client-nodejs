@@ -42,6 +42,20 @@ if (await nfe.companies.exists(company.id)) {
 }
 ```
 
+### O CNPJ (`federalTaxNumber`)
+
+- **Tipo `number`.** A API v1 de empresas trabalha com o CNPJ (ou CPF) como número.
+- **Zero à esquerda.** Um CNPJ que começa com zero perde esse zero como número:
+  `01234567999885` vira `1234567999885`. O SDK aceita o número assim e confere os dígitos
+  verificadores depois de completar com zeros; a API faz o mesmo e grava as 14 posições. A
+  leitura pela v1 devolve o número curto, e regravar a empresa com ele funciona.
+  `findByTaxNumber` compara pelo valor, então acha a empresa pelo número curto.
+- **String só com dígitos.** Em JavaScript sem tipos, uma string de 14 dígitos (CNPJ) ou 11
+  (CPF) também é aceita, porque a API v1 aceita.
+- **CNPJ alfanumérico** (IN RFB 2.229/2024, com letras nas 12 primeiras posições). A API v1 de
+  empresas não aceita esse formato; só a API v3 aceita. O SDK lança `ValidationError` antes da
+  requisição.
+
 ## Iterar todas as empresas
 
 ```typescript

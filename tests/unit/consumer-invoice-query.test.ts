@@ -104,12 +104,12 @@ describe('ConsumerInvoiceQueryResource', () => {
 
     it('should reject non-numeric access key', async () => {
       await expect(resource.retrieve('3524011234567800019059000000001234123456789X')).rejects.toThrow(ValidationError);
-      await expect(resource.retrieve('3524011234567800019059000000001234123456789X')).rejects.toThrow('Expected 44 numeric digits');
+      await expect(resource.retrieve('3524011234567800019059000000001234123456789X')).rejects.toThrow('Expected 44 characters');
     });
 
     it('should reject access key with wrong length (43 digits)', async () => {
       await expect(resource.retrieve('3524011234567800019059000000001234123456789')).rejects.toThrow(ValidationError);
-      await expect(resource.retrieve('3524011234567800019059000000001234123456789')).rejects.toThrow('Expected 44 numeric digits');
+      await expect(resource.retrieve('3524011234567800019059000000001234123456789')).rejects.toThrow('Expected 44 characters');
     });
 
     it('should reject access key with wrong length (45 digits)', async () => {
@@ -130,6 +130,20 @@ describe('ConsumerInvoiceQueryResource', () => {
     it('should apply validation to downloadXml as well', async () => {
       await expect(resource.downloadXml('')).rejects.toThrow(ValidationError);
       await expect(resource.downloadXml('abc')).rejects.toThrow(ValidationError);
+    });
+
+    // A chave do CF-e também traz o CNPJ do emitente nas posições 7 a 20.
+    it('sends an access key with letters in the issuer CNPJ upper case', async () => {
+      const alphaKey = '35260612ABC34501DE35590010000000031100000037';
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: createMockCoupon(),
+        status: 200,
+        headers: {},
+      } as HttpResponse<TaxCoupon>);
+
+      await resource.retrieve(alphaKey.toLowerCase());
+
+      expect(mockHttpClient.get).toHaveBeenCalledWith(`/v1/consumerinvoices/coupon/${alphaKey}`);
     });
   });
 

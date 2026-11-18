@@ -296,6 +296,114 @@ describe('CompaniesResource', () => {
     });
   });
 
+  // Medido com escrita autorizada em 2026-11-18 (CNPJ sintético 01234567999885, inexistente na
+  // Receita): `POST /v1/companies` com o número curto responde 201, o `PUT` com o objeto lido
+  // responde 200, e o `PUT` com a string de 14 posições também. Até a v6.0.1 o SDK recusava os
+  // três casos no cliente.
+  describe('federalTaxNumber: zero à esquerda e CNPJ alfanumérico', () => {
+    const LEADING_ZERO_CNPJ = 1234567999885; // 01234567999885
+    const LEADING_ZERO_CPF = 1234567890; // 01234567890
+    const body = { name: 'Empresa', email: 'e@example.com' };
+
+    function mockWrite(method: 'post' | 'put', federalTaxNumber: unknown) {
+      vi.mocked(mockHttpClient[method]).mockResolvedValue({
+        data: { companies: createMockCompany({ federalTaxNumber: federalTaxNumber as number }) },
+        status: method === 'post' ? 201 : 200,
+        headers: {},
+      } as any);
+    }
+
+    it('create aceita CNPJ que perdeu o zero à esquerda', async () => {
+      mockWrite('post', LEADING_ZERO_CNPJ);
+      await companies.create({ ...body, federalTaxNumber: LEADING_ZERO_CNPJ });
+      expect(mockHttpClient.post).toHaveBeenCalledWith('/companies', {
+        ...body,
+        federalTaxNumber: LEADING_ZERO_CNPJ,
+      });
+    });
+
+    it('create aceita CPF que perdeu o zero à esquerda', async () => {
+      mockWrite('post', LEADING_ZERO_CPF);
+      await companies.create({ ...body, federalTaxNumber: LEADING_ZERO_CPF });
+      expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
+    });
+
+    it('create aceita o CNPJ como string só de dígitos, como a API', async () => {
+      mockWrite('post', LEADING_ZERO_CNPJ);
+      await companies.create({ ...body, federalTaxNumber: '01234567999885' as unknown as number });
+      expect(mockHttpClient.post).toHaveBeenCalledWith('/companies', {
+        ...body,
+        federalTaxNumber: '01234567999885',
+      });
+    });
+
+    it('update aceita CNPJ e CPF que perderam o zero à esquerda', async () => {
+      mockWrite('put', LEADING_ZERO_CNPJ);
+      await companies.update(TEST_COMPANY_ID, { federalTaxNumber: LEADING_ZERO_CNPJ });
+      await companies.update(TEST_COMPANY_ID, { federalTaxNumber: LEADING_ZERO_CPF });
+      expect(mockHttpClient.put).toHaveBeenCalledTimes(2);
+    });
+
+    it('ler e regravar a empresa não lança erro local', async () => {
+      const current = createMockCompany({ id: TEST_COMPANY_ID, federalTaxNumber: LEADING_ZERO_CNPJ });
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: { companies: current },
+        status: 200,
+        headers: {},
+      } as any);
+      mockWrite('put', LEADING_ZERO_CNPJ);
+
+      const read = await companies.retrieve(TEST_COMPANY_ID);
+      await companies.update(TEST_COMPANY_ID, { ...read, tradeName: 'Novo nome' });
+
+      expect(mockHttpClient.put).toHaveBeenCalledWith(
+        `/companies/${TEST_COMPANY_ID}`,
+        expect.objectContaining({ federalTaxNumber: LEADING_ZERO_CNPJ, tradeName: 'Novo nome' })
+      );
+    });
+
+    it('CNPJ alfanumérico lança ValidationError apontando a API v3, sem requisição', async () => {
+      const promise = companies.create({ ...body, federalTaxNumber: '12ABC34501DE35' as unknown as number });
+      await expect(promise).rejects.toThrow(ValidationError);
+      await expect(
+        companies.create({ ...body, federalTaxNumber: '12ABC34501DE35' as unknown as number })
+      ).rejects.toThrow('The v3 companies API accepts it');
+      expect(mockHttpClient.post).not.toHaveBeenCalled();
+    });
+
+    it('número curto com DV inválido depois de completar continua recusado', async () => {
+      await expect(
+        companies.create({ ...body, federalTaxNumber: 1234567999886 })
+      ).rejects.toThrow(ValidationError);
+      expect(mockHttpClient.post).not.toHaveBeenCalled();
+    });
+
+    it('findByTaxNumber acha a empresa pelo número curto, venha ele como número ou string', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: {
+          companies: [
+            createMockCompany({ id: 'company-1', federalTaxNumber: 11222333000181 }),
+            createMockCompany({ id: 'company-2', federalTaxNumber: LEADING_ZERO_CNPJ }),
+            createMockCompany({ id: 'company-3', federalTaxNumber: '00000000000191' as unknown as number }),
+          ],
+          page: 1,
+        },
+        status: 200,
+        headers: {},
+      } as any);
+
+      expect((await companies.findByTaxNumber(LEADING_ZERO_CNPJ))?.id).toBe('company-2');
+      expect((await companies.findByTaxNumber(191))?.id).toBe('company-3');
+    });
+
+    it('findByTaxNumber recusa o que não é inteiro não negativo de até 14 dígitos', async () => {
+      await expect(companies.findByTaxNumber(-1)).rejects.toThrow(ValidationError);
+      await expect(companies.findByTaxNumber(1.5)).rejects.toThrow(ValidationError);
+      await expect(companies.findByTaxNumber(123456789012345)).rejects.toThrow(ValidationError);
+      expect(mockHttpClient.get).not.toHaveBeenCalled();
+    });
+  });
+
   describe('Error Handling', () => {
     it('should propagate HTTP client errors', async () => {
       const error = new Error('Network error');
