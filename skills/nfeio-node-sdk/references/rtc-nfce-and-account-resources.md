@@ -64,8 +64,8 @@ delete(companyId, municipalTaxId): Promise<void>
 `create`, `retrieve` and `update` return the registration itself (since 6.0.1; the API wraps it
 as `{ municipalTax: {…} }` and the SDK unwraps it).
 
-**`update` is a PUT that replaces the registration**, per the platform documentation
-(nfe/docs@b9e7953): an omitted `taxNumber` is erased and an omitted `environment` falls back to
+**`update` is a PUT that replaces the registration**, per the platform documentation:
+an omitted `taxNumber` is erased and an omitted `environment` falls back to
 `Development`. Read, change, send the whole object back — and **omit `rpsNumber`/`lastRpsSent`**,
 which an omitted value preserves; sending them overwrites the RPS counter, even backwards:
 

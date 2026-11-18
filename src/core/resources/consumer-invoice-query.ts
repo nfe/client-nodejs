@@ -27,7 +27,7 @@ import { withUnservedRouteNote } from '../utils/unserved-route.js';
  * Consumer Invoice Query Resource
  *
  * @deprecated **A plataforma não serve nenhuma das duas rotas deste recurso.**
- * Elas estão declaradas na spec `consulta-nf-consumidor` e no `nfeio-docs`, em
+ * Elas estão declaradas na spec `consulta-nf-consumidor` e na documentação da plataforma, em
  * `nfe.api.nfe.io` — e respondem `404` de corpo vazio, sem `content-type`,
  * idêntico ao de um path inventado no mesmo host. Confirmação independente: o
  * `404` vem **inclusive sem credencial**, enquanto uma rota servida no mesmo host

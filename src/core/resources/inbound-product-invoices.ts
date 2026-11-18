@@ -293,7 +293,7 @@ export class InboundProductInvoicesResource {
     // Plural `/inbound/productinvoices/` here and in the three methods below, as the platform
     // serves it. The singular form answers 404 with an empty body even without credentials, like an
     // invented path (measured 2026-10-14). The local spec consulta-nfe-distribuicao-v1.yaml
-    // (vintage b487823) still says singular; upstream fixed it in nfe/docs@51d8816.
+    // still says singular; the platform's current spec already uses the plural.
     const response = await this.http.get<InboundProductInvoiceMetadata>(
       `/v2/companies/${companyId}/inbound/productinvoices/${key}`
     );

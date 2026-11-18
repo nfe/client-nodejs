@@ -32,8 +32,8 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   `404` de corpo vazio mesmo sem credencial, igual a um path inventado; o plural responde
   `401` sem credencial, e `200` com ela nos dois métodos de leitura sondados
   (`getProductInvoiceDetails` e `getJson`). A spec local `consulta-nfe-distribuicao-v1.yaml` ainda
-  diz singular; o upstream corrigiu em `nfe/docs@51d8816`. Cinco testes unitários afirmavam o
-  path errado e foram corrigidos junto.
+  diz singular; a spec atualizada da plataforma já traz o plural. Cinco testes unitários
+  afirmavam o path errado e foram corrigidos junto.
 
   O bug era latente. Em 30 dias de log de gateway (2026-09-14 a 10-14), o plural teve 28.543
   respostas `200` e o singular, 9 respostas `404`, nenhuma com User-Agent do SDK. Evidência em
@@ -61,7 +61,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 ### Documentação
 
 - **`municipalTaxes.update` é um PUT que substitui a inscrição, e nada avisava.** Pela
-  documentação da plataforma (`nfe/docs@b9e7953`), omitir `taxNumber` apaga o número da
+  documentação da plataforma, omitir `taxNumber` apaga o número da
   inscrição, e omitir `environment` volta para `Development`. `rpsNumber` e `lastRpsSent` são a
   exceção: omitidos, preservam o contador de RPS; enviados, sobrescrevem o contador, inclusive
   para trás. O JSDoc, `docs/recursos/municipal-taxes.md` e a skill agora mostram o roteiro: ler
@@ -271,7 +271,7 @@ reescrita.
   O parâmetro era opcional e a documentação prometia um ZIP com todas as notas. A rota não
   existe: `/serviceinvoices/pdf` responde `404 "service invoice with id (pdf) was not
   found"`, porque o servidor casa a rota `/{id}` e lê `pdf` como identificador. Não está
-  na spec `nf-servico-v1` nem no `nfeio-docs`. Nota de migração em `MIGRATION.md`.
+  na spec `nf-servico-v1` nem na documentação da plataforma. Nota de migração em `MIGRATION.md`.
 
 - **O erro da API parava de chegar ao chamador.** `extractErrorMessage` só lia
   `message`/`error`/`detail`/`details`. A plataforma usa quatro envelopes:

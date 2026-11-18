@@ -47,7 +47,7 @@ console.log(created.id);
 ## Atualizar: o PUT substitui a inscrição
 
 `update` é um **PUT de substituição**, não uma atualização dos campos enviados.
-Segundo a documentação da plataforma (`nfe/docs@b9e7953`, 14/10/2026):
+Segundo a documentação da plataforma (14/10/2026):
 
 - `taxNumber` omitido é **apagado**;
 - `environment` omitido volta para `Development`;

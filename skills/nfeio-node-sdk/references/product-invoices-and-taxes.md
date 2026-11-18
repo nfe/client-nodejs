@@ -164,8 +164,8 @@ interface NfeStateTax {
 }
 ```
 
-The enum values follow the spec's casing (state codes such as `'sP'`), which is questioned
-upstream in nfe/docs#338.
+The enum values follow the spec's casing (state codes such as `'sP'`), which has been
+reported to the platform team.
 
 | Method | Signature |
 |--------|-----------|

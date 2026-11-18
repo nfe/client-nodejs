@@ -72,7 +72,7 @@ export class MunicipalTaxesResource {
    * Update a municipal tax registration.
    *
    * **This is a PUT that replaces the registration, not a partial update.** Per the platform
-   * documentation (nfe/docs@b9e7953, 2026-10-14), an omitted `taxNumber` is erased and an
+   * documentation (as of 2026-10-14), an omitted `taxNumber` is erased and an
    * omitted `environment` falls back to `Development`; other omitted fields are not guaranteed to
    * keep their value. Read the registration, change what you need and send the whole object back.
    *
