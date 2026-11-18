@@ -11,4 +11,4 @@
 export const PACKAGE_NAME = 'nfe-io';
 
 /** Versão desta build, vinda do `package.json`. */
-export const VERSION = '6.0.1';
+export const VERSION = '6.0.2';
