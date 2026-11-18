@@ -223,7 +223,7 @@ export class CompaniesResource {
    * ```typescript
    * const company = await nfe.companies.create({
    *   name: 'Acme Corp',
-   *   federalTaxNumber: 11222333000181,
+   *   federalTaxNumber: 11222333999952,
    *   taxRegime: 'SimplesNacional',
    *   address: {
    *     state: 'SP',
@@ -760,7 +760,7 @@ export class CompaniesResource {
    *
    * @example
    * ```typescript
-   * const company = await nfe.companies.findByTaxNumber(11222333000181);
+   * const company = await nfe.companies.findByTaxNumber(11222333999952);
    *
    * if (company) {
    *   console.log('Found:', company.name);

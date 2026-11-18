@@ -382,7 +382,7 @@ describe('CompaniesResource', () => {
       vi.mocked(mockHttpClient.get).mockResolvedValue({
         data: {
           companies: [
-            createMockCompany({ id: 'company-1', federalTaxNumber: 11222333000181 }),
+            createMockCompany({ id: 'company-1', federalTaxNumber: 11222333999952 }),
             createMockCompany({ id: 'company-2', federalTaxNumber: LEADING_ZERO_CNPJ }),
             createMockCompany({ id: 'company-3', federalTaxNumber: '00000000000191' as unknown as number }),
           ],

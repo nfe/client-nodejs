@@ -156,8 +156,8 @@ Queries Receita Federal for company data by CNPJ.
 
 ```typescript
 // The response wraps the entity: { legalEntity }
-const { legalEntity } = await nfe.legalEntityLookup.getBasicInfo('11.222.333/0001-81');
-await nfe.legalEntityLookup.getBasicInfo('11222333000181'); // same query
+const { legalEntity } = await nfe.legalEntityLookup.getBasicInfo('11.222.333/9999-52');
+await nfe.legalEntityLookup.getBasicInfo('11222333999952'); // same query
 
 interface LegalEntityBasicInfoOptions {
   updateAddress?: boolean;   // Update the address from postal service data (default: true)
@@ -200,7 +200,7 @@ type LegalEntityStatus = 'Unknown' | 'Active' | 'Suspended' | 'Cancelled' | 'Una
 Get state tax registrations (Inscricoes Estaduais) for a specific state:
 
 ```typescript
-const taxInfo = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333000181');
+const taxInfo = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333999952');
 ```
 
 **BrazilianState** type — all 27 UF codes plus special values:
@@ -282,7 +282,7 @@ const addr = await nfe.addresses.lookupByPostalCode('01310-100');
 await nfe.serviceInvoices.createAndWait(companyId, {
   // ...
   borrower: {
-    federalTaxNumber: 11222333000181,
+    federalTaxNumber: 11222333999952,
     name: 'Client',
     address: {
       country: addr.country,

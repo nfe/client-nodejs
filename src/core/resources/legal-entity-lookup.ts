@@ -102,7 +102,7 @@ function validateState(state: string | undefined | null): BrazilianState {
  *
  * @example Basic CNPJ lookup
  * ```typescript
- * const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/0001-81');
+ * const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/9999-52');
  * console.log(result.legalEntity?.name);       // 'EMPRESA LTDA'
  * console.log(result.legalEntity?.status);      // 'Active'
  * console.log(result.legalEntity?.address?.city?.name); // 'São Paulo'
@@ -110,7 +110,7 @@ function validateState(state: string | undefined | null): BrazilianState {
  *
  * @example State tax registration lookup
  * ```typescript
- * const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333000181');
+ * const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333999952');
  * for (const tax of result.legalEntity?.stateTaxes ?? []) {
  *   console.log(`IE: ${tax.taxNumber} - Status: ${tax.status}`);
  * }
@@ -118,7 +118,7 @@ function validateState(state: string | undefined | null): BrazilianState {
  *
  * @example Best IE for invoice issuance
  * ```typescript
- * const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333000181');
+ * const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333999952');
  * const bestIE = result.legalEntity?.stateTaxes?.[0];
  * console.log(`Best IE: ${bestIE?.taxNumber} (${bestIE?.status})`);
  * ```
@@ -142,7 +142,7 @@ export class LegalEntityLookupResource {
    * legal name, trade name, address, phone numbers, economic activities (CNAE),
    * legal nature, partners, registration status, and share capital.
    *
-   * @param federalTaxNumber - CNPJ number, with or without punctuation (e.g., "11222333000181", "11.222.333/0001-81" or the alphanumeric "12.ABC.345/01DE-35")
+   * @param federalTaxNumber - CNPJ number, with or without punctuation (e.g., "11222333999952", "11.222.333/9999-52" or the alphanumeric "12.ABC.345/01DE-35")
    * @param options - Optional lookup configuration
    * @returns Promise with company basic information
    * @throws {ValidationError} If the CNPJ is out of format (12 letters or digits + 2 check digits) or has invalid check digits
@@ -152,14 +152,14 @@ export class LegalEntityLookupResource {
    * @example
    * ```typescript
    * // Simple lookup
-   * const result = await nfe.legalEntityLookup.getBasicInfo('11222333000181');
+   * const result = await nfe.legalEntityLookup.getBasicInfo('11222333999952');
    * console.log(result.legalEntity?.name);
    *
    * // With formatted CNPJ
-   * const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/0001-81');
+   * const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/9999-52');
    *
    * // Disable address update from postal service
-   * const result = await nfe.legalEntityLookup.getBasicInfo('11222333000181', {
+   * const result = await nfe.legalEntityLookup.getBasicInfo('11222333999952', {
    *   updateAddress: false,
    *   updateCityCode: true
    * });
@@ -203,7 +203,7 @@ export class LegalEntityLookupResource {
    *
    * @example
    * ```typescript
-   * const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333000181');
+   * const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333999952');
    * console.log(result.legalEntity?.taxRegime);  // 'SimplesNacional'
    *
    * for (const tax of result.legalEntity?.stateTaxes ?? []) {
@@ -242,7 +242,7 @@ export class LegalEntityLookupResource {
    *
    * @example
    * ```typescript
-   * const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '11222333000181');
+   * const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '11222333999952');
    * for (const tax of result.legalEntity?.stateTaxes ?? []) {
    *   if (tax.status === 'Abled') {
    *     console.log(`Can issue invoices with IE: ${tax.taxNumber}`);
@@ -283,7 +283,7 @@ export class LegalEntityLookupResource {
    *
    * @example
    * ```typescript
-   * const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333000181');
+   * const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333999952');
    * const bestIE = result.legalEntity?.stateTaxes?.[0];
    * if (bestIE) {
    *   console.log(`Recommended IE: ${bestIE.taxNumber} (${bestIE.status})`);

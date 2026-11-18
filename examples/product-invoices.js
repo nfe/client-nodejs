@@ -42,7 +42,7 @@ async function main() {
     operationType: 'Outgoing',
     buyer: {
       name: 'Empresa Exemplo LTDA',
-      federalTaxNumber: 11222333000181,
+      federalTaxNumber: 11222333999952,
       address: {
         street: 'Rua Exemplo',
         number: '100',

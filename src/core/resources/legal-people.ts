@@ -200,7 +200,7 @@ export class LegalPeopleResource {
    * ```typescript
    * const person = await nfe.legalPeople.findByTaxNumber(
    *   'company-id',
-   *   '11222333000181'
+   *   '11222333999952'
    * );
    * if (person) {
    *   console.log('Found:', person.name);

@@ -226,7 +226,7 @@ const exp = await nfe.companies.checkCertificateExpiration(companyId);
 ```typescript
 // Find company by CNPJ/CPF (returns null if not found). Compares by value:
 // a CNPJ that starts with zero is found by the short number (1234567999885).
-const company = await nfe.companies.findByTaxNumber(11222333000181);
+const company = await nfe.companies.findByTaxNumber(11222333999952);
 
 // Search by name (returns array)
 const matches = await nfe.companies.findByName('Example');

@@ -138,7 +138,7 @@ export function requireCnpj(value: string | number | null | undefined): string {
   if (!CNPJ_PATTERN.test(cnpj)) {
     throw new ValidationError(
       `Invalid federal tax number format: "${value}". Expected 14 characters after removing punctuation: ` +
-        '12 letters or digits followed by 2 check digits (e.g., "11222333000181", "11.222.333/0001-81" ' +
+        '12 letters or digits followed by 2 check digits (e.g., "11222333999952", "11.222.333/9999-52" ' +
         'or the alphanumeric "12.ABC.345/01DE-35").'
     );
   }

@@ -313,7 +313,7 @@ if ('id' in result) {
 // Example 2: Invoice with full details
 const invoice = await nfe.serviceInvoices.create('company-id', {
   borrower: {
-    federalTaxNumber: 11222333000181,
+    federalTaxNumber: 11222333999952,
     name: 'Acme Corporation',
     email: 'finance@acme.com',
     address: {
@@ -1070,7 +1070,7 @@ Create a new company with automatic CNPJ/CPF validation.
 
 ```typescript
 const company = await nfe.companies.create({
-  federalTaxNumber: 11222333000181, // CNPJ or CPF as a number; one that starts with zero may lose it (01234567999885 → 1234567999885)
+  federalTaxNumber: 11222333999952, // CNPJ or CPF as a number; one that starts with zero may lose it (01234567999885 → 1234567999885)
   name: 'My Company',
   email: 'company@example.com',
   address: {
@@ -1255,7 +1255,7 @@ Find company by federal tax number (CNPJ or CPF).
 
 ```typescript
 // Search by CNPJ, as a number (a CNPJ that starts with zero is found by the short number)
-const company = await nfe.companies.findByTaxNumber(11222333000181);
+const company = await nfe.companies.findByTaxNumber(11222333999952);
 
 // Or by CPF (11 digits)
 const company = await nfe.companies.findByTaxNumber(12345678901);
@@ -1338,7 +1338,7 @@ Create a legal person.
 
 ```typescript
 const legalPerson = await nfe.legalPeople.create('company-id', {
-  federalTaxNumber: '11222333000181',
+  federalTaxNumber: '11222333999952',
   name: 'Legal Person Company',
   email: 'legal@example.com'
 });
@@ -1383,7 +1383,7 @@ await nfe.legalPeople.delete('company-id', 'person-id');
 Find legal person by CNPJ.
 
 ```typescript
-const person = await nfe.legalPeople.findByTaxNumber('company-id', '11222333000181');
+const person = await nfe.legalPeople.findByTaxNumber('company-id', '11222333999952');
 ```
 
 ### Natural People
@@ -2087,13 +2087,13 @@ Query Brazilian company (CNPJ) data from Receita Federal and state tax registrie
 Lookup basic company information by CNPJ from Receita Federal. Returns legal name, trade name, address, phone numbers, economic activities (CNAE), legal nature, partners, and registration status.
 
 ```typescript
-const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/0001-81');
+const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/9999-52');
 console.log(result.legalEntity?.name);       // 'EMPRESA LTDA'
 console.log(result.legalEntity?.status);      // 'Active'
 console.log(result.legalEntity?.address?.city?.name);
 
 // With options
-const result = await nfe.legalEntityLookup.getBasicInfo('11222333000181', {
+const result = await nfe.legalEntityLookup.getBasicInfo('11222333999952', {
   updateAddress: false,
   updateCityCode: true,
 });
@@ -2103,7 +2103,7 @@ const result = await nfe.legalEntityLookup.getBasicInfo('11222333000181', {
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation (e.g., `"11222333000181"`, `"11.222.333/0001-81"` or the alphanumeric `"12.ABC.345/01DE-35"`). Punctuation is removed and letters are kept, in upper case |
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation (e.g., `"11222333999952"`, `"11.222.333/9999-52"` or the alphanumeric `"12.ABC.345/01DE-35"`). Punctuation is removed and letters are kept, in upper case |
 | `options` | `LegalEntityBasicInfoOptions` | No | Lookup options |
 
 **Options:**
@@ -2125,7 +2125,7 @@ const result = await nfe.legalEntityLookup.getBasicInfo('11222333000181', {
 Lookup state tax registration (Inscrição Estadual) by CNPJ and state. Returns tax regime, legal nature, and state tax registration details including fiscal document indicators (NFe, NFSe, CTe, NFCe).
 
 ```typescript
-const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333000181');
+const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333999952');
 console.log(result.legalEntity?.taxRegime);  // 'SimplesNacional'
 
 for (const tax of result.legalEntity?.stateTaxes ?? []) {
@@ -2152,7 +2152,7 @@ for (const tax of result.legalEntity?.stateTaxes ?? []) {
 Evaluate state tax registration for invoice issuance. Returns extended status information (including `UnabledTemp`, `UnabledNotConfirmed`) useful for determining whether product invoices (NF-e) can be issued.
 
 ```typescript
-const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '11222333000181');
+const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '11222333999952');
 for (const tax of result.legalEntity?.stateTaxes ?? []) {
   if (tax.status === 'Abled') {
     console.log(`Can issue invoices with IE: ${tax.taxNumber}`);
@@ -2178,7 +2178,7 @@ for (const tax of result.legalEntity?.stateTaxes ?? []) {
 Get the best (suggested) state tax registration for invoice issuance. When multiple registrations are enabled in a state, NFE.io applies evaluation criteria to recommend the optimal IE.
 
 ```typescript
-const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333000181');
+const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333999952');
 const bestIE = result.legalEntity?.stateTaxes?.[0];
 if (bestIE) {
   console.log(`Recommended IE: ${bestIE.taxNumber} (${bestIE.status})`);
@@ -2492,7 +2492,7 @@ Issue a product invoice (NF-e) by posting it to the processing queue.
 const result = await nfe.productInvoices.create('company-id', {
   operationNature: 'Venda de mercadoria',
   operationType: 'Outgoing',
-  buyer: { name: 'Empresa LTDA', federalTaxNumber: 11222333000181 },
+  buyer: { name: 'Empresa LTDA', federalTaxNumber: 11222333999952 },
   items: [{ code: 'PROD-001', description: 'Produto X', quantity: 1, unitAmount: 100 }],
   payment: [{ paymentDetail: [{ method: 'Cash', amount: 100 }] }],
 });

@@ -62,7 +62,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   `ValidationError` sem requisição. Antes, a API respondia `400`, que já virava `ValidationError`.
   O cálculo é o módulo 11 com o valor ASCII − 48 de cada caractere: para dígitos, dá o resultado
   de sempre, e as 26 letras valem.
-- **A consulta de CNPJ recusa texto fora da máscara.** `'CNPJ 11.222.333/0001-81'` passava,
+- **A consulta de CNPJ recusa texto fora da máscara.** `'CNPJ 11.222.333/9999-52'` passava,
   porque o `\D` descartava tudo o que não era dígito. Agora falha no cliente.
 - **Mensagens de erro novas**, para quem compara texto:
   - chave de acesso: `Expected 44 characters: digits only, except positions 7 to 18, which hold the issuer CNPJ and may contain letters (alphanumeric CNPJ).`;
@@ -90,7 +90,8 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   sempre o recusou. Com esta versão, a consulta de CNPJ também o recusa no cliente. Ele aparecia
   no README, no `MIGRATION.md`, em `docs/API.md`, nos exemplos, no JSDoc, na skill e nos testes,
   em consultas de CNPJ, em `companies.create`, em pessoas e no comprador de NF-e. Agora esses
-  exemplos usam `11222333000181`, e o `companies.create` do README passou a usar `number`.
+  exemplos usam `11222333999952`, um CNPJ sintético: o DV é válido, e a consulta de CNPJ não o
+  encontra na Receita. O `companies.create` do README passou a usar `number`.
 - **Formato do CNPJ nas páginas.** As páginas de consulta de CNPJ, de empresas e de NF-e de
   entrada explicam o formato com letras, a normalização e que o CNPJ alfanumérico exige a API v3.
   A página de NF-e de entrada lista quais métodos já aceitam a chave com letras.

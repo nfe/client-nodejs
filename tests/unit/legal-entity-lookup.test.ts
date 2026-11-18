@@ -13,8 +13,8 @@ import type {
 // Test Data
 // ============================================================================
 
-const VALID_CNPJ_DIGITS = '11222333000181';
-const VALID_CNPJ_FORMATTED = '11.222.333/0001-81';
+const VALID_CNPJ_DIGITS = '11222333999952';
+const VALID_CNPJ_FORMATTED = '11.222.333/9999-52';
 
 const createMockBasicInfoResponse = (
   overrides: Partial<LegalEntityBasicInfoResponse> = {}
@@ -185,7 +185,7 @@ describe('LegalEntityLookupResource', () => {
     });
 
     it('rejects text outside the CNPJ mask', async () => {
-      await expect(resource.getBasicInfo('CNPJ 11.222.333/0001-81')).rejects.toThrow(
+      await expect(resource.getBasicInfo('CNPJ 11.222.333/9999-52')).rejects.toThrow(
         '12 letters or digits followed by 2 check digits'
       );
       expect(mockHttpClient.get).not.toHaveBeenCalled();
@@ -430,10 +430,10 @@ describe('LegalEntityLookupResource', () => {
       };
       vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
 
-      await resource.getBasicInfo('11.222.333/0001-81');
+      await resource.getBasicInfo('11.222.333/9999-52');
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        '/v2/legalentities/basicInfo/11222333000181',
+        '/v2/legalentities/basicInfo/11222333999952',
         undefined
       );
     });
@@ -487,7 +487,7 @@ describe('LegalEntityLookupResource', () => {
       };
       vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
 
-      await resource.getStateTaxInfo('SP', '11.222.333/0001-81');
+      await resource.getStateTaxInfo('SP', '11.222.333/9999-52');
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
         `/v2/legalentities/stateTaxInfo/SP/${VALID_CNPJ_DIGITS}`

@@ -365,7 +365,7 @@ on the live API — fetch the real list with `await nfe.webhooks.fetchEventTypes
 
 1. **Import path**: Use `'nfe-io'` not `'@nfe-io/sdk'`. The JSDoc uses `@nfe-io/sdk` but the npm package is `nfe-io`.
 
-2. **`federalTaxNumber` type varies**: For `companies.create()` it's a **number** (`11222333000181`). For `legalPeople`/`naturalPeople` and lookup resources it's a **string** (`'11222333000181'`). A CNPJ or CPF that starts with zero loses it as a number (`01234567999885` → `1234567999885`): since 6.0.2 the SDK accepts that short number, as the API does, and `companies.findByTaxNumber` compares by value. Lookups accept the CNPJ with or without punctuation and check the check digits locally.
+2. **`federalTaxNumber` type varies**: For `companies.create()` it's a **number** (`11222333999952`). For `legalPeople`/`naturalPeople` and lookup resources it's a **string** (`'11222333999952'`). A CNPJ or CPF that starts with zero loses it as a number (`01234567999885` → `1234567999885`): since 6.0.2 the SDK accepts that short number, as the API does, and `companies.findByTaxNumber` compares by value. Lookups accept the CNPJ with or without punctuation and check the check digits locally.
 
 3. **`serviceInvoices.create()` returns a union**: The return type is `{ status: 'immediate', invoice } | { status: 'async', response }`. Always use `createAndWait()` unless you need manual control.
 

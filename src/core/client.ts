@@ -93,7 +93,7 @@ export { NATURAL_PERSON_API_BASE_URL } from './resources/index.js';
  *
  * // Create a company
  * const company = await nfe.companies.create({
- *   federalTaxNumber: 11222333000181, // v1: number. An alphanumeric CNPJ needs the v3 API
+ *   federalTaxNumber: 11222333999952, // v1: number. An alphanumeric CNPJ needs the v3 API
  *   name: 'My Company'
  * });
  *
@@ -234,7 +234,7 @@ export class NfeClient {
    * @example
    * ```typescript
    * const company = await nfe.companies.create({
-   *   federalTaxNumber: 11222333000181, // v1: number. An alphanumeric CNPJ needs the v3 API
+   *   federalTaxNumber: 11222333999952, // v1: number. An alphanumeric CNPJ needs the v3 API
    *   name: 'My Company',
    *   email: 'company@example.com'
    * });
@@ -262,7 +262,7 @@ export class NfeClient {
    * @example
    * ```typescript
    * const legalPerson = await nfe.legalPeople.create(companyId, {
-   *   federalTaxNumber: '11222333000181',
+   *   federalTaxNumber: '11222333999952',
    *   name: 'Legal Person Company'
    * });
    * ```
@@ -549,11 +549,11 @@ export class NfeClient {
    * @example
    * ```typescript
    * // Basic CNPJ lookup
-   * const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/0001-81');
+   * const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/9999-52');
    * console.log(result.legalEntity?.name);
    *
    * // State tax registration
-   * const stateTax = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333000181');
+   * const stateTax = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333999952');
    * ```
    */
   get legalEntityLookup(): LegalEntityLookupResource {

@@ -24,7 +24,7 @@ const client = new NfeClient({
 });
 
 // Example CNPJ — replace with a real one for testing
-const EXAMPLE_CNPJ = process.env.TEST_CNPJ || '11222333000181';
+const EXAMPLE_CNPJ = process.env.TEST_CNPJ || '11222333999952';
 const EXAMPLE_STATE = process.env.TEST_STATE || 'SP';
 
 /**
@@ -98,7 +98,7 @@ async function lookupWithOptions() {
 
   try {
     // Formatted CNPJ is accepted — punctuation is stripped automatically
-    const result = await client.legalEntityLookup.getBasicInfo('11.222.333/0001-81', {
+    const result = await client.legalEntityLookup.getBasicInfo('11.222.333/9999-52', {
       updateAddress: false,   // Skip postal service address enrichment
       updateCityCode: true,   // But still update city IBGE code
     });

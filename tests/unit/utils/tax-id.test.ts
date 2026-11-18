@@ -59,8 +59,8 @@ describe('tax-id: CNPJ', () => {
   });
 
   it('aceita o CNPJ numérico tradicional e recusa sequência repetida', () => {
-    expect(isValidCnpj('11222333000181')).toBe(true);
-    expect(isValidCnpj(11222333000181)).toBe(true);
+    expect(isValidCnpj('11222333999952')).toBe(true);
+    expect(isValidCnpj(11222333999952)).toBe(true);
     expect(isValidCnpj('11111111111111')).toBe(false);
     expect(isValidCnpj('00000000000000')).toBe(false);
   });
@@ -77,32 +77,32 @@ describe('tax-id: CNPJ', () => {
 
   it('normaliza máscara e minúsculas sem perder letras', () => {
     expect(normalizeCnpj('12.abc.345/01de-35')).toBe('12ABC34501DE35');
-    expect(normalizeCnpj(' 11.222.333/0001-81 ')).toBe('11222333000181');
+    expect(normalizeCnpj(' 11.222.333/9999-52 ')).toBe('11222333999952');
     expect(isValidCnpj('12.abc.345/01de-35')).toBe(true);
   });
 
   it('recusa formato com letra nos dígitos verificadores ou tamanho errado', () => {
     expect(isValidCnpj('12ABC34501DEA5')).toBe(false);
     expect(isValidCnpj('12ABC34501DE3')).toBe(false);
-    expect(isValidCnpj('CNPJ 11.222.333/0001-81')).toBe(false);
+    expect(isValidCnpj('CNPJ 11.222.333/9999-52')).toBe(false);
   });
 
   it('recusa number que não é inteiro seguro e não negativo', () => {
-    expect(isValidCnpj(-11222333000181)).toBe(false);
-    expect(isValidCnpj(11222333000181.5)).toBe(false);
+    expect(isValidCnpj(-11222333999952)).toBe(false);
+    expect(isValidCnpj(11222333999952.5)).toBe(false);
     expect(isValidCnpj(Number.NaN)).toBe(false);
   });
 
   it('detecta CNPJ alfanumérico pelas 12 primeiras posições', () => {
     expect(isAlphanumericCnpj('12.ABC.345/01DE-35')).toBe(true);
     expect(isAlphanumericCnpj('12abc34501de35')).toBe(true);
-    expect(isAlphanumericCnpj('11222333000181')).toBe(false);
-    expect(isAlphanumericCnpj(11222333000181)).toBe(false);
+    expect(isAlphanumericCnpj('11222333999952')).toBe(false);
+    expect(isAlphanumericCnpj(11222333999952)).toBe(false);
   });
 
   it('dá o mesmo resultado que o cálculo numérico antigo para os CNPJs da suíte', () => {
     const numerics = [
-      11222333000181, 12345678000276, 11111111000111, 11122233344455, 11223344000155,
+      11222333999952, 12345678000276, 11111111000111, 11122233344455, 11223344000155,
       12345678000190, 12345678901234, 33333333000133, 98765432000110, 98765432109876,
       11444555000149, 1234567999885, 191,
     ];
@@ -121,7 +121,7 @@ describe('tax-id: CNPJ', () => {
       expect(() => requireCnpj('')).toThrow('Federal tax number (CNPJ) is required');
       expect(() => requireCnpj('   ')).toThrow(ValidationError);
       expect(() => requireCnpj(undefined)).toThrow(ValidationError);
-      expect(() => requireCnpj('CNPJ 11.222.333/0001-81')).toThrow(
+      expect(() => requireCnpj('CNPJ 11.222.333/9999-52')).toThrow(
         '12 letters or digits followed by 2 check digits'
       );
       expect(() => requireCnpj('12ABC34501DE36')).toThrow('check digits do not match');

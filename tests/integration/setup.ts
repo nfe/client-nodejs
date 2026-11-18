@@ -95,7 +95,9 @@ export const ALLOW_ACCOUNT_WRITES = process.env.NFE_ALLOW_ACCOUNT_WRITES === 'tr
 
 // Test data helpers for integration tests
 export const TEST_COMPANY_DATA = {
-  federalTaxNumber: 11222333000181, // Valid CNPJ with proper check digits
+  // CNPJ sintético: DV válido e inexistente na Receita (consulta de CNPJ → 404 em 2026-11-18).
+  // Não usar CNPJ real aqui: estes dados criam empresas na conta.
+  federalTaxNumber: 11222333999952,
   name: 'Empresa Teste SDK v3',
   email: 'teste-sdk@example.com',
   taxRegime: 1 as const, // Simples Nacional

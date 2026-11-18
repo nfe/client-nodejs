@@ -80,7 +80,7 @@ function buildQueryString(params: Record<string, string | number | boolean>): st
  * const result = await nfe.productInvoices.create('company-id', {
  *   operationNature: 'Venda de mercadoria',
  *   operationType: 'Outgoing',
- *   buyer: { name: 'Empresa LTDA', federalTaxNumber: 11222333000181 },
+ *   buyer: { name: 'Empresa LTDA', federalTaxNumber: 11222333999952 },
  *   items: [{ code: 'PROD-001', description: 'Produto X', quantity: 1, unitAmount: 100 }],
  *   payment: [{ paymentDetail: [{ method: 'Cash', amount: 100 }] }],
  * });

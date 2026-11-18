@@ -123,7 +123,7 @@ describe('LegalPeopleResource', () => {
       vi.mocked(mockHttpClient.get).mockResolvedValue({
         data: {
           legalPeople: [
-            createMockLegalPerson({ id: 'p1', federalTaxNumber: 11222333000181 as unknown as string }),
+            createMockLegalPerson({ id: 'p1', federalTaxNumber: 11222333999952 as unknown as string }),
             createMockLegalPerson({ id: 'p2', federalTaxNumber: 1234567999885 as unknown as string }),
           ],
         },

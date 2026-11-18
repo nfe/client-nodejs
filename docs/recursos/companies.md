@@ -33,7 +33,7 @@ o pré-requisito de toda emissão — e precisa de inscrição
 ```typescript
 const company = await nfe.companies.create({
   name: 'Minha Empresa LTDA',
-  federalTaxNumber: 11222333000181,
+  federalTaxNumber: 11222333999952,
   email: 'fiscal@empresa.com',
 });
 

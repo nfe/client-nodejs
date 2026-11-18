@@ -53,7 +53,7 @@ async function demonstrateJSDoc() {
       type: 'LegalEntity' as const,
       name: 'Client Name',
       email: 'client@example.com',
-      federalTaxNumber: 11222333000181,
+      federalTaxNumber: 11222333999952,
       address: {
         country: 'BRA',
         postalCode: '01310-100',
@@ -141,7 +141,7 @@ async function demonstrateJSDoc() {
   // Hover to see CNPJ lookup documentation
   const legalPerson = await nfe.legalPeople.findByTaxNumber(
     companyId,
-    '11222333000181'
+    '11222333999952'
   );
 
   // Hover to see CPF lookup documentation
