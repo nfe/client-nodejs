@@ -116,6 +116,27 @@ describe('LegalPeopleResource', () => {
     });
   });
 
+  // A v1 devolve federalTaxNumber como número; um CNPJ que começa com zero chega sem ele.
+  // Até a v6.0.1 a busca comparava texto e não achava o registro.
+  describe('findByTaxNumber', () => {
+    it('acha o registro numérico pela string com zero à esquerda e máscara', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: {
+          legalPeople: [
+            createMockLegalPerson({ id: 'p1', federalTaxNumber: 11222333999952 as unknown as string }),
+            createMockLegalPerson({ id: 'p2', federalTaxNumber: 1234567999885 as unknown as string }),
+          ],
+        },
+        status: 200,
+        headers: {},
+      } as any);
+
+      expect((await legalPeople.findByTaxNumber(TEST_COMPANY_ID, '01234567999885'))?.id).toBe('p2');
+      expect((await legalPeople.findByTaxNumber(TEST_COMPANY_ID, '01.234.567/9998-85'))?.id).toBe('p2');
+      expect(await legalPeople.findByTaxNumber(TEST_COMPANY_ID, '99999999000191')).toBeUndefined();
+    });
+  });
+
   describe('error handling', () => {
     it('should propagate errors from http client', async () => {
       const error = new Error('Network error');

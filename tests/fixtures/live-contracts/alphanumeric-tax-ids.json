@@ -1,0 +1,131 @@
+{
+  "probe": "CNPJ alfanumérico (IN RFB 2.229/2024), chave de acesso com letras e CNPJ que perdeu o zero à esquerda",
+  "capturedOn": "2026-11-18",
+  "change": "fix-tax-id-validation",
+  "note": "Status e corpo vêm de respostas reais; os valores são sintéticos. CNPJ alfanumérico: 12ABC34501DE35, exemplo público da Receita Federal (DV válido, inexistente na base). Chave de acesso: montada com esse CNPJ e DV calculado com ASCII - 48. CNPJ com zero à esquerda: 01234567999885, sintético; a consulta de CNPJ confirmou que não existe na Receita. Ids de empresa e de conta foram trocados por placeholders.",
+  "method": "GET só de leitura, salvo o grupo companiesV1LeadingZero, que escreveu na conta do time com autorização (uma empresa criada, regravada e excluída).",
+  "accessKeyWithLetters": {
+    "key": "35260612ABC34501DE35550010000000031100000033",
+    "cases": [
+      {
+        "route": "GET /v2/companies/{companyId}/inbound/productinvoices/{accessKey}",
+        "host": "api.nfse.io",
+        "status": 404,
+        "body": { "errors": [{ "message": "Key {accessKey} for companyId {companyId} and accountId {accountId} does not exist" }] },
+        "reading": "formato aceito; a mesma resposta de uma chave numérica inexistente"
+      },
+      {
+        "route": "GET /v2/companies/{companyId}/inbound/productinvoices/{accessKey}/json e …/events/{eventKey}",
+        "host": "api.nfse.io",
+        "status": 404,
+        "body": { "errors": [{ "message": "Key {accessKey} for companyId {companyId} and accountId {accountId} does not exist" }] },
+        "reading": "as sub-rotas de productinvoices também aceitam o formato"
+      },
+      {
+        "route": "GET /v2/companies/{companyId}/inbound/{accessKey}",
+        "host": "api.nfse.io",
+        "status": 400,
+        "body": { "errors": [{ "message": "access key must have 44 digits" }] },
+        "reading": "a rota raiz recusa o formato; com chave numérica sintética de DV válido responde 404"
+      },
+      {
+        "route": "GET /v2/companies/{companyId}/inbound/{accessKey}/xml, /pdf, /events/{eventKey} e /events/{eventKey}/xml",
+        "host": "api.nfse.io",
+        "status": 400,
+        "body": { "errors": [{ "message": "access key must have 44 digits" }] },
+        "reading": "todas as sub-rotas da raiz recusam o formato"
+      },
+      {
+        "route": "GET /v2/productinvoices/{accessKey}",
+        "host": "nfe.api.nfe.io",
+        "credential": "data",
+        "status": 400,
+        "body": { "errors": [{ "message": "accessKey can only to contain 44 numbers" }] },
+        "reading": "a consulta de NF-e ainda não tem versão alfanumérica"
+      }
+    ]
+  },
+  "legalEntityLookup": {
+    "credential": "data",
+    "host": "legalentity.api.nfe.io",
+    "cases": [
+      {
+        "route": "GET /v1/legalentities/basicInfo/12ABC34501DE35",
+        "status": 400,
+        "body": { "errors": [{ "code": 40001, "message": "CNPJ alfanumérico não é suportado nesta versão. Utilize a v3." }] }
+      },
+      {
+        "route": "GET /v2/legalentities/basicInfo/12ABC34501DE35",
+        "status": 400,
+        "body": { "errors": [{ "code": 40001, "message": "CNPJ alfanumérico não é suportado nesta versão. Utilize a v3." }] },
+        "reading": "a rota que o SDK usa; o SDK repassa esta mensagem como ValidationError"
+      },
+      {
+        "route": "GET /v2/legalentities/stateTaxForInvoice/SP/12ABC34501DE35",
+        "status": 400,
+        "body": { "errors": [{ "code": 40001, "message": "CNPJ alfanumérico não é suportado nesta versão. Utilize a v3." }] }
+      },
+      {
+        "route": "GET /v3/legalentities/basicInfo/12ABC34501DE35",
+        "status": 404,
+        "body": { "errors": [{ "message": "CNPJ not found in Serpro." }] },
+        "reading": "formato aceito; o CNPJ de exemplo não existe na base"
+      },
+      {
+        "route": "GET /v3/legalentities/basicInfo/12ABC34501DE36",
+        "status": 400,
+        "body": { "errors": [{ "message": "cnpj is null, white space or not valid" }] },
+        "reading": "a API valida o DV; a v2 responde o mesmo para CNPJ numérico com DV inválido"
+      },
+      {
+        "route": "GET /v3/legalentities/basicInfo/12.ABC.345%2F01DE-35",
+        "status": 307,
+        "headers": { "location": "/v3/legalentities/basicInfo/12.ABC.345/01DE-35" },
+        "reading": "a barra da máscara quebra o path; o SDK remove a máscara antes de montar a URL"
+      }
+    ]
+  },
+  "companiesV1LeadingZero": {
+    "host": "api.nfe.io",
+    "cnpj": "01234567999885",
+    "cases": [
+      {
+        "route": "POST /v1/companies",
+        "body": { "federalTaxNumber": 1234567999886 },
+        "status": 400,
+        "response": { "errors": [{ "code": 40032, "message": "federal tax number is not valid" }] },
+        "reading": "DV inválido depois de completar com zeros; nada foi criado"
+      },
+      {
+        "route": "POST /v1/companies",
+        "body": { "federalTaxNumber": 1234567999885 },
+        "status": 201,
+        "responseFederalTaxNumber": 1234567999885,
+        "reading": "a API aceita o número que perdeu o zero"
+      },
+      {
+        "route": "GET /v3/companies/{companyId}",
+        "host": "api.nfse.io",
+        "status": 200,
+        "responseFederalTaxNumber": "01234567999885",
+        "reading": "o valor gravado tem as 14 posições"
+      },
+      {
+        "route": "PUT /v1/companies/{companyId}",
+        "body": "o objeto lido pela v1, com federalTaxNumber 1234567999885",
+        "status": 200
+      },
+      {
+        "route": "PUT /v1/companies/{companyId}",
+        "body": { "federalTaxNumber": "01234567999885" },
+        "status": 200,
+        "reading": "a v1 também aceita a string de 14 posições"
+      },
+      {
+        "route": "DELETE /v1/companies/{companyId}",
+        "status": 204,
+        "reading": "exclusão lógica: a empresa continua na conta com status Inactive"
+      }
+    ]
+  }
+}

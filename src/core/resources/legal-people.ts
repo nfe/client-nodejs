@@ -23,6 +23,7 @@
  */
 
 import type { HttpClient } from '../http/client.js';
+import { isSameTaxNumber } from '../utils/tax-id.js';
 import type { LegalPerson, ResourceId, ListResponse } from '../types.js';
 
 /**
@@ -191,14 +192,15 @@ export class LegalPeopleResource {
    * Find legal person by federal tax number (CNPJ)
    *
    * @param companyId - Company ID
-   * @param federalTaxNumber - CNPJ (only numbers)
+   * @param federalTaxNumber - CNPJ, with or without punctuation. The comparison is by value, so a
+   *   record whose number lost its leading zeros still matches
    * @returns Legal person or undefined if not found
    *
    * @example
    * ```typescript
    * const person = await nfe.legalPeople.findByTaxNumber(
    *   'company-id',
-   *   '12345678901234'
+   *   '11222333999952'
    * );
    * if (person) {
    *   console.log('Found:', person.name);
@@ -214,7 +216,7 @@ export class LegalPeopleResource {
 
     return people.find(
       (person: LegalPerson) =>
-        person.federalTaxNumber?.toString() === federalTaxNumber
+        isSameTaxNumber(person.federalTaxNumber, federalTaxNumber)
     );
   }
 }

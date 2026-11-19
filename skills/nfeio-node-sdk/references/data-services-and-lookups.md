@@ -70,7 +70,8 @@ Queries NF-e data directly from SEFAZ by access key. No company scope needed.
 ### retrieve(accessKey): Promise<ProductInvoiceDetails>
 
 ```typescript
-// Access key must be exactly 44 numeric digits
+// 44 characters; positions 7–18 (issuer CNPJ) may hold letters since 6.0.2.
+// This query route still answers 400 for a key with letters (measured 2026-11-18).
 const invoice = await nfe.productInvoiceQuery.retrieve('35210512345678000190550010000001231123456789');
 ```
 
@@ -154,33 +155,37 @@ Queries Receita Federal for company data by CNPJ.
 ### getBasicInfo(cnpj, options?): Promise<LegalEntityBasicInfoResponse>
 
 ```typescript
-// CNPJ accepts formatted or raw string
-const info = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
-const info = await nfe.legalEntityLookup.getBasicInfo('12345678000190');
+// The response wraps the entity: { legalEntity }
+const { legalEntity } = await nfe.legalEntityLookup.getBasicInfo('11.222.333/9999-52');
+await nfe.legalEntityLookup.getBasicInfo('11222333999952'); // same query
 
 interface LegalEntityBasicInfoOptions {
-  includePartners?: boolean;     // Include partner/shareholder info
-  includeActivities?: boolean;   // Include CNAE economic activities
+  updateAddress?: boolean;   // Update the address from postal service data (default: true)
+  updateCityCode?: boolean;  // With updateAddress: false, update only the city code (default: false)
 }
 ```
 
-**LegalEntityBasicInfo** key fields:
+CNPJ input (all four methods), since 6.0.2:
+- Punctuation (`.`, `/`, `-`, spaces) is removed and letters go upper case; letters are never stripped.
+- Format: 12 letters or digits + 2 check digits. The SDK checks the check digits (modulo 11, ASCII − 48 per character) and throws `ValidationError` without a request when they do not match; the API also answers `400` for them.
+- Alphanumeric CNPJ: these methods call the `v2` routes, which accept only numeric CNPJ. The API answers `400` "CNPJ alfanumérico não é suportado nesta versão. Utilize a v3.", raised as `ValidationError`.
+
+**LegalEntityBasicInfo** key fields (all optional in the type):
 ```typescript
 {
-  federalTaxNumber: string;        // CNPJ
-  name: string;                    // Legal name (razao social)
+  federalTaxNumber?: number;       // CNPJ as NUMBER on v2: a leading zero is lost (00000000000191 → 191)
+  name?: string;                   // Legal name (razao social)
   tradeName?: string;              // Trade name (nome fantasia)
-  status: LegalEntityStatus;       // 'Active' | 'Suspended' | 'Cancelled' | ...
-  size: LegalEntitySize;           // 'ME' | 'EPP' | 'DEMAIS'
-  unit: LegalEntityUnit;           // 'Headoffice' | 'Subsidiary'
-  natureCode: LegalEntityNatureCode;
-  taxRegime: LegalEntityTaxRegime; // 'SimplesNacional' | 'MEI' | 'Normal' | 'Unknown'
-  openingDate?: string;
+  status?: LegalEntityStatus;      // 'Active' | 'Suspended' | 'Cancelled' | ...
+  size?: LegalEntitySize;          // 'ME' | 'EPP' | 'DEMAIS' | 'Unknown'
+  unit?: LegalEntityUnit;          // 'Headoffice' | 'Subsidiary'
+  legalNature?: LegalEntityNature;
+  openedOn?: string;
   email?: string;
-  capital?: number;                // Social capital
+  shareCapital?: number;           // Social capital
   address?: LegalEntityAddress;
   phones?: LegalEntityPhone[];
-  activities?: LegalEntityEconomicActivity[];  // CNAE codes
+  economicActivities?: LegalEntityEconomicActivity[];  // CNAE codes
   partners?: LegalEntityPartner[];
 }
 ```
@@ -195,7 +200,7 @@ type LegalEntityStatus = 'Unknown' | 'Active' | 'Suspended' | 'Cancelled' | 'Una
 Get state tax registrations (Inscricoes Estaduais) for a specific state:
 
 ```typescript
-const taxInfo = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+const taxInfo = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333999952');
 ```
 
 **BrazilianState** type — all 27 UF codes plus special values:
@@ -209,12 +214,13 @@ type BrazilianState =
   | 'NA'; // Not applicable
 ```
 
-Returns state tax registrations with status per state:
+Returns `{ legalEntity }` with `taxRegime`, `legalNature` and the registrations in `stateTaxes`:
 ```typescript
 interface LegalEntityStateTax {
-  taxNumber: string;                      // IE number
-  state: BrazilianState;
-  status: LegalEntityStateTaxStatus;      // 'Abled' | 'Unabled' | 'Cancelled' | 'Unknown'
+  taxNumber?: string;                     // IE number
+  code?: BrazilianState;                  // UF of the registration
+  status?: LegalEntityStateTaxStatus;     // 'Abled' | 'Unabled' | 'Cancelled' | 'Unknown'
+  nfe?: LegalEntityFiscalDocumentInfo;    // also nfse, cte, nfce
 }
 ```
 
@@ -269,15 +275,14 @@ type NaturalPersonStatus =
 ### Address from CEP to Invoice
 
 ```typescript
-// 1. Look up address by CEP
-const { addresses } = await nfe.addresses.lookupByPostalCode('01310-100');
-const addr = addresses[0];
+// 1. Look up address by CEP (returns a single Address)
+const addr = await nfe.addresses.lookupByPostalCode('01310-100');
 
 // 2. Use in invoice borrower
 await nfe.serviceInvoices.createAndWait(companyId, {
   // ...
   borrower: {
-    federalTaxNumber: 12345678000190,
+    federalTaxNumber: 11222333999952,
     name: 'Client',
     address: {
       country: addr.country,

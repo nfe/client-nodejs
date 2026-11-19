@@ -23,6 +23,7 @@
  */
 
 import type { HttpClient } from '../http/client.js';
+import { isSameTaxNumber } from '../utils/tax-id.js';
 import type { NaturalPerson, ResourceId, ListResponse } from '../types.js';
 
 /**
@@ -191,7 +192,8 @@ export class NaturalPeopleResource {
    * Find natural person by federal tax number (CPF)
    *
    * @param companyId - Company ID
-   * @param federalTaxNumber - CPF (only numbers)
+   * @param federalTaxNumber - CPF, with or without punctuation. The comparison is by value, so a
+   *   record whose number lost its leading zeros still matches
    * @returns Natural person or undefined if not found
    *
    * @example
@@ -214,7 +216,7 @@ export class NaturalPeopleResource {
 
     return people.find(
       (person: NaturalPerson) =>
-        person.federalTaxNumber?.toString() === federalTaxNumber
+        isSameTaxNumber(person.federalTaxNumber, federalTaxNumber)
     );
   }
 }

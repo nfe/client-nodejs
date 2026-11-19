@@ -13,6 +13,7 @@ import type {
   InboundFileResource
 } from '../types.js';
 import { ValidationError } from '../errors/index.js';
+import { requireAccessKey } from '../utils/tax-id.js';
 
 // ============================================================================
 // Constants
@@ -21,30 +22,9 @@ import { ValidationError } from '../errors/index.js';
 /** Base URL for CT-e API */
 export const CTE_API_BASE_URL = 'https://api.nfse.io';
 
-/** Regex pattern for valid access key (44 numeric digits) */
-const ACCESS_KEY_PATTERN = /^\d{44}$/;
-
 // ============================================================================
 // Validation Helpers
 // ============================================================================
-
-/**
- * Validates access key format (44 numeric digits)
- * @param accessKey - The CT-e access key to validate
- * @throws {ValidationError} If access key format is invalid
- */
-function validateAccessKey(accessKey: string): void {
-  if (!accessKey || accessKey.trim() === '') {
-    throw new ValidationError('Access key is required');
-  }
-
-  const normalized = accessKey.trim();
-  if (!ACCESS_KEY_PATTERN.test(normalized)) {
-    throw new ValidationError(
-      `Invalid access key: "${accessKey}". Expected 44 numeric digits.`
-    );
-  }
-}
 
 /**
  * Validates company ID is not empty
@@ -224,10 +204,10 @@ export class TransportationInvoicesResource {
   /**
    * Retrieve CT-e metadata by access key
    *
-   * Gets the metadata of a CT-e document by its 44-digit access key.
+   * Gets the metadata of a CT-e document by its 44-character access key.
    *
    * @param companyId - The company ID that received the CT-e
-   * @param accessKey - The 44-digit CT-e access key
+   * @param accessKey - The 44-character CT-e access key
    * @returns Promise with the CT-e metadata
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the CT-e is not found
@@ -249,10 +229,10 @@ export class TransportationInvoicesResource {
     accessKey: string
   ): Promise<TransportationInvoiceMetadata> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     const response = await this.http.get<TransportationInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}`
+      `/v2/companies/${companyId}/inbound/${key}`
     );
 
     return response.data;
@@ -270,7 +250,7 @@ export class TransportationInvoicesResource {
    * (tests/fixtures/live-contracts/inbound-download.json).
    *
    * @param companyId - The company ID that received the CT-e
-   * @param accessKey - The 44-digit CT-e access key
+   * @param accessKey - The 44-character CT-e access key
    * @returns Promise com o file-resource (`publicTemporaryUri`)
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the CT-e is not found
@@ -286,10 +266,10 @@ export class TransportationInvoicesResource {
    */
   async downloadXml(companyId: string, accessKey: string): Promise<InboundFileResource> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     const response = await this.http.get<InboundFileResource>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}/xml`
+      `/v2/companies/${companyId}/inbound/${key}/xml`
     );
 
     return response.data;
@@ -305,7 +285,7 @@ export class TransportationInvoicesResource {
    * Gets the metadata of an event related to a CT-e document.
    *
    * @param companyId - The company ID that received the CT-e
-   * @param accessKey - The 44-digit CT-e access key
+   * @param accessKey - The 44-character CT-e access key
    * @param eventKey - The event key
    * @returns Promise with the event metadata
    * @throws {ValidationError} If any parameter is invalid
@@ -327,14 +307,14 @@ export class TransportationInvoicesResource {
     eventKey: string
   ): Promise<TransportationInvoiceMetadata> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     if (!eventKey || eventKey.trim() === '') {
       throw new ValidationError('Event key is required');
     }
 
     const response = await this.http.get<TransportationInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}/events/${eventKey.trim()}`
+      `/v2/companies/${companyId}/inbound/${key}/events/${eventKey.trim()}`
     );
 
     return response.data;
@@ -346,7 +326,7 @@ export class TransportationInvoicesResource {
    * Gets the XML content of a CT-e event.
    *
    * @param companyId - The company ID that received the CT-e
-   * @param accessKey - The 44-digit CT-e access key
+   * @param accessKey - The 44-character CT-e access key
    * @param eventKey - The event key
    * @returns Promise com o file-resource (`publicTemporaryUri`)
    * @throws {ValidationError} If any parameter is invalid
@@ -373,14 +353,14 @@ export class TransportationInvoicesResource {
     eventKey: string
   ): Promise<InboundFileResource> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     if (!eventKey || eventKey.trim() === '') {
       throw new ValidationError('Event key is required');
     }
 
     const response = await this.http.get<InboundFileResource>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}/events/${eventKey.trim()}/xml`
+      `/v2/companies/${companyId}/inbound/${key}/events/${eventKey.trim()}/xml`
     );
 
     return response.data;

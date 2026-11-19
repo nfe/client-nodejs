@@ -549,7 +549,7 @@ for await (const company of nfe.companies.listIterator()) {
 }
 
 // 🆕 Novo na v3: Métodos de busca
-const company = await nfe.companies.findByTaxNumber(12345678000190); // CNPJ
+const company = await nfe.companies.findByTaxNumber(11222333999952); // CNPJ
 const matches = await nfe.companies.findByName('Acme'); // Por nome
 const withCerts = await nfe.companies.getCompaniesWithCertificates();
 const expiring = await nfe.companies.getCompaniesWithExpiringCertificates(30);

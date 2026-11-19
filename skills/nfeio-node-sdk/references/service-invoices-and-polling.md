@@ -30,7 +30,7 @@ interface ServiceInvoiceAsyncResponse {
   description: string;            // Service description
   servicesAmount: number;         // Total service amount
   borrower: {
-    federalTaxNumber: number;     // CNPJ (14 digits) or CPF (11 digits) as NUMBER
+    federalTaxNumber: number;     // CNPJ or CPF as NUMBER (v1); one that starts with zero loses it. Alphanumeric CNPJ: API v3 only
     name: string;
     email?: string;
     address?: {
@@ -163,7 +163,7 @@ interface Company {
   id: string;
   name: string;
   tradeName?: string;
-  federalTaxNumber: number;   // CNPJ (14 digits) or CPF (11 digits) as NUMBER
+  federalTaxNumber: number;   // CNPJ or CPF as NUMBER (v1). Short numbers (lost leading zeros) are valid; alphanumeric CNPJ: API v3 only
   email: string;
   address?: Address;
   // Auto-populated:
@@ -172,7 +172,7 @@ interface Company {
 }
 ```
 
-Validates CNPJ (14-digit check digit algorithm) and CPF (11-digit check digit algorithm) before sending.
+Validates `federalTaxNumber` before sending: a valid CNPJ (14 positions) or CPF (11 positions), checked by its check digits. Since 6.0.2 a number that lost its leading zeros (`1234567999885` for `01234567999885`) is accepted, as the API does (it pads and stores the 14 positions), and so is a string of digits. An alphanumeric CNPJ throws `ValidationError`: the v1 companies API does not accept it.
 
 ### list(options?): Promise<ListResponse<Company>>
 
@@ -224,8 +224,9 @@ const exp = await nfe.companies.checkCertificateExpiration(companyId);
 ### Search Helpers
 
 ```typescript
-// Find company by CNPJ/CPF (returns null if not found)
-const company = await nfe.companies.findByTaxNumber(12345678000190);
+// Find company by CNPJ/CPF (returns null if not found). Compares by value:
+// a CNPJ that starts with zero is found by the short number (1234567999885).
+const company = await nfe.companies.findByTaxNumber(11222333999952);
 
 // Search by name (returns array)
 const matches = await nfe.companies.findByName('Example');
@@ -265,7 +266,7 @@ interface LegalPerson {
 | `createBatch` | `(companyId, items[]): Promise<LegalPerson[]>` |
 | `findByTaxNumber` | `(companyId, taxNumber): Promise<LegalPerson \| undefined>` |
 
-`findByTaxNumber` returns `undefined` (not throwing `NotFoundError`) when not found.
+`findByTaxNumber` returns `undefined` (not throwing `NotFoundError`) when not found. Since 6.0.2 it compares by value: punctuation is ignored and a record whose number lost its leading zeros still matches.
 
 ---
 

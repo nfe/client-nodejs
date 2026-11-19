@@ -8,37 +8,16 @@
 
 import type { HttpClient } from '../http/client.js';
 import type { TaxCoupon } from '../types.js';
-import { ValidationError } from '../errors/index.js';
+import { requireAccessKey } from '../utils/tax-id.js';
 import { withUnservedRouteNote } from '../utils/unserved-route.js';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-/** Regex pattern for valid access key (44 numeric digits) */
-const ACCESS_KEY_PATTERN = /^\d{44}$/;
-
 // ============================================================================
 // Validation Helpers
 // ============================================================================
-
-/**
- * Validates access key format (44 numeric digits)
- * @param accessKey - The access key to validate
- * @throws {ValidationError} If access key is empty or has invalid format
- */
-function validateAccessKey(accessKey: string): void {
-  if (!accessKey || accessKey.trim() === '') {
-    throw new ValidationError('Access key is required');
-  }
-
-  const normalized = accessKey.trim();
-  if (!ACCESS_KEY_PATTERN.test(normalized)) {
-    throw new ValidationError(
-      `Invalid access key: "${accessKey}". Expected 44 numeric digits.`
-    );
-  }
-}
 
 // ============================================================================
 // Resource Implementation
@@ -48,7 +27,7 @@ function validateAccessKey(accessKey: string): void {
  * Consumer Invoice Query Resource
  *
  * @deprecated **A plataforma não serve nenhuma das duas rotas deste recurso.**
- * Elas estão declaradas na spec `consulta-nf-consumidor` e no `nfeio-docs`, em
+ * Elas estão declaradas na spec `consulta-nf-consumidor` e na documentação da plataforma, em
  * `nfe.api.nfe.io` — e respondem `404` de corpo vazio, sem `content-type`,
  * idêntico ao de um path inventado no mesmo host. Confirmação independente: o
  * `404` vem **inclusive sem credencial**, enquanto uma rota servida no mesmo host
@@ -90,7 +69,7 @@ export class ConsumerInvoiceQueryResource {
   /**
    * Retrieve full CFe-SAT coupon details from SEFAZ by access key
    *
-   * @param accessKey - 44-digit numeric access key (Chave de Acesso)
+   * @param accessKey - 44-character access key (Chave de Acesso; positions 7-18 may hold letters of an alphanumeric CNPJ)
    * @returns Full coupon details including issuer, buyer, items, totals, and payment
    * @throws {ValidationError} If access key format is invalid
    * @throws {NotFoundError} If no coupon matches the access key (HTTP 404)
@@ -107,10 +86,10 @@ export class ConsumerInvoiceQueryResource {
    * ```
    */
   async retrieve(accessKey: string): Promise<TaxCoupon> {
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
     const response = await withUnservedRouteNote(
       'GET /v1/consumerinvoices/coupon/{accessKey}',
-      () => this.http.get<TaxCoupon>(`/v1/consumerinvoices/coupon/${accessKey.trim()}`)
+      () => this.http.get<TaxCoupon>(`/v1/consumerinvoices/coupon/${key}`)
     );
     return response.data;
   }
@@ -118,7 +97,7 @@ export class ConsumerInvoiceQueryResource {
   /**
    * Download the raw CFe XML for a consumer invoice by access key
    *
-   * @param accessKey - 44-digit numeric access key (Chave de Acesso)
+   * @param accessKey - 44-character access key (Chave de Acesso; positions 7-18 may hold letters of an alphanumeric CNPJ)
    * @returns Buffer containing the XML binary content
    * @throws {ValidationError} If access key format is invalid
    * @throws {NotFoundError} If no coupon matches the access key (HTTP 404)
@@ -133,12 +112,12 @@ export class ConsumerInvoiceQueryResource {
    * ```
    */
   async downloadXml(accessKey: string): Promise<Buffer> {
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
     const response = await withUnservedRouteNote(
       'GET /v1/consumerinvoices/coupon/{accessKey}.xml',
       () =>
         this.http.getBuffer(
-          `/v1/consumerinvoices/coupon/${accessKey.trim()}.xml`,
+          `/v1/consumerinvoices/coupon/${key}.xml`,
           // Mesmo motivo do productInvoiceQuery: sem o JSON de segunda escolha, o
           // erro volta 406 de corpo vazio em vez da mensagem da API.
           'application/xml, application/json;q=0.9'

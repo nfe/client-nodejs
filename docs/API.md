@@ -237,7 +237,7 @@ Create a new service invoice. Returns either a completed invoice (201) or async 
 interface ServiceInvoiceData {
   // Required fields
   borrower: {
-    federalTaxNumber: number;        // CPF (11 digits) or CNPJ (14 digits)
+    federalTaxNumber: number;        // CPF or CNPJ as a number (leading zeros may be lost); alphanumeric CNPJ needs the v3 API
     name: string;
     email?: string;
     address?: {
@@ -313,7 +313,7 @@ if ('id' in result) {
 // Example 2: Invoice with full details
 const invoice = await nfe.serviceInvoices.create('company-id', {
   borrower: {
-    federalTaxNumber: 12345678000190,
+    federalTaxNumber: 11222333999952,
     name: 'Acme Corporation',
     email: 'finance@acme.com',
     address: {
@@ -1070,7 +1070,7 @@ Create a new company with automatic CNPJ/CPF validation.
 
 ```typescript
 const company = await nfe.companies.create({
-  federalTaxNumber: 12345678000190, // CNPJ (14 digits) or CPF (11 digits)
+  federalTaxNumber: 11222333999952, // CNPJ or CPF as a number; one that starts with zero may lose it (01234567999885 → 1234567999885)
   name: 'My Company',
   email: 'company@example.com',
   address: {
@@ -1254,8 +1254,8 @@ if (warning) {
 Find company by federal tax number (CNPJ or CPF).
 
 ```typescript
-// Search by CNPJ (14 digits)
-const company = await nfe.companies.findByTaxNumber(12345678000190);
+// Search by CNPJ, as a number (a CNPJ that starts with zero is found by the short number)
+const company = await nfe.companies.findByTaxNumber(11222333999952);
 
 // Or by CPF (11 digits)
 const company = await nfe.companies.findByTaxNumber(12345678901);
@@ -1338,7 +1338,7 @@ Create a legal person.
 
 ```typescript
 const legalPerson = await nfe.legalPeople.create('company-id', {
-  federalTaxNumber: '12345678000190',
+  federalTaxNumber: '11222333999952',
   name: 'Legal Person Company',
   email: 'legal@example.com'
 });
@@ -1383,7 +1383,7 @@ await nfe.legalPeople.delete('company-id', 'person-id');
 Find legal person by CNPJ.
 
 ```typescript
-const person = await nfe.legalPeople.findByTaxNumber('company-id', '12345678000190');
+const person = await nfe.legalPeople.findByTaxNumber('company-id', '11222333999952');
 ```
 
 ### Natural People
@@ -1910,18 +1910,11 @@ await nfe.inboundProductInvoices.manifest(
   '35240112345678000190550010000001231234567890'
 );
 
-// Confirmação da Operação
+// Confirmação da Operação is 210200 (210220 is Desconhecimento)
 await nfe.inboundProductInvoices.manifest(
   'company-id',
   '35240112345678000190550010000001231234567890',
-  210220
-);
-
-// Operação não Realizada
-await nfe.inboundProductInvoices.manifest(
-  'company-id',
-  '35240112345678000190550010000001231234567890',
-  210240
+  210200
 );
 ```
 
@@ -1929,9 +1922,22 @@ await nfe.inboundProductInvoices.manifest(
 
 | Code | Event |
 |------|-------|
+| `210200` | Confirmação da Operação (confirmation — "goods received as described") |
 | `210210` | Ciência da Operação (awareness, default) |
-| `210220` | Confirmação da Operação (confirmation) |
+| `210220` | Desconhecimento da Operação (disowned — "I do not recognize this transaction") |
 | `210240` | Operação não Realizada (operation not performed) |
+
+:::danger Códigos de manifestação: confira antes de enviar
+`210220` é **Desconhecimento da Operação**, não Confirmação. Enviá-lo por engano registra na
+SEFAZ, em nome do destinatário, uma declaração formal de que a operação **não é reconhecida** —
+visível para o emissor e para o fisco, e não reversível pelo mesmo canal. Até a 6.0.1, esta
+documentação o chamava de Confirmação, o que estava errado.
+
+Confirmação da Operação é **`210200`**, que o tipo `ManifestEventType` aceita desde a 6.0.2.
+:::
+
+Segundo a documentação da plataforma, esta rota responde `400` para `210240`: o evento exige
+justificativa, e a rota não tem corpo para enviá-la.
 
 #### `reprocessWebhook(companyId: string, accessKeyOrNsu: string): Promise<InboundProductInvoiceMetadata>`
 
@@ -2081,13 +2087,13 @@ Query Brazilian company (CNPJ) data from Receita Federal and state tax registrie
 Lookup basic company information by CNPJ from Receita Federal. Returns legal name, trade name, address, phone numbers, economic activities (CNAE), legal nature, partners, and registration status.
 
 ```typescript
-const result = await nfe.legalEntityLookup.getBasicInfo('12.345.678/0001-90');
+const result = await nfe.legalEntityLookup.getBasicInfo('11.222.333/9999-52');
 console.log(result.legalEntity?.name);       // 'EMPRESA LTDA'
 console.log(result.legalEntity?.status);      // 'Active'
 console.log(result.legalEntity?.address?.city?.name);
 
 // With options
-const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
+const result = await nfe.legalEntityLookup.getBasicInfo('11222333999952', {
   updateAddress: false,
   updateCityCode: true,
 });
@@ -2097,7 +2103,7 @@ const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation (e.g., `"12345678000190"` or `"12.345.678/0001-90"`) |
+| `federalTaxNumber` | `string` | Yes | CNPJ, with or without punctuation (e.g., `"11222333999952"`, `"11.222.333/9999-52"` or the alphanumeric `"12.ABC.345/01DE-35"`). Punctuation is removed and letters are kept, in upper case |
 | `options` | `LegalEntityBasicInfoOptions` | No | Lookup options |
 
 **Options:**
@@ -2110,7 +2116,7 @@ const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
 **Returns:** `LegalEntityBasicInfoResponse` — Company basic information including address, phones, activities, partners.
 
 **Throws:**
-- `ValidationError` if CNPJ format is invalid (not 14 digits after stripping punctuation)
+- `ValidationError` if the CNPJ is out of format (12 letters or digits followed by 2 check digits) or its check digits do not match (checked locally, modulo 11 with ASCII − 48), or when the API answers `400`: the `v2` routes reject an alphanumeric CNPJ with "CNPJ alfanumérico não é suportado nesta versão. Utilize a v3."
 - `NotFoundError` if no company found for the given CNPJ (HTTP 404)
 - `AuthenticationError` if API key is invalid (HTTP 401)
 
@@ -2119,7 +2125,7 @@ const result = await nfe.legalEntityLookup.getBasicInfo('12345678000190', {
 Lookup state tax registration (Inscrição Estadual) by CNPJ and state. Returns tax regime, legal nature, and state tax registration details including fiscal document indicators (NFe, NFSe, CTe, NFCe).
 
 ```typescript
-const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '12345678000190');
+const result = await nfe.legalEntityLookup.getStateTaxInfo('SP', '11222333999952');
 console.log(result.legalEntity?.taxRegime);  // 'SimplesNacional'
 
 for (const tax of result.legalEntity?.stateTaxes ?? []) {
@@ -2146,7 +2152,7 @@ for (const tax of result.legalEntity?.stateTaxes ?? []) {
 Evaluate state tax registration for invoice issuance. Returns extended status information (including `UnabledTemp`, `UnabledNotConfirmed`) useful for determining whether product invoices (NF-e) can be issued.
 
 ```typescript
-const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '12345678000190');
+const result = await nfe.legalEntityLookup.getStateTaxForInvoice('MG', '11222333999952');
 for (const tax of result.legalEntity?.stateTaxes ?? []) {
   if (tax.status === 'Abled') {
     console.log(`Can issue invoices with IE: ${tax.taxNumber}`);
@@ -2172,7 +2178,7 @@ for (const tax of result.legalEntity?.stateTaxes ?? []) {
 Get the best (suggested) state tax registration for invoice issuance. When multiple registrations are enabled in a state, NFE.io applies evaluation criteria to recommend the optimal IE.
 
 ```typescript
-const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '12345678000190');
+const result = await nfe.legalEntityLookup.getSuggestedStateTaxForInvoice('SP', '11222333999952');
 const bestIE = result.legalEntity?.stateTaxes?.[0];
 if (bestIE) {
   console.log(`Recommended IE: ${bestIE.taxNumber} (${bestIE.status})`);
@@ -2486,7 +2492,7 @@ Issue a product invoice (NF-e) by posting it to the processing queue.
 const result = await nfe.productInvoices.create('company-id', {
   operationNature: 'Venda de mercadoria',
   operationType: 'Outgoing',
-  buyer: { name: 'Empresa LTDA', federalTaxNumber: 12345678000190 },
+  buyer: { name: 'Empresa LTDA', federalTaxNumber: 11222333999952 },
   items: [{ code: 'PROD-001', description: 'Produto X', quantity: 1, unitAmount: 100 }],
   payment: [{ paymentDetail: [{ method: 'Cash', amount: 100 }] }],
 });

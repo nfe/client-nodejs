@@ -920,13 +920,21 @@ export interface EnableInboundOptions {
 }
 
 /**
- * Manifest event types for Manifestação do Destinatário
+ * Manifest event types for Manifestação do Destinatário. The values are the `tpEvent` enum
+ * the platform declares for the manifest route: `[210200, 210210, 210220, 210240]`.
  *
+ * - `210200` — Confirmação da Operação (confirmation of the operation). Missing from this type
+ *   until 6.0.1, which pushed callers to the wrong code.
  * - `210210` — Ciência da Operação (awareness of the operation)
- * - `210220` — Confirmação da Operação (confirmation of the operation)
- * - `210240` — Operação não Realizada (operation not performed)
+ * - `210220` — **Desconhecimento da Operação** (the recipient does NOT recognize the operation).
+ *   Until 6.0.1 this documentation called it "Confirmação da Operação", which is wrong. Sending
+ *   it by mistake registers at SEFAZ, on behalf of the recipient, a formal statement that the
+ *   operation is not recognized, visible to the issuer and to the tax authority.
+ * - `210240` — Operação não Realizada (operation not performed). The platform documents that
+ *   the `/manifest` route answers `400` for it: the event requires a justification, and this
+ *   route has no body to carry it.
  */
-export type ManifestEventType = 210210 | 210220 | 210240;
+export type ManifestEventType = 210200 | 210210 | 210220 | 210240;
 
 // ============================================================================
 // Product Invoice Query Types (consulta-nf)

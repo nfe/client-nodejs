@@ -7,14 +7,124 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não lançado]
 
+## [6.0.2] - 2026-11-18
+
+> **CNPJ alfanumérico (IN RFB 2.229/2024), primeira parte: o SDK para de recusar no cliente o que
+> a API aceita.** Uma regra só passa a valer para CNPJ, CPF e chave de acesso em todos os
+> recursos. O acesso à família v3 da API, a única que aceita CNPJ alfanumérico, vem numa minor.
+> Evidência em `tests/fixtures/live-contracts/alphanumeric-tax-ids.json`.
+>
+> **Manifestação do destinatário: o `210220` é Desconhecimento da Operação, não Confirmação.** A
+> documentação errava o código. A Confirmação é o `210200`, que o tipo `ManifestEventType` passa a
+> aceitar.
+>
+> Nada novo é exportado. A única mudança de tipo é aditiva: `ManifestEventType` ganha o `210200`.
+
+### Corrigido
+
+- **`companies` aceita CNPJ ou CPF que começa com zero.** Como `number`, o documento perde o
+  zero: `01234567999885` vira `1234567999885`. `create`, `update` e `findByTaxNumber` recusavam
+  esse número pelo tamanho. A API completa os zeros. Medido em 2026-11-18, com escrita
+  autorizada:
+  - `POST /v1/companies` com o número curto respondeu `201`;
+  - a v3 devolveu o CNPJ gravado com as 14 posições;
+  - o `PUT` com o objeto lido respondeu `200`.
+
+  Agora o SDK completa com zeros e confere os dígitos verificadores, e `findByTaxNumber` compara
+  pelo valor. Em JavaScript sem tipos, uma string só de dígitos (14 para CNPJ, 11 para CPF)
+  também é aceita, como na API. O tipo continua `number`.
+- **A chave de acesso de emitente com CNPJ alfanumérico deixa de ser recusada no cliente.** Com
+  CNPJ alfanumérico, as posições 7 a 18 da chave têm letras. `inboundProductInvoices`,
+  `productInvoiceQuery`, `consumerInvoiceQuery` e `transportationInvoices` exigiam 44 dígitos.
+  Agora aceitam letras nessas posições e enviam a chave em maiúsculas. Cada rota da API decide se
+  atende (medido em 2026-11-18):
+  - as rotas `/inbound/productinvoices/…` aceitam a chave;
+  - as rotas `/inbound/{chave}…` e a consulta de NF-e ainda respondem `400`, e o SDK repassa a
+    mensagem como `ValidationError`.
+- **A consulta de CNPJ deixa de arrancar as letras.** `legalEntityLookup` fazia
+  `replace(/\D/g, '')`: um CNPJ alfanumérico virava 9 dígitos, e o erro dizia "got 9 digit(s)".
+  Agora a normalização tira só `.`, `/`, `-` e espaços e converte letras para maiúsculas. O CNPJ
+  alfanumérico chega à API, que responde `400` com "CNPJ alfanumérico não é suportado nesta
+  versão. Utilize a v3.". O SDK lança `ValidationError` com essa mensagem.
+- **`legalPeople.findByTaxNumber` e `naturalPeople.findByTaxNumber` comparam pelo valor.** Um
+  registro que a API devolve como número sem o zero à esquerda passa a ser achado pela string com
+  o zero, com ou sem máscara.
+- **`ManifestEventType` aceita o `210200`, a Confirmação da Operação.** O tipo tinha só `210210`,
+  `210220` e `210240`: em TypeScript, confirmar uma operação não compilava sem forçar o tipo, e a
+  documentação mandava usar o `210220`, que é Desconhecimento (veja Documentação). Agora o tipo
+  tem os quatro códigos que a plataforma declara para a rota de manifestação:
+  `210200 | 210210 | 210220 | 210240`. A mudança é aditiva: o código que compilava continua
+  compilando, e o padrão continua `210210`. O SDK só repassa o código à API.
+
+### Alterado
+
+- **A consulta de CNPJ confere os dígitos verificadores no cliente.** Um DV inválido lança
+  `ValidationError` sem requisição. Antes, a API respondia `400`, que já virava `ValidationError`.
+  O cálculo é o módulo 11 com o valor ASCII − 48 de cada caractere: para dígitos, dá o resultado
+  de sempre, e as 26 letras valem.
+- **A consulta de CNPJ recusa texto fora da máscara.** `'CNPJ 11.222.333/9999-52'` passava,
+  porque o `\D` descartava tudo o que não era dígito. Agora falha no cliente.
+- **Mensagens de erro novas**, para quem compara texto:
+  - chave de acesso: `Expected 44 characters: digits only, except positions 7 to 18, which hold the issuer CNPJ and may contain letters (alphanumeric CNPJ).`;
+  - CNPJ fora do formato: `Expected 14 characters after removing punctuation: 12 letters or digits followed by 2 check digits …`;
+  - CNPJ com DV inválido: `The CNPJ check digits do not match.`;
+  - `companies` com CNPJ alfanumérico: `Alphanumeric CNPJ is not accepted by the v1 companies API. The v3 companies API accepts it.`;
+  - `companies` com documento inválido: `Invalid federalTaxNumber: … Expected a valid CNPJ (14 digits) or CPF (11 digits); a number that lost its leading zeros is accepted.`;
+  - `companies.findByTaxNumber`: `Tax number must be a non-negative integer with up to 14 digits (CNPJ or CPF)`.
+
 ### Documentação
 
+- **O código `210220` da manifestação é Desconhecimento da Operação, não Confirmação.** O JSDoc de
+  `ManifestEventType` e de `inboundProductInvoices.manifest`, o README, `docs/API.md`, a skill e
+  o exemplo `examples/inbound-product-invoices.js` chamavam o `210220` de "Confirmação da
+  Operação". Isso está errado: enviá-lo registra na SEFAZ, em nome do destinatário, uma
+  declaração formal de que a operação não é reconhecida, visível para o emissor e para o fisco.
+  Um cliente quase o enviou seguindo a documentação.
+  - O texto agora traz os quatro códigos e o aviso.
+  - A Confirmação da Operação é `210200`. O README, `docs/API.md`, o JSDoc e a skill mostram como
+    enviá-la, e o tipo passa a aceitar o código (veja Corrigido).
+  - Segundo a documentação da plataforma, a rota de manifestação responde `400` para `210240`,
+    porque o evento exige justificativa. Os exemplos que manifestavam `210220` e `210240` saíram.
+  - Nada muda em tempo de execução.
+- **Exemplos com CNPJ inválido.** O CNPJ de exemplo `12345678000190` tem DV inválido, e a API
+  sempre o recusou. Com esta versão, a consulta de CNPJ também o recusa no cliente. Ele aparecia
+  no README, no `MIGRATION.md`, em `docs/API.md`, nos exemplos, no JSDoc, na skill e nos testes,
+  em consultas de CNPJ, em `companies.create`, em pessoas e no comprador de NF-e. Agora esses
+  exemplos usam `11222333999952`, um CNPJ sintético: o DV é válido, e a consulta de CNPJ não o
+  encontra na Receita. O `companies.create` do README passou a usar `number`.
+- **Formato do CNPJ nas páginas.** As páginas de consulta de CNPJ, de empresas e de NF-e de
+  entrada explicam o formato com letras, a normalização e que o CNPJ alfanumérico exige a API v3.
+  A página de NF-e de entrada lista quais métodos já aceitam a chave com letras.
+- **Skill publicada (`skills/nfeio-node-sdk/`).**
+  - A skill registra a regra da 6.0.2: zero à esquerda, chave de acesso com letras e quais rotas
+    a aceitam, e CNPJ alfanumérico só na família v3 da API.
+  - A seção de consulta de CNPJ trazia opções que não existem (`includePartners`,
+    `includeActivities`). As opções reais são `updateAddress` e `updateCityCode`.
+  - Ela também trazia campos com nome ou tipo errado. O certo é `federalTaxNumber` como `number`,
+    e não `string`, mais `openedOn`, `shareCapital`, `economicActivities` e `legalNature`.
+  - O padrão "Address from CEP" desestruturava `{ addresses }`, mas `lookupByPostalCode` devolve
+    um `Address`.
 - **As páginas de `docs/` que o portal espelha foram conferidas contra o código.** Havia
   assinaturas e retornos de antes da 6.0.0 nas páginas de NF-e, NFS-e, inscrição estadual,
   consulta de CNPJ e pessoas, e em `downloads.md`, que ainda prometia "Buffer sempre" e "ZIP por
   empresa". Também foram corrigidos exemplos que não compilavam em modo estrito. `docs/API.md`,
   `docs/EXTENDING.md` e `docs/EXTENSIBILITY_SUMMARY.md` são da v3 e ganharam aviso de legado no
   topo, sem reescrever o conteúdo.
+- **Frontmatter de máquina nas páginas de `docs/`.** Cada página traz `tags` e
+  `integration: [sdk]`, que o portal de documentação usa como facetas de busca.
+
+### Manutenção
+
+- **Sai o arquivo `VERSION` da raiz.** Ele estava parado em `4.0.0` desde a v4, e nada o lia:
+  nem o build, nem os testes, nem o workflow de publicação, nem o pacote publicado. A versão tem
+  uma fonte só, o `package.json`; `src/version.ts` é gerado dele, e `tests/unit/version.test.ts`
+  falha se as duas divergirem.
+- **`npm run test:types` passa a conferir os tipos.** O comando roda `vitest --typecheck`, que só
+  confere os arquivos do programa do TypeScript. O `tsconfig.json` inclui só `src/`, então os
+  arquivos `tests/types/*.test-d.ts` ficavam de fora e nenhum erro de tipo aparecia: a asserção
+  falsa `expectTypeOf<1>().toEqualTypeOf<2>()` passava. O CI e o workflow de publicação rodam esse
+  comando. Agora o `vitest.config.ts` aponta o typecheck para o `tsconfig.test-types.json`, que
+  inclui os testes de tipo. Os quatro guardas de tipo que já existiam passam sem mudança.
 
 ## [6.0.1] - 2026-10-16
 
@@ -32,8 +142,8 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   `404` de corpo vazio mesmo sem credencial, igual a um path inventado; o plural responde
   `401` sem credencial, e `200` com ela nos dois métodos de leitura sondados
   (`getProductInvoiceDetails` e `getJson`). A spec local `consulta-nfe-distribuicao-v1.yaml` ainda
-  diz singular; o upstream corrigiu em `nfe/docs@51d8816`. Cinco testes unitários afirmavam o
-  path errado e foram corrigidos junto.
+  diz singular; a spec atualizada da plataforma já traz o plural. Cinco testes unitários
+  afirmavam o path errado e foram corrigidos junto.
 
   O bug era latente. Em 30 dias de log de gateway (2026-09-14 a 10-14), o plural teve 28.543
   respostas `200` e o singular, 9 respostas `404`, nenhuma com User-Agent do SDK. Evidência em
@@ -61,7 +171,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 ### Documentação
 
 - **`municipalTaxes.update` é um PUT que substitui a inscrição, e nada avisava.** Pela
-  documentação da plataforma (`nfe/docs@b9e7953`), omitir `taxNumber` apaga o número da
+  documentação da plataforma, omitir `taxNumber` apaga o número da
   inscrição, e omitir `environment` volta para `Development`. `rpsNumber` e `lastRpsSent` são a
   exceção: omitidos, preservam o contador de RPS; enviados, sobrescrevem o contador, inclusive
   para trás. O JSDoc, `docs/recursos/municipal-taxes.md` e a skill agora mostram o roteiro: ler
@@ -271,7 +381,7 @@ reescrita.
   O parâmetro era opcional e a documentação prometia um ZIP com todas as notas. A rota não
   existe: `/serviceinvoices/pdf` responde `404 "service invoice with id (pdf) was not
   found"`, porque o servidor casa a rota `/{id}` e lê `pdf` como identificador. Não está
-  na spec `nf-servico-v1` nem no `nfeio-docs`. Nota de migração em `MIGRATION.md`.
+  na spec `nf-servico-v1` nem na documentação da plataforma. Nota de migração em `MIGRATION.md`.
 
 - **O erro da API parava de chegar ao chamador.** `extractErrorMessage` só lia
   `message`/`error`/`detail`/`details`. A plataforma usa quatro envelopes:
@@ -1365,7 +1475,8 @@ SDK JavaScript legado com API baseada em callbacks.
 
 ## Links
 
-[Não lançado]: https://github.com/nfe/client-nodejs/compare/v6.0.1...HEAD
+[Não lançado]: https://github.com/nfe/client-nodejs/compare/v6.0.2...HEAD
+[6.0.2]: https://github.com/nfe/client-nodejs/compare/v6.0.1...v6.0.2
 [6.0.1]: https://github.com/nfe/client-nodejs/compare/v6.0.0...v6.0.1
 [6.0.0]: https://github.com/nfe/client-nodejs/compare/v5.2.0...v6.0.0
 [5.2.0]: https://github.com/nfe/client-nodejs/compare/v5.1.0...v5.2.0

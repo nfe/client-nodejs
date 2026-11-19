@@ -15,13 +15,11 @@ import type {
   ManifestEventType
 } from '../types.js';
 import { ValidationError } from '../errors/index.js';
+import { requireAccessKey } from '../utils/tax-id.js';
 
 // ============================================================================
 // Constants
 // ============================================================================
-
-/** Regex pattern for valid access key (44 numeric digits) */
-const ACCESS_KEY_PATTERN = /^\d{44}$/;
 
 /** Default manifest event type: Ciência da Operação */
 const DEFAULT_MANIFEST_EVENT_TYPE: ManifestEventType = 210210;
@@ -38,24 +36,6 @@ const DEFAULT_MANIFEST_EVENT_TYPE: ManifestEventType = 210210;
 function validateCompanyId(companyId: string): void {
   if (!companyId || companyId.trim() === '') {
     throw new ValidationError('Company ID is required');
-  }
-}
-
-/**
- * Validates access key format (44 numeric digits)
- * @param accessKey - The access key to validate
- * @throws {ValidationError} If access key format is invalid
- */
-function validateAccessKey(accessKey: string): void {
-  if (!accessKey || accessKey.trim() === '') {
-    throw new ValidationError('Access key is required');
-  }
-
-  const normalized = accessKey.trim();
-  if (!ACCESS_KEY_PATTERN.test(normalized)) {
-    throw new ValidationError(
-      `Invalid access key: "${accessKey}". Expected 44 numeric digits.`
-    );
   }
 }
 
@@ -247,11 +227,11 @@ export class InboundProductInvoicesResource {
   /**
    * Get details of an inbound NF-e/CT-e by access key (webhook v1 format)
    *
-   * Retrieves the metadata of an inbound document using its 44-digit access key.
+   * Retrieves the metadata of an inbound document using its 44-character access key.
    * This is the generic endpoint that works for both NF-e and CT-e documents.
    *
    * @param companyId - The company ID that received the document
-   * @param accessKey - The 44-digit access key
+   * @param accessKey - The 44-character access key
    * @returns Promise with the inbound invoice metadata
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the document is not found
@@ -272,10 +252,10 @@ export class InboundProductInvoicesResource {
     accessKey: string
   ): Promise<InboundInvoiceMetadata> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     const response = await this.http.get<InboundInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}`
+      `/v2/companies/${companyId}/inbound/${key}`
     );
 
     return response.data;
@@ -284,11 +264,11 @@ export class InboundProductInvoicesResource {
   /**
    * Get details of an inbound NF-e by access key (webhook v2 format)
    *
-   * Retrieves the metadata of an NF-e document using its 44-digit access key.
+   * Retrieves the metadata of an NF-e document using its 44-character access key.
    * This endpoint returns additional `productInvoices` array compared to the v1 format.
    *
    * @param companyId - The company ID that received the document
-   * @param accessKey - The 44-digit access key
+   * @param accessKey - The 44-character access key
    * @returns Promise with the inbound product invoice metadata (includes productInvoices array)
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the document is not found
@@ -308,14 +288,14 @@ export class InboundProductInvoicesResource {
     accessKey: string
   ): Promise<InboundProductInvoiceMetadata> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     // Plural `/inbound/productinvoices/` here and in the three methods below, as the platform
     // serves it. The singular form answers 404 with an empty body even without credentials, like an
     // invented path (measured 2026-10-14). The local spec consulta-nfe-distribuicao-v1.yaml
-    // (vintage b487823) still says singular; upstream fixed it in nfe/docs@51d8816.
+    // still says singular; the platform's current spec already uses the plural.
     const response = await this.http.get<InboundProductInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/productinvoices/${accessKey.trim()}`
+      `/v2/companies/${companyId}/inbound/productinvoices/${key}`
     );
 
     return response.data;
@@ -331,7 +311,7 @@ export class InboundProductInvoicesResource {
    * Retrieves the metadata of an event associated with an inbound document.
    *
    * @param companyId - The company ID that received the document
-   * @param accessKey - The 44-digit access key of the parent document
+   * @param accessKey - The 44-character access key of the parent document
    * @param eventKey - The event key
    * @returns Promise with the event metadata
    * @throws {ValidationError} If any parameter is invalid
@@ -353,11 +333,11 @@ export class InboundProductInvoicesResource {
     eventKey: string
   ): Promise<InboundInvoiceMetadata> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
     validateEventKey(eventKey);
 
     const response = await this.http.get<InboundInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}/events/${eventKey.trim()}`
+      `/v2/companies/${companyId}/inbound/${key}/events/${eventKey.trim()}`
     );
 
     return response.data;
@@ -370,7 +350,7 @@ export class InboundProductInvoicesResource {
    * Returns the webhook v2 format with `productInvoices` array.
    *
    * @param companyId - The company ID that received the document
-   * @param accessKey - The 44-digit access key of the parent document
+   * @param accessKey - The 44-character access key of the parent document
    * @param eventKey - The event key
    * @returns Promise with the product invoice event metadata
    * @throws {ValidationError} If any parameter is invalid
@@ -393,11 +373,11 @@ export class InboundProductInvoicesResource {
     eventKey: string
   ): Promise<InboundProductInvoiceMetadata> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
     validateEventKey(eventKey);
 
     const response = await this.http.get<InboundProductInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/productinvoices/${accessKey.trim()}/events/${eventKey.trim()}`
+      `/v2/companies/${companyId}/inbound/productinvoices/${key}/events/${eventKey.trim()}`
     );
 
     return response.data;
@@ -418,7 +398,7 @@ export class InboundProductInvoicesResource {
    * (tests/fixtures/live-contracts/inbound-download.json).
    *
    * @param companyId - The company ID that received the document
-   * @param accessKey - The 44-digit access key
+   * @param accessKey - The 44-character access key
    * @returns Promise com o file-resource (`publicTemporaryUri`)
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the document is not found
@@ -431,10 +411,10 @@ export class InboundProductInvoicesResource {
    */
   async getXml(companyId: string, accessKey: string): Promise<InboundFileResource> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     const response = await this.http.get<InboundFileResource>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}/xml`
+      `/v2/companies/${companyId}/inbound/${key}/xml`
     );
 
     return response.data;
@@ -451,7 +431,7 @@ export class InboundProductInvoicesResource {
    * (tests/fixtures/live-contracts/inbound-download.json).
    *
    * @param companyId - The company ID that received the document
-   * @param accessKey - The 44-digit access key of the parent document
+   * @param accessKey - The 44-character access key of the parent document
    * @param eventKey - The event key
    * @returns Promise with the event XML content as a string
    * @throws {ValidationError} If any parameter is invalid
@@ -469,11 +449,11 @@ export class InboundProductInvoicesResource {
     eventKey: string
   ): Promise<InboundFileResource> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
     validateEventKey(eventKey);
 
     const response = await this.http.get<InboundFileResource>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}/events/${eventKey.trim()}/xml`
+      `/v2/companies/${companyId}/inbound/${key}/events/${eventKey.trim()}/xml`
     );
 
     return response.data;
@@ -490,7 +470,7 @@ export class InboundProductInvoicesResource {
    * (tests/fixtures/live-contracts/inbound-download.json).
    *
    * @param companyId - The company ID that received the document
-   * @param accessKey - The 44-digit access key
+   * @param accessKey - The 44-character access key
    * @returns Promise com o file-resource (`publicTemporaryUri`)
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the document is not found
@@ -503,10 +483,10 @@ export class InboundProductInvoicesResource {
    */
   async getPdf(companyId: string, accessKey: string): Promise<InboundFileResource> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     const response = await this.http.get<InboundFileResource>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}/pdf`
+      `/v2/companies/${companyId}/inbound/${key}/pdf`
     );
 
     return response.data;
@@ -518,7 +498,7 @@ export class InboundProductInvoicesResource {
    * Gets the structured JSON data of an NF-e document.
    *
    * @param companyId - The company ID that received the document
-   * @param accessKey - The 44-digit access key
+   * @param accessKey - The 44-character access key
    * @returns Promise with the NF-e metadata in JSON format
    * @throws {ValidationError} If company ID or access key is invalid
    * @throws {NotFoundError} If the document is not found
@@ -538,10 +518,10 @@ export class InboundProductInvoicesResource {
     accessKey: string
   ): Promise<InboundInvoiceMetadata> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     const response = await this.http.get<InboundInvoiceMetadata>(
-      `/v2/companies/${companyId}/inbound/productinvoices/${accessKey.trim()}/json`
+      `/v2/companies/${companyId}/inbound/productinvoices/${key}/json`
     );
 
     return response.data;
@@ -558,12 +538,18 @@ export class InboundProductInvoicesResource {
    * Defaults to "Ciência da Operação" (210210) if no event type is specified.
    *
    * **Event types:**
+   * - `210200` — Confirmação da Operação (confirmation). Accepted by the type since 6.0.2.
    * - `210210` — Ciência da Operação (awareness, default)
-   * - `210220` — Confirmação da Operação (confirmation)
-   * - `210240` — Operação não Realizada (operation not performed)
+   * - `210220` — **Desconhecimento da Operação**: the recipient does NOT recognize the operation.
+   *   It is NOT "Confirmação da Operação", as this documentation said until 6.0.1. Sending it by
+   *   mistake registers at SEFAZ a formal statement that the operation is not recognized,
+   *   visible to the issuer and to the tax authority.
+   * - `210240` — Operação não Realizada (operation not performed). According to the platform
+   *   documentation, this route answers `400` for it: the event requires a justification, and
+   *   this route has no body to carry it.
    *
    * @param companyId - The company ID
-   * @param accessKey - The 44-digit access key of the NF-e
+   * @param accessKey - The 44-character access key of the NF-e
    * @param tpEvent - Manifest event type (defaults to 210210)
    * @returns Promise with the manifest response
    * @throws {ValidationError} If company ID or access key is invalid
@@ -576,12 +562,12 @@ export class InboundProductInvoicesResource {
    * );
    * ```
    *
-   * @example Confirm operation
+   * @example Confirm the operation (Confirmação da Operação is 210200, not 210220)
    * ```typescript
    * const result = await nfe.inboundProductInvoices.manifest(
    *   'company-id',
    *   '35240112345678000190550010000001231234567890',
-   *   210220
+   *   210200
    * );
    * ```
    */
@@ -591,10 +577,10 @@ export class InboundProductInvoicesResource {
     tpEvent: ManifestEventType = DEFAULT_MANIFEST_EVENT_TYPE
   ): Promise<string> {
     validateCompanyId(companyId);
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
 
     const response = await this.http.post<string>(
-      `/v2/companies/${companyId}/inbound/${accessKey.trim()}/manifest?tpEvent=${tpEvent}`
+      `/v2/companies/${companyId}/inbound/${key}/manifest?tpEvent=${tpEvent}`
     );
 
     return response.data;
@@ -608,10 +594,10 @@ export class InboundProductInvoicesResource {
    * Reprocess webhook for an inbound NF-e by access key or NSU
    *
    * Triggers reprocessing of the webhook notification for a specific document,
-   * identified either by its 44-digit access key or by its NSU number.
+   * identified either by its 44-character access key or by its NSU number.
    *
    * @param companyId - The company ID
-   * @param accessKeyOrNsu - The 44-digit access key or NSU number
+   * @param accessKeyOrNsu - The 44-character access key or NSU number
    * @returns Promise with the product invoice metadata
    * @throws {ValidationError} If company ID or identifier is empty
    * @throws {NotFoundError} If the document is not found

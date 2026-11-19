@@ -488,7 +488,7 @@ export class ServiceInvoicesResource {
    * opcional e o ramo sem id montava `/serviceinvoices/pdf`, que o servidor casa
    * com a rota `/{id}` e trata como identificador literal:
    * `404 "service invoice with id (pdf) was not found"`. A rota não está na spec
-   * `nf-servico-v1` nem no `nfeio-docs` — nunca houve caminho válido.
+   * `nf-servico-v1` nem na documentação da plataforma — nunca houve caminho válido.
    */
   async downloadPdf(companyId: string, invoiceId: string): Promise<Buffer> {
     const response = await this.http.get<Buffer>(

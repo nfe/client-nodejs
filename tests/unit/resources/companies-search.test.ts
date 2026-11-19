@@ -68,10 +68,16 @@ describe('CompaniesResource - Search Helpers', () => {
       expect(company).toBeNull();
     });
 
-    it('should reject invalid tax number length', async () => {
-      await expect(
-        companies.findByTaxNumber(123)
-      ).rejects.toThrow(ValidationError);
+    // Até a v6.0.1 este teste exigia erro para 3 dígitos. Mas um documento que começa com zero
+    // vira número curto: o CNPJ 00000000000191 chega como 191. Desde a 6.0.2 só a forma é
+    // conferida, e uma busca que não acha devolve null.
+    it('accepts a short number: the document may have lost its leading zeros', async () => {
+      await expect(companies.findByTaxNumber(123)).resolves.toBeNull();
+    });
+
+    it('rejects what is not a non-negative integer with up to 14 digits', async () => {
+      await expect(companies.findByTaxNumber(-123)).rejects.toThrow(ValidationError);
+      await expect(companies.findByTaxNumber(123456789012345)).rejects.toThrow(ValidationError);
     });
 
     it('should accept 11-digit CPF', async () => {

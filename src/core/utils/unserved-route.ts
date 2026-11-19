@@ -1,7 +1,7 @@
 /**
  * NFE.io SDK — rotas declaradas na spec que a plataforma não serve.
  *
- * Algumas rotas existem na OpenAPI (e no `nfeio-docs`) e simplesmente não são
+ * Algumas rotas existem na OpenAPI (e na documentação da plataforma) e simplesmente não são
  * roteadas em produção. O chamador recebe `404` e não tem como distinguir isso de
  * "esse dado não existe" — vai procurar defeito nos próprios dados, ou reportar
  * como bug do SDK.

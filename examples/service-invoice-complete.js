@@ -60,7 +60,7 @@ const createdInvoiceIds = [];
 function createInvoiceData(description = 'Consulting Services') {
   return {
     borrower: {
-      federalTaxNumber: 12345678901, // CPF (11 digits) or CNPJ (14 digits)
+      federalTaxNumber: 12345678901, // CPF or CNPJ as a number (a document that starts with zero loses it); alphanumeric CNPJ needs the v3 API
       name: 'João da Silva',
       email: 'joao.silva@example.com',
     },

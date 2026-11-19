@@ -18,6 +18,7 @@ import type {
 import type { HttpClient } from '../http/client.js';
 import { ValidationError, NotFoundError } from '../errors/index.js';
 import { CertificateValidator } from '../utils/certificate-validator.js';
+import { isAlphanumericCnpj, isSameTaxNumber, isValidCnpj, isValidCpf } from '../utils/tax-id.js';
 
 // Page size for listAll/listIterator: the API caps GET /companies at
 // pageCount 50 (values above 50 — and also 1 — are rejected with a 400).
@@ -111,61 +112,40 @@ function readListedCertificate(company: Company): CompanyCertificateV1 | undefin
 // ============================================================================
 
 /**
- * Validate CNPJ format (14 digits) with check digits
+ * Valida o `federalTaxNumber` de uma empresa na API v1.
+ *
+ * - `number`: válido se, completado com zeros, for CNPJ de 14 posições ou CPF de 11. Um
+ *   documento que começa com zero chega como número curto, e a API o completa: medido em
+ *   2026-11-18, `POST /v1/companies` com `1234567999885` responde `201` e grava
+ *   `01234567999885`. Até a v6.0.1 o SDK recusava esse número pelo tamanho.
+ * - `string` só com dígitos (14 para CNPJ, 11 para CPF): aceita em tempo de execução, porque
+ *   a API v1 aceita (`PUT` com a string de 14 posições respondeu `200`). O tipo continua `number`.
+ * - CNPJ alfanumérico: a API v1 de empresas não o aceita; só a v3.
  */
-function validateCNPJ(cnpj: number): boolean {
-  const cnpjStr = cnpj.toString().padStart(14, '0');
-  if (cnpjStr.length !== 14) return false;
-  if (/^(\d)\1{13}$/.test(cnpjStr)) return false; // All same digits
-
-  // Validate first check digit
-  let sum = 0;
-  let weight = 5;
-  for (let i = 0; i < 12; i++) {
-    sum += parseInt(cnpjStr[i]!) * weight;
-    weight = weight === 2 ? 9 : weight - 1;
+function validateCompanyTaxNumber(taxNumber: unknown): void {
+  if (typeof taxNumber === 'number') {
+    if (isValidCnpj(taxNumber) || isValidCpf(taxNumber)) return;
+    throw new ValidationError(
+      `Invalid federalTaxNumber: ${taxNumber}. Expected a valid CNPJ (14 digits) or CPF (11 digits); ` +
+        'a number that lost its leading zeros is accepted.'
+    );
   }
-  const firstDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-  if (firstDigit !== parseInt(cnpjStr[12]!)) return false;
 
-  // Validate second check digit
-  sum = 0;
-  weight = 6;
-  for (let i = 0; i < 13; i++) {
-    sum += parseInt(cnpjStr[i]!) * weight;
-    weight = weight === 2 ? 9 : weight - 1;
+  if (typeof taxNumber === 'string') {
+    if (isAlphanumericCnpj(taxNumber) && isValidCnpj(taxNumber)) {
+      throw new ValidationError(
+        'Alphanumeric CNPJ is not accepted by the v1 companies API. The v3 companies API accepts it.'
+      );
+    }
+    if (/^\d{14}$/.test(taxNumber) && isValidCnpj(taxNumber)) return;
+    if (/^\d{11}$/.test(taxNumber) && isValidCpf(taxNumber)) return;
+    throw new ValidationError(
+      `Invalid federalTaxNumber: "${taxNumber}". Expected a number, or a string of 14 digits (CNPJ) ` +
+        'or 11 digits (CPF) with valid check digits.'
+    );
   }
-  const secondDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-  if (secondDigit !== parseInt(cnpjStr[13]!)) return false;
 
-  return true;
-}
-
-/**
- * Validate CPF format (11 digits) with check digits
- */
-function validateCPF(cpf: number): boolean {
-  const cpfStr = cpf.toString().padStart(11, '0');
-  if (cpfStr.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(cpfStr)) return false; // All same digits
-
-  // Validate first check digit
-  let sum = 0;
-  for (let i = 0; i < 9; i++) {
-    sum += parseInt(cpfStr[i]!) * (10 - i);
-  }
-  const firstDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-  if (firstDigit !== parseInt(cpfStr[9]!)) return false;
-
-  // Validate second check digit
-  sum = 0;
-  for (let i = 0; i < 10; i++) {
-    sum += parseInt(cpfStr[i]!) * (11 - i);
-  }
-  const secondDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-  if (secondDigit !== parseInt(cpfStr[10]!)) return false;
-
-  return true;
+  throw new ValidationError('federalTaxNumber must be a number');
 }
 
 /**
@@ -174,23 +154,7 @@ function validateCPF(cpf: number): boolean {
 function validateCompanyData(data: Partial<Company>): void {
   // Validate required fields for creation
   if ('federalTaxNumber' in data) {
-    const taxNumber = data.federalTaxNumber;
-    if (typeof taxNumber !== 'number') {
-      throw new ValidationError('federalTaxNumber must be a number');
-    }
-
-    const length = taxNumber.toString().length;
-    if (length === 14) {
-      if (!validateCNPJ(taxNumber)) {
-        throw new ValidationError('Invalid CNPJ format. Must be 14 digits and not all same digit.');
-      }
-    } else if (length === 11) {
-      if (!validateCPF(taxNumber)) {
-        throw new ValidationError('Invalid CPF format. Must be 11 digits and not all same digit.');
-      }
-    } else {
-      throw new ValidationError('federalTaxNumber must be 11 digits (CPF) or 14 digits (CNPJ)');
-    }
+    validateCompanyTaxNumber(data.federalTaxNumber);
   }
 
   // Validate email format if provided
@@ -259,7 +223,7 @@ export class CompaniesResource {
    * ```typescript
    * const company = await nfe.companies.create({
    *   name: 'Acme Corp',
-   *   federalTaxNumber: 12345678000190,
+   *   federalTaxNumber: 11222333999952,
    *   taxRegime: 'SimplesNacional',
    *   address: {
    *     state: 'SP',
@@ -786,12 +750,17 @@ export class CompaniesResource {
   /**
    * Find company by federal tax number (CNPJ or CPF)
    *
-   * @param taxNumber - Federal tax number (11 digits for CPF, 14 for CNPJ)
+   * A CNPJ or CPF that starts with zero loses those zeros as a `number`
+   * (`01234567999885` becomes `1234567999885`). The API v1 returns it that way, and
+   * this method accepts it: the comparison is by value, not by the count of digits.
+   *
+   * @param taxNumber - Federal tax number as a number (CNPJ or CPF, up to 14 digits)
    * @returns Company if found, null otherwise
+   * @throws {ValidationError} If `taxNumber` is not a non-negative integer with up to 14 digits
    *
    * @example
    * ```typescript
-   * const company = await nfe.companies.findByTaxNumber(12345678901234);
+   * const company = await nfe.companies.findByTaxNumber(11222333999952);
    *
    * if (company) {
    *   console.log('Found:', company.name);
@@ -801,16 +770,19 @@ export class CompaniesResource {
    * ```
    */
   async findByTaxNumber(taxNumber: number): Promise<Company | null> {
-    // Validate tax number format
-    const length = taxNumber.toString().length;
-    if (length !== 11 && length !== 14) {
-      throw new ValidationError('Tax number must be 11 digits (CPF) or 14 digits (CNPJ)');
+    // Until 6.0.1 this required exactly 11 or 14 digits, which refused every
+    // document that starts with zero. Only the shape is checked here: a search
+    // for an invalid document simply finds nothing.
+    if (!Number.isSafeInteger(taxNumber) || taxNumber < 0 || String(taxNumber).length > 14) {
+      throw new ValidationError(
+        'Tax number must be a non-negative integer with up to 14 digits (CNPJ or CPF)'
+      );
     }
 
     const companies = await this.listAll();
 
     const found = companies.find((company: Company) =>
-      company.federalTaxNumber === taxNumber
+      isSameTaxNumber(company.federalTaxNumber, taxNumber)
     );
 
     return found || null;

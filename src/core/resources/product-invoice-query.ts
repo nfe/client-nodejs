@@ -11,7 +11,7 @@ import type {
   ProductInvoiceDetails,
   ProductInvoiceEventsResponse,
 } from '../types.js';
-import { ValidationError } from '../errors/index.js';
+import { requireAccessKey } from '../utils/tax-id.js';
 
 // ============================================================================
 // Constants
@@ -19,9 +19,6 @@ import { ValidationError } from '../errors/index.js';
 
 /** Base URL for NF-e Query API */
 export const NFE_QUERY_API_BASE_URL = 'https://nfe.api.nfe.io';
-
-/** Regex pattern for valid access key (44 numeric digits) */
-const ACCESS_KEY_PATTERN = /^\d{44}$/;
 
 /**
  * `Accept` dos downloads por chave de acesso.
@@ -45,24 +42,6 @@ const ACCEPT_XML = 'application/xml, application/json;q=0.9';
 // ============================================================================
 // Validation Helpers
 // ============================================================================
-
-/**
- * Validates access key format (44 numeric digits)
- * @param accessKey - The access key to validate
- * @throws {ValidationError} If access key is empty or has invalid format
- */
-function validateAccessKey(accessKey: string): void {
-  if (!accessKey || accessKey.trim() === '') {
-    throw new ValidationError('Access key is required');
-  }
-
-  const normalized = accessKey.trim();
-  if (!ACCESS_KEY_PATTERN.test(normalized)) {
-    throw new ValidationError(
-      `Invalid access key: "${accessKey}". Expected 44 numeric digits.`
-    );
-  }
-}
 
 // ============================================================================
 // Resource Implementation
@@ -105,7 +84,7 @@ export class ProductInvoiceQueryResource {
   /**
    * Retrieve full product invoice (NF-e) details from SEFAZ by access key
    *
-   * @param accessKey - 44-digit numeric access key (Chave de Acesso)
+   * @param accessKey - 44-character access key (Chave de Acesso; positions 7-18 may hold letters of an alphanumeric CNPJ)
    * @returns Full invoice details including issuer, buyer, items, totals, transport, and payment
    * @throws {ValidationError} If access key format is invalid
    * @throws {NotFoundError} If no invoice matches the access key (HTTP 404)
@@ -122,9 +101,9 @@ export class ProductInvoiceQueryResource {
    * ```
    */
   async retrieve(accessKey: string): Promise<ProductInvoiceDetails> {
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
     const response = await this.http.get<ProductInvoiceDetails>(
-      `/v2/productinvoices/${accessKey.trim()}`
+      `/v2/productinvoices/${key}`
     );
     return response.data;
   }
@@ -132,7 +111,7 @@ export class ProductInvoiceQueryResource {
   /**
    * Download the DANFE PDF for a product invoice by access key
    *
-   * @param accessKey - 44-digit numeric access key (Chave de Acesso)
+   * @param accessKey - 44-character access key (Chave de Acesso; positions 7-18 may hold letters of an alphanumeric CNPJ)
    * @returns Buffer containing the PDF binary content
    * @throws {ValidationError} If access key format is invalid
    * @throws {NotFoundError} If no invoice matches the access key (HTTP 404)
@@ -147,9 +126,9 @@ export class ProductInvoiceQueryResource {
    * ```
    */
   async downloadPdf(accessKey: string): Promise<Buffer> {
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
     const response = await this.http.getBuffer(
-      `/v2/productinvoices/${accessKey.trim()}.pdf`,
+      `/v2/productinvoices/${key}.pdf`,
       ACCEPT_PDF
     );
     return response.data;
@@ -158,7 +137,7 @@ export class ProductInvoiceQueryResource {
   /**
    * Download the raw NF-e XML for a product invoice by access key
    *
-   * @param accessKey - 44-digit numeric access key (Chave de Acesso)
+   * @param accessKey - 44-character access key (Chave de Acesso; positions 7-18 may hold letters of an alphanumeric CNPJ)
    * @returns Buffer containing the XML binary content
    * @throws {ValidationError} If access key format is invalid
    * @throws {NotFoundError} If no invoice matches the access key (HTTP 404)
@@ -173,9 +152,9 @@ export class ProductInvoiceQueryResource {
    * ```
    */
   async downloadXml(accessKey: string): Promise<Buffer> {
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
     const response = await this.http.getBuffer(
-      `/v2/productinvoices/${accessKey.trim()}.xml`,
+      `/v2/productinvoices/${key}.xml`,
       ACCEPT_XML
     );
     return response.data;
@@ -186,7 +165,7 @@ export class ProductInvoiceQueryResource {
    *
    * Events include cancellations, corrections, manifestations, etc.
    *
-   * @param accessKey - 44-digit numeric access key (Chave de Acesso)
+   * @param accessKey - 44-character access key (Chave de Acesso; positions 7-18 may hold letters of an alphanumeric CNPJ)
    * @returns Events response with an array of fiscal events and query timestamp
    * @throws {ValidationError} If access key format is invalid
    * @throws {NotFoundError} If no invoice matches the access key (HTTP 404)
@@ -203,9 +182,9 @@ export class ProductInvoiceQueryResource {
    * ```
    */
   async listEvents(accessKey: string): Promise<ProductInvoiceEventsResponse> {
-    validateAccessKey(accessKey);
+    const key = requireAccessKey(accessKey);
     const response = await this.http.get<ProductInvoiceEventsResponse>(
-      `/v2/productinvoices/events/${accessKey.trim()}`
+      `/v2/productinvoices/events/${key}`
     );
     return response.data;
   }

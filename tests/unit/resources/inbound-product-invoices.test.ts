@@ -63,7 +63,7 @@ describe('InboundProductInvoicesResource', () => {
 
     it('should throw ValidationError for invalid access key format', async () => {
       await expect(resource.getDetails(testCompanyId, '12345')).rejects.toThrow(ValidationError);
-      await expect(resource.getDetails(testCompanyId, '12345')).rejects.toThrow(/Expected 44 numeric digits/);
+      await expect(resource.getDetails(testCompanyId, '12345')).rejects.toThrow(/Expected 44 characters/);
     });
 
     it('should throw ValidationError for empty access key', async () => {
@@ -82,6 +82,29 @@ describe('InboundProductInvoicesResource', () => {
 
     it('should throw ValidationError for whitespace-only eventKey', async () => {
       await expect(resource.getEventDetails(testCompanyId, validAccessKey, '   ')).rejects.toThrow(ValidationError);
+    });
+
+    // Emitente com CNPJ alfanumérico: letras nas posições 7 a 18. Medido em 2026-11-18, a rota
+    // /inbound/productinvoices/{chave} aceita o formato (404 para chave inexistente, igual à
+    // numérica); a rota /inbound/{chave} ainda recusa com 400. O SDK envia e a API decide.
+    it('accepts an access key with letters in the issuer CNPJ and sends it upper case', async () => {
+      const alphaKey = '35260612ABC34501DE35550010000000031100000033';
+      mockHttpClient.get.mockResolvedValue({ data: {}, status: 200, headers: {} });
+
+      await resource.getProductInvoiceDetails(testCompanyId, alphaKey.toLowerCase());
+      await resource.getDetails(testCompanyId, ` ${alphaKey} `);
+
+      expect(mockHttpClient.get).toHaveBeenNthCalledWith(
+        1,
+        `/v2/companies/${testCompanyId}/inbound/productinvoices/${alphaKey}`
+      );
+      expect(mockHttpClient.get).toHaveBeenNthCalledWith(2, `/v2/companies/${testCompanyId}/inbound/${alphaKey}`);
+    });
+
+    it('still rejects a letter outside the issuer CNPJ positions', async () => {
+      const alphaKey = '35260612ABC34501DE35550010000000031100000033';
+      await expect(resource.getDetails(testCompanyId, `${alphaKey.slice(0, 43)}X`)).rejects.toThrow(ValidationError);
+      expect(mockHttpClient.get).not.toHaveBeenCalled();
     });
 
     it('should throw ValidationError for empty accessKeyOrNsu on reprocessWebhook', async () => {
@@ -429,6 +452,18 @@ describe('InboundProductInvoicesResource', () => {
       expect(result).toBe('ok');
       expect(mockHttpClient.post).toHaveBeenCalledWith(
         `/v2/companies/${testCompanyId}/inbound/${validAccessKey}/manifest?tpEvent=210210`
+      );
+    });
+
+    // Confirmação da Operação é 210200. Até a 6.0.1 o tipo não o aceitava, e a documentação
+    // chamava o 210220 (Desconhecimento) de Confirmação.
+    it('should send manifest with tpEvent=210200 (Confirmação da Operação)', async () => {
+      mockHttpClient.post.mockResolvedValue({ data: 'ok', status: 200, headers: {} });
+
+      await resource.manifest(testCompanyId, validAccessKey, 210200);
+
+      expect(mockHttpClient.post).toHaveBeenCalledWith(
+        `/v2/companies/${testCompanyId}/inbound/${validAccessKey}/manifest?tpEvent=210200`
       );
     });
 

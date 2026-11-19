@@ -13,8 +13,8 @@ import type {
 // Test Data
 // ============================================================================
 
-const VALID_CNPJ_DIGITS = '12345678000190';
-const VALID_CNPJ_FORMATTED = '12.345.678/0001-90';
+const VALID_CNPJ_DIGITS = '11222333999952';
+const VALID_CNPJ_FORMATTED = '11.222.333/9999-52';
 
 const createMockBasicInfoResponse = (
   overrides: Partial<LegalEntityBasicInfoResponse> = {}
@@ -149,14 +149,61 @@ describe('LegalEntityLookupResource', () => {
       await expect(resource.getBasicInfo('   ')).rejects.toThrow('Federal tax number (CNPJ) is required');
     });
 
-    it('should reject CNPJ with fewer than 14 digits', async () => {
+    it('should reject CNPJ with fewer than 14 characters', async () => {
       await expect(resource.getBasicInfo('1234567800019')).rejects.toThrow(ValidationError);
-      await expect(resource.getBasicInfo('1234567800019')).rejects.toThrow('Expected 14 digits');
+      await expect(resource.getBasicInfo('1234567800019')).rejects.toThrow('Expected 14 characters');
     });
 
-    it('should reject CNPJ with more than 14 digits', async () => {
+    it('should reject CNPJ with more than 14 characters', async () => {
       await expect(resource.getBasicInfo('123456780001901')).rejects.toThrow(ValidationError);
-      await expect(resource.getBasicInfo('123456780001901')).rejects.toThrow('Expected 14 digits');
+      await expect(resource.getBasicInfo('123456780001901')).rejects.toThrow('Expected 14 characters');
+    });
+
+    // CNPJ alfanumérico (IN RFB 2.229/2024). Até a v6.0.1, `replace(/\D/g, '')` arrancava as
+    // letras e acusava "got 9 digit(s)"; a mensagem certa é a da API.
+    it('keeps the letters of an alphanumeric CNPJ and normalizes mask and case', async () => {
+      vi.mocked(mockHttpClient.get).mockResolvedValue({
+        data: createMockBasicInfoResponse(),
+        status: 200,
+        headers: {},
+      });
+
+      await resource.getBasicInfo('12.abc.345/01de-35');
+
+      expect(mockHttpClient.get).toHaveBeenCalledWith(
+        '/v2/legalentities/basicInfo/12ABC34501DE35',
+        undefined
+      );
+    });
+
+    it('rejects an invalid check digit before any request', async () => {
+      await expect(resource.getBasicInfo('12ABC34501DE36')).rejects.toThrow(ValidationError);
+      await expect(resource.getStateTaxInfo('SP', '12ABC34501DE36')).rejects.toThrow(
+        'check digits do not match'
+      );
+      expect(mockHttpClient.get).not.toHaveBeenCalled();
+    });
+
+    it('rejects text outside the CNPJ mask', async () => {
+      await expect(resource.getBasicInfo('CNPJ 11.222.333/9999-52')).rejects.toThrow(
+        '12 letters or digits followed by 2 check digits'
+      );
+      expect(mockHttpClient.get).not.toHaveBeenCalled();
+    });
+
+    it('lets the API answer the version boundary for an alphanumeric CNPJ', async () => {
+      // Resposta medida em 2026-11-18 na v2 da consulta de CNPJ.
+      vi.mocked(mockHttpClient.get).mockRejectedValue(
+        new ValidationError('CNPJ alfanumérico não é suportado nesta versão. Utilize a v3.', {
+          errors: [{ code: 40001, message: 'CNPJ alfanumérico não é suportado nesta versão. Utilize a v3.' }],
+        })
+      );
+
+      await expect(resource.getBasicInfo('12ABC34501DE35')).rejects.toThrow('Utilize a v3');
+      expect(mockHttpClient.get).toHaveBeenCalledWith(
+        '/v2/legalentities/basicInfo/12ABC34501DE35',
+        undefined
+      );
     });
 
     it('should accept valid 14-digit CNPJ', async () => {
@@ -383,10 +430,10 @@ describe('LegalEntityLookupResource', () => {
       };
       vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
 
-      await resource.getBasicInfo('12.345.678/0001-90');
+      await resource.getBasicInfo('11.222.333/9999-52');
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        '/v2/legalentities/basicInfo/12345678000190',
+        '/v2/legalentities/basicInfo/11222333999952',
         undefined
       );
     });
@@ -440,7 +487,7 @@ describe('LegalEntityLookupResource', () => {
       };
       vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
 
-      await resource.getStateTaxInfo('SP', '12.345.678/0001-90');
+      await resource.getStateTaxInfo('SP', '11.222.333/9999-52');
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
         `/v2/legalentities/stateTaxInfo/SP/${VALID_CNPJ_DIGITS}`
